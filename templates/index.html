@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Personal Buffett{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header row -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="mb-0 fw-bold">My Watchlist</h2>
+      <small class="text-muted">{{ now }} CST</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button id="btn-fetch" onclick="triggerFetch()" class="btn btn-gold">
+        <i class="bi bi-arrow-repeat me-1"></i>Refresh &amp; Analyse
+      </button>
+      {% if latest_report %}
+      <a href="{{ url_for('report') }}" class="btn btn-outline-gold">
+        <i class="bi bi-file-earmark-text me-1"></i>Latest Report ({{ latest_report.date }})
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Fetch log -->
+  <div id="fetch-log" class="fetch-log mb-4" style="display:none"></div>
+
+  <!-- Stock cards -->
+  {% if stocks %}
+  <div class="row g-3 mb-4">
+    {% for s in stocks %}
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="stock-card {% if s.change_pct is not none %}{% if s.change_pct >= 0 %}card-up{% else %}card-down{% endif %}{% endif %}">
+
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <span class="grade-badge">{{ s.grade_emoji }} {{ s.grade }}</span>
+            <h6 class="mb-0 mt-1 fw-bold">{{ s.name }}</h6>
+            <small class="text-muted">{{ s.code }}</small>
+          </div>
+          <div class="text-end">
+            {% if s.price %}
+            <div class="price">¥{{ "%.2f"|format(s.price) }}</div>
+            <div class="change-pct {% if s.change_pct >= 0 %}text-danger{% else %}text-success{% endif %}">
+              {{ "%+.2f"|format(s.change_pct) }}%
+            </div>
+            {% else %}
+            <small class="text-muted">No quote</small>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if s.amount %}
+        <div class="meta-row"><i class="bi bi-bar-chart-fill me-1"></i>Volume ¥{{ "%.1f"|format(s.amount) }}B</div>
+        {% endif %}
+
+        {% if s.main_net is not none %}
+        <div class="meta-row {% if s.main_net >= 0 %}text-danger{% else %}text-success{% endif %}">
+          <i class="bi bi-{% if s.main_net >= 0 %}arrow-up{% else %}arrow-down{% endif %}-circle me-1"></i>
+          Institutional {% if s.main_net >= 0 %}inflow{% else %}outflow{% endif %}
+          ¥{{ "%.2f"|format(s.main_net|abs) }}B
+        </div>
+        {% endif %}
+
+        <div class="moat-text mt-2">🏰 {{ s.moat[:50] }}{% if s.moat|length > 50 %}…{% endif %}</div>
+
+        <div class="d-flex gap-2 mt-3">
+          <button onclick="showNews('{{ s.code }}', '{{ s.name }}')"
+                  class="btn btn-outline-secondary btn-sm flex-fill">
+            <i class="bi bi-newspaper me-1"></i>News
+          </button>
+          <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
+                onsubmit="return confirm('Remove {{ s.name }} from your watchlist?')"
+                class="flex-fill">
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+              <i class="bi bi-trash me-1"></i>Remove
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state text-center py-5 mb-4">
+    <i class="bi bi-graph-up display-4 text-muted"></i>
+    <h5 class="mt-3 text-muted">Your watchlist is empty</h5>
+    <p class="text-muted small">Add your first stock below to get started.</p>
+  </div>
+  {% endif %}
+
+  <!-- Add stock -->
+  <div class="add-card mb-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-gold"></i>Add to Watchlist</h6>
+    <form method="post" action="{{ url_for('add_stock') }}">
+      <div class="row g-2">
+        <div class="col-12 col-sm-3">
+          <input type="text" name="code" class="form-control" placeholder="Code (e.g. 600031)" required maxlength="10">
+        </div>
+        <div class="col-12 col-sm-4">
+          <input type="text" name="name" class="form-control" placeholder="Name (e.g. SANY Heavy)" required maxlength="30">
+        </div>
+        <div class="col-12 col-sm-3">
+          <input type="text" name="desc" class="form-control" placeholder="Note (optional)" maxlength="60">
+        </div>
+        <div class="col-12 col-sm-2">
+          <button type="submit" class="btn btn-gold w-100">Add</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Historical reports -->
+  {% if reports %}
+  <div class="reports-card">
+    <h6 class="fw-bold mb-3"><i class="bi bi-archive me-2 text-gold"></i>Historical Reports</h6>
+    <div class="list-group list-group-flush">
+      {% for r in reports %}
+      <a href="{{ url_for('report', date=r.date) }}"
+         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>{{ r.date }}</span>
+        <small class="text-muted">{{ r.created_at[:16] }}</small>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- News modal (slide up) -->
+<div id="news-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-slideup modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold" id="modal-title">News</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modal-body">Loading…</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function triggerFetch() {
+  const btn = document.getElementById('btn-fetch');
+  const log = document.getElementById('fetch-log');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Fetching… (~60s)';
+  log.style.display = 'block';
+  log.textContent   = 'Connecting to data sources…\n';
+
+  try {
+    const resp = await fetch('/fetch', { method: 'POST' });
+    const data = await resp.json();
+    log.textContent = data.stdout || '(no output)';
+    if (!data.ok) log.textContent += '\nError: ' + data.stderr;
+    btn.innerHTML = data.ok
+      ? '<i class="bi bi-check-circle me-1"></i>Done — reloading…'
+      : '<i class="bi bi-exclamation-circle me-1"></i>Error — see log';
+    btn.disabled = false;
+    if (data.ok) setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    log.textContent = 'Request failed: ' + e;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Refresh & Analyse';
+    btn.disabled  = false;
+  }
+}
+
+async function showNews(code, name) {
+  document.getElementById('modal-title').textContent = name + ' · Recent News';
+  document.getElementById('modal-body').textContent  = 'Loading…';
+  const modal = new bootstrap.Modal(document.getElementById('news-modal'));
+  modal.show();
+
+  const news = await fetch(`/api/news/${code}`).then(r => r.json());
+  if (!news.length) {
+    document.getElementById('modal-body').textContent = 'No recent news found.';
+    return;
+  }
+  document.getElementById('modal-body').innerHTML = news.map(n => `
+    <div class="news-item mb-3 pb-3 border-bottom">
+      <a href="${n.link || '#'}" target="_blank" class="text-decoration-none text-dark fw-semibold">
+        ${n.title}
+      </a>
+      <div class="text-muted small mt-1">${n.source || ''} · ${(n.publish_time || '').slice(0,10)}</div>
+    </div>
+  `).join('');
+}
+</script>
+{% endblock %}

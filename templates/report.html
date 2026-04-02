@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Report {{ report.date }} — Personal Buffett{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Dashboard
+    </a>
+    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-2 text-gold"></i>{{ report.date }} Daily Report</h5>
+    <small class="text-muted ms-auto">{{ now }} CST</small>
+  </div>
+
+  <!-- Date navigation -->
+  {% if reports %}
+  <div class="d-flex gap-2 flex-wrap mb-4">
+    {% for r in reports %}
+    <a href="{{ url_for('report', date=r.date) }}"
+       class="btn btn-sm {% if r.date == report.date %}btn-gold{% else %}btn-outline-secondary{% endif %}">
+      {{ r.date }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Report body -->
+  <div class="report-body">
+    <div id="md-render"></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  document.getElementById('md-render').innerHTML = marked.parse({{ report.md | tojson }});
+</script>
+{% endblock %}
