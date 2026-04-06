@@ -1969,83 +1969,88 @@ footer small {
 }
 
 /* ══════════════════════════════════════════════════
-   US-30 · 我的选股页 — 目录式侧边栏
+   US-30 · 我的选股页 — 无侧边栏，顶部工具栏
    ══════════════════════════════════════════════════ */
 
+/* 兼容旧 layout class（保留不报错）*/
 .watchlist-layout {
-  display: flex;
-  align-items: flex-start;
-  min-height: calc(100vh - 60px);
-  max-width: 1400px;
+  display: block;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-/* ── 侧边栏容器 ── */
-.watchlist-sidebar {
-  width: 175px;
-  flex-shrink: 0;
-  border-right: 1px solid var(--rule-light);
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--paper);
-  z-index: 10;
+/* 主容器 */
+.watchlist-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px 80px;
 }
 
-/* ── 顶部：标题 + 操作图标 ── */
-.wl-sidebar-header {
+/* ── 顶部工具栏 ── */
+.wl-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 12px 10px;
-  border-bottom: 1px solid var(--rule-light);
-  flex-shrink: 0;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--rule);
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.wl-sidebar-title {
+.wl-toolbar-title {
   font-family: Georgia, serif;
-  font-size: 13px;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--ink);
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
+}
+
+.wl-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .wl-badge {
   background: var(--ink);
   color: var(--paper);
   border-radius: 8px;
-  padding: 0 5px;
-  font-size: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
   font-family: sans-serif;
   font-weight: 700;
 }
 
-.wl-sidebar-actions {
+/* ── 工具栏图标按钮 ── */
+.wl-icon-btn {
   display: flex;
   align-items: center;
-  gap: 2px;
-}
-
-/* ── 图标按钮 ── */
-.wl-icon-btn {
+  gap: 5px;
   background: none;
-  border: none;
-  padding: 4px 5px;
+  border: 1px solid var(--rule-light);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-family: sans-serif;
   cursor: pointer;
   color: var(--ink-muted);
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  transition: background .1s, color .1s;
+  transition: all .12s;
 }
 .wl-icon-btn:hover, .wl-icon-btn.active {
-  background: rgba(0,0,0,.07);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
+.wl-add-btn {
+  border-style: solid;
+  color: var(--ink);
+  border-color: var(--ink);
+  font-weight: 600;
+}
+.wl-add-btn:hover { opacity: .8; }
 
 /* ── Popover ── */
 .wl-popover-wrap { position: relative; }
@@ -2053,124 +2058,31 @@ footer small {
 .wl-popover {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
+  top: calc(100% + 6px);
+  left: 0;
   background: var(--paper);
   border: 1px solid var(--rule);
-  border-radius: 5px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.12);
-  padding: 10px 12px;
-  min-width: 140px;
-  z-index: 100;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.13);
+  padding: 10px 14px;
+  min-width: 150px;
+  z-index: 200;
 }
 .wl-popover.open { display: block; }
-
-.wl-pop-title {
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: var(--ink-muted);
-  font-weight: 700;
-  font-family: sans-serif;
-  margin-bottom: 8px;
-}
 
 .wl-pop-opt {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
+  gap: 8px;
+  font-size: 13px;
   color: var(--ink);
-  padding: 4px 0;
+  padding: 5px 0;
   cursor: pointer;
   font-family: sans-serif;
   user-select: none;
   white-space: nowrap;
 }
 .wl-pop-opt input { cursor: pointer; accent-color: var(--ink); }
-
-/* ── 目录列表 ── */
-.wl-directory {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px 0;
-}
-
-.wl-dir-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  cursor: pointer;
-  transition: background .1s;
-  border-left: 2px solid transparent;
-}
-.wl-dir-item:hover { background: rgba(0,0,0,.04); }
-.wl-dir-item.active {
-  background: rgba(0,0,0,.05);
-  border-left-color: var(--ink);
-}
-
-.wl-dir-grade {
-  font-size: 9.5px;
-  padding: 1px 4px;
-  flex-shrink: 0;
-}
-
-.wl-dir-name {
-  font-size: 12.5px;
-  font-family: sans-serif;
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wl-dir-conclusion {
-  font-size: 10px;
-  font-family: sans-serif;
-  flex-shrink: 0;
-  font-weight: 600;
-}
-.wl-dir-买入  { color: #2a7a3a; }
-.wl-dir-持有  { color: var(--ink-muted); }
-.wl-dir-减持  { color: #b06800; }
-.wl-dir-卖出  { color: #b03030; }
-
-/* ── 底部添加按钮 ── */
-.wl-sidebar-footer {
-  padding: 10px 12px;
-  border-top: 1px solid var(--rule-light);
-  flex-shrink: 0;
-}
-
-.wl-add-btn {
-  width: 100%;
-  background: none;
-  border: 1px dashed var(--rule);
-  border-radius: 4px;
-  padding: 6px;
-  font-size: 12px;
-  font-family: sans-serif;
-  color: var(--ink-muted);
-  cursor: pointer;
-  transition: all .12s;
-}
-.wl-add-btn:hover {
-  border-style: solid;
-  border-color: var(--ink);
-  color: var(--ink);
-  background: rgba(0,0,0,.03);
-}
-
-/* ── 主内容区 ── */
-.watchlist-main {
-  flex: 1;
-  min-width: 0;
-  padding: 20px 24px 80px;
-}
 
 /* ── 卡片 Quick Actions ── */
 .holding-card { position: relative; overflow: visible; }
@@ -2308,7 +2220,7 @@ footer small {
 #holding-grid[data-view="thumb"] .holding-top { flex-direction: column; align-items: flex-start; gap: 4px; }
 #holding-grid[data-view="thumb"] .stock-price { font-size: 13px; }
 
-/* ── 取消按钮（pending 卡片）── */
+/* ── pending 卡片 / 取消 ── */
 .holding-analysis-pending {
   display: flex;
   align-items: center;
@@ -2323,46 +2235,21 @@ footer small {
   padding: 2px 4px;
   border-radius: 2px;
   margin-left: auto;
-  transition: color .1s;
   line-height: 1;
 }
 .btn-cancel-job:hover { color: var(--red, #b03030); }
 
-/* ── 移动端：侧边栏变顶部横向目录 ── */
+/* ── 卡片底部操作行 ── */
+.holding-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── 移动端 ── */
 @media (max-width: 768px) {
-  .watchlist-layout { flex-direction: column; }
-
-  .watchlist-sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 2px solid var(--rule);
-    flex-direction: column;
-  }
-
-  .wl-directory {
-    display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 4px 0;
-    gap: 0;
-  }
-
-  .wl-dir-item {
-    flex-shrink: 0;
-    border-left: none;
-    border-bottom: 2px solid transparent;
-    padding: 6px 10px;
-  }
-  .wl-dir-item.active { border-bottom-color: var(--ink); background: rgba(0,0,0,.04); }
-
-  .wl-dir-conclusion { display: none; }
-
-  .wl-sidebar-footer { display: none; }
-
-  .watchlist-main { padding: 14px 16px 80px; }
+  .watchlist-wrap { padding: 14px 16px 80px; }
+  .wl-toolbar { gap: 8px; }
 }
 
 /* ── Report hint (homepage) ── */
