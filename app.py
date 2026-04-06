@@ -14,12 +14,51 @@ from flask_bcrypt import Bcrypt
 from authlib.integrations.flask_client import OAuth
 import db
 from scripts.config import CN_TZ, BUFFETT_PROFILES
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
+from nz_profiles import NZ_PROFILES, NZ_SECTORS
+from nz_fetch import (fetch_all_nz_quotes, fetch_nz_quote,
+                      fetch_nz_news, fetch_nz_market_news, fetch_nzx50,
+                      fetch_rbnz_news)
+from macro_fetch import fetch_fomc_news
+from pipeline import start_pipeline
+import stock_search as _stock_search  # 触发 A股列表后台预热
+
+# ── i18n ──────────────────────────────────────────────
+_I18N_DIR = os.path.join(os.path.dirname(__file__), "i18n")
+_i18n_cache = {}
+
+def _load_strings(locale):
+    if locale not in _i18n_cache:
+        path = os.path.join(_I18N_DIR, f"{locale}.json")
+        fallback = os.path.join(_I18N_DIR, "en.json")
+        with open(path if os.path.exists(path) else fallback) as f:
+            _i18n_cache[locale] = json.load(f)
+    return _i18n_cache[locale]
+
+MARKET_CURRENCY = {"cn": "¥", "nz": "NZ$", "hk": "HK$", "us": "$"}
+
+def _detect_market(code):
+    if code.endswith(".NZ"):   return "nz"
+    if code.endswith(".HK"):   return "hk"
+    if re.match(r"^\d{5}$", code): return "hk"
+    if re.match(r"^\d{6}$", code): return "cn"
+    return "us"
 
 app    = Flask(__name__)
 bcrypt = Bcrypt(app)
 oauth  = OAuth(app)
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "personal-buffett-2024-xK9m")
+
+@app.context_processor
+def inject_i18n():
+    locale = session.get("locale", "en")
+    return {
+        "t":               _load_strings(locale),
+        "locale":          locale,
+        "user_region":     session.get("region", "nz"),
+        "market_currency": MARKET_CURRENCY,
+    }
 
 # ── Google OAuth ──────────────────────────────────────
 # Fill in after getting credentials from Google Cloud Console
@@ -68,7 +107,7 @@ def google_callback():
         avatar   = userinfo.get("picture", "")
 
         db.init_db()
-        user = db.get_or_create_google_user(g_id, email, name, avatar)
+        user = db.get_or_create_oauth_user("google", g_id, email, name, avatar)
         session["user_id"]      = user["id"]
         session["display_name"] = user.get("display_name") or name
         session["avatar_url"]   = user.get("avatar_url") or avatar
@@ -143,6 +182,8 @@ def _set_session(user):
     session["user_id"]      = user["id"]
     session["display_name"] = user.get("display_name") or user.get("email","").split("@")[0]
     session["avatar_url"]   = user.get("avatar_url", "")
+    session["locale"]       = user.get("locale", "en")
+    session["region"]       = user.get("region", "nz")
 
 
 @app.route("/logout")
@@ -151,53 +192,297 @@ def logout():
     return redirect(url_for("login"))
 
 
+# ── Public Homepage ────────────────────────────────────
+@app.route("/home")
+def home():
+    nzx50   = fetch_nzx50()
+    quotes  = fetch_all_nz_quotes()
+    news    = fetch_nz_market_news()
+    # Top movers
+    movers  = sorted(quotes.values(), key=lambda x: abs(x.get("change", 0)), reverse=True)[:4]
+    # A-grade picks
+    picks   = [t for t, p in NZ_PROFILES.items() if p["grade"] == "A"]
+    pick_quotes = {t: quotes.get(t, {}) for t in picks}
+    return render_template("home.html",
+        nzx50=nzx50, movers=movers, news=news,
+        sectors=NZ_SECTORS, picks=picks,
+        pick_quotes=pick_quotes, profiles=NZ_PROFILES,
+        logged_in="user_id" in session,
+    )
+
+
+# ── Individual Stock Page ──────────────────────────────
+@app.route("/stock/<path:code>/fundamentals")
+@login_required
+def stock_fundamentals(code):
+    code  = code.upper()
+    stock = db.get_stock(code)
+    if not stock:
+        flash("Stock not found.", "warning")
+        return redirect(url_for("index"))
+
+    market  = stock.get("market", "us")
+    history = db.get_analysis_history(code, period="daily", limit=20)
+    ff_hist = db.get_fund_flow_history(code, days=60)
+    price   = db.get_latest_price(code)
+
+    return render_template("fundamentals.html",
+        stock=stock,
+        history=history,
+        ff_hist=ff_hist,
+        price=price,
+        currency=MARKET_CURRENCY.get(market, "$"),
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d"),
+    )
+
+
+@app.route("/stock/<path:code>")
+@login_required
+def stock_page(code):
+    code  = code.upper()
+    stock = db.get_stock(code)
+    if not stock:
+        flash("Stock not found. Add it to your watchlist first.", "warning")
+        return redirect(url_for("index"))
+
+    market   = stock.get("market", "us")
+    price    = db.get_latest_price(code)
+    news     = db.get_stock_news(code, days=7)
+    analysis = db.get_latest_analysis(code, period="daily")
+    history  = db.get_analysis_history(code, period="daily", limit=10)
+    prices   = db.get_price_history(code, days=30)
+    ff       = db.get_fund_flow(code) if market == "cn" else {}
+
+    # pending pipeline job?
+    with db.get_conn() as c:
+        j = c.execute("""
+            SELECT id, status FROM pipeline_jobs
+            WHERE code=? AND status IN ('pending','running')
+            ORDER BY id DESC LIMIT 1
+        """, (code,)).fetchone()
+        pending_job = dict(j) if j else None
+
+    in_wl = any(r.get("stock_code") == code
+                for r in db.get_user_watchlist(session["user_id"]))
+
+    return render_template("stock.html",
+        stock=stock, price=price, news=news,
+        analysis=analysis, history=history, prices=prices,
+        fund_flow=ff, pending_job=pending_job,
+        in_watchlist=in_wl,
+        currency=MARKET_CURRENCY.get(market, "$"),
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+    )
+
+
 # ── Dashboard ─────────────────────────────────────────
 @app.route("/")
 @login_required
 def index():
     db.init_db()
+    db._migrate()
+    region    = session.get("region", "nz")
     watchlist = db.get_user_watchlist(session["user_id"])
     quote_map = {q["code"]: q for q in db.get_quotes()}
     reports   = db.list_reports(limit=10)
     latest    = db.get_report()
 
+    # ── 自选股：从 DB 读价格 + 最新分析结果 ──────────────
     stocks = []
     for row in watchlist:
-        code    = row["code"]
-        q       = quote_map.get(code, {})
-        profile = BUFFETT_PROFILES.get(code, {})
-        ff      = db.get_fund_flow(code)
+        code   = row.get("stock_code") or row.get("code")
+        market = row.get("market") or _detect_market(code)
+        name   = row.get("name", code)
+
+        price_row = db.get_latest_price(code)
+        analysis  = db.get_latest_analysis(code, period="daily")
+        ff        = db.get_fund_flow(code) if market == "cn" else {}
+
+        # 检查是否有正在跑的 pipeline
+        pending_job = None
+        with db.get_conn() as c:
+            j = c.execute("""
+                SELECT id, status FROM pipeline_jobs
+                WHERE code=? AND status IN ('pending','running')
+                ORDER BY id DESC LIMIT 1
+            """, (code,)).fetchone()
+            if j:
+                pending_job = dict(j)
+
         stocks.append({
-            "code":        code,
-            "name":        row["name"],
-            "description": row["description"],
-            "price":       q.get("price"),
-            "change_pct":  q.get("change_pct"),
-            "amount":      q.get("amount"),
-            "grade":       profile.get("grade", "—"),
-            "grade_emoji": profile.get("grade_emoji", ""),
-            "moat":        profile.get("moat", "—"),
-            "main_net":    ff.get("main_net") if ff else None,
+            "code":       code,
+            "name":       name,
+            "market":     market,
+            "currency":   MARKET_CURRENCY.get(market, "$"),
+            "price":      price_row.get("price"),
+            "change_pct": price_row.get("change_pct"),
+            "grade":      analysis.get("grade", "—") if analysis else "—",
+            "conclusion": analysis.get("conclusion", "") if analysis else "",
+            "reasoning":  (analysis.get("reasoning","") or "")[:120] if analysis else "",
+            "has_letter": bool(analysis and analysis.get("letter_html")),
+            "main_net":   ff.get("main_net") if ff else None,
+            "pending_job":pending_job,
+            "analysis_date": analysis.get("analysis_date","") if analysis else "",
         })
 
+    local_stocks = [s for s in stocks if s["market"] == region]
+    intl_stocks  = [s for s in stocks if s["market"] != region]
+
+    # ── Market pulse（轻量，只拉 NZX50）─────────────────
+    market = {}
+    try:
+        market["nzx50"]      = fetch_nzx50()
+        market["nz_sectors"] = NZ_SECTORS
+    except Exception:
+        pass
+    # 宏观数据从 DB 最新快照读（不实时爬，刷新按钮才更新）
+    try:
+        snap = db.get_market_snapshot()
+        if snap:
+            mdata = snap.get("data", {})
+            for k in ("fear_greed", "cny_usd", "cn_indices", "commodities"):
+                if mdata.get(k):
+                    market[k] = mdata[k]
+    except Exception:
+        pass
+
+    # ── 本地新闻（NZ Herald + RBNZ）─────────────────────
+    local_news = []
+    try:
+        for n in fetch_nz_market_news()[:8]:
+            local_news.append({**n, "section": "Market"})
+    except Exception:
+        pass
+    try:
+        for n in fetch_rbnz_news(limit=3):
+            local_news.append({**n, "section": "RBNZ"})
+    except Exception:
+        pass
+
+    # ── 国际新闻（DB里的股票新闻 + FOMC）────────────────
+    intl_news = []
+    try:
+        cn_codes = [s["code"] for s in stocks if s["market"] in ("cn","hk")]
+        seen = set()
+        for code in cn_codes[:15]:
+            stock_info = db.get_stock(code)
+            sname = stock_info.get("name", code) if stock_info else code
+            for n in db.get_stock_news(code, days=3):
+                key = n.get("title","")[:40]
+                if key and key not in seen:
+                    seen.add(key)
+                    intl_news.append({
+                        "title":   n.get("title",""),
+                        "link":    n.get("link",""),
+                        "source":  n.get("source", sname),
+                        "time":    n.get("publish_time",""),
+                        "section": sname,
+                    })
+        intl_news.sort(key=lambda x: x.get("time",""), reverse=True)
+        intl_news = intl_news[:10]
+    except Exception:
+        pass
+    try:
+        for n in fetch_fomc_news(limit=2):
+            intl_news.append({**n, "section": "FOMC"})
+    except Exception:
+        pass
+    # Fear & Greed + CNY 插到国际新闻开头
+    fg  = market.get("fear_greed", {})
+    cny = market.get("cny_usd", {})
+    if fg and fg.get("score") is not None:
+        intl_news.insert(0, {
+            "title":   f"CNN Fear & Greed: {fg['score']} — {fg.get('label','')}. {fg.get('buffett','')}",
+            "link": "", "source": "CNN Markets", "time": "", "section": "Macro",
+        })
+    if cny and cny.get("rate"):
+        intl_news.insert(1, {
+            "title":   f"USD/CNY {cny['rate']} — {cny.get('direction','')}",
+            "link": "", "source": "汇率", "time": "", "section": "Macro",
+        })
+
+    weekly_report    = db.get_report(period="weekly")
+    monthly_report   = db.get_report(period="monthly")
+    quarterly_report = db.get_report(period="quarterly")
+
     return render_template("index.html",
-        stocks=stocks, reports=reports, latest_report=latest,
+        stocks=stocks,
+        local_stocks=local_stocks, intl_stocks=intl_stocks,
+        local_news=local_news,     intl_news=intl_news,
+        reports=reports,           latest_report=latest,
+        weekly_report=weekly_report,
+        monthly_report=monthly_report,
+        quarterly_report=quarterly_report,
+        market=market,
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
     )
 
 
-# ── Watchlist ─────────────────────────────────────────
+# ── Watchlist Page ────────────────────────────────────
+@app.route("/watchlist")
+@login_required
+def watchlist_page():
+    db.init_db()
+    watchlist = db.get_user_watchlist(session["user_id"])
+    stocks = []
+    for row in watchlist:
+        code   = row.get("stock_code") or row.get("code")
+        market = row.get("market") or _detect_market(code)
+        name   = row.get("name", code)
+        price_row = db.get_latest_price(code)
+        analysis  = db.get_latest_analysis(code, period="daily")
+        with db.get_conn() as c:
+            j = c.execute("""SELECT id,status FROM pipeline_jobs
+                WHERE code=? AND status IN ('pending','running')
+                ORDER BY id DESC LIMIT 1""", (code,)).fetchone()
+            pending_job = dict(j) if j else None
+        grade = analysis.get("grade", "") if analysis else ""
+        _GRADE_ORDER = {"A":1,"B+":2,"B":3,"B-":4,"C+":5,"C":6,"D":7}
+        # signals data for richer card
+        fund = db.get_fundamentals(code) if market == "cn" else {}
+        sigs = fund.get("signals", {}) if fund else {}
+        stocks.append({
+            "code": code, "name": name, "market": market,
+            "currency": MARKET_CURRENCY.get(market, "$"),
+            "price": price_row.get("price"),
+            "change_pct": price_row.get("change_pct"),
+            "grade": grade or "—",
+            "grade_sort": _GRADE_ORDER.get(grade, 99),
+            "conclusion": analysis.get("conclusion", "") if analysis else "",
+            "reasoning": (analysis.get("reasoning","") or "")[:120] if analysis else "",
+            "has_letter": bool(analysis and analysis.get("letter_html")),
+            "pending_job": pending_job,
+            "analysis_date": analysis.get("analysis_date","") if analysis else "",
+            "moat_direction": sigs.get("moat_direction", ""),
+            "roic_latest":    sigs.get("roic_latest"),
+            "fcf_quality":    sigs.get("fcf_quality_avg"),
+        })
+    return render_template("watchlist.html", stocks=stocks,
+                           now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"))
+
+
+# ── Watchlist Actions ──────────────────────────────────
 @app.route("/add", methods=["POST"])
 @login_required
 def add_stock():
-    code = request.form.get("code", "").strip()
-    name = request.form.get("name", "").strip()
-    desc = request.form.get("desc", "").strip()
+    code   = request.form.get("code", "").strip().upper()
+    name   = request.form.get("name", "").strip()
+    notes  = request.form.get("desc", "").strip()
+    market = request.form.get("market", "").strip()
     if not code or not name:
         flash("Stock code and name are required.", "warning")
-    else:
-        db.add_user_stock(session["user_id"], code, name, desc)
-        flash(f"{name} ({code}) added.", "success")
+        return redirect(url_for("index"))
+
+    if not market:
+        market = _detect_market(code)
+    if market == "nz" and not code.endswith(".NZ"):
+        code += ".NZ"
+
+    db.add_user_stock(session["user_id"], code, name, market, notes=notes)
+
+    # 触发后台分析 pipeline
+    job_id = start_pipeline(session["user_id"], code, market)
+    flash(f"{name} ({code}) 已添加，巴菲特正在分析中…", "success")
     return redirect(url_for("index"))
 
 
@@ -213,12 +498,32 @@ def remove_stock(code):
 @app.route("/report/<date>")
 @login_required
 def report(date=None):
-    row = db.get_report(date)
+    period = request.args.get("period", "daily")
+    row = db.get_report(date, period=period)
+    if not row:
+        # fallback: try daily
+        row = db.get_report(date, period="daily")
     if not row:
         flash("No report available yet.", "info")
         return redirect(url_for("index"))
+    all_reports = (db.list_reports(limit=10, period="daily") +
+                   db.list_reports(limit=5, period="weekly") +
+                   db.list_reports(limit=3, period="monthly") +
+                   db.list_reports(limit=2, period="quarterly"))
+    all_reports.sort(key=lambda r: r["date"], reverse=True)
     return render_template("report.html",
-        report=row, reports=db.list_reports(limit=30),
+        report=row, reports=all_reports,
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+    )
+
+
+# ── Accuracy / US-24 ─────────────────────────────────
+@app.route("/report/accuracy")
+@login_required
+def accuracy():
+    stats = db.get_accuracy_stats()
+    return render_template("accuracy.html",
+        stats=stats,
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
     )
 
@@ -238,11 +543,150 @@ def fetch():
         return jsonify({"ok": False, "stdout": "", "stderr": "Timed out (180s)"})
 
 
+# ── Run periodic digest on demand ─────────────────────
+@app.route("/run-digest", methods=["POST"])
+@login_required
+def run_digest():
+    mode = request.form.get("mode", "weekly")
+    if mode not in ("weekly", "monthly", "quarterly"):
+        flash("Invalid mode.", "warning")
+        return redirect(url_for("index"))
+    script = os.path.join(os.path.dirname(__file__), "scripts", "periodic_digest.py")
+    try:
+        result = subprocess.run([sys.executable, script, mode],
+            capture_output=True, text=True, timeout=300)
+        if result.returncode == 0:
+            flash(f"{mode.capitalize()} digest generated.", "success")
+        else:
+            flash(f"Error: {result.stderr[-200:]}", "danger")
+    except subprocess.TimeoutExpired:
+        flash("Timed out (5 min).", "danger")
+    return redirect(url_for("index"))
+
+
+# ── Language toggle (works logged-in or out) ──────────
+@app.route("/set-locale", methods=["POST"])
+def set_locale():
+    locale = request.form.get("locale", "en")
+    if locale not in ("en", "zh"):
+        locale = "en"
+    session["locale"] = locale
+    if session.get("user_id"):
+        region = session.get("region", "nz")
+        db.update_user_settings(session["user_id"], region, locale)
+    _i18n_cache.clear()
+    return redirect(request.referrer or url_for("index"))
+
+
+# ── Settings ──────────────────────────────────────────
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if request.method == "POST":
+        region = request.form.get("region", "nz")
+        locale = request.form.get("locale", "en")
+        db.update_user_settings(session["user_id"], region, locale)
+        session["region"] = region
+        session["locale"] = locale
+        _i18n_cache.clear()  # reload strings on next request
+        flash(_load_strings(locale).get("settings_saved", "Settings saved."), "success")
+        return redirect(url_for("settings"))
+    return render_template("settings.html")
+
+
 # ── API ───────────────────────────────────────────────
 @app.route("/api/news/<code>")
 @login_required
 def api_news(code):
     return jsonify(db.get_news(code, days=3))
+
+
+@app.route("/api/letter/<code>")
+@login_required
+def api_letter(code):
+    analysis = db.get_latest_analysis(code, period="daily")
+    if not analysis:
+        return jsonify({"letter": None})
+    return jsonify({
+        "letter":      analysis.get("letter_html", ""),
+        "grade":       analysis.get("grade"),
+        "conclusion":  analysis.get("conclusion"),
+        "date":        analysis.get("analysis_date"),
+    })
+
+
+@app.route("/api/analyze/<code>", methods=["POST"])
+@login_required
+def api_analyze(code):
+    stock = db.get_stock(code)
+    if not stock:
+        return jsonify({"error": "stock not found"}), 404
+    job_id = start_pipeline(session["user_id"], code, stock["market"])
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/job/<int:job_id>")
+@login_required
+def api_job(job_id):
+    """前端轮询 pipeline 状态"""
+    job = db.get_job(job_id)
+    if not job:
+        return jsonify({"status": "not_found"}), 404
+    analysis = {}
+    if job["status"] == "done" and job.get("code"):
+        result = db.get_latest_analysis(job["code"])
+        if result:
+            analysis = {
+                "grade":      result.get("grade"),
+                "conclusion": result.get("conclusion"),
+                "reasoning":  result.get("reasoning","")[:150],
+                "letter":     result.get("letter_html",""),
+            }
+    return jsonify({
+        "status":   job["status"],
+        "code":     job.get("code"),
+        "log":      job.get("log",""),
+        "error":    job.get("error"),
+        "analysis": analysis,
+    })
+
+
+@app.route("/api/analyze-batch", methods=["POST"])
+@login_required
+def api_analyze_batch():
+    """US-12：批量触发选中股票各自的 pipeline"""
+    codes = request.json.get("codes", [])
+    if not codes:
+        return jsonify({"error": "no codes"}), 400
+    job_ids = []
+    for code in codes[:20]:  # 最多20只防止滥用
+        stock = db.get_stock(code)
+        if not stock:
+            continue
+        job_id = start_pipeline(session["user_id"], code, stock["market"])
+        job_ids.append({"code": code, "job_id": job_id})
+    return jsonify({"job_ids": job_ids})
+
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+
+@app.route("/api/search")
+@login_required
+def api_search():
+    """股票模糊搜索：AKShare(A股) + yfinance(其他)"""
+    q = request.args.get("q", "").strip()
+    if len(q) < 1:
+        return jsonify([])
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
+    import stock_search as _ss
+    # 如果 A股数据还在后台加载中（且查询像 A股），告知前端
+    has_cn = any('\u4e00' <= c <= '\u9fff' for c in q) or q.isdigit()
+    if has_cn and _ss._CN_LOADING and _ss._CN_CACHE is None:
+        return jsonify({"loading": True})
+    return jsonify(_ss.search(q, limit=10))
 
 
 if __name__ == "__main__":

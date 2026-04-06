@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}预测准确率 · {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="max-width:960px;padding:2rem 1rem;">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{{ url_for('report') }}" class="btn btn-sm btn-outline-secondary">← 报告</a>
+    <h1 class="h4 mb-0" style="font-family:var(--font-serif)">预测准确率追踪</h1>
+    <span class="text-muted small ms-auto">{{ now }} · {{ stats.total_labelled }} 条已标注</span>
+  </div>
+
+  {% if stats.total_labelled == 0 %}
+  <div class="acc-empty">
+    <p>暂无已标注的预测记录。</p>
+    <p class="text-muted small">
+      分析记录生成后 7/30 天，由 <code>backfill_returns.py</code> 自动回填实际收益。
+    </p>
+  </div>
+  {% else %}
+
+  <!-- ── 准确率矩阵 ── -->
+  <section class="acc-section mb-4">
+    <h2 class="acc-section-title">按预测类型</h2>
+    <div class="acc-table-wrap">
+      <table class="acc-table">
+        <thead>
+          <tr>
+            <th>预测结论</th>
+            <th>时间窗口</th>
+            <th>总计</th>
+            <th>正确</th>
+            <th>错误</th>
+            <th>中性</th>
+            <th>准确率</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in stats.by_type %}
+          <tr>
+            <td>
+              <span class="conclusion-badge conclusion-{{ s.conclusion }}">{{ s.conclusion }}</span>
+            </td>
+            <td class="text-muted">{{ s.horizon }}</td>
+            <td>{{ s.total }}</td>
+            <td class="text-success">{{ s.correct }}</td>
+            <td class="text-danger">{{ s.wrong }}</td>
+            <td class="text-muted">{{ s.neutral }}</td>
+            <td>
+              {% if s.accuracy_pct is not none %}
+                <div class="acc-bar-wrap">
+                  <div class="acc-bar" style="width:{{ s.accuracy_pct }}%;"
+                       data-pct="{{ s.accuracy_pct }}"></div>
+                  <span class="acc-bar-label
+                    {% if s.accuracy_pct >= 60 %}acc-good
+                    {% elif s.accuracy_pct >= 45 %}acc-mid
+                    {% else %}acc-bad{% endif %}">
+                    {{ s.accuracy_pct }}%
+                  </span>
+                </div>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="acc-footnote">
+      判定规则：买入预测实际涨 &gt;3% = 正确；涨幅在 ±3% 以内 = 中性；实际跌 &gt;3% = 错误。减持/卖出方向相反。持有预测以 ±3% 以内为正确。
+    </p>
+  </section>
+
+  <!-- ── 错误案例 ── -->
+  {% if stats.recent_wrong %}
+  <section class="acc-section">
+    <h2 class="acc-section-title">近期错误预测（7日窗口）</h2>
+    <div class="acc-wrong-list">
+      {% for w in stats.recent_wrong %}
+      <div class="acc-wrong-row">
+        <div class="acc-wrong-meta">
+          <a href="{{ url_for('stock', code=w.code) }}" class="acc-wrong-name">{{ w.name }}（{{ w.code }}）</a>
+          <span class="acc-wrong-date">{{ w.date }}</span>
+        </div>
+        <div class="acc-wrong-body">
+          <span class="conclusion-badge conclusion-{{ w.conclusion }}">{{ w.conclusion }}</span>
+          <span class="acc-wrong-return text-danger">
+            实际 {{ '%+.1f'|format(w.return_7d) }}%
+          </span>
+          {% if w.reasoning %}
+          <span class="acc-wrong-reason text-muted">— {{ w.reasoning }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}

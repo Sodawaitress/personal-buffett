@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.settings_title }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 520px">
+
+  <h2 class="fw-bold mb-4"><i class="bi bi-gear me-2"></i>{{ t.settings_title }}</h2>
+
+  <form method="post" action="{{ url_for('settings') }}">
+    <div class="add-card mb-3">
+
+      <!-- Region -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">{{ t.settings_region }}</label>
+        <p class="text-muted small mb-2">{{ t.settings_region_help }}</p>
+        <select name="region" class="form-select">
+          <option value="nz" {% if user_region == 'nz' %}selected{% endif %}>{{ t.market_nz }}</option>
+          <option value="cn" {% if user_region == 'cn' %}selected{% endif %}>{{ t.market_cn }}</option>
+          <option value="hk" {% if user_region == 'hk' %}selected{% endif %}>{{ t.market_hk }}</option>
+          <option value="us" {% if user_region == 'us' %}selected{% endif %}>{{ t.market_us }}</option>
+        </select>
+      </div>
+
+      <!-- Language -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">{{ t.settings_language }}</label>
+        <div class="d-flex gap-2">
+          <label class="flex-fill">
+            <input type="radio" name="locale" value="en" class="d-none"
+                   {% if locale == 'en' %}checked{% endif %}
+                   onchange="this.form.submit()">
+            <span class="btn {% if locale == 'en' %}btn-gold{% else %}btn-outline-secondary{% endif %} w-100">
+              English
+            </span>
+          </label>
+          <label class="flex-fill">
+            <input type="radio" name="locale" value="zh" class="d-none"
+                   {% if locale == 'zh' %}checked{% endif %}
+                   onchange="this.form.submit()">
+            <span class="btn {% if locale == 'zh' %}btn-gold{% else %}btn-outline-secondary{% endif %} w-100">
+              中文
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-gold w-100">{{ t.btn_save }}</button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

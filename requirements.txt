@@ -4,5 +4,5 @@ Authlib==1.6.9
 requests==2.33.1
 feedparser==6.0.12
 akshare==1.18.49
+yfinance>=0.2.40
 python-dotenv==1.2.2
-google-genai

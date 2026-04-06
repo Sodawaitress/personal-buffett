@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} · 价值档案 — {{ t.brand }}{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  {# ── 面包屑 ── #}
+  <div class="stock-breadcrumb">
+    <a href="{{ url_for('index') }}">←</a>
+    <span class="bc-sep">/</span>
+    <a href="{{ url_for('watchlist_page') }}">← 全部选股</a>
+    <span class="bc-sep">/</span>
+    <a href="{{ url_for('stock_page', code=stock.code) }}">{{ stock.name }}</a>
+    <span class="bc-sep">/</span>
+    <span>价值档案</span>
+  </div>
+
+  {# ── 页头 ── #}
+  <div class="fund-page-header">
+    <div>
+      <h1 class="fund-title">{{ stock.name }}</h1>
+      <div class="fund-meta">
+        <span class="market-tag">{{ stock.market | upper }}</span>
+        <span class="stock-code-tag">{{ stock.code }}</span>
+        {% if stock.sector %}<span class="stock-sector">{{ stock.sector }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="fund-price-block">
+      {% if price and price.price %}
+      <div class="stock-price-big">{{ currency }}{{ "%.2f"|format(price.price) }}</div>
+      {% if price.change_pct is not none %}
+      <div class="stock-change-big {{ 'up' if price.change_pct >= 0 else 'down' }}">
+        {{ "%+.2f"|format(price.change_pct) }}%
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <hr class="section-rule" style="margin-bottom:32px">
+
+  {# ══════════════════════════════════════════════
+     一、评级时间线
+     ══════════════════════════════════════════════ #}
+  <section class="fund-section">
+    <div class="fund-section-label">巴菲特评级时间线</div>
+    <hr class="section-rule">
+
+    {% if history %}
+    <div class="rating-timeline">
+      {% for a in history %}
+      <div class="rating-entry">
+        <div class="rating-date">{{ a.analysis_date }}</div>
+        <div class="rating-dot-wrap">
+          <div class="rating-dot grade-dot-{{ a.grade | lower | replace('+','-plus') | replace('-','-minus') if a.grade else 'c' }}"></div>
+          {% if not loop.last %}<div class="rating-line"></div>{% endif %}
+        </div>
+        <div class="rating-body">
+          <span class="grade-tag grade-{{ a.grade | lower | replace('+','-plus') | replace('-','-minus') if a.grade else 'c' }}">
+            {{ a.grade }}
+          </span>
+          <span class="rating-conclusion">{{ a.conclusion }}</span>
+          {% if a.reasoning %}
+          <p class="rating-snippet">{{ a.reasoning[:120] }}…</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="fund-empty">数据积累中 — 分析后自动更新</div>
+    {% endif %}
+  </section>
+
+  {# ══════════════════════════════════════════════
+     二、财务指标（数据积累占位）
+     ══════════════════════════════════════════════ #}
+  <section class="fund-section">
+    <div class="fund-section-label">基本面指标</div>
+    <hr class="section-rule">
+
+    <div class="fund-metrics-grid">
+      <div class="fund-metric-card">
+        <div class="fund-metric-label">市盈率 PE</div>
+        <div class="fund-metric-value">
+          {% if price and price.pe_ratio %}{{ "%.1f"|format(price.pe_ratio) }}x
+          {% else %}<span class="fund-accumulating">积累中</span>{% endif %}
+        </div>
+      </div>
+      <div class="fund-metric-card">
+        <div class="fund-metric-label">市净率 PB</div>
+        <div class="fund-metric-value">
+          {% if price and price.pb_ratio %}{{ "%.2f"|format(price.pb_ratio) }}x
+          {% else %}<span class="fund-accumulating">积累中</span>{% endif %}
+        </div>
+      </div>
+      <div class="fund-metric-card">
+        <div class="fund-metric-label">ROE</div>
+        <div class="fund-metric-value"><span class="fund-accumulating">积累中</span></div>
+      </div>
+      <div class="fund-metric-card">
+        <div class="fund-metric-label">净利润率</div>
+        <div class="fund-metric-value"><span class="fund-accumulating">积累中</span></div>
+      </div>
+      <div class="fund-metric-card">
+        <div class="fund-metric-label">资产负债率</div>
+        <div class="fund-metric-value"><span class="fund-accumulating">积累中</span></div>
+      </div>
+      <div class="fund-metric-card">
+        <div class="fund-metric-label">自由现金流</div>
+        <div class="fund-metric-value"><span class="fund-accumulating">积累中</span></div>
+      </div>
+    </div>
+    <p class="fund-note">财务数据将在下次分析运行后自动补全</p>
+  </section>
+
+  {# ══════════════════════════════════════════════
+     三、主力资金历史（仅 A 股）
+     ══════════════════════════════════════════════ #}
+  {% if stock.market == 'cn' %}
+  <section class="fund-section">
+    <div class="fund-section-label">主力资金历史</div>
+    <hr class="section-rule">
+
+    {% if ff_hist %}
+    <div class="fund-chart-wrap">
+      <canvas id="ffChart" height="100"></canvas>
+    </div>
+    <script>
+    (function(){
+      const labels = {{ ff_hist | map(attribute='date') | list | tojson }};
+      const nets   = {{ ff_hist | map(attribute='main_net') | list | tojson }};
+      const colors = nets.map(v => v >= 0 ? 'rgba(45,122,45,0.75)' : 'rgba(192,57,43,0.75)');
+      const borderColors = nets.map(v => v >= 0 ? '#2d7a2d' : '#c0392b');
+      new Chart(document.getElementById('ffChart'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '主力净流入（亿）',
+            data: nets,
+            backgroundColor: colors,
+            borderColor: borderColors,
+            borderWidth: 1,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.raw;
+                  return (v >= 0 ? '流入 +' : '流出 ') + Math.abs(v).toFixed(2) + ' 亿';
+                }
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
+            y: {
+              ticks: { font: { size: 11 }, color: '#666',
+                callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '亿' },
+              grid: { color: '#e8e4de' }
+            }
+          }
+        }
+      });
+    })();
+    </script>
+
+    <div class="ff-summary">
+      {% set total = namespace(v=0) %}
+      {% for f in ff_hist %}{% set total.v = total.v + f.main_net %}{% endfor %}
+      近 {{ ff_hist|length }} 个交易日累计主力净
+      <strong class="{{ 'fund-in' if total.v >= 0 else 'fund-out' }}">
+        {{ '流入' if total.v >= 0 else '流出' }} {{ "%.2f"|format(total.v | abs) }} 亿
+      </strong>
+    </div>
+
+    {% else %}
+    <div class="fund-empty">暂无资金流数据 — 收盘后自动更新</div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {# ══════════════════════════════════════════════
+     四、护城河评估（占位，pipeline 未填结构字段）
+     ══════════════════════════════════════════════ #}
+  <section class="fund-section">
+    <div class="fund-section-label">护城河评估</div>
+    <hr class="section-rule">
+
+    {% set latest = history[0] if history else none %}
+    {% if latest and latest.moat %}
+    <p class="fund-text">{{ latest.moat }}</p>
+    {% else %}
+    <div class="fund-moat-grid">
+      {% for dim in [('品牌护城河','brand'),('成本优势','cost'),('网络效应','network'),('转换成本','switch')] %}
+      <div class="fund-moat-row">
+        <span class="fund-moat-label">{{ dim[0] }}</span>
+        <div class="fund-moat-bar-wrap">
+          <div class="fund-moat-bar fund-moat-empty"></div>
+        </div>
+        <span class="fund-accumulating" style="font-size:11px">积累中</span>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="fund-note">护城河评分将在分析完成后自动填充</p>
+    {% endif %}
+  </section>
+
+  {# 底部返回 #}
+  <div style="margin-top:40px;margin-bottom:32px">
+    <a href="{{ url_for('stock_page', code=stock.code) }}" class="btn-outline-ink btn-sm">
+      ← 返回 {{ stock.name }} 详情
+    </a>
+  </div>
+
+</div>
+{% endblock %}

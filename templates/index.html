@@ -1,144 +1,310 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard — Personal Buffett{% endblock %}
+{% block title %}{{ t.nav_dashboard }} — {{ t.brand }}{% endblock %}
+
+{# ── Pulse Bar：有持仓时隐藏 ── #}
+{% block pulse_bar %}
+{% if not stocks %}
+<div class="pulse-bar">
+  <div class="pulse-bar-inner">
+    {% if market.nzx50 and market.nzx50.price %}
+    {% set nzx = market.nzx50 %}
+    <div class="pulse-item">
+      <span class="pulse-label">NZX 50</span>
+      <span class="pulse-val">{{ "%.0f"|format(nzx.price) }}</span>
+      <span class="pulse-val {{ 'pulse-down' if nzx.change < 0 else 'pulse-up' }}">{{ "%+.2f"|format(nzx.change) }}%</span>
+    </div><div class="pulse-divider"></div>
+    {% endif %}
+    {% set fg = market.fear_greed %}
+    {% if fg %}
+    <div class="pulse-item">
+      <span class="pulse-label">Fear & Greed</span>
+      {% if fg.score <= 40 %}<span class="fg-pill fg-fear">{{ fg.score }} {{ fg.label }}</span>
+      {% elif fg.score >= 60 %}<span class="fg-pill fg-greed">{{ fg.score }} {{ fg.label }}</span>
+      {% else %}<span class="fg-pill fg-neutral">{{ fg.score }} {{ fg.label }}</span>{% endif %}
+    </div><div class="pulse-divider"></div>
+    {% endif %}
+    {% set cny = market.cny_usd %}
+    {% if cny %}
+    <div class="pulse-item">
+      <span class="pulse-label">USD/CNY</span>
+      <span class="pulse-val pulse-neutral">{{ cny.rate }}</span>
+    </div><div class="pulse-divider"></div>
+    {% endif %}
+    {% set idx = market.cn_indices %}
+    {% if idx %}
+      {% for key, name in [('sh','上证'), ('sz','深证'), ('cyb','创业板')] %}
+        {% set i = idx.get(key) %}{% if i %}
+        <div class="pulse-item">
+          <span class="pulse-label">{{ name }}</span>
+          <span class="pulse-val {{ 'pulse-down' if i.change < 0 else 'pulse-up' }}">{{ "%.2f"|format(i.price) }} {{ "%+.2f"|format(i.change) }}%</span>
+        </div><div class="pulse-divider"></div>
+        {% endif %}{% endfor %}
+    {% endif %}
+    {% set comm = market.commodities %}
+    {% if comm %}{% for key, v in comm.items() %}
+      <div class="pulse-item">
+        <span class="pulse-label">{{ v.name }}</span>
+        <span class="pulse-val {{ 'pulse-down' if v.change < 0 else 'pulse-up' }}">{{ "%.0f"|format(v.price) }}</span>
+      </div><div class="pulse-divider"></div>
+    {% endfor %}{% endif %}
+    <span class="pulse-label" style="margin-left:auto">{{ now }} CST</span>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="page-container">
 
-  <!-- Header row -->
-  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-    <div>
-      <h2 class="mb-0 fw-bold">My Watchlist</h2>
-      <small class="text-muted">{{ now }} CST</small>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-      <button id="btn-fetch" onclick="triggerFetch()" class="btn btn-gold">
-        <i class="bi bi-arrow-repeat me-1"></i>Refresh &amp; Analyse
-      </button>
+  {# ── 报头 ── #}
+  {% if stocks %}
+  {# 有持仓：简洁题头，日期 + 大按钮 #}
+  <div class="front-masthead front-masthead-compact">
+    <div class="front-compact-top">
+      <span class="front-compact-date">{{ now[:10] }}</span>
       {% if latest_report %}
-      <a href="{{ url_for('report') }}" class="btn btn-outline-gold">
-        <i class="bi bi-file-earmark-text me-1"></i>Latest Report ({{ latest_report.date }})
-      </a>
+      <a href="{{ url_for('report') }}" class="report-hint">今日简报已更新 · 查看 →</a>
       {% endif %}
     </div>
+    <button id="btn-fetch" onclick="triggerFetch()" class="btn-buffett-hero">
+      {{ t.btn_refresh }}
+    </button>
   </div>
+  {% else %}
+  {# 无持仓：完整报头 #}
+  <div class="front-masthead">
+    <div class="front-dateline">{{ now[:10] }}</div>
+    <h1 class="front-title">{{ t.brand }}</h1>
+    <div class="front-tagline">{{ t.tagline }}</div>
+    <div class="front-rule"></div>
+    <div class="front-actions">
+      <button id="btn-fetch" onclick="triggerFetch()" class="btn-ink">
+        <i class="bi bi-arrow-repeat"></i> {{ t.btn_refresh }}
+      </button>
+    </div>
+  </div>
+  {% endif %}
 
-  <!-- Fetch log -->
-  <div id="fetch-log" class="fetch-log mb-4" style="display:none"></div>
+  <div id="fetch-log" class="fetch-log" style="display:none"></div>
 
-  <!-- Stock cards -->
+  {# ══════════════════════════════════
+     持仓简报 / 空状态引导
+     ══════════════════════════════════ #}
   {% if stocks %}
-  <div class="row g-3 mb-4">
-    {% for s in stocks %}
-    <div class="col-12 col-sm-6 col-lg-4">
-      <div class="stock-card {% if s.change_pct is not none %}{% if s.change_pct >= 0 %}card-up{% else %}card-down{% endif %}{% endif %}">
+  <div class="watchlist-section">
+    <div class="watchlist-header">
+      <span class="section-label">我的持仓</span>
+    </div>
+    <hr class="section-rule">
 
-        <div class="d-flex justify-content-between align-items-start mb-2">
+    {# 添加股票面板（点 + 卡后展开，选中即提交）#}
+    <div id="add-panel" class="add-panel hidden">
+      <form id="add-form" method="post" action="{{ url_for('add_stock') }}">
+        <input type="hidden" name="code" id="add-code">
+        <input type="hidden" name="name" id="add-name">
+        <input type="hidden" name="market" id="add-market">
+        <div class="stock-search-wrap">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" id="search-q" class="search-input search-input-icon"
+                 placeholder="搜索股票代码或名称（如：茅台 / AAPL / 600519）"
+                 autocomplete="off">
+          <div id="search-dropdown" class="search-dropdown"></div>
+        </div>
+        <div style="text-align:right;margin-top:6px">
+          <button type="button" class="btn-text" onclick="closeAddPanel()">取消</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="holding-grid" id="holding-grid">
+      {% for s in stocks %}
+      <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }}"
+           data-code="{{ s.code }}"
+           {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
+
+        {# 顶部：名称 + 价格 #}
+        <div class="holding-top">
           <div>
-            <span class="grade-badge">{{ s.grade_emoji }} {{ s.grade }}</span>
-            <h6 class="mb-0 mt-1 fw-bold">{{ s.name }}</h6>
-            <small class="text-muted">{{ s.code }}</small>
+            <span class="holding-name">{{ s.name }}</span>
+            <span class="market-tag" style="margin-left:6px">{{ s.market | upper }}</span>
           </div>
-          <div class="text-end">
+          <div class="stock-price-block">
             {% if s.price %}
-            <div class="price">¥{{ "%.2f"|format(s.price) }}</div>
-            <div class="change-pct {% if s.change_pct >= 0 %}text-danger{% else %}text-success{% endif %}">
-              {{ "%+.2f"|format(s.change_pct) }}%
-            </div>
+            <div class="stock-price">{{ s.currency }}{{ "%.2f"|format(s.price) }}</div>
+            {% if s.change_pct is not none %}
+            <div class="stock-change {{ 'up' if s.change_pct >= 0 else 'down' }}">{{ "%+.2f"|format(s.change_pct) }}%</div>
+            {% endif %}
             {% else %}
-            <small class="text-muted">No quote</small>
+            <div class="stock-price" style="font-size:12px;color:var(--ink-faint)">{{ t.no_quote }}</div>
             {% endif %}
           </div>
         </div>
 
-        {% if s.amount %}
-        <div class="meta-row"><i class="bi bi-bar-chart-fill me-1"></i>Volume ¥{{ "%.1f"|format(s.amount) }}B</div>
+        {# 分析状态 #}
+        {% if s.pending_job %}
+        <div class="holding-analysis-pending">
+          <span class="spinner"></span>
+          <span class="pending-text">巴菲特分析中…</span>
+        </div>
+        {% elif s.conclusion %}
+        <div class="holding-analysis">
+          <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade else 'c' }}">
+            {{ s.grade }}
+          </span>
+          <span class="holding-conclusion">{{ s.conclusion }}</span>
+        </div>
+        <p class="holding-reasoning">{{ s.reasoning }}</p>
+        {% if s.has_letter %}
+        <button onclick="showLetter('{{ s.code }}', '{{ s.name }}')" class="btn-text">
+          读巴菲特信 →
+        </button>
         {% endif %}
-
-        {% if s.main_net is not none %}
-        <div class="meta-row {% if s.main_net >= 0 %}text-danger{% else %}text-success{% endif %}">
-          <i class="bi bi-{% if s.main_net >= 0 %}arrow-up{% else %}arrow-down{% endif %}-circle me-1"></i>
-          Institutional {% if s.main_net >= 0 %}inflow{% else %}outflow{% endif %}
-          ¥{{ "%.2f"|format(s.main_net|abs) }}B
+        {% else %}
+        <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">
+          暂无分析 — <button onclick="triggerAnalysis('{{ s.code }}')" class="btn-text">立即分析</button>
         </div>
         {% endif %}
 
-        <div class="moat-text mt-2">🏰 {{ s.moat[:50] }}{% if s.moat|length > 50 %}…{% endif %}</div>
-
-        <div class="d-flex gap-2 mt-3">
-          <button onclick="showNews('{{ s.code }}', '{{ s.name }}')"
-                  class="btn btn-outline-secondary btn-sm flex-fill">
-            <i class="bi bi-newspaper me-1"></i>News
-          </button>
+        {# 底部操作 #}
+        <div class="holding-actions">
+          <a href="{{ url_for('stock_page', code=s.code) }}" class="btn-text" style="font-size:11px">详情 →</a>
+          <span style="font-size:10px;color:var(--ink-faint)">
+            {% if s.analysis_date %}{{ s.analysis_date }}{% endif %}
+          </span>
           <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
-                onsubmit="return confirm('Remove {{ s.name }} from your watchlist?')"
-                class="flex-fill">
-            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
-              <i class="bi bi-trash me-1"></i>Remove
-            </button>
+                onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:inline">
+            <button type="submit" class="btn-text danger">移除</button>
           </form>
         </div>
+      </div>
+      {% endfor %}
 
+      {# + 卡：空白卡片，大加号，点击展开搜索面板 #}
+      <div class="holding-card add-card" onclick="openAddPanel()">
+        <i class="bi bi-plus-lg add-card-icon"></i>
       </div>
     </div>
-    {% endfor %}
+
   </div>
 
   {% else %}
-  <div class="empty-state text-center py-5 mb-4">
-    <i class="bi bi-graph-up display-4 text-muted"></i>
-    <h5 class="mt-3 text-muted">Your watchlist is empty</h5>
-    <p class="text-muted small">Add your first stock below to get started.</p>
-  </div>
-  {% endif %}
-
-  <!-- Add stock -->
-  <div class="add-card mb-4">
-    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-gold"></i>Add to Watchlist</h6>
-    <form method="post" action="{{ url_for('add_stock') }}">
-      <div class="row g-2">
-        <div class="col-12 col-sm-3">
-          <input type="text" name="code" class="form-control" placeholder="Code (e.g. 600031)" required maxlength="10">
+  {# 空状态 #}
+  <div class="empty-hero">
+    <div class="empty-hero-inner">
+      <div class="empty-hero-icon">📊</div>
+      <h2 class="empty-hero-title">还没有添加股票</h2>
+      <p class="empty-hero-sub">搜索你关注的公司，让巴菲特帮你分析。</p>
+      <button onclick="document.getElementById('add-panel-hero').classList.remove('hidden')"
+              class="btn-ink" style="font-size:14px;padding:10px 24px">
+        巴菲特怎么看
+      </button>
+      <div id="add-panel-hero" class="add-panel hidden" style="margin-top:20px">
+        <div class="stock-search-wrap">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" id="search-q-hero" class="search-input search-input-icon"
+                 placeholder="搜索股票代码或名称（如：茅台 / AAPL / 600519）"
+                 autocomplete="off">
+          <div id="search-dropdown-hero" class="search-dropdown"></div>
         </div>
-        <div class="col-12 col-sm-4">
-          <input type="text" name="name" class="form-control" placeholder="Name (e.g. SANY Heavy)" required maxlength="30">
-        </div>
-        <div class="col-12 col-sm-3">
-          <input type="text" name="desc" class="form-control" placeholder="Note (optional)" maxlength="60">
-        </div>
-        <div class="col-12 col-sm-2">
-          <button type="submit" class="btn btn-gold w-100">Add</button>
-        </div>
+        <form id="add-form-hero" method="post" action="{{ url_for('add_stock') }}" class="add-watchlist-form" style="margin-top:10px">
+          <input type="hidden" name="code" id="add-code-hero">
+          <input type="hidden" name="name" id="add-name-hero">
+          <input type="hidden" name="market" id="add-market-hero">
+          <div id="add-selected-hero" class="add-selected" style="display:none">
+            <span id="add-selected-label-hero"></span>
+            <button type="button" class="btn-text" onclick="clearSelectionHero()">×</button>
+          </div>
+          <button type="submit" id="btn-add-submit-hero" class="btn-ink" disabled>巴菲特怎么看</button>
+        </form>
       </div>
-    </form>
-  </div>
-
-  <!-- Historical reports -->
-  {% if reports %}
-  <div class="reports-card">
-    <h6 class="fw-bold mb-3"><i class="bi bi-archive me-2 text-gold"></i>Historical Reports</h6>
-    <div class="list-group list-group-flush">
-      {% for r in reports %}
-      <a href="{{ url_for('report', date=r.date) }}"
-         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>{{ r.date }}</span>
-        <small class="text-muted">{{ r.created_at[:16] }}</small>
-      </a>
-      {% endfor %}
     </div>
   </div>
   {% endif %}
 
+  {# ══════════════════════════════════
+     市场信息流 — NYT 双栏
+     ══════════════════════════════════ #}
+  <div class="news-section-wrap">
+  <div class="news-columns">
+
+    {# 本地栏 #}
+    <div class="news-col">
+      <div class="col-header">
+        <span class="section-label">{{ t.tab_local }}</span>
+        <span class="col-subhead">New Zealand · Markets &amp; Economy</span>
+      </div>
+      <hr class="section-rule">
+      {% if local_news %}
+        {% for n in local_news %}
+        <div class="news-article {{ 'news-article-rbnz' if n.section == 'RBNZ' else '' }}">
+          <div class="news-kicker">{{ n.section }}</div>
+          {% if n.link %}<a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
+          {% else %}<div class="news-headline-plain">{{ n.title }}</div>{% endif %}
+          <div class="news-byline">{{ n.source }}{% if n.time %} · {{ n.time[:10] }}{% endif %}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty-state">点「刷新」加载 NZ 新闻</p>
+      {% endif %}
+      {% if market.nz_sectors %}
+      <div style="margin-top:24px">
+        <span class="section-label" style="font-size:10px">NZX SECTORS</span>
+        <hr class="section-rule">
+        {% for sector in market.nz_sectors %}
+        <div class="sector-row">
+          <span>{{ sector.emoji }}</span><strong>{{ sector.name }}</strong>
+          <span class="sector-desc">{{ sector.desc }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# 国际栏 #}
+    <div class="news-col">
+      <div class="col-header">
+        <span class="section-label">{{ t.tab_intl }}</span>
+        <span class="col-subhead">A-Share · Macro · Global</span>
+      </div>
+      <hr class="section-rule">
+      {% if intl_news %}
+        {% for n in intl_news %}
+        <div class="news-article {{ 'news-article-macro' if n.section == 'Macro' else ('news-article-fomc' if n.section == 'FOMC' else '') }}">
+          <div class="news-kicker">{{ n.section }}</div>
+          {% if n.link %}<a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
+          {% else %}<div class="news-headline-plain">{{ n.title }}</div>{% endif %}
+          <div class="news-byline">{{ n.source }}{% if n.time %} · {{ n.time[:10] }}{% endif %}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty-state">添加 A股/美股 后显示相关新闻</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {# US-14: 历史报告移至 /report 页，首页只保留低调入口 #}
+  {% if reports %}
+  <div style="margin-top:20px;text-align:right">
+    <a href="{{ url_for('report') }}" style="font-size:11px;color:var(--ink-faint);font-family:-apple-system,sans-serif">
+      历史报告 →
+    </a>
+  </div>
+  {% endif %}
+
+  </div>{# /news-section-wrap #}
+
 </div>
 
-<!-- News modal (slide up) -->
-<div id="news-modal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-slideup modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header border-0 pb-0">
-        <h6 class="modal-title fw-bold" id="modal-title">News</h6>
+{# ── 巴菲特信 Modal ── #}
+<div id="letter-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content letter-modal-content">
+      <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
+        <h6 class="modal-title" id="letter-modal-title" style="font-family:Georgia,serif">巴菲特来信</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="modal-body">Loading…</div>
+      <div class="modal-body letter-body" id="letter-modal-body">{{ t.loading }}</div>
     </div>
   </div>
 </div>
@@ -146,50 +312,205 @@
 
 {% block scripts %}
 <script>
+// ── 刷新宏观数据 ──────────────────────────────────────
 async function triggerFetch() {
   const btn = document.getElementById('btn-fetch');
   const log = document.getElementById('fetch-log');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Fetching… (~60s)';
+  btn.textContent = '{{ t.loading }}';
   log.style.display = 'block';
-  log.textContent   = 'Connecting to data sources…\n';
-
+  log.textContent = 'Connecting…\n';
   try {
     const resp = await fetch('/fetch', { method: 'POST' });
     const data = await resp.json();
     log.textContent = data.stdout || '(no output)';
-    if (!data.ok) log.textContent += '\nError: ' + data.stderr;
-    btn.innerHTML = data.ok
-      ? '<i class="bi bi-check-circle me-1"></i>Done — reloading…'
-      : '<i class="bi bi-exclamation-circle me-1"></i>Error — see log';
+    if (!data.ok) log.textContent += '\n' + data.stderr;
+    btn.textContent = data.ok ? '{{ t.done_reloading }}' : '{{ t.error }}';
     btn.disabled = false;
     if (data.ok) setTimeout(() => location.reload(), 1500);
   } catch(e) {
-    log.textContent = 'Request failed: ' + e;
-    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Refresh & Analyse';
-    btn.disabled  = false;
+    log.textContent = 'Failed: ' + e;
+    btn.textContent = '{{ t.btn_refresh }}';
+    btn.disabled = false;
   }
 }
 
-async function showNews(code, name) {
-  document.getElementById('modal-title').textContent = name + ' · Recent News';
-  document.getElementById('modal-body').textContent  = 'Loading…';
-  const modal = new bootstrap.Modal(document.getElementById('news-modal'));
-  modal.show();
+// ── 手动触发单股分析 ──────────────────────────────────
+async function triggerAnalysis(code) {
+  const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
+  const data = await resp.json();
+  if (data.job_id) {
+    // 找到对应卡片，显示 pending 状态
+    const card = document.querySelector(`[data-code="${code}"]`) ||
+                 document.querySelector('.holding-card');
+    if (card) {
+      card.dataset.job = data.job_id;
+      card.classList.add('holding-pending');
+      pollJob(data.job_id, code);
+    }
+  }
+}
 
-  const news = await fetch(`/api/news/${code}`).then(r => r.json());
-  if (!news.length) {
-    document.getElementById('modal-body').textContent = 'No recent news found.';
+// ── Pipeline 状态轮询 ─────────────────────────────────
+function pollJob(jobId, code) {
+  const card = document.querySelector(`[data-job="${jobId}"]`);
+  if (!card) return;
+
+  const interval = setInterval(async () => {
+    try {
+      const resp = await fetch(`/api/job/${jobId}`);
+      const data = await resp.json();
+
+      if (data.status === 'done') {
+        clearInterval(interval);
+        location.reload();  // 重载显示分析结果
+      } else if (data.status === 'failed') {
+        clearInterval(interval);
+        const el = card.querySelector('.pending-text');
+        if (el) el.textContent = '分析失败，请重试';
+      }
+    } catch(e) {
+      clearInterval(interval);
+    }
+  }, 5000);
+}
+
+// ── 读巴菲特信 ────────────────────────────────────────
+async function showLetter(code, name) {
+  document.getElementById('letter-modal-title').textContent = `致你 — 关于 ${name}`;
+  document.getElementById('letter-modal-body').textContent  = '正在取信…';
+  new bootstrap.Modal(document.getElementById('letter-modal')).show();
+
+  const resp = await fetch(`/api/letter/${code}`);
+  const data = await resp.json();
+  if (data.letter) {
+    document.getElementById('letter-modal-body').innerHTML = `
+      <div class="letter-paper">
+        <div class="letter-location">奥马哈，内布拉斯加州 · ${data.date || ''}</div>
+        <div class="letter-salutation">致你，</div>
+        <div class="letter-body-text">${data.letter.replace(/\n/g,'<br>')}</div>
+        <div class="letter-sig">沃伦·巴菲特（私人版）<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
+        <div class="letter-grade">
+          <span class="grade-tag grade-${(data.grade||'c').toLowerCase().replace('+','-plus').replace('-','-minus')}">
+            ${data.grade || '—'}
+          </span>
+          <span style="margin-left:8px;font-size:13px">${data.conclusion || ''}</span>
+        </div>
+        <div class="letter-footer">数据截至 ${data.date || ''} · 本分析不构成投资建议</div>
+      </div>
+    `;
+  } else {
+    document.getElementById('letter-modal-body').textContent = '暂无分析信件';
+  }
+}
+
+// ── 页面加载时启动所有 pending job 的轮询 ─────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-job]').forEach(card => {
+    const jobId = card.dataset.job;
+    const code  = card.dataset.code;
+    if (jobId && code) pollJob(jobId, code);
+  });
+
+  // 绑定搜索框（+ 卡 和 空状态 hero）
+  initSearch('search-q',    'search-dropdown',    'add-code',    'add-name',    'add-market',    'add-selected',    'add-selected-label',    'btn-add-submit');
+  initSearch('search-q-hero','search-dropdown-hero','add-code-hero','add-name-hero','add-market-hero','add-selected-hero','add-selected-label-hero','btn-add-submit-hero');
+});
+
+// ── 股票搜索（两个表单共用）─────────────────────────────
+function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, labelId, btnId) {
+  const inp   = document.getElementById(inputId);
+  const drop  = document.getElementById(dropId);
+  if (!inp || !drop) return;
+
+  let timer;
+  inp.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp), 350);
+  });
+
+  // 点外部关闭
+  document.addEventListener('click', e => {
+    if (!inp.contains(e.target) && !drop.contains(e.target))
+      drop.classList.remove('open');
+  });
+}
+
+async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp) {
+  // 立刻给用户反馈
+  drop.innerHTML = '<div class="search-loading"><span class="spinner-sm"></span> 搜索中…</div>';
+  drop.classList.add('open');
+  try {
+    const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
+    const data = await resp.json();
+    // API 可能返回 {loading: true} 表示 A股数据还在加载
+    if (data.loading) {
+      drop.innerHTML = '<div class="search-empty"><i class="bi bi-hourglass-split"></i> A股数据加载中，请稍候再试…</div>';
+      drop.classList.add('open');
+      return;
+    }
+    const items = Array.isArray(data) ? data : [];
+    if (!items.length) { drop.innerHTML='<div class="search-empty">没有找到结果</div>'; drop.classList.add('open'); return; }
+    drop.innerHTML = items.map(r => `
+      <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
+        <span class="search-item-code">${r.code}</span>
+        <span class="search-item-name">${r.name}</span>
+        <span class="market-tag">${r.market.toUpperCase()}</span>
+      </div>
+    `).join('');
+    drop.classList.add('open');
+  } catch(e) {
+    drop.innerHTML = '<div class="search-empty">搜索失败，请重试</div>';
+    drop.classList.add('open');
+  }
+}
+
+function selectStock(code, name, market, codeId, nameId, marketId, selectedId, labelId, btnId, inputId) {
+  document.getElementById(codeId).value   = code;
+  document.getElementById(nameId).value   = name;
+  document.getElementById(marketId).value = market;
+  // 关闭下拉
+  const dropId = inputId === 'search-q' ? 'search-dropdown' : 'search-dropdown-hero';
+  const drop = document.getElementById(dropId);
+  if (drop) drop.classList.remove('open');
+  // 主添加表单：直接提交
+  if (inputId === 'search-q') {
+    document.getElementById('add-form').submit();
     return;
   }
-  document.getElementById('modal-body').innerHTML = news.map(n => `
-    <div class="news-item mb-3 pb-3 border-bottom">
-      <a href="${n.link || '#'}" target="_blank" class="text-decoration-none text-dark fw-semibold">
-        ${n.title}
-      </a>
-      <div class="text-muted small mt-1">${n.source || ''} · ${(n.publish_time || '').slice(0,10)}</div>
-    </div>
-  `).join('');
+  // hero 表单：保留旧逻辑（显示选中状态 + 手动提交按钮）
+  document.getElementById(inputId).value = '';
+  document.getElementById(labelId).textContent = name + ' (' + code + ') · ' + market.toUpperCase();
+  document.getElementById(selectedId).style.display = 'flex';
+  document.getElementById(btnId).disabled = false;
+}
+
+function openAddPanel() {
+  const panel = document.getElementById('add-panel');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('search-q').focus();
+}
+function closeAddPanel() {
+  document.getElementById('add-panel').classList.add('hidden');
+  clearSelection();
+}
+
+function clearSelection() {
+  document.getElementById('add-code').value = '';
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-market').value = '';
+  document.getElementById('add-selected').style.display = 'none';
+  document.getElementById('btn-add-submit').disabled = true;
+}
+function clearSelectionHero() {
+  document.getElementById('add-code-hero').value = '';
+  document.getElementById('add-name-hero').value = '';
+  document.getElementById('add-market-hero').value = '';
+  document.getElementById('add-selected-hero').style.display = 'none';
+  document.getElementById('btn-add-submit-hero').disabled = true;
 }
 </script>
 {% endblock %}

@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% block title %}我的选股 — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="watchlist-layout">
+
+  {# ── 左侧边栏 ── #}
+  <aside class="watchlist-sidebar" id="watchlist-sidebar">
+
+    <div class="wl-section wl-section-title">
+      <span class="wl-title">我的选股</span>
+      <span class="wl-badge">{{ stocks | length }}</span>
+    </div>
+
+    <div class="wl-section">
+      <div class="wl-label">排序</div>
+      <label class="wl-option"><input type="radio" name="wl-sort" value="default" checked> 默认顺序</label>
+      <label class="wl-option"><input type="radio" name="wl-sort" value="grade"> 评级（高→低）</label>
+      <label class="wl-option"><input type="radio" name="wl-sort" value="change"> 涨跌幅</label>
+      <label class="wl-option"><input type="radio" name="wl-sort" value="date"> 最近分析</label>
+    </div>
+
+    <div class="wl-section">
+      <div class="wl-label">筛选</div>
+      <label class="wl-option"><input type="checkbox" id="filter-stale"> 待更新（&gt;7天）</label>
+      <label class="wl-option"><input type="checkbox" id="filter-good"> 评级 B+ 以上</label>
+    </div>
+
+    <div class="wl-section">
+      <div class="wl-label">批量操作</div>
+      <button class="wl-action-btn" onclick="selectAll()">全选</button>
+      <button class="wl-action-btn" onclick="selectNone()">取消选择</button>
+      <div id="batch-selected-info" style="display:none;font-size:11px;color:var(--ink-muted);margin:6px 0 4px">
+        已选 <span id="batch-count">0</span> 只
+      </div>
+      <button class="wl-action-btn primary" id="btn-batch-analyze" onclick="batchAnalyze()" disabled>各自重新分析</button>
+      <button class="wl-action-btn" id="btn-batch-portfolio" onclick="batchPortfolio()" disabled>组合分析</button>
+    </div>
+
+    <div class="wl-section wl-section-add">
+      <button class="btn-ink" style="width:100%;justify-content:center"
+              onclick="toggleAddPanel()">＋ 添加股票</button>
+    </div>
+
+  </aside>
+
+  {# ── 主内容区 ── #}
+  <main class="watchlist-main">
+
+    {# 顶部：视图切换 #}
+    <div class="wl-main-header">
+      <div class="wl-view-btns">
+        <button class="wl-view-btn active" id="btn-card-view" onclick="setView('card')" title="卡片模式">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <rect x="0" y="0" width="6" height="6"/><rect x="8" y="0" width="6" height="6"/>
+            <rect x="0" y="8" width="6" height="6"/><rect x="8" y="8" width="6" height="6"/>
+          </svg>
+          卡片
+        </button>
+        <button class="wl-view-btn" id="btn-thumb-view" onclick="setView('thumb')" title="缩略图模式">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <rect x="0" y="0" width="3" height="3"/><rect x="4" y="0" width="3" height="3"/><rect x="8" y="0" width="3" height="3"/><rect x="12" y="0" width="2" height="3"/>
+            <rect x="0" y="4" width="3" height="3"/><rect x="4" y="4" width="3" height="3"/><rect x="8" y="4" width="3" height="3"/><rect x="12" y="4" width="2" height="3"/>
+            <rect x="0" y="8" width="3" height="3"/><rect x="4" y="8" width="3" height="3"/><rect x="8" y="8" width="3" height="3"/><rect x="12" y="8" width="2" height="3"/>
+          </svg>
+          缩略图
+        </button>
+      </div>
+      <span class="wl-main-date">{{ now[:10] }}</span>
+    </div>
+
+    {# 添加股票面板 #}
+    <div id="add-panel" class="add-panel hidden" style="margin-bottom:20px">
+      <div class="stock-search-wrap">
+        <input type="text" id="search-q" class="search-input"
+               placeholder="搜索股票代码或名称（如：茅台 / AAPL / ATM.NZ）"
+               autocomplete="off">
+        <div id="search-dropdown" class="search-dropdown"></div>
+      </div>
+      <form id="add-form" method="post" action="{{ url_for('add_stock') }}" class="add-watchlist-form" style="margin-top:10px">
+        <input type="hidden" name="code" id="add-code">
+        <input type="hidden" name="name" id="add-name">
+        <input type="hidden" name="market" id="add-market">
+        <div id="add-selected" class="add-selected" style="display:none">
+          <span id="add-selected-label"></span>
+          <button type="button" class="btn-text" onclick="clearSelection()">×</button>
+        </div>
+        <input type="text" name="desc" placeholder="{{ t.add_note_placeholder }}" maxlength="60">
+        <button type="submit" id="btn-add-submit" class="btn-ink" disabled>{{ t.btn_add }}</button>
+      </form>
+    </div>
+
+    {% if stocks %}
+    {# 股票卡片网格 #}
+    <div class="holding-grid" id="holding-grid" data-view="card">
+      {% for s in stocks %}
+      <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }}"
+           data-code="{{ s.code }}"
+           data-grade-sort="{{ s.grade_sort }}"
+           data-change="{{ s.change_pct or 0 }}"
+           data-date="{{ s.analysis_date or '' }}"
+           {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
+
+        {# checkbox（始终在 DOM，通过 CSS 控制可见性）#}
+        <label class="holding-checkbox">
+          <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
+        </label>
+
+        {# 卡片主体 #}
+        <div class="card-main">
+          <div class="holding-top">
+            <div class="holding-name-wrap">
+              <span class="holding-name">{{ s.name }}</span>
+              <span class="market-tag" style="margin-left:5px">{{ s.market | upper }}</span>
+            </div>
+            <div class="stock-price-block">
+              {% if s.price %}
+              <span class="stock-price">{{ s.currency }}{{ "%.2f"|format(s.price) }}</span>
+              {% if s.change_pct is not none %}
+              <span class="stock-change {{ 'up' if s.change_pct >= 0 else 'down' }}">{{ "%+.2f"|format(s.change_pct) }}%</span>
+              {% endif %}
+              {% else %}
+              <span class="stock-price" style="font-size:12px;color:var(--ink-faint)">{{ t.no_quote }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if s.pending_job %}
+          <div class="holding-analysis-pending">
+            <span class="spinner"></span>
+            <span class="pending-text">巴菲特分析中…</span>
+          </div>
+          {% elif s.conclusion %}
+          <div class="holding-analysis">
+            <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','') else 'c' }}">
+              {{ s.grade }}
+            </span>
+            <span class="holding-conclusion">{{ s.conclusion }}</span>
+          </div>
+          <p class="holding-reasoning">{{ s.reasoning }}</p>
+          {% else %}
+          <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">尚无分析</div>
+          {% endif %}
+
+          {# 信号行（A股专属，有数据才显示）#}
+          {% if s.moat_direction or s.roic_latest %}
+          <div class="holding-signals">
+            {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
+            {% if s.roic_latest %}<span class="signal-chip">ROIC {{ "%.1f"|format(s.roic_latest) }}%</span>{% endif %}
+          </div>
+          {% endif %}
+
+          <div class="holding-meta">
+            {% if s.analysis_date %}
+            <span class="holding-date">{{ s.analysis_date }}</span>
+            {% endif %}
+            {% if s.has_letter %}
+            <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
+            {% endif %}
+          </div>
+        </div>
+
+        {# 快捷操作（hover 显示）#}
+        <div class="card-quick-actions">
+          <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="qa-btn">↻</button>
+          <a href="{{ url_for('stock_page', code=s.code) }}" title="详情" class="qa-btn">→</a>
+          <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
+                onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
+            <button type="submit" title="移除" class="qa-btn qa-danger">×</button>
+          </form>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-hero">
+      <div class="empty-hero-inner">
+        <div class="empty-hero-icon">📊</div>
+        <h2 class="empty-hero-title">还没有添加股票</h2>
+        <p class="empty-hero-sub">搜索你关注的公司，让巴菲特帮你分析。</p>
+        <button onclick="toggleAddPanel()" class="btn-ink">巴菲特怎么看</button>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+</div>
+
+{# 移动端侧边栏触发按钮 #}
+<button class="wl-sidebar-toggle" id="wl-mob-toggle" onclick="toggleMobileSidebar()" title="筛选排序">☰</button>
+
+{# 巴菲特信 Modal #}
+<div id="letter-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content letter-modal-content">
+      <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
+        <h6 class="modal-title" id="letter-modal-title" style="font-family:Georgia,serif">巴菲特来信</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body letter-body" id="letter-modal-body">{{ t.loading }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── 视图切换 ──────────────────────────────────────────
+function setView(v) {
+  const grid = document.getElementById('holding-grid');
+  if (!grid) return;
+  grid.dataset.view = v;
+  document.getElementById('btn-card-view').classList.toggle('active', v === 'card');
+  document.getElementById('btn-thumb-view').classList.toggle('active', v === 'thumb');
+  localStorage.setItem('wl-view', v);
+}
+
+// ── 排序 ─────────────────────────────────────────────
+document.querySelectorAll('input[name="wl-sort"]').forEach(r => {
+  r.addEventListener('change', () => { sortCards(r.value); localStorage.setItem('wl-sort', r.value); });
+});
+
+function sortCards(by) {
+  const grid = document.getElementById('holding-grid');
+  if (!grid) return;
+  const cards = [...grid.querySelectorAll('.holding-card')];
+  cards.sort((a, b) => {
+    if (by === 'grade')  return (+(a.dataset.gradeSort||99)) - (+(b.dataset.gradeSort||99));
+    if (by === 'change') return (+(b.dataset.change||0))    - (+(a.dataset.change||0));
+    if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
+    return 0; // default: keep order
+  });
+  cards.forEach(c => grid.appendChild(c));
+}
+
+// ── 筛选 ─────────────────────────────────────────────
+function applyFilters() {
+  const stale = document.getElementById('filter-stale')?.checked;
+  const good  = document.getElementById('filter-good')?.checked;
+  const today = new Date();
+  document.querySelectorAll('.holding-card').forEach(card => {
+    let show = true;
+    if (stale) {
+      const d = card.dataset.date;
+      if (d) {
+        const days = (today - new Date(d)) / 86400000;
+        if (days <= 7) show = false;
+      }
+    }
+    if (good) {
+      const gs = +(card.dataset.gradeSort || 99);
+      if (gs > 2) show = false; // 只显示 A(1) 和 B+(2)
+    }
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+document.getElementById('filter-stale')?.addEventListener('change', applyFilters);
+document.getElementById('filter-good')?.addEventListener('change', applyFilters);
+
+// ── 批量操作 ─────────────────────────────────────────
+function selectAll() {
+  document.querySelectorAll('.stock-checkbox').forEach(cb => {
+    const card = cb.closest('.holding-card');
+    if (!card || card.style.display === 'none') return;
+    cb.checked = true;
+    card.classList.add('card-selected');
+  });
+  _updateBatch();
+}
+
+function selectNone() {
+  document.querySelectorAll('.stock-checkbox').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.holding-card')?.classList.remove('card-selected');
+  });
+  _updateBatch();
+}
+
+function onCheckChange() {
+  document.querySelectorAll('.holding-card').forEach(card => {
+    const cb = card.querySelector('.stock-checkbox');
+    card.classList.toggle('card-selected', !!(cb && cb.checked));
+  });
+  _updateBatch();
+}
+
+function _updateBatch() {
+  const n = document.querySelectorAll('.stock-checkbox:checked').length;
+  const info = document.getElementById('batch-selected-info');
+  const cnt  = document.getElementById('batch-count');
+  if (cnt) cnt.textContent = n;
+  if (info) info.style.display = n > 0 ? 'block' : 'none';
+  document.getElementById('btn-batch-analyze').disabled   = n === 0;
+  document.getElementById('btn-batch-portfolio').disabled = n === 0;
+}
+
+async function batchAnalyze() {
+  const codes = [...document.querySelectorAll('.stock-checkbox:checked')].map(cb => cb.value);
+  if (!codes.length) return;
+  const btn = document.getElementById('btn-batch-analyze');
+  btn.disabled = true; btn.textContent = '启动中…';
+  const resp = await fetch('/api/analyze-batch', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({codes})
+  });
+  const data = await resp.json();
+  if (data.job_ids) {
+    data.job_ids.forEach(({code, job_id}) => {
+      const card = document.querySelector(`[data-code="${code}"]`);
+      if (card) { card.dataset.job = job_id; card.classList.add('holding-pending'); pollJob(job_id, code); }
+    });
+    selectNone();
+    btn.textContent = '各自重新分析';
+  }
+}
+
+function batchPortfolio() {
+  const codes = [...document.querySelectorAll('.stock-checkbox:checked')].map(cb => cb.value);
+  if (codes.length) window.location.href = '/portfolio?codes=' + codes.join(',');
+}
+
+// ── 单股操作 ─────────────────────────────────────────
+async function triggerAnalysis(code) {
+  const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
+  const data = await resp.json();
+  if (data.job_id) {
+    const card = document.querySelector(`[data-code="${code}"]`);
+    if (card) { card.dataset.job = data.job_id; card.classList.add('holding-pending'); pollJob(data.job_id, code); }
+  }
+}
+
+function pollJob(jobId, code) {
+  const interval = setInterval(async () => {
+    try {
+      const data = await (await fetch(`/api/job/${jobId}`)).json();
+      if (data.status === 'done') { clearInterval(interval); location.reload(); }
+      else if (data.status === 'failed') {
+        clearInterval(interval);
+        const el = document.querySelector(`[data-job="${jobId}"] .pending-text`);
+        if (el) el.textContent = '分析失败，请重试';
+      }
+    } catch(e) { clearInterval(interval); }
+  }, 5000);
+}
+
+// ── 添加面板 ─────────────────────────────────────────
+function toggleAddPanel() {
+  document.getElementById('add-panel').classList.toggle('hidden');
+}
+
+// ── 巴菲特信 Modal ────────────────────────────────────
+async function showLetter(code, name) {
+  document.getElementById('letter-modal-title').textContent = `致你 — 关于 ${name}`;
+  document.getElementById('letter-modal-body').textContent  = '正在取信…';
+  new bootstrap.Modal(document.getElementById('letter-modal')).show();
+  const data = await (await fetch(`/api/letter/${code}`)).json();
+  if (data.letter) {
+    document.getElementById('letter-modal-body').innerHTML = `
+      <div class="letter-paper">
+        <div class="letter-location">奥马哈，内布拉斯加州 · ${data.date || ''}</div>
+        <div class="letter-salutation">致你，</div>
+        <div class="letter-body-text">${data.letter.replace(/\n/g,'<br>')}</div>
+        <div class="letter-sig">沃伦·巴菲特（私人版）<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
+        <div class="letter-grade">
+          <span class="grade-tag grade-${(data.grade||'c').toLowerCase().replace('+','-plus').replace('-','-minus')}">${data.grade||'—'}</span>
+          <span style="margin-left:8px;font-size:13px">${data.conclusion||''}</span>
+        </div>
+        <div class="letter-footer">数据截至 ${data.date||''} · 本分析不构成投资建议</div>
+      </div>`;
+  } else {
+    document.getElementById('letter-modal-body').textContent = '暂无分析信件';
+  }
+}
+
+// ── 移动端侧边栏 ──────────────────────────────────────
+function toggleMobileSidebar() {
+  document.getElementById('watchlist-sidebar').classList.toggle('mobile-open');
+}
+
+// ── 搜索框 ────────────────────────────────────────────
+function clearSelection() {
+  ['add-code','add-name','add-market'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('add-selected').style.display = 'none';
+  document.getElementById('btn-add-submit').disabled = true;
+}
+
+// ── 初始化：恢复偏好 ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // 恢复视图
+  const savedView = localStorage.getItem('wl-view') || 'card';
+  setView(savedView);
+
+  // 恢复排序
+  const savedSort = localStorage.getItem('wl-sort') || 'default';
+  const r = document.querySelector(`input[name="wl-sort"][value="${savedSort}"]`);
+  if (r) { r.checked = true; sortCards(savedSort); }
+
+  // 启动 pending 轮询
+  document.querySelectorAll('[data-job]').forEach(card => {
+    if (card.dataset.job && card.dataset.code) pollJob(card.dataset.job, card.dataset.code);
+  });
+
+  // 搜索框
+  initSearch('search-q','search-dropdown','add-code','add-name','add-market','add-selected','add-selected-label','btn-add-submit');
+});
+
+function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, labelId, btnId) {
+  const inp = document.getElementById(inputId);
+  const drop = document.getElementById(dropId);
+  if (!inp || !drop) return;
+  let timer;
+  inp.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp), 350);
+  });
+  document.addEventListener('click', e => {
+    if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('open');
+  });
+}
+
+async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp) {
+  try {
+    const items = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
+    if (!Array.isArray(items) || !items.length) {
+      drop.innerHTML='<div class="search-empty">没有找到结果</div>'; drop.classList.add('open'); return;
+    }
+    drop.innerHTML = items.map(r => `
+      <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
+        <span class="search-item-code">${r.code}</span>
+        <span class="search-item-name">${r.name}</span>
+        <span class="market-tag">${r.market.toUpperCase()}</span>
+      </div>`).join('');
+    drop.classList.add('open');
+  } catch(e) { drop.innerHTML='<div class="search-empty">搜索失败</div>'; drop.classList.add('open'); }
+}
+
+function selectStock(code, name, market, codeId, nameId, marketId, selectedId, labelId, btnId, inputId) {
+  document.getElementById(codeId).value   = code;
+  document.getElementById(nameId).value   = name;
+  document.getElementById(marketId).value = market;
+  document.getElementById(inputId).value  = '';
+  document.getElementById(labelId).textContent = `${name} (${code}) · ${market.toUpperCase()}`;
+  document.getElementById(selectedId).style.display = 'flex';
+  document.getElementById(btnId).disabled = false;
+  document.getElementById('search-dropdown').classList.remove('open');
+}
+</script>
+{% endblock %}

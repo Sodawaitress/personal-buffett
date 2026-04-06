@@ -18,6 +18,9 @@ from config import (
     SERVERCHAN_KEY
 )
 from buffett_analyst import analyze_all
+from macro_fetch import fetch_all_macro
+from nz_fetch import fetch_rbnz_news, fetch_nzx_announcements, fetch_nzx_earnings_calendar
+from stock_fetch import fetch_cn_earnings_calendar
 
 
 # ── 运行抓取 ──────────────────────────────────────────
@@ -41,6 +44,11 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
     lhb       = data.get("lhb", [])
     sector    = data.get("sector_news", [])
     intl      = data.get("intl_news", {})
+    macro     = data.get("macro", {})
+    rbnz      = data.get("rbnz", [])
+    nzx_ann   = data.get("nzx_announcements", {})
+    nzx_earn  = data.get("nzx_earnings", [])
+    cn_earn   = data.get("cn_earnings", [])
 
     # ── 涨跌排序 ──────────────────────────────────────
     sorted_stocks = sorted(
@@ -212,10 +220,99 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
 |---|---|---|---|
 """ + "\n".join(alert_lines)
 
+    # ── 宏观环境 ──────────────────────────────────────
+    macro_lines = []
+
+    # A股三大指数
+    indices = macro.get("cn_indices", {})
+    if indices:
+        idx_parts = []
+        for key in ("sh", "sz", "cyb"):
+            idx = indices.get(key, {})
+            if idx:
+                arrow = "📈" if idx["change"] >= 0 else "📉"
+                idx_parts.append(f"{idx['name']} {idx['price']:.2f}（{idx['change']:+.2f}%）{arrow}")
+        if idx_parts:
+            macro_lines.append("**A股指数**：" + " | ".join(idx_parts))
+
+    # CNY/USD 汇率
+    cny = macro.get("cny_usd", {})
+    if cny:
+        macro_lines.append(f"**USD/CNY**：{cny['rate']} {cny.get('direction','')}")
+
+    # 大宗商品
+    comm = macro.get("commodities", {})
+    if comm:
+        comm_parts = []
+        for v in comm.values():
+            arrow = "📈" if v["change"] >= 0 else "📉"
+            comm_parts.append(f"{v['name']} {v['price']:.0f}（{v['change']:+.2f}%）{arrow}")
+        if comm_parts:
+            macro_lines.append("**大宗商品**：" + " | ".join(comm_parts))
+
+    # Fear & Greed
+    fg = macro.get("fear_greed", {})
+    if fg:
+        macro_lines.append(f"**市场情绪**：Fear & Greed {fg['score']}/100 — {fg['buffett']}")
+
+    # 挖掘机销量
+    excav = macro.get("excavator", {})
+    excav_news = excav.get("latest_news", [])
+    if excav_news:
+        macro_lines.append(f"**🚜 挖掘机先行指标**：{excav_news[0]['title'][:80]}")
+
+    macro_section = ""
+    if macro_lines:
+        macro_section = "## 🌍 宏观环境\n\n" + "\n\n".join(macro_lines) + "\n"
+
+    # ── 近期重要日程 ──────────────────────────────────
+    calendar_lines = []
+
+    # FOMC
+    fomc = macro.get("fomc", [])
+    for f in fomc[:2]:
+        calendar_lines.append(f"- 🏦 **[{f['title'][:70]}]({f['link']})** （Fed · {f['time'][:10]}）")
+
+    # RBNZ
+    for r in rbnz[:2]:
+        calendar_lines.append(f"- 🇳🇿 **[{r['title'][:70]}]({r['link']})** （RBNZ · {r['time'][:10]}）")
+
+    # A股财报日历
+    for e in cn_earn[:4]:
+        calendar_lines.append(f"- 📋 **{e['name']}**（{e['code']}）预计披露 {e['date']} {e['type']}")
+
+    # NZX财报日历
+    for e in nzx_earn[:3]:
+        calendar_lines.append(f"- 📋 **{e['name']}**（{e['ticker']}）财报约 {e['date']}")
+
+    calendar_section = ""
+    if calendar_lines:
+        calendar_section = "## 📅 重要日程\n\n" + "\n".join(calendar_lines) + "\n"
+
+    # ── NZX公司公告 ───────────────────────────────────
+    nzx_ann_lines = []
+    for ticker, items in nzx_ann.items():
+        profile = {}
+        try:
+            from nz_profiles import NZ_PROFILES
+            profile = NZ_PROFILES.get(ticker, {})
+        except Exception:
+            pass
+        name = profile.get("name", ticker)
+        for item in items:
+            nzx_ann_lines.append(
+                f"- **{name}** [{item['title'][:70]}]({item['link']}) ({item['source']} · {item['time']})"
+            )
+
+    nzx_section = ""
+    if nzx_ann_lines:
+        nzx_section = "## 🇳🇿 NZX公司公告\n\n" + "\n".join(nzx_ann_lines) + "\n"
+
     report = f"""# 📈 自选股日报 {date}
 
 {buffett_summary}
 
+{macro_section}
 ## 📊 今日行情
 
 | 股票 | 现价 | 涨跌幅 | 成交额 |
@@ -226,8 +323,9 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
 {lhb_section}
 ## 📰 个股动态（巴菲特视角）
 
-""" + "\n\n".join(stock_sections) + """
+""" + "\n\n".join(stock_sections) + f"""
 
+{nzx_section}
 ## 🌐 国际视角
 
 """ + "\n".join(intl_lines) + """
@@ -236,8 +334,9 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
 
 """ + "\n".join(sector_lines) + f"""
 
+{calendar_section}
 ---
-*数据来源：新浪财经·东方财富·财联社 · {datetime.now(CN_TZ).strftime('%Y-%m-%d %H:%M CST')}*
+*数据来源：新浪财经·东方财富·财联社·RBNZ·Federal Reserve · {datetime.now(CN_TZ).strftime('%Y-%m-%d %H:%M CST')}*
 *评级说明：A=优质护城河 B=合格 C=周期/弱护城河 D=警报*
 """
     return report.strip()
@@ -329,6 +428,13 @@ def main():
     print("\n📝 Step 2/3：生成报告...")
     with open(RAW_OUTPUT, encoding="utf-8") as f:
         data = json.load(f)
+
+    # 宏观数据（pipeline层抓，不走subprocess）
+    print("  🌍 宏观数据...")
+    data["macro"]             = fetch_all_macro()
+    data["rbnz"]              = fetch_rbnz_news()
+    data["nzx_announcements"] = fetch_nzx_announcements()
+    data["nzx_earnings"]      = fetch_nzx_earnings_calendar()
 
     print("  🤖 Groq 巴菲特分析...")
     ai_analysis = analyze_all(data)

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}About · Personal Buffett{% endblock %}
+
+{% block content %}
+<div class="about-wrap">
+
+  <header class="about-hero">
+    <h1 class="about-title">Personal Buffett</h1>
+    <p class="about-tagline">An AI-powered value investing assistant — built for someone who needed signal, not noise.</p>
+  </header>
+
+  <div class="about-body">
+
+    <section class="about-section">
+      <h2>The Problem</h2>
+      <p>
+        My mum has been investing in A-shares for years. She reads financial news every
+        morning, tracks eight stocks, and still finds it hard to know what actually matters
+        on any given day. Most apps give her prices and charts — not judgment.
+      </p>
+      <p>
+        I built this for her. The goal was simple: each morning, she opens the app and gets
+        one thing per stock — a clear, opinionated letter in plain language that tells her
+        whether to hold, buy more, or start worrying.
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>What It Does</h2>
+      <ul class="about-list">
+        <li>
+          <strong>Daily pipeline</strong> — fetches real-time price, news, fund flow, and
+          annual financials for every watchlist stock, then runs a Buffett-framework
+          analysis using Groq's free Llama 3 70B API.
+        </li>
+        <li>
+          <strong>Buffett letter</strong> — each analysis is a first-person letter from
+          "Warren Buffett (private edition)": moat direction, capital allocation quality,
+          PE/PB vs 5-year history, fund flow, and a clear conclusion.
+        </li>
+        <li>
+          <strong>Wall Street-grade signals</strong> — ROIC trend, Owner Earnings,
+          retained earnings efficiency (Buffett's capital allocation test), major-shareholder
+          pledge ratio, margin balance direction, institutional holdings changes.
+        </li>
+        <li>
+          <strong>Prediction tracking</strong> — every buy/hold/reduce/sell prediction is
+          logged. Seven and thirty days later, actual returns are back-filled automatically
+          so the model's accuracy can be measured and improved.
+        </li>
+        <li>
+          <strong>Multi-market</strong> — A-shares via AKShare and Sina Finance, NZX and
+          US stocks via yfinance.
+        </li>
+      </ul>
+    </section>
+
+    <section class="about-section">
+      <h2>What I Built</h2>
+      <div class="about-contrib-grid">
+        <div class="about-contrib-item">
+          <span class="about-contrib-label">Data Layer</span>
+          <p>
+            Full A-share pipeline: Sina hq API for real-time quotes, AKShare for financial
+            abstracts (ROE, net margin, leverage, EPS), Sina balance sheet and cash flow
+            APIs for ROIC and Owner Earnings calculation, plus pledge ratio, margin balance,
+            and institutional holdings. NZ/US via yfinance.
+          </p>
+        </div>
+        <div class="about-contrib-item">
+          <span class="about-contrib-label">Analysis Model</span>
+          <p>
+            Designed the Buffett prompt framework from scratch: GREAT/GOOD/GRUESOME business
+            classification, moat direction inference, capital allocation quality assessment,
+            and loss-making company edge-case handling. Pre-compute trend directions in code
+            before injection into the LLM prompt — this eliminates a class of "LLM confuses
+            12.6% > 8.6% with decline" errors.
+          </p>
+        </div>
+        <div class="about-contrib-item">
+          <span class="about-contrib-label">Prediction System</span>
+          <p>
+            Every analysis is treated as a falsifiable prediction. A daily launchd job
+            back-fills actual 7d/30d returns and tracks accuracy by prediction type
+            (buy/hold/reduce/sell). This is the feedback loop that lets the model improve.
+          </p>
+        </div>
+        <div class="about-contrib-item">
+          <span class="about-contrib-label">Product Design</span>
+          <p>
+            NYT-inspired newspaper layout. Watchlist sidebar with client-side sort, filter,
+            and thumbnail mode. Stock fundamentals page with rating timeline, financial trend
+            charts, and moat analysis. Multi-language (EN/ZH) with i18n JSON tables.
+          </p>
+        </div>
+        <div class="about-contrib-item">
+          <span class="about-contrib-label">Infrastructure</span>
+          <p>
+            macOS launchd for fully automated daily runs — pipeline at 08:30 CST, backfill
+            at 17:00 NZT. Flask + SQLite backend designed to migrate to PostgreSQL without
+            schema changes. Google OAuth + bcrypt password auth.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-section">
+      <h2>Tech Stack</h2>
+      <div class="about-stack">
+        <span class="stack-chip">Flask 3</span>
+        <span class="stack-chip">SQLite</span>
+        <span class="stack-chip">AKShare</span>
+        <span class="stack-chip">yfinance</span>
+        <span class="stack-chip">Groq · Llama 3.3 70B</span>
+        <span class="stack-chip">Authlib · Google OAuth</span>
+        <span class="stack-chip">Bootstrap 5</span>
+        <span class="stack-chip">Chart.js</span>
+        <span class="stack-chip">macOS launchd</span>
+        <span class="stack-chip">Python 3.11+</span>
+      </div>
+    </section>
+
+    <section class="about-section">
+      <h2>Design Principles</h2>
+      <p>
+        Three questions Warren Buffett asks about every business, hard-wired into every
+        analysis prompt:
+      </p>
+      <ol class="about-principles">
+        <li><strong>Is this a great business?</strong> — GREAT (high ROE, low capital consumption) / GOOD (solid but needs reinvestment) / GRUESOME (grows fast, eats capital, doesn't earn)</li>
+        <li><strong>Is the moat widening or narrowing?</strong> — ROE and net margin trends, competitive signals in news, institutional flows</li>
+        <li><strong>Is the price reasonable?</strong> — PE/PB vs 5-year historical percentile, not just absolute numbers</li>
+      </ol>
+      <p>
+        The LLM doesn't replace judgment. It synthesises structured data into a readable
+        letter that surfaces the most important signal for each stock, each day — so the
+        human can focus on deciding, not filtering.
+      </p>
+    </section>
+
+    <footer class="about-footer">
+      <p>Built by Zhou Yu · <a href="{{ url_for('login') }}">Sign in</a> to use the app</p>
+    </footer>
+
+  </div>
+</div>
+{% endblock %}
