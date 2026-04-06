@@ -73,6 +73,12 @@ def init_db():
             stock_code  TEXT REFERENCES stocks(code) ON DELETE CASCADE,
             added_at    TEXT DEFAULT (datetime('now')),
             notes       TEXT,
+            status      TEXT DEFAULT 'watching',
+            buy_date    TEXT,
+            buy_price   REAL,
+            sell_date   TEXT,
+            sell_price  REAL,
+            entry_grade TEXT,
             UNIQUE(user_id, stock_code)
         );
 
@@ -786,8 +792,66 @@ def get_accuracy_stats():
     }
 
 
+def update_stock_status(user_id, code, status,
+                        buy_date=None, buy_price=None,
+                        sell_date=None, sell_price=None,
+                        entry_grade=None):
+    """移动卡片：更新持有状态 + 买入/卖出记录。"""
+    fields = {"status": status}
+    if status == "holding":
+        if buy_date:    fields["buy_date"]    = buy_date
+        if buy_price:   fields["buy_price"]   = buy_price
+        if entry_grade: fields["entry_grade"] = entry_grade
+        # 移入持有时清空卖出记录（重新买入场景）
+        fields["sell_date"]  = None
+        fields["sell_price"] = None
+    elif status == "sold":
+        if sell_date:  fields["sell_date"]  = sell_date
+        if sell_price: fields["sell_price"] = sell_price
+    elif status == "watching":
+        # 移回观察区：清空所有交易记录
+        fields.update({"buy_date": None, "buy_price": None,
+                        "sell_date": None, "sell_price": None,
+                        "entry_grade": None})
+    set_clause = ", ".join(f"{k}=?" for k in fields)
+    with get_conn() as c:
+        c.execute(
+            f"UPDATE user_watchlist SET {set_clause} WHERE user_id=? AND stock_code=?",
+            list(fields.values()) + [user_id, code]
+        )
+
+
+def get_performance_data(user_id):
+    """返回用户持有/已卖出股票的绩效数据（不含纯观察）。"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT w.stock_code AS code, s.name, s.market, w.status,
+                   w.buy_date, w.buy_price, w.sell_date, w.sell_price,
+                   w.entry_grade, w.added_at
+            FROM user_watchlist w
+            JOIN stocks s ON s.code = w.stock_code
+            WHERE w.user_id=? AND w.status IN ('holding','sold')
+            ORDER BY w.buy_date DESC NULLS LAST
+        """, (user_id,)).fetchall()
+    return [dict(r) for r in rows]
+
+
 def _migrate():
-    pass  # 新 schema 不需要迁移
+    """向旧 DB 补加新字段（ALTER TABLE 幂等）。"""
+    new_cols = [
+        ("user_watchlist", "status",      "TEXT DEFAULT 'watching'"),
+        ("user_watchlist", "buy_date",    "TEXT"),
+        ("user_watchlist", "buy_price",   "REAL"),
+        ("user_watchlist", "sell_date",   "TEXT"),
+        ("user_watchlist", "sell_price",  "REAL"),
+        ("user_watchlist", "entry_grade", "TEXT"),
+    ]
+    with get_conn() as c:
+        for table, col, typedef in new_cols:
+            try:
+                c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
+            except Exception:
+                pass  # 字段已存在，忽略
 
 
 if __name__ == "__main__":

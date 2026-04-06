@@ -456,9 +456,22 @@ def watchlist_page():
             "moat_direction": sigs.get("moat_direction", ""),
             "roic_latest":    sigs.get("roic_latest"),
             "fcf_quality":    sigs.get("fcf_quality_avg"),
+            # 状态字段
+            "status":      row.get("status", "watching"),
+            "buy_date":    row.get("buy_date"),
+            "buy_price":   row.get("buy_price"),
+            "sell_date":   row.get("sell_date"),
+            "sell_price":  row.get("sell_price"),
+            "entry_grade": row.get("entry_grade"),
         })
-    return render_template("watchlist.html", stocks=stocks,
-                           now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"))
+
+    holding  = [s for s in stocks if s["status"] == "holding"]
+    watching = [s for s in stocks if s["status"] == "watching"]
+    sold     = [s for s in stocks if s["status"] == "sold"]
+
+    return render_template("watchlist.html",
+        stocks=stocks, holding=holding, watching=watching, sold=sold,
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"))
 
 
 # ── Watchlist Actions ──────────────────────────────────
@@ -491,6 +504,128 @@ def add_stock():
 def remove_stock(code):
     db.remove_user_stock(session["user_id"], code)
     return redirect(url_for("index"))
+
+
+# ── 状态移动 API ───────────────────────────────────────
+@app.route("/api/stock/<code>/status", methods=["POST"])
+@login_required
+def update_stock_status(code):
+    """移动卡片到 watching / holding / sold，记录日期和价格。"""
+    data      = request.get_json() or {}
+    status    = data.get("status")
+    if status not in ("watching", "holding", "sold"):
+        return jsonify({"error": "invalid status"}), 400
+
+    buy_date   = data.get("buy_date")
+    buy_price  = data.get("buy_price")
+    sell_date  = data.get("sell_date")
+    sell_price = data.get("sell_price")
+
+    # 自动快照当前巴菲特评级（移入持有时）
+    entry_grade = None
+    if status == "holding":
+        analysis = db.get_latest_analysis(code, period="daily")
+        if analysis:
+            entry_grade = analysis.get("grade")
+
+    db.update_stock_status(
+        session["user_id"], code, status,
+        buy_date=buy_date, buy_price=float(buy_price) if buy_price else None,
+        sell_date=sell_date, sell_price=float(sell_price) if sell_price else None,
+        entry_grade=entry_grade,
+    )
+    return jsonify({"ok": True, "entry_grade": entry_grade})
+
+
+# ── 算账面板 ──────────────────────────────────────────
+@app.route("/watchlist/performance")
+@login_required
+def performance_page():
+    rows     = db.get_performance_data(session["user_id"])
+    quote_map = {q["code"]: q for q in db.get_quotes()}
+    today    = datetime.now(CN_TZ).date()
+
+    holdings = []
+    sold     = []
+    for r in rows:
+        code      = r["code"]
+        q         = quote_map.get(code, {})
+        cur_price = q.get("price")
+        market    = r.get("market", "cn")
+        currency  = MARKET_CURRENCY.get(market, "$")
+
+        # 持有天数
+        ref_date  = r.get("buy_date") or r.get("added_at", "")[:10]
+        try:
+            from datetime import date as _date
+            d0   = _date.fromisoformat(ref_date)
+            days = (today - d0).days
+        except Exception:
+            days = None
+
+        entry = r.get("buy_price") or (q.get("price") if not r.get("buy_date") else None)
+
+        perf = {
+            **r,
+            "currency":    currency,
+            "cur_price":   cur_price,
+            "days_held":   days,
+            "entry_price": entry,
+            "return_pct":  None,
+            "annualized":  None,
+        }
+
+        if entry and entry > 0:
+            if r["status"] == "sold" and r.get("sell_price"):
+                exit_p = r["sell_price"]
+                ret    = (exit_p - entry) / entry * 100
+            elif r["status"] == "holding" and cur_price:
+                exit_p = cur_price
+                ret    = (exit_p - entry) / entry * 100
+            else:
+                ret = None
+
+            if ret is not None:
+                perf["return_pct"] = ret
+                if days and days > 0:
+                    perf["annualized"] = ((1 + ret / 100) ** (365 / days) - 1) * 100
+
+        if r["status"] == "holding":
+            holdings.append(perf)
+        else:
+            sold.append(perf)
+
+    # 胜率 & 评级准确率
+    stats = _calc_performance_stats(holdings + sold)
+
+    return render_template("performance.html",
+        holdings=holdings, sold=sold, stats=stats,
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"))
+
+
+def _calc_performance_stats(rows):
+    """计算胜率和评级准确率。"""
+    with_return = [r for r in rows if r.get("return_pct") is not None]
+    if not with_return:
+        return {}
+
+    winners    = [r for r in with_return if r["return_pct"] > 0]
+    win_rate   = len(winners) / len(with_return) * 100
+
+    # 评级准确率：买入时 B+ 以上的股票，实际结果是否为正
+    graded     = [r for r in with_return if r.get("entry_grade") in ("A","B+","B")]
+    grade_wins = [r for r in graded if r["return_pct"] > 0]
+    grade_acc  = len(grade_wins) / len(graded) * 100 if graded else None
+
+    avg_return = sum(r["return_pct"] for r in with_return) / len(with_return)
+
+    return {
+        "total":      len(with_return),
+        "win_rate":   win_rate,
+        "avg_return": avg_return,
+        "grade_acc":  grade_acc,
+        "grade_n":    len(graded),
+    }
 
 
 # ── Reports ───────────────────────────────────────────

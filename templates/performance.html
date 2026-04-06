@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}算账 — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="watchlist-wrap">
+
+  <div class="stock-breadcrumb">
+    <a href="{{ url_for('watchlist_page') }}">← 我的选股</a>
+    <span class="bc-sep">/</span>
+    <span>算账</span>
+  </div>
+
+  <h1 style="font-family:Georgia,serif;font-size:22px;margin:16px 0 4px">算账 · 判断力复盘</h1>
+  <p style="font-size:13px;color:var(--ink-muted);margin-bottom:24px">
+    这不是"今天浮盈多少"，而是"你的判断力在提升还是退步"。
+  </p>
+
+  {# ── 统计摘要 ── #}
+  {% if stats %}
+  <div class="perf-stats-bar">
+    <div class="perf-stat">
+      <span class="perf-stat-val">{{ "%.0f"|format(stats.win_rate) }}%</span>
+      <span class="perf-stat-label">胜率</span>
+      <span class="perf-stat-sub">{{ stats.total }} 只有记录</span>
+    </div>
+    <div class="perf-stat">
+      <span class="perf-stat-val {{ 'up' if stats.avg_return >= 0 else 'down' }}">{{ "%+.1f"|format(stats.avg_return) }}%</span>
+      <span class="perf-stat-label">平均收益</span>
+      <span class="perf-stat-sub">含持有中</span>
+    </div>
+    {% if stats.grade_acc is not none %}
+    <div class="perf-stat">
+      <span class="perf-stat-val">{{ "%.0f"|format(stats.grade_acc) }}%</span>
+      <span class="perf-stat-label">评级准确率</span>
+      <span class="perf-stat-sub">买入 B+ 以上的 {{ stats.grade_n }} 只</span>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ── 持有中 ── #}
+  {% if holdings %}
+  <div class="perf-section">
+    <div class="wl-section-header">持有中 <span class="wl-badge">{{ holdings | length }}</span></div>
+    <table class="data-table perf-table">
+      <thead>
+        <tr>
+          <th>股票</th>
+          <th>买入日</th>
+          <th style="text-align:right">买入价</th>
+          <th style="text-align:right">现价</th>
+          <th style="text-align:right">收益率</th>
+          <th style="text-align:right">年化</th>
+          <th style="text-align:right">持有天</th>
+          <th>买入评级</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in holdings %}
+        <tr>
+          <td>
+            <a href="{{ url_for('stock_page', code=r.code) }}" style="font-weight:600;color:var(--ink);text-decoration:none">{{ r.name }}</a>
+            <span class="market-tag" style="margin-left:4px">{{ r.market | upper }}</span>
+          </td>
+          <td style="font-size:12px;color:var(--ink-muted)">{{ r.buy_date or '—' }}</td>
+          <td style="text-align:right;font-size:12.5px">
+            {% if r.entry_price %}{{ r.currency }}{{ "%.2f"|format(r.entry_price) }}{% else %}<span style="color:var(--ink-faint)">—</span>{% endif %}
+          </td>
+          <td style="text-align:right;font-size:12.5px">
+            {% if r.cur_price %}{{ r.currency }}{{ "%.2f"|format(r.cur_price) }}{% else %}<span style="color:var(--ink-faint)">—</span>{% endif %}
+          </td>
+          <td style="text-align:right">
+            {% if r.return_pct is not none %}
+            <span class="{{ 'up' if r.return_pct >= 0 else 'down' }}" style="font-weight:700">{{ "%+.1f"|format(r.return_pct) }}%</span>
+            {% else %}<span style="color:var(--ink-faint)">—</span>{% endif %}
+          </td>
+          <td style="text-align:right">
+            {% if r.annualized is not none %}
+            <span class="{{ 'up' if r.annualized >= 0 else 'down' }}" style="font-size:12px">{{ "%+.1f"|format(r.annualized) }}%</span>
+            {% else %}<span style="color:var(--ink-faint)">—</span>{% endif %}
+          </td>
+          <td style="text-align:right;font-size:12px;color:var(--ink-muted)">{{ r.days_held or '—' }}</td>
+          <td>
+            {% if r.entry_grade %}
+            <span class="grade-tag grade-{{ r.entry_grade | lower | replace('+','-plus') | replace('-','-minus') }}">{{ r.entry_grade }}</span>
+            {% else %}<span style="color:var(--ink-faint);font-size:11px">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {# ── 已卖出 ── #}
+  {% if sold %}
+  <div class="perf-section">
+    <div class="wl-section-header" style="margin-top:32px">已实现收益 <span class="wl-badge">{{ sold | length }}</span></div>
+    <table class="data-table perf-table">
+      <thead>
+        <tr>
+          <th>股票</th>
+          <th>买入日</th>
+          <th>卖出日</th>
+          <th style="text-align:right">买入价</th>
+          <th style="text-align:right">卖出价</th>
+          <th style="text-align:right">收益率</th>
+          <th style="text-align:right">年化</th>
+          <th style="text-align:right">持有天</th>
+          <th>买入评级</th>
+          <th>评级对了吗</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in sold %}
+        {% set grade_good = r.entry_grade in ('A','B+','B') %}
+        {% set outcome_good = r.return_pct is not none and r.return_pct > 0 %}
+        <tr>
+          <td>
+            <a href="{{ url_for('stock_page', code=r.code) }}" style="font-weight:600;color:var(--ink);text-decoration:none">{{ r.name }}</a>
+            <span class="market-tag" style="margin-left:4px">{{ r.market | upper }}</span>
+          </td>
+          <td style="font-size:12px;color:var(--ink-muted)">{{ r.buy_date or '—' }}</td>
+          <td style="font-size:12px;color:var(--ink-muted)">{{ r.sell_date or '—' }}</td>
+          <td style="text-align:right;font-size:12.5px">
+            {% if r.entry_price %}{{ r.currency }}{{ "%.2f"|format(r.entry_price) }}{% else %}—{% endif %}
+          </td>
+          <td style="text-align:right;font-size:12.5px">
+            {% if r.sell_price %}{{ r.currency }}{{ "%.2f"|format(r.sell_price) }}{% else %}—{% endif %}
+          </td>
+          <td style="text-align:right">
+            {% if r.return_pct is not none %}
+            <span class="{{ 'up' if r.return_pct >= 0 else 'down' }}" style="font-weight:700">{{ "%+.1f"|format(r.return_pct) }}%</span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="text-align:right">
+            {% if r.annualized is not none %}
+            <span class="{{ 'up' if r.annualized >= 0 else 'down' }}" style="font-size:12px">{{ "%+.1f"|format(r.annualized) }}%</span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="text-align:right;font-size:12px;color:var(--ink-muted)">{{ r.days_held or '—' }}</td>
+          <td>
+            {% if r.entry_grade %}
+            <span class="grade-tag grade-{{ r.entry_grade | lower | replace('+','-plus') | replace('-','-minus') }}">{{ r.entry_grade }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:13px">
+            {% if r.entry_grade and r.return_pct is not none %}
+              {% if grade_good and outcome_good %}
+                <span style="color:var(--green)">✓ 判断准</span>
+              {% elif not grade_good and not outcome_good %}
+                <span style="color:var(--green)">✓ 判断准</span>
+              {% elif grade_good and not outcome_good %}
+                <span style="color:var(--red)">✗ 高估了</span>
+              {% else %}
+                <span style="color:var(--ink-muted)">～ 低估了</span>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if not holdings and not sold %}
+  <div class="empty-hero" style="padding:60px 0;text-align:center">
+    <p style="color:var(--ink-muted);margin-bottom:16px">还没有持有或卖出记录</p>
+    <p style="font-size:13px;color:var(--ink-faint)">在「我的选股」页面点卡片的「移至…」按钮，把股票移入「持有中」</p>
+    <a href="{{ url_for('watchlist_page') }}" class="btn-ink" style="margin-top:16px;display:inline-block">去我的选股</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

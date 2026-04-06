@@ -7,6 +7,7 @@
   {# ── 顶部工具栏 ── #}
   <div class="wl-toolbar">
     <span class="wl-toolbar-title">我的选股 <span class="wl-badge">{{ stocks | length }}</span></span>
+    <a href="{{ url_for('performance_page') }}" class="wl-perf-link">算账 →</a>
 
     {# 搜索框 #}
     <div class="wl-search-wrap">
@@ -65,90 +66,145 @@
     </form>
   </div>
 
-  {% if stocks %}
-  {# 股票卡片网格 #}
-  <div class="holding-grid" id="holding-grid" data-view="card">
-    {% for s in stocks %}
-    <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }}"
-         id="card-{{ s.code }}"
-         data-code="{{ s.code }}"
-         data-name="{{ s.name }}"
-         data-grade-sort="{{ s.grade_sort }}"
-         data-change="{{ s.change_pct or 0 }}"
-         data-date="{{ s.analysis_date or '' }}"
-         data-href="{{ url_for('stock_page', code=s.code) }}"
-         onclick="cardClick(event, this)"
-         {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
+  {# ── 卡片渲染 macro ── #}
+  {% macro render_card(s) %}
+  <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }} {{ 'card-sold' if s.status == 'sold' else '' }}"
+       id="card-{{ s.code }}"
+       data-code="{{ s.code }}"
+       data-name="{{ s.name }}"
+       data-grade-sort="{{ s.grade_sort }}"
+       data-change="{{ s.change_pct or 0 }}"
+       data-date="{{ s.analysis_date or '' }}"
+       data-href="{{ url_for('stock_page', code=s.code) }}"
+       data-status="{{ s.status }}"
+       onclick="cardClick(event, this)"
+       {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
 
-      <label class="holding-checkbox" onclick="event.stopPropagation()">
-        <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
-      </label>
+    <label class="holding-checkbox" onclick="event.stopPropagation()">
+      <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
+    </label>
 
-      <div class="card-main">
-        <div class="holding-top">
-          <div class="holding-name-wrap">
-            <span class="holding-name-link">{{ s.name }}</span>
-            <span class="market-tag" style="margin-left:5px">{{ s.market | upper }}</span>
-          </div>
-          <div class="stock-price-block">
-            {% if s.price %}
-            <span class="stock-price">{{ s.currency }}{{ "%.2f"|format(s.price) }}</span>
-            {% if s.change_pct is not none %}
-            <span class="stock-change {{ 'up' if s.change_pct >= 0 else 'down' }}">{{ "%+.2f"|format(s.change_pct) }}%</span>
-            {% endif %}
-            {% else %}
-            <span class="stock-price" style="font-size:12px;color:var(--ink-faint)">{{ t.no_quote }}</span>
-            {% endif %}
-          </div>
+    <div class="card-main">
+      <div class="holding-top">
+        <div class="holding-name-wrap">
+          <span class="holding-name-link">{{ s.name }}</span>
+          <span class="market-tag" style="margin-left:5px">{{ s.market | upper }}</span>
         </div>
-
-        {% if s.pending_job %}
-        <div class="holding-analysis-pending">
-          <span class="spinner"></span>
-          <span class="pending-text">巴菲特分析中…</span>
-          <button class="btn-cancel-job" onclick="event.stopPropagation(); cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="取消">✕</button>
-        </div>
-        {% elif s.conclusion %}
-        <div class="holding-analysis">
-          <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','') else 'c' }}">
-            {{ s.grade }}
-          </span>
-          <span class="holding-conclusion">{{ s.conclusion }}</span>
-        </div>
-        <p class="holding-reasoning">{{ s.reasoning }}</p>
-        {% else %}
-        <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">尚无分析</div>
-        {% endif %}
-
-        {% if s.moat_direction or s.roic_latest %}
-        <div class="holding-signals">
-          {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
-          {% if s.roic_latest %}<span class="signal-chip">ROIC {{ "%.1f"|format(s.roic_latest) }}%</span>{% endif %}
-        </div>
-        {% endif %}
-
-        <div class="holding-meta">
-          {% if s.analysis_date %}
-          <span class="holding-date">{{ s.analysis_date }}</span>
+        <div class="stock-price-block">
+          {% if s.price %}
+          <span class="stock-price">{{ s.currency }}{{ "%.2f"|format(s.price) }}</span>
+          {% if s.change_pct is not none %}
+          <span class="stock-change {{ 'up' if s.change_pct >= 0 else 'down' }}">{{ "%+.2f"|format(s.change_pct) }}%</span>
           {% endif %}
-          <div class="holding-actions" onclick="event.stopPropagation()">
-            {% if s.has_letter %}
-            <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
-            {% endif %}
-            <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="btn-text" style="font-size:11px">↻ 分析</button>
-            <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
-                  onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
-              <button type="submit" class="btn-text" style="font-size:11px;color:var(--ink-muted)">移除</button>
-            </form>
-          </div>
+          {% else %}
+          <span class="stock-price" style="font-size:12px;color:var(--ink-faint)">{{ t.no_quote }}</span>
+          {% endif %}
         </div>
       </div>
 
-    </div>
-    {% endfor %}
-  </div>
+      {# 持有中：显示买入价 → 现价涨跌 #}
+      {% if s.status == 'holding' and s.buy_price and s.price %}
+      {% set ret = (s.price - s.buy_price) / s.buy_price * 100 %}
+      <div class="card-return-bar">
+        <span class="return-label">买入 {{ s.currency }}{{ "%.2f"|format(s.buy_price) }}</span>
+        <span class="return-val {{ 'up' if ret >= 0 else 'down' }}">{{ "%+.1f"|format(ret) }}%</span>
+      </div>
+      {% endif %}
 
-  {# 列表模式 #}
+      {% if s.pending_job %}
+      <div class="holding-analysis-pending">
+        <span class="spinner"></span>
+        <span class="pending-text">巴菲特分析中…</span>
+        <button class="btn-cancel-job" onclick="event.stopPropagation(); cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="取消">✕</button>
+      </div>
+      {% elif s.conclusion %}
+      <div class="holding-analysis">
+        <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','') else 'c' }}">
+          {{ s.grade }}
+        </span>
+        <span class="holding-conclusion">{{ s.conclusion }}</span>
+      </div>
+      <p class="holding-reasoning">{{ s.reasoning }}</p>
+      {% else %}
+      <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">尚无分析</div>
+      {% endif %}
+
+      {% if s.moat_direction or s.roic_latest %}
+      <div class="holding-signals">
+        {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
+        {% if s.roic_latest %}<span class="signal-chip">ROIC {{ "%.1f"|format(s.roic_latest) }}%</span>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="holding-meta">
+        {% if s.analysis_date %}
+        <span class="holding-date">{{ s.analysis_date }}</span>
+        {% endif %}
+        <div class="holding-actions" onclick="event.stopPropagation()">
+          {% if s.has_letter %}
+          <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
+          {% endif %}
+          {% if s.status != 'sold' %}
+          <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="btn-text" style="font-size:11px">↻ 分析</button>
+          {% endif %}
+          <button onclick="openMoveDialog('{{ s.code }}','{{ s.name }}','{{ s.status }}')" class="btn-text" style="font-size:11px">移至…</button>
+          <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
+                onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
+            <button type="submit" class="btn-text" style="font-size:11px;color:var(--ink-muted)">移除</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endmacro %}
+
+  {% if stocks %}
+
+  {# ── 三分区卡片视图 ── #}
+  <div id="wl-sections">
+
+    {# 我的持有 #}
+    {% if holding %}
+    <div class="wl-section">
+      <div class="wl-section-header">
+        我的持有 <span class="wl-badge">{{ holding | length }}</span>
+      </div>
+      <div class="holding-grid" id="grid-holding">
+        {% for s in holding %}{{ render_card(s) }}{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# 我的观察 #}
+    <div class="wl-section">
+      <div class="wl-section-header">
+        我的观察 <span class="wl-badge">{{ watching | length }}</span>
+      </div>
+      <div class="holding-grid" id="grid-watching">
+        {% if watching %}
+          {% for s in watching %}{{ render_card(s) }}{% endfor %}
+        {% else %}
+          <p class="wl-section-empty">还没有观察中的股票</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# 已卖出 #}
+    {% if sold %}
+    <div class="wl-section">
+      <div class="wl-section-header">
+        已卖出 <span class="wl-badge">{{ sold | length }}</span>
+        <a href="{{ url_for('performance_page') }}" class="wl-section-link">查看算账 →</a>
+      </div>
+      <div class="holding-grid" id="grid-sold">
+        {% for s in sold %}{{ render_card(s) }}{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>{# end wl-sections #}
+
+  {# ── 列表模式（跨三区平铺） ── #}
   <div class="wl-list-view" id="wl-list-view" style="display:none">
     <table class="wl-list-table">
       <thead>
@@ -161,12 +217,13 @@
           <th style="width:62px;text-align:right">涨跌</th>
           <th style="width:52px">结论</th>
           <th style="width:64px">日期</th>
+          <th style="width:52px">状态</th>
           <th style="width:100px">操作</th>
         </tr>
       </thead>
       <tbody id="wl-list-body">
         {% for s in stocks %}
-        <tr class="wl-list-row"
+        <tr class="wl-list-row {{ 'row-sold' if s.status == 'sold' else '' }}"
             id="row-{{ s.code }}"
             data-code="{{ s.code }}"
             data-name="{{ s.name }}"
@@ -205,11 +262,19 @@
             {% else %}<span style="color:var(--ink-faint);font-size:11px">—</span>{% endif %}
           </td>
           <td style="font-size:11px;color:var(--ink-muted)">{{ (s.analysis_date or '')[-5:] }}</td>
+          <td style="font-size:11px">
+            {% if s.status == 'holding' %}<span style="color:var(--ink)">持有</span>
+            {% elif s.status == 'sold' %}<span style="color:var(--ink-muted)">已卖</span>
+            {% else %}<span style="color:var(--ink-muted)">观察</span>{% endif %}
+          </td>
           <td class="wl-list-ops" onclick="event.stopPropagation()">
+            {% if s.status != 'sold' %}
             <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="重新分析">↻</button>
+            {% endif %}
             {% if s.has_letter %}
             <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn">信</button>
             {% endif %}
+            <button onclick="openMoveDialog('{{ s.code }}','{{ s.name }}','{{ s.status }}')" class="wl-op-btn" title="移至">⇄</button>
             <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
                   onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
               <button type="submit" class="wl-op-btn wl-op-danger">移除</button>
@@ -233,6 +298,37 @@
   </div>
   {% endif %}
 
+</div>
+
+{# 移至 Modal #}
+<div id="move-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
+    <div class="modal-content">
+      <div class="modal-header" style="border-bottom:1px solid var(--rule-light);padding:14px 20px">
+        <h6 class="modal-title" id="move-modal-title" style="font-family:-apple-system,sans-serif;font-size:14px;font-weight:600">移动股票</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:20px">
+        <div class="move-status-btns" style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="move-status-btn" data-status="watching" onclick="selectMoveStatus('watching',this)">观察</button>
+          <button class="move-status-btn" data-status="holding"  onclick="selectMoveStatus('holding',this)">持有</button>
+          <button class="move-status-btn" data-status="sold"     onclick="selectMoveStatus('sold',this)">已卖出</button>
+        </div>
+        <div id="move-date-row" style="display:none;margin-bottom:10px">
+          <label style="font-size:12px;color:var(--ink-muted);display:block;margin-bottom:4px" id="move-date-label">操作日期</label>
+          <input type="date" id="move-date" class="wl-search-input" style="width:100%">
+        </div>
+        <div id="move-price-row" style="display:none;margin-bottom:10px">
+          <label style="font-size:12px;color:var(--ink-muted);display:block;margin-bottom:4px" id="move-price-label">价格（可选，留空则自动拉历史收盘价）</label>
+          <input type="number" id="move-price" class="wl-search-input" style="width:100%" placeholder="0.00" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--rule-light);padding:12px 20px">
+        <button type="button" class="btn-outline-ink btn-sm" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn-ink btn-sm" onclick="confirmMove()">确认移动</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 {# 批量操作底部栏 #}
@@ -285,13 +381,60 @@ function toggleView() {
 function setView(v) {
   if (v === 'list' && window.innerWidth < 768) v = 'card';
   _currentView = v;
-  const grid     = document.getElementById('holding-grid');
+  const sections = document.getElementById('wl-sections');
   const listView = document.getElementById('wl-list-view');
-  if (grid)     grid.style.display     = v === 'list' ? 'none' : '';
+  if (sections) sections.style.display = v === 'list' ? 'none' : '';
   if (listView) listView.style.display = v === 'list' ? ''     : 'none';
   const btn = document.getElementById('view-toggle-btn');
   if (btn) btn.textContent = v === 'list' ? '卡片' : '列表';
   localStorage.setItem('wl-view', v);
+}
+
+// ── 移至 Modal ────────────────────────────────────────
+let _moveCode = '', _moveName = '', _moveModal = null;
+function openMoveDialog(code, name, currentStatus) {
+  _moveCode = code; _moveName = name;
+  document.getElementById('move-modal-title').textContent = `移动 ${name}`;
+  // 重置
+  document.querySelectorAll('.move-status-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('move-date-row').style.display = 'none';
+  document.getElementById('move-price-row').style.display = 'none';
+  document.getElementById('move-price').value = '';
+  // 默认选今天
+  document.getElementById('move-date').value = new Date().toISOString().slice(0,10);
+  // 高亮当前状态
+  const cur = document.querySelector(`.move-status-btn[data-status="${currentStatus}"]`);
+  if (cur) cur.classList.add('active');
+  _moveModal = new bootstrap.Modal(document.getElementById('move-modal'));
+  _moveModal.show();
+}
+function selectMoveStatus(status, btn) {
+  document.querySelectorAll('.move-status-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const showDate  = status !== 'watching';
+  const dateLabel = status === 'holding' ? '买入日期' : '卖出日期';
+  const priceLbl  = status === 'holding' ? '买入价（可选）' : '卖出价（可选）';
+  document.getElementById('move-date-row').style.display  = showDate ? '' : 'none';
+  document.getElementById('move-price-row').style.display = showDate ? '' : 'none';
+  document.getElementById('move-date-label').textContent  = dateLabel;
+  document.getElementById('move-price-label').textContent = priceLbl;
+}
+async function confirmMove() {
+  const statusBtn = document.querySelector('.move-status-btn.active');
+  if (!statusBtn) { alert('请选择目标状态'); return; }
+  const status = statusBtn.dataset.status;
+  const date   = document.getElementById('move-date').value;
+  const price  = parseFloat(document.getElementById('move-price').value) || null;
+  const body   = { status };
+  if (status === 'holding') { if (date) body.buy_date = date; if (price) body.buy_price = price; }
+  if (status === 'sold')    { if (date) body.sell_date = date; if (price) body.sell_price = price; }
+  const resp = await fetch(`/api/stock/${_moveCode}/status`, {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  if (resp.ok) {
+    _moveModal?.hide();
+    location.reload();
+  }
 }
 
 // ── 排序 ─────────────────────────────────────────────
@@ -313,8 +456,11 @@ function sortCards(by) {
     if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
     return 0;
   };
-  const grid = document.getElementById('holding-grid');
-  if (grid) [...grid.querySelectorAll('.holding-card')].sort(cmp).forEach(c => grid.appendChild(c));
+  // 三分区各自排序
+  ['grid-holding','grid-watching','grid-sold'].forEach(id => {
+    const g = document.getElementById(id);
+    if (g) [...g.querySelectorAll('.holding-card')].sort(cmp).forEach(c => g.appendChild(c));
+  });
   const tbody = document.getElementById('wl-list-body');
   if (tbody) [...tbody.querySelectorAll('.wl-list-row')].sort(cmp).forEach(r => tbody.appendChild(r));
 }

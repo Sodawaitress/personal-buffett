@@ -1974,6 +1974,162 @@ footer small {
   color: var(--ink);
   border-color: var(--ink);
 }
+.wl-perf-link {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.wl-perf-link:hover { background: var(--ink); color: var(--paper); }
+
+/* ── 三分区 ── */
+.wl-section { margin-bottom: 32px; }
+.wl-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--rule-light);
+  margin-bottom: 16px;
+}
+.wl-section-link {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.wl-section-link:hover { color: var(--ink); }
+.wl-section-empty {
+  color: var(--ink-faint);
+  font-size: 13px;
+  padding: 16px 0;
+}
+
+/* ── 已卖出卡片灰显 ── */
+.card-sold { opacity: .65; }
+.card-sold:hover { opacity: .85; }
+.row-sold { opacity: .65; }
+
+/* ── 卡片回报条 ── */
+.card-return-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  margin: 4px 0 6px;
+  padding: 4px 8px;
+  background: var(--paper-2);
+  border-radius: 3px;
+}
+.return-label { color: var(--ink-muted); }
+.return-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── 移至按钮状态 ── */
+.move-status-btn {
+  flex: 1;
+  padding: 7px 0;
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.move-status-btn:hover { border-color: var(--ink); color: var(--ink); }
+.move-status-btn.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+/* ═══════════════════════════════════════════════
+   PERFORMANCE PAGE (算账)
+   ═══════════════════════════════════════════════ */
+.perf-stats-bar {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  padding: 20px 24px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+}
+
+.perf-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+.perf-stat-val {
+  font-size: 28px;
+  font-family: Georgia, serif;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.perf-stat-val.up  { color: var(--green); }
+.perf-stat-val.down { color: var(--red); }
+
+.perf-stat-label {
+  font-size: 12px;
+  font-family: -apple-system, sans-serif;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.perf-stat-sub {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-family: -apple-system, sans-serif;
+}
+
+.perf-section { margin-bottom: 40px; }
+
+.perf-table { width: 100%; }
+
+.perf-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--ink-muted);
+  font-family: -apple-system, sans-serif;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--rule);
+  white-space: nowrap;
+}
+
+.perf-table td {
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--rule-light);
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.perf-table tbody tr:hover { background: rgba(0,0,0,.02); }
 
 /* ── Popover ── */
 .wl-popover-wrap { position: relative; }
