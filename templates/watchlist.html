@@ -85,6 +85,19 @@
     </label>
 
     <div class="card-main">
+      <div class="card-status-row" onclick="event.stopPropagation()">
+        <div class="status-tabs">
+          <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">观察</button>
+          <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">持有</button>
+          <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">卖出</button>
+        </div>
+        <div class="status-extra" id="extra-{{ s.code }}" style="display:none">
+          <input type="date"   class="status-date-input"  id="extra-date-{{ s.code }}"  value="{{ now_date or '' }}">
+          <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="价格(选填)" step="0.01" min="0">
+          <button class="status-confirm-btn" onclick="confirmStatus('{{ s.code }}')">✓</button>
+        </div>
+      </div>
+
       <div class="holding-top">
         <div class="holding-name-wrap">
           <span class="holding-name-link">{{ s.name }}</span>
@@ -144,16 +157,6 @@
           {% if s.has_letter %}
           <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
           {% endif %}
-          <div class="status-tabs" onclick="event.stopPropagation()">
-            <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" data-s="watching" onclick="switchStatus('{{ s.code }}','watching',this)">观察</button>
-            <button class="status-tab {{ 'active' if s.status == 'holding' else '' }}" data-s="holding"  onclick="switchStatus('{{ s.code }}','holding',this)">持有</button>
-            <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" data-s="sold"    onclick="switchStatus('{{ s.code }}','sold',this)">卖出</button>
-          </div>
-          <div class="status-extra" id="extra-{{ s.code }}" style="display:none">
-            <input type="date"   class="status-date-input"  id="extra-date-{{ s.code }}"  value="{{ ('' ~ (now_date or '')) }}">
-            <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="价格(选填)" step="0.01" min="0">
-            <button class="status-confirm-btn" onclick="confirmStatus('{{ s.code }}')">✓</button>
-          </div>
           {% if s.status != 'sold' %}
           <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="btn-text" style="font-size:11px">↻ 分析</button>
           {% endif %}

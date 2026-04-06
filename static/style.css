@@ -2061,6 +2061,15 @@ footer small {
   color: var(--paper);
 }
 
+/* ── Card top status row ── */
+.card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
 /* ── Inline status tabs ── */
 .status-tabs {
   display: inline-flex;
