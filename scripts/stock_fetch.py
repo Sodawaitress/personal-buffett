@@ -351,7 +351,8 @@ def _analyze_moat_direction(annual: list) -> str:
         detail    = f"ROE {latest_roe:.1f}%，近几年波动不大"
     elif roe_delta <= -4 or (roe_delta <= -2 and margin_delta <= -2):
         direction = "护城河收窄"
-        detail    = f"ROE从{roe_vals[-1]:.1f}%降至{latest_roe:.1f}%，净利率同步下行"
+        margin_note = f"净利率同步下行（{margin_vals[-1]:.1f}%→{margin_vals[0]:.1f}%）" if (margin_vals and margin_delta <= -1) else f"净利率尚稳（{margin_vals[0]:.1f}%）" if margin_vals else ""
+        detail    = f"ROE从{roe_vals[-1]:.1f}%降至{latest_roe:.1f}%，{margin_note}" if margin_note else f"ROE从{roe_vals[-1]:.1f}%降至{latest_roe:.1f}%"
     elif roe_delta >= 2 and latest_roe < 15:
         direction = "护城河改善中"
         detail    = f"ROE从低位回升至{latest_roe:.1f}%，趋势向好但尚未到优质水平"
