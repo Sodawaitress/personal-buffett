@@ -8,6 +8,12 @@
   <div class="wl-toolbar">
     <span class="wl-toolbar-title">我的选股 <span class="wl-badge">{{ stocks | length }}</span></span>
 
+    {# 搜索框 #}
+    <div class="wl-search-wrap">
+      <input type="text" id="wl-search" class="wl-search-input" placeholder="搜索名称 / 代码…" oninput="filterBySearch(this.value)" autocomplete="off">
+      <button class="wl-search-clear" id="wl-search-clear" onclick="clearSearch()" style="display:none">×</button>
+    </div>
+
     <div class="wl-toolbar-controls">
       {# 排序 #}
       <div class="wl-popover-wrap">
@@ -50,6 +56,7 @@
         </button>
         <div class="wl-popover" id="view-popover">
           <label class="wl-pop-opt"><input type="radio" name="wl-view" value="card" checked> 卡片</label>
+          <label class="wl-pop-opt"><input type="radio" name="wl-view" value="list"> 列表</label>
           <label class="wl-pop-opt"><input type="radio" name="wl-view" value="thumb"> 缩略图</label>
         </div>
       </div>
@@ -92,6 +99,7 @@
     <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }}"
          id="card-{{ s.code }}"
          data-code="{{ s.code }}"
+         data-name="{{ s.name }}"
          data-grade-sort="{{ s.grade_sort }}"
          data-change="{{ s.change_pct or 0 }}"
          data-date="{{ s.analysis_date or '' }}"
@@ -165,6 +173,78 @@
     {% endfor %}
   </div>
 
+  {# 列表模式 #}
+  <div class="wl-list-view" id="wl-list-view" style="display:none">
+    <table class="wl-list-table">
+      <thead>
+        <tr>
+          <th style="width:28px"></th>
+          <th style="width:44px">评级</th>
+          <th>名称</th>
+          <th style="width:44px">市场</th>
+          <th style="width:80px;text-align:right">价格</th>
+          <th style="width:62px;text-align:right">涨跌</th>
+          <th style="width:52px">结论</th>
+          <th style="width:64px">日期</th>
+          <th style="width:120px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="wl-list-body">
+        {% for s in stocks %}
+        <tr class="wl-list-row"
+            id="row-{{ s.code }}"
+            data-code="{{ s.code }}"
+            data-name="{{ s.name }}"
+            data-grade-sort="{{ s.grade_sort }}"
+            data-change="{{ s.change_pct or 0 }}"
+            data-date="{{ s.analysis_date or '' }}"
+            {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
+          <td>
+            <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
+          </td>
+          <td>
+            <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','',None) else 'c' }}">
+              {{ s.grade or '—' }}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('stock_page', code=s.code) }}" class="wl-list-name">{{ s.name }}</a>
+            {% if s.pending_job %}
+            <span class="spinner" style="width:10px;height:10px;margin-left:6px;vertical-align:middle"></span>
+            {% endif %}
+          </td>
+          <td><span class="market-tag">{{ s.market | upper }}</span></td>
+          <td style="text-align:right;font-size:12.5px">
+            {% if s.price %}{{ s.currency }}{{ "%.2f"|format(s.price) }}{% else %}—{% endif %}
+          </td>
+          <td style="text-align:right">
+            {% if s.change_pct is not none %}
+            <span class="stock-change {{ 'up' if s.change_pct >= 0 else 'down' }}" style="font-size:12px">{{ "%+.1f"|format(s.change_pct) }}%</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if s.conclusion %}
+            <span class="wl-list-conclusion wl-dir-{{ s.conclusion }}">{{ s.conclusion }}</span>
+            {% else %}<span style="color:var(--ink-faint);font-size:11px">—</span>{% endif %}
+          </td>
+          <td style="font-size:11px;color:var(--ink-muted)">{{ (s.analysis_date or '')[-5:] }}</td>
+          <td class="wl-list-ops">
+            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="重新分析">↻</button>
+            {% if s.has_letter %}
+            <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn">信</button>
+            {% endif %}
+            <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
+                  onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
+              <button type="submit" class="wl-op-btn wl-op-danger">移除</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div id="wl-list-empty" style="display:none;text-align:center;padding:2rem;color:var(--ink-muted);font-size:.9rem">没有匹配的股票</div>
+  </div>
+
   {% else %}
   <div class="empty-hero">
     <div class="empty-hero-inner">
@@ -222,11 +302,50 @@ document.querySelectorAll('input[name="wl-view"]').forEach(r => {
   r.addEventListener('change', () => setView(r.value));
 });
 function setView(v) {
-  const grid = document.getElementById('holding-grid');
-  if (!grid) return;
-  grid.dataset.view = v;
+  const grid    = document.getElementById('holding-grid');
+  const listView= document.getElementById('wl-list-view');
+  // 移动端 list → card
+  if (v === 'list' && window.innerWidth < 768) v = 'card';
+  if (grid)     { grid.style.display = v === 'list' ? 'none' : ''; grid.dataset.view = v; }
+  if (listView) { listView.style.display = v === 'list' ? '' : 'none'; }
   document.querySelectorAll('input[name="wl-view"]').forEach(r => r.checked = r.value === v);
   localStorage.setItem('wl-view', v);
+}
+
+// ── 搜索过滤 ─────────────────────────────────────────
+function filterBySearch(q) {
+  const norm = q.trim().toLowerCase();
+  const clear = document.getElementById('wl-search-clear');
+  if (clear) clear.style.display = norm ? '' : 'none';
+
+  let visibleCards = 0, visibleRows = 0;
+
+  // 卡片模式
+  document.querySelectorAll('.holding-card').forEach(card => {
+    const name = (card.dataset.name || '').toLowerCase();
+    const code = (card.dataset.code || '').toLowerCase();
+    const match = !norm || name.includes(norm) || code.includes(norm);
+    card.style.display = match ? '' : 'none';
+    if (match) visibleCards++;
+  });
+
+  // 列表模式
+  document.querySelectorAll('.wl-list-row').forEach(row => {
+    const name = (row.dataset.name || '').toLowerCase();
+    const code = (row.dataset.code || '').toLowerCase();
+    const match = !norm || name.includes(norm) || code.includes(norm);
+    row.style.display = match ? '' : 'none';
+    if (match) visibleRows++;
+  });
+
+  // 空状态
+  const emptyEl = document.getElementById('wl-list-empty');
+  if (emptyEl) emptyEl.style.display = (norm && visibleRows === 0) ? '' : 'none';
+}
+
+function clearSearch() {
+  const inp = document.getElementById('wl-search');
+  if (inp) { inp.value = ''; filterBySearch(''); inp.focus(); }
 }
 
 // ── 排序 ─────────────────────────────────────────────
@@ -234,14 +353,16 @@ document.querySelectorAll('input[name="wl-sort"]').forEach(r => {
   r.addEventListener('change', () => { sortCards(r.value); localStorage.setItem('wl-sort', r.value); });
 });
 function sortCards(by) {
-  const grid = document.getElementById('holding-grid');
-  if (!grid) return;
-  [...grid.querySelectorAll('.holding-card')].sort((a, b) => {
+  const cmp = (a, b) => {
     if (by === 'grade')  return (+(a.dataset.gradeSort||99)) - (+(b.dataset.gradeSort||99));
     if (by === 'change') return (+(b.dataset.change||0))    - (+(a.dataset.change||0));
     if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
     return 0;
-  }).forEach(c => grid.appendChild(c));
+  };
+  const grid = document.getElementById('holding-grid');
+  if (grid) [...grid.querySelectorAll('.holding-card')].sort(cmp).forEach(c => grid.appendChild(c));
+  const tbody = document.getElementById('wl-list-body');
+  if (tbody) [...tbody.querySelectorAll('.wl-list-row')].sort(cmp).forEach(r => tbody.appendChild(r));
 }
 
 // ── 筛选 ─────────────────────────────────────────────

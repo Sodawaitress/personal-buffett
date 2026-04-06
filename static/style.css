@@ -2024,6 +2024,39 @@ footer small {
   font-weight: 700;
 }
 
+/* ── 工具栏搜索框 ── */
+.wl-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.wl-search-input {
+  border: 1px solid var(--rule-light);
+  border-radius: 4px;
+  padding: 5px 28px 5px 10px;
+  font-size: 13px;
+  font-family: sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  width: 180px;
+  outline: none;
+  transition: border-color .15s;
+}
+.wl-search-input:focus { border-color: var(--ink); }
+.wl-search-input::placeholder { color: var(--ink-faint); }
+.wl-search-clear {
+  position: absolute;
+  right: 6px;
+  background: none;
+  border: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.wl-search-clear:hover { color: var(--ink); }
+
 /* ── 工具栏图标按钮 ── */
 .wl-icon-btn {
   display: flex;
@@ -2246,10 +2279,79 @@ footer small {
   gap: 10px;
 }
 
+/* ── 列表模式 ── */
+.wl-list-view { overflow-x: auto; }
+
+.wl-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: sans-serif;
+}
+
+.wl-list-table thead th {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 2px solid var(--rule);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink-muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wl-list-row {
+  border-bottom: 1px solid var(--rule-light, #ebebeb);
+  transition: background .1s;
+}
+.wl-list-row:hover { background: rgba(0,0,0,.025); }
+
+.wl-list-row td {
+  padding: 8px 10px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.wl-list-name {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13.5px;
+}
+.wl-list-name:hover { text-decoration: underline; }
+
+.wl-list-conclusion {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.wl-list-ops {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wl-op-btn {
+  background: none;
+  border: 1px solid var(--rule-light);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: sans-serif;
+  transition: background .1s;
+}
+.wl-op-btn:hover { background: rgba(0,0,0,.06); }
+.wl-op-danger:hover { background: #fee; color: #b03030; border-color: #fcc; }
+
 /* ── 移动端 ── */
 @media (max-width: 768px) {
   .watchlist-wrap { padding: 14px 16px 80px; }
-  .wl-toolbar { gap: 8px; }
+  .wl-toolbar { flex-wrap: wrap; gap: 8px; }
+  .wl-search-input { width: 140px; }
+  .wl-list-view { display: none !important; } /* 移动端不显示列表模式 */
 }
 
 /* ── Report hint (homepage) ── */
