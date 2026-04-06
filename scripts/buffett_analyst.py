@@ -167,25 +167,43 @@ def analyze_period(period_label: str, days: int, news_by_code: dict,
     return _call_groq(SYSTEM_PERIOD, user_msg, max_tokens=600)
 
 
-SYSTEM_LETTER = """你是沃伦·巴菲特，用第一人称写一封给持仓者的私人分析信。
+SYSTEM_LETTER = """你是沃伦·巴菲特，用第一人称写一封给持仓者的私人分析信，同时附上结构化维度评估。
 
-你的分析框架（必须贯穿全文，但不要明着列清单）：
-
-1. 生意分类：这是 GREAT（高ROE、低资本消耗）、GOOD（稳固但需持续再投入）还是 GRUESOME（高增长、吃资本、不赚钱）？
-2. 护城河方向：护城河在变宽还是变窄？新闻里有没有竞争者逼近、政策松绑、技术替代的信号？
-3. 管理层信号：从新闻里看，有没有机构惰性的迹象（高点并购、CFO离职、频繁"一次性费用"）？有没有真金白银回购或增持？
+【第一部分：分析信正文】
+分析框架（贯穿全文，不要列清单）：
+1. 生意分类：GREAT（高ROE、低资本消耗）/ GOOD（稳固但需持续再投入）/ GRUESOME（高增长、吃资本、不赚钱）
+2. 护城河方向：变宽还是变窄？有没有竞争者逼近、技术替代、政策打压的信号？
+3. 管理层信号：机构惰性迹象（高点并购、CFO离职、频繁"一次性费用"）？还是真金白银回购/增持？
 4. 资金面（A股）：主力净流入/流出的幅度和趋势说明什么？
-5. 估值常识：PE/PB如果有数据，跟历史均值比是便宜还是贵？没数据就不要瞎猜。
+5. 估值常识：PE/PB跟历史均值比是便宜还是贵？没数据不猜。
 
 写作要求：
-- 开头直接切入最重要的一件事：这只股票现在最值得关注的是什么？
-- 有具体数据就用，没有就别编。宁可说"现在没有足够的财务数据"也不要含糊其辞。
-- 该犀利时犀利：护城河在收窄就说收窄，管理层有红旗就点出来，不要和稀泥。
-- 偶尔可以提查理芒格，但不要刻意。
-- 结尾一句话给出立场，不含糊。
+- 开头直接切入最重要的一件事
+- 有数据就用，没有就说"数据不足"，不编造
+- 该犀利时犀利，不和稀泥
+- 偶尔可提查理芒格
+- 结尾一句话给出明确立场
 - 署名「沃伦·巴菲特（私人版）」
-- 总字数 280-380 字（中文）
-- 纯文字，不用任何 Markdown 符号"""
+- 总字数 250-350 字（中文），纯文字无 Markdown
+
+【第二部分：结构化维度（信件正文结束后，另起一行）】
+在信件最后，必须输出以下格式（每行一个字段，冒号后直接接内容，不超过25字）：
+
+===DIMS===
+护城河：[一句话，说明宽/窄/稳及核心依据]
+管理层：[一句话，信号正面/中性/有红旗]
+估值：[一句话，便宜/合理/偏贵，引用PE/PB数据]
+资金流向：[一句话，流入/流出/中性，引用主力数据]
+行为金融：[一句话，从Kahneman行为经济学视角——当前持有者最可能犯什么心理偏差？理性人应该怎么看？若是卖出/D级，必须点名沉没成本陷阱]
+宏观敏感度：[一句话，对利率/政策/汇率的敏感程度]
+评级：[A/B+/B/B-/C/D] | 结论：[买入/持有/减持/卖出]
+===END===
+
+【行为金融字段的特殊规则】
+- 若股票名称含 ST 或 *ST：必须写"退市风险高，彩票型资产，持有多为损失厌恶而非价值判断"
+- 若主力资金净流出超过 -5%：必须提示"机构在离场，散户在接盘"
+- 若结论为减持/卖出：必须问"忘记买入成本，今天你愿意以此价格买入吗？若答案是否，持有的唯一理由是情绪"
+- 若近期涨幅超过 20%：提示 FOMO 追涨风险"""
 
 
 def _score_news(news: list) -> list:
@@ -415,8 +433,14 @@ def analyze_stock_v2(code: str, name: str, market: str,
 
     signals_str = "\n".join(signals_lines)
 
+    # ST 股检测
+    is_st = "ST" in name.upper() or code.upper().startswith(("ST", "*ST"))
+    st_warning = ""
+    if is_st:
+        st_warning = "\n⚠️ 风险警示：该股票为ST/风险警示股，存在退市风险，流动性差，散户占比极高，属于典型彩票型资产。"
+
     user_msg = f"""公司：{name}（{code}）
-市场：{market.upper()}
+市场：{market.upper()}{st_warning}
 {price_str}
 {ff_str}
 {profile_str}
@@ -426,35 +450,53 @@ def analyze_stock_v2(code: str, name: str, market: str,
 近期新闻（已过滤噪音，按信号重要性排序）：
 {news_lines}
 
-请写分析信，结尾单独一行：
-评级：[A/B+/B/B-/C/D] | 结论：[买入/持有/减持/卖出]"""
+请按格式输出：先写分析信正文，再输出 ===DIMS=== 结构化维度块。"""
 
-    raw = _call_groq(SYSTEM_LETTER, user_msg, max_tokens=700)
+    raw = _call_groq(SYSTEM_LETTER, user_msg, max_tokens=900)
     if not raw:
         return {}
 
+    import re
+
+    # 分离信件正文和维度块
+    dims_match = re.search(r'===DIMS===(.*?)===END===', raw, re.DOTALL)
+    dims_text  = dims_match.group(1).strip() if dims_match else ""
+    letter_text = raw[:dims_match.start()].strip() if dims_match else raw.strip()
+
+    # 从信件正文里也去掉评级行（兼容旧格式）
+    letter_lines = [l for l in letter_text.splitlines()
+                    if not re.match(r'\s*评级[：:]\s*[A-Z]', l)]
+    letter_text = "\n".join(letter_lines).strip()
+
     # 解析评级和结论
     grade, conclusion = "C", "持有"
-    for line in raw.splitlines():
-        if "评级：" in line or "评级:" in line:
-            import re
-            m = re.search(r'评级[：:]\s*([A-Z][+-]?)', line)
-            if m:
-                grade = m.group(1)
-            m2 = re.search(r'结论[：:]\s*(买入|持有|减持|卖出)', line)
-            if m2:
-                conclusion = m2.group(1)
+    grade_line = dims_text if dims_text else raw
+    m = re.search(r'评级[：:]\s*([A-Z][+\-]?)', grade_line)
+    if m: grade = m.group(1)
+    m2 = re.search(r'结论[：:]\s*(买入|持有|减持|卖出)', grade_line)
+    if m2: conclusion = m2.group(1)
 
-    # 信件正文（去掉最后评级行）
-    letter_lines = [l for l in raw.splitlines() if "评级：" not in l and "评级:" not in l]
-    letter_text  = "\n".join(letter_lines).strip()
+    # 解析各维度
+    def _parse_dim(key: str, text: str) -> str:
+        m = re.search(rf'{key}[：:]\s*(.+)', text)
+        return m.group(1).strip()[:60] if m else ""
+
+    dims = {
+        "moat":             _parse_dim("护城河", dims_text),
+        "management":       _parse_dim("管理层", dims_text),
+        "valuation":        _parse_dim("估值",   dims_text),
+        "fund_flow_summary":_parse_dim("资金流向", dims_text),
+        "behavioral":       _parse_dim("行为金融", dims_text),
+        "macro_sensitivity":_parse_dim("宏观敏感度", dims_text),
+    }
 
     return {
-        "conclusion":    conclusion,
-        "grade":         grade,
-        "reasoning":     letter_text[:200],   # 前200字作简报
-        "letter_html":   letter_text,         # 完整信件
-        "raw_output":    raw,
+        "conclusion":       conclusion,
+        "grade":            grade,
+        "reasoning":        letter_text[:200],
+        "letter_html":      letter_text,
+        "raw_output":       raw,
+        **dims,
     }
 
 
