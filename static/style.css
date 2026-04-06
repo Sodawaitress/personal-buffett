@@ -1969,6 +1969,11 @@ footer small {
   font-weight: 600;
 }
 .wl-add-btn:hover { opacity: .8; }
+.wl-analyze-btn {
+  border-style: solid;
+  color: var(--ink);
+  border-color: var(--ink);
+}
 
 /* ── Popover ── */
 .wl-popover-wrap { position: relative; }
@@ -2070,16 +2075,26 @@ footer small {
   color: var(--ink-faint);
 }
 
-/* ── checkbox ── */
+/* ── 卡片点击跳转 ── */
+.holding-card { cursor: pointer; }
+.holding-card .holding-actions { cursor: default; }
+
+/* ── 列表行点击跳转 ── */
+.wl-list-row { cursor: pointer; }
+.wl-list-row .wl-list-ops { cursor: default; }
+
+/* ── checkbox（默认隐藏，select-mode 显示） ── */
 .holding-checkbox {
   position: absolute;
   top: 8px;
   left: 8px;
-  display: flex;
+  display: none;
   cursor: pointer;
   z-index: 1;
 }
 .holding-checkbox input { accent-color: var(--ink); }
+.select-mode .holding-checkbox { display: flex; }
+.select-mode .holding-card { cursor: default; }
 
 /* ── 高亮动画（目录点击）── */
 @keyframes card-flash {

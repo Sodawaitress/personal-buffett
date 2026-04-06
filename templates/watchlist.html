@@ -17,10 +17,7 @@
     <div class="wl-toolbar-controls">
       {# 排序 #}
       <div class="wl-popover-wrap">
-        <button class="wl-icon-btn" title="排序" onclick="togglePopover('sort-popover', this); event.stopPropagation()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" pointer-events="none">
-            <line x1="1" y1="3.5" x2="13" y2="3.5"/><line x1="3" y1="7" x2="13" y2="7"/><line x1="5" y1="10.5" x2="13" y2="10.5"/>
-          </svg>
+        <button class="wl-icon-btn" id="sort-btn" title="排序" onclick="togglePopover('sort-popover', this); event.stopPropagation()">
           排序
         </button>
         <div class="wl-popover" id="sort-popover">
@@ -31,35 +28,11 @@
         </div>
       </div>
 
-      {# 筛选 #}
-      <div class="wl-popover-wrap">
-        <button class="wl-icon-btn" title="筛选" onclick="togglePopover('filter-popover', this); event.stopPropagation()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" pointer-events="none">
-            <path d="M1 2h12l-4.5 5v4l-3-1.5V7L1 2z"/>
-          </svg>
-          筛选
-        </button>
-        <div class="wl-popover" id="filter-popover">
-          <label class="wl-pop-opt"><input type="checkbox" id="filter-stale"> 待更新（>7天）</label>
-          <label class="wl-pop-opt"><input type="checkbox" id="filter-good"> 仅 B+ 以上</label>
-        </div>
-      </div>
+      {# 视图切换（单按钮） #}
+      <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">列表</button>
 
-      {# 视图 #}
-      <div class="wl-popover-wrap">
-        <button class="wl-icon-btn" title="视图" onclick="togglePopover('view-popover', this); event.stopPropagation()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" pointer-events="none">
-            <rect x="0" y="0" width="6" height="6"/><rect x="8" y="0" width="6" height="6"/>
-            <rect x="0" y="8" width="6" height="6"/><rect x="8" y="8" width="6" height="6"/>
-          </svg>
-          视图
-        </button>
-        <div class="wl-popover" id="view-popover">
-          <label class="wl-pop-opt"><input type="radio" name="wl-view" value="card" checked> 卡片</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-view" value="list"> 列表</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-view" value="thumb"> 缩略图</label>
-        </div>
-      </div>
+      {# 分析（进入选择模式） #}
+      <button class="wl-icon-btn wl-analyze-btn" id="analyze-mode-btn" onclick="toggleSelectMode()">分析</button>
 
       {# 添加 #}
       <button class="wl-icon-btn wl-add-btn" onclick="toggleAddPanel()">
@@ -103,16 +76,18 @@
          data-grade-sort="{{ s.grade_sort }}"
          data-change="{{ s.change_pct or 0 }}"
          data-date="{{ s.analysis_date or '' }}"
+         data-href="{{ url_for('stock_page', code=s.code) }}"
+         onclick="cardClick(event, this)"
          {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
 
-      <label class="holding-checkbox">
+      <label class="holding-checkbox" onclick="event.stopPropagation()">
         <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
       </label>
 
       <div class="card-main">
         <div class="holding-top">
           <div class="holding-name-wrap">
-            <a href="{{ url_for('stock_page', code=s.code) }}" class="holding-name-link">{{ s.name }}</a>
+            <span class="holding-name-link">{{ s.name }}</span>
             <span class="market-tag" style="margin-left:5px">{{ s.market | upper }}</span>
           </div>
           <div class="stock-price-block">
@@ -131,7 +106,7 @@
         <div class="holding-analysis-pending">
           <span class="spinner"></span>
           <span class="pending-text">巴菲特分析中…</span>
-          <button class="btn-cancel-job" onclick="cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="取消">✕</button>
+          <button class="btn-cancel-job" onclick="event.stopPropagation(); cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="取消">✕</button>
         </div>
         {% elif s.conclusion %}
         <div class="holding-analysis">
@@ -156,7 +131,7 @@
           {% if s.analysis_date %}
           <span class="holding-date">{{ s.analysis_date }}</span>
           {% endif %}
-          <div class="holding-actions">
+          <div class="holding-actions" onclick="event.stopPropagation()">
             {% if s.has_letter %}
             <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
             {% endif %}
@@ -178,7 +153,7 @@
     <table class="wl-list-table">
       <thead>
         <tr>
-          <th style="width:28px"></th>
+          <th class="wl-list-cb-col" style="width:28px;display:none"></th>
           <th style="width:44px">评级</th>
           <th>名称</th>
           <th style="width:44px">市场</th>
@@ -186,7 +161,7 @@
           <th style="width:62px;text-align:right">涨跌</th>
           <th style="width:52px">结论</th>
           <th style="width:64px">日期</th>
-          <th style="width:120px">操作</th>
+          <th style="width:100px">操作</th>
         </tr>
       </thead>
       <tbody id="wl-list-body">
@@ -198,8 +173,10 @@
             data-grade-sort="{{ s.grade_sort }}"
             data-change="{{ s.change_pct or 0 }}"
             data-date="{{ s.analysis_date or '' }}"
+            data-href="{{ url_for('stock_page', code=s.code) }}"
+            onclick="rowClick(event, this)"
             {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
-          <td>
+          <td class="wl-list-cb-col" style="display:none" onclick="event.stopPropagation()">
             <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
           </td>
           <td>
@@ -208,7 +185,7 @@
             </span>
           </td>
           <td>
-            <a href="{{ url_for('stock_page', code=s.code) }}" class="wl-list-name">{{ s.name }}</a>
+            <span class="wl-list-name">{{ s.name }}</span>
             {% if s.pending_job %}
             <span class="spinner" style="width:10px;height:10px;margin-left:6px;vertical-align:middle"></span>
             {% endif %}
@@ -228,7 +205,7 @@
             {% else %}<span style="color:var(--ink-faint);font-size:11px">—</span>{% endif %}
           </td>
           <td style="font-size:11px;color:var(--ink-muted)">{{ (s.analysis_date or '')[-5:] }}</td>
-          <td class="wl-list-ops">
+          <td class="wl-list-ops" onclick="event.stopPropagation()">
             <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="重新分析">↻</button>
             {% if s.has_letter %}
             <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn">信</button>
@@ -282,6 +259,10 @@
 
 {% block scripts %}
 <script>
+// ── 全局状态 ──────────────────────────────────────────
+let _selectMode = false;
+let _currentView = 'card';
+
 // ── Popover ───────────────────────────────────────────
 function togglePopover(id, btn) {
   const pop = document.getElementById(id);
@@ -293,69 +274,42 @@ function togglePopover(id, btn) {
 document.addEventListener('click', e => {
   if (!e.target.closest('.wl-popover-wrap')) {
     document.querySelectorAll('.wl-popover').forEach(p => p.classList.remove('open'));
-    document.querySelectorAll('.wl-icon-btn:not(.wl-add-btn)').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#sort-btn').forEach(b => b.classList.remove('active'));
   }
 });
 
-// ── 视图 ─────────────────────────────────────────────
-document.querySelectorAll('input[name="wl-view"]').forEach(r => {
-  r.addEventListener('change', () => setView(r.value));
-});
+// ── 视图切换（单按钮） ─────────────────────────────────
+function toggleView() {
+  setView(_currentView === 'card' ? 'list' : 'card');
+}
 function setView(v) {
-  const grid    = document.getElementById('holding-grid');
-  const listView= document.getElementById('wl-list-view');
-  // 移动端 list → card
   if (v === 'list' && window.innerWidth < 768) v = 'card';
-  if (grid)     { grid.style.display = v === 'list' ? 'none' : ''; grid.dataset.view = v; }
-  if (listView) { listView.style.display = v === 'list' ? '' : 'none'; }
-  document.querySelectorAll('input[name="wl-view"]').forEach(r => r.checked = r.value === v);
+  _currentView = v;
+  const grid     = document.getElementById('holding-grid');
+  const listView = document.getElementById('wl-list-view');
+  if (grid)     grid.style.display     = v === 'list' ? 'none' : '';
+  if (listView) listView.style.display = v === 'list' ? ''     : 'none';
+  const btn = document.getElementById('view-toggle-btn');
+  if (btn) btn.textContent = v === 'list' ? '卡片' : '列表';
   localStorage.setItem('wl-view', v);
 }
 
-// ── 搜索过滤 ─────────────────────────────────────────
-function filterBySearch(q) {
-  const norm = q.trim().toLowerCase();
-  const clear = document.getElementById('wl-search-clear');
-  if (clear) clear.style.display = norm ? '' : 'none';
-
-  let visibleCards = 0, visibleRows = 0;
-
-  // 卡片模式
-  document.querySelectorAll('.holding-card').forEach(card => {
-    const name = (card.dataset.name || '').toLowerCase();
-    const code = (card.dataset.code || '').toLowerCase();
-    const match = !norm || name.includes(norm) || code.includes(norm);
-    card.style.display = match ? '' : 'none';
-    if (match) visibleCards++;
-  });
-
-  // 列表模式
-  document.querySelectorAll('.wl-list-row').forEach(row => {
-    const name = (row.dataset.name || '').toLowerCase();
-    const code = (row.dataset.code || '').toLowerCase();
-    const match = !norm || name.includes(norm) || code.includes(norm);
-    row.style.display = match ? '' : 'none';
-    if (match) visibleRows++;
-  });
-
-  // 空状态
-  const emptyEl = document.getElementById('wl-list-empty');
-  if (emptyEl) emptyEl.style.display = (norm && visibleRows === 0) ? '' : 'none';
-}
-
-function clearSearch() {
-  const inp = document.getElementById('wl-search');
-  if (inp) { inp.value = ''; filterBySearch(''); inp.focus(); }
-}
-
 // ── 排序 ─────────────────────────────────────────────
-document.querySelectorAll('input[name="wl-sort"]').forEach(r => {
-  r.addEventListener('change', () => { sortCards(r.value); localStorage.setItem('wl-sort', r.value); });
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input[name="wl-sort"]').forEach(r => {
+    r.addEventListener('change', () => {
+      sortCards(r.value);
+      localStorage.setItem('wl-sort', r.value);
+      // 选后关闭 popover
+      document.querySelectorAll('.wl-popover').forEach(p => p.classList.remove('open'));
+      document.getElementById('sort-btn')?.classList.remove('active');
+    });
+  });
 });
 function sortCards(by) {
   const cmp = (a, b) => {
     if (by === 'grade')  return (+(a.dataset.gradeSort||99)) - (+(b.dataset.gradeSort||99));
-    if (by === 'change') return (+(b.dataset.change||0))    - (+(a.dataset.change||0));
+    if (by === 'change') return (+(b.dataset.change||0))     - (+(a.dataset.change||0));
     if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
     return 0;
   };
@@ -365,33 +319,82 @@ function sortCards(by) {
   if (tbody) [...tbody.querySelectorAll('.wl-list-row')].sort(cmp).forEach(r => tbody.appendChild(r));
 }
 
-// ── 筛选 ─────────────────────────────────────────────
-function applyFilters() {
-  const stale = document.getElementById('filter-stale')?.checked;
-  const good  = document.getElementById('filter-good')?.checked;
-  const today = new Date();
+// ── 搜索过滤 ─────────────────────────────────────────
+function filterBySearch(q) {
+  const norm = q.trim().toLowerCase();
+  const clear = document.getElementById('wl-search-clear');
+  if (clear) clear.style.display = norm ? '' : 'none';
+  let visibleRows = 0;
   document.querySelectorAll('.holding-card').forEach(card => {
-    let show = true;
-    if (stale && card.dataset.date && (today - new Date(card.dataset.date)) / 86400000 <= 7) show = false;
-    if (good  && (+(card.dataset.gradeSort||99)) > 2) show = false;
-    card.style.display = show ? '' : 'none';
+    const match = !norm || (card.dataset.name||'').toLowerCase().includes(norm) || (card.dataset.code||'').toLowerCase().includes(norm);
+    card.style.display = match ? '' : 'none';
   });
+  document.querySelectorAll('.wl-list-row').forEach(row => {
+    const match = !norm || (row.dataset.name||'').toLowerCase().includes(norm) || (row.dataset.code||'').toLowerCase().includes(norm);
+    row.style.display = match ? '' : 'none';
+    if (match) visibleRows++;
+  });
+  const emptyEl = document.getElementById('wl-list-empty');
+  if (emptyEl) emptyEl.style.display = (norm && visibleRows === 0) ? '' : 'none';
 }
-document.getElementById('filter-stale')?.addEventListener('change', applyFilters);
-document.getElementById('filter-good')?.addEventListener('change', applyFilters);
+function clearSearch() {
+  const inp = document.getElementById('wl-search');
+  if (inp) { inp.value = ''; filterBySearch(''); inp.focus(); }
+}
 
-// ── 批量操作 ─────────────────────────────────────────
-function selectNone() {
-  document.querySelectorAll('.stock-checkbox').forEach(cb => {
-    cb.checked = false;
-    cb.closest('.holding-card')?.classList.remove('card-selected');
-  });
+// ── 选择模式 ─────────────────────────────────────────
+function toggleSelectMode() {
+  _selectMode ? exitSelectMode() : enterSelectMode();
+}
+function enterSelectMode() {
+  _selectMode = true;
+  document.getElementById('holding-grid')?.classList.add('select-mode');
+  document.getElementById('wl-list-view')?.classList.add('select-mode');
+  // 显示列表复选框列
+  document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = '');
+  const btn = document.getElementById('analyze-mode-btn');
+  if (btn) { btn.textContent = '取消选择'; btn.classList.add('active'); }
+}
+function exitSelectMode() {
+  _selectMode = false;
+  document.querySelectorAll('.stock-checkbox').forEach(cb => { cb.checked = false; });
+  document.querySelectorAll('.holding-card').forEach(c => c.classList.remove('card-selected'));
+  document.querySelectorAll('.wl-list-row').forEach(r => r.classList.remove('card-selected'));
+  document.getElementById('holding-grid')?.classList.remove('select-mode');
+  document.getElementById('wl-list-view')?.classList.remove('select-mode');
+  document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = 'none');
+  const btn = document.getElementById('analyze-mode-btn');
+  if (btn) { btn.textContent = '分析'; btn.classList.remove('active'); }
   _updateBatch();
 }
+
+// ── 卡片 / 行点击 ─────────────────────────────────────
+function cardClick(e, card) {
+  if (_selectMode) {
+    const cb = card.querySelector('.stock-checkbox');
+    if (cb) { cb.checked = !cb.checked; onCheckChange(); }
+    return;
+  }
+  window.location.href = card.dataset.href;
+}
+function rowClick(e, row) {
+  if (_selectMode) {
+    const cb = row.querySelector('.stock-checkbox');
+    if (cb) { cb.checked = !cb.checked; onCheckChange(); }
+    return;
+  }
+  window.location.href = row.dataset.href;
+}
+
+// ── 批量操作 ─────────────────────────────────────────
 function onCheckChange() {
   document.querySelectorAll('.holding-card').forEach(card => {
     const cb = card.querySelector('.stock-checkbox');
     card.classList.toggle('card-selected', !!(cb && cb.checked));
+  });
+  document.querySelectorAll('.wl-list-row').forEach(row => {
+    const cb = row.querySelector('.stock-checkbox');
+    row.classList.toggle('card-selected', !!(cb && cb.checked));
   });
   _updateBatch();
 }
@@ -408,10 +411,10 @@ async function batchAnalyze() {
   })).json();
   if (data.job_ids) {
     data.job_ids.forEach(({code, job_id}) => {
-      const card = document.querySelector(`[data-code="${code}"]`);
+      const card = document.querySelector(`.holding-card[data-code="${code}"]`);
       if (card) { card.dataset.job = job_id; card.classList.add('holding-pending'); pollJob(job_id, code); }
     });
-    selectNone();
+    exitSelectMode();
   }
 }
 function batchPortfolio() {
@@ -424,13 +427,13 @@ async function triggerAnalysis(code) {
   const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
-    const card = document.querySelector(`[data-code="${code}"]`);
+    const card = document.querySelector(`.holding-card[data-code="${code}"]`);
     if (card) { card.dataset.job = data.job_id; card.classList.add('holding-pending'); pollJob(data.job_id, code); }
   }
 }
 async function cancelJob(jobId, code) {
   await fetch(`/api/job/${jobId}/cancel`, { method: 'POST' });
-  const card = document.querySelector(`[data-code="${code}"]`);
+  const card = document.querySelector(`.holding-card[data-code="${code}"]`);
   if (card) {
     card.classList.remove('holding-pending');
     delete card.dataset.job;
@@ -492,8 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedSort = localStorage.getItem('wl-sort') || 'default';
   const r = document.querySelector(`input[name="wl-sort"][value="${savedSort}"]`);
   if (r) { r.checked = true; sortCards(savedSort); }
-  document.querySelectorAll('[data-job]').forEach(card => {
-    if (card.dataset.job) pollJob(card.dataset.job, card.dataset.code);
+  document.querySelectorAll('.holding-card[data-job], .wl-list-row[data-job]').forEach(el => {
+    if (el.dataset.job) pollJob(el.dataset.job, el.dataset.code);
   });
   initSearch('search-q','search-dropdown','add-code','add-name','add-market','add-selected','add-selected-label','btn-add-submit');
 });
