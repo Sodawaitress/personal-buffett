@@ -2061,6 +2061,69 @@ footer small {
   color: var(--paper);
 }
 
+/* ── Inline status tabs ── */
+.status-tabs {
+  display: inline-flex;
+  border: 1px solid var(--rule-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.status-tab {
+  background: none;
+  border: none;
+  border-right: 1px solid var(--rule-light);
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: -apple-system, sans-serif;
+  color: var(--ink-muted);
+  cursor: pointer;
+  line-height: 1.6;
+  transition: background .12s, color .12s;
+}
+.status-tab:last-child { border-right: none; }
+.status-tab:hover { background: var(--rule-light); color: var(--ink); }
+.status-tab.active {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+/* Compact variant for list view */
+.status-tabs-sm .status-tab { padding: 1px 5px; font-size: 10px; }
+
+/* Inline date/price confirm row */
+.status-extra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.status-date-input,
+.status-price-input {
+  font-size: 11px;
+  font-family: -apple-system, sans-serif;
+  border: 1px solid var(--rule-light);
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: var(--paper-2);
+  color: var(--ink);
+  line-height: 1.6;
+}
+.status-date-input  { width: 120px; }
+.status-price-input { width: 90px; }
+.status-confirm-btn {
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+.status-confirm-btn:hover { opacity: .85; }
+
 /* ═══════════════════════════════════════════════
    PERFORMANCE PAGE (算账)
    ═══════════════════════════════════════════════ */

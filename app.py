@@ -471,7 +471,8 @@ def watchlist_page():
 
     return render_template("watchlist.html",
         stocks=stocks, holding=holding, watching=watching, sold=sold,
-        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"))
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+        now_date=datetime.now(CN_TZ).strftime("%Y-%m-%d"))
 
 
 # ── Watchlist Actions ──────────────────────────────────

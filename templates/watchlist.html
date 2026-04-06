@@ -144,10 +144,19 @@
           {% if s.has_letter %}
           <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
           {% endif %}
+          <div class="status-tabs" onclick="event.stopPropagation()">
+            <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" data-s="watching" onclick="switchStatus('{{ s.code }}','watching',this)">观察</button>
+            <button class="status-tab {{ 'active' if s.status == 'holding' else '' }}" data-s="holding"  onclick="switchStatus('{{ s.code }}','holding',this)">持有</button>
+            <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" data-s="sold"    onclick="switchStatus('{{ s.code }}','sold',this)">卖出</button>
+          </div>
+          <div class="status-extra" id="extra-{{ s.code }}" style="display:none">
+            <input type="date"   class="status-date-input"  id="extra-date-{{ s.code }}"  value="{{ ('' ~ (now_date or '')) }}">
+            <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="价格(选填)" step="0.01" min="0">
+            <button class="status-confirm-btn" onclick="confirmStatus('{{ s.code }}')">✓</button>
+          </div>
           {% if s.status != 'sold' %}
           <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="btn-text" style="font-size:11px">↻ 分析</button>
           {% endif %}
-          <button onclick="openMoveDialog('{{ s.code }}','{{ s.name }}','{{ s.status }}')" class="btn-text" style="font-size:11px">移至…</button>
           <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
                 onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
             <button type="submit" class="btn-text" style="font-size:11px;color:var(--ink-muted)">移除</button>
@@ -268,13 +277,17 @@
             {% else %}<span style="color:var(--ink-muted)">观察</span>{% endif %}
           </td>
           <td class="wl-list-ops" onclick="event.stopPropagation()">
+            <div class="status-tabs status-tabs-sm">
+              <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">观</button>
+              <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">持</button>
+              <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">卖</button>
+            </div>
             {% if s.status != 'sold' %}
             <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="重新分析">↻</button>
             {% endif %}
             {% if s.has_letter %}
             <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn">信</button>
             {% endif %}
-            <button onclick="openMoveDialog('{{ s.code }}','{{ s.name }}','{{ s.status }}')" class="wl-op-btn" title="移至">⇄</button>
             <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
                   onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
               <button type="submit" class="wl-op-btn wl-op-danger">移除</button>
@@ -300,36 +313,7 @@
 
 </div>
 
-{# 移至 Modal #}
-<div id="move-modal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
-    <div class="modal-content">
-      <div class="modal-header" style="border-bottom:1px solid var(--rule-light);padding:14px 20px">
-        <h6 class="modal-title" id="move-modal-title" style="font-family:-apple-system,sans-serif;font-size:14px;font-weight:600">移动股票</h6>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" style="padding:20px">
-        <div class="move-status-btns" style="display:flex;gap:8px;margin-bottom:16px">
-          <button class="move-status-btn" data-status="watching" onclick="selectMoveStatus('watching',this)">观察</button>
-          <button class="move-status-btn" data-status="holding"  onclick="selectMoveStatus('holding',this)">持有</button>
-          <button class="move-status-btn" data-status="sold"     onclick="selectMoveStatus('sold',this)">已卖出</button>
-        </div>
-        <div id="move-date-row" style="display:none;margin-bottom:10px">
-          <label style="font-size:12px;color:var(--ink-muted);display:block;margin-bottom:4px" id="move-date-label">操作日期</label>
-          <input type="date" id="move-date" class="wl-search-input" style="width:100%">
-        </div>
-        <div id="move-price-row" style="display:none;margin-bottom:10px">
-          <label style="font-size:12px;color:var(--ink-muted);display:block;margin-bottom:4px" id="move-price-label">价格（可选，留空则自动拉历史收盘价）</label>
-          <input type="number" id="move-price" class="wl-search-input" style="width:100%" placeholder="0.00" step="0.01" min="0">
-        </div>
-      </div>
-      <div class="modal-footer" style="border-top:1px solid var(--rule-light);padding:12px 20px">
-        <button type="button" class="btn-outline-ink btn-sm" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn-ink btn-sm" onclick="confirmMove()">确认移动</button>
-      </div>
-    </div>
-  </div>
-</div>
+{# 移至 Modal 已移除，改用内联状态栏 #}
 
 {# 批量操作底部栏 #}
 <div class="batch-bar" id="batch-bar">
@@ -390,51 +374,52 @@ function setView(v) {
   localStorage.setItem('wl-view', v);
 }
 
-// ── 移至 Modal ────────────────────────────────────────
-let _moveCode = '', _moveName = '', _moveModal = null;
-function openMoveDialog(code, name, currentStatus) {
-  _moveCode = code; _moveName = name;
-  document.getElementById('move-modal-title').textContent = `移动 ${name}`;
-  // 重置
-  document.querySelectorAll('.move-status-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('move-date-row').style.display = 'none';
-  document.getElementById('move-price-row').style.display = 'none';
-  document.getElementById('move-price').value = '';
-  // 默认选今天
-  document.getElementById('move-date').value = new Date().toISOString().slice(0,10);
-  // 高亮当前状态
-  const cur = document.querySelector(`.move-status-btn[data-status="${currentStatus}"]`);
-  if (cur) cur.classList.add('active');
-  _moveModal = new bootstrap.Modal(document.getElementById('move-modal'));
-  _moveModal.show();
-}
-function selectMoveStatus(status, btn) {
-  document.querySelectorAll('.move-status-btn').forEach(b => b.classList.remove('active'));
+// ── 内联状态栏 ────────────────────────────────────────
+let _pendingStatus = {};   // code → target status
+
+function switchStatus(code, status, btn) {
+  // 找到该卡片/行下同组所有 status-tab，取消其他高亮
+  const group = btn.closest('.status-tabs');
+  group.querySelectorAll('.status-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const showDate  = status !== 'watching';
-  const dateLabel = status === 'holding' ? '买入日期' : '卖出日期';
-  const priceLbl  = status === 'holding' ? '买入价（可选）' : '卖出价（可选）';
-  document.getElementById('move-date-row').style.display  = showDate ? '' : 'none';
-  document.getElementById('move-price-row').style.display = showDate ? '' : 'none';
-  document.getElementById('move-date-label').textContent  = dateLabel;
-  document.getElementById('move-price-label').textContent = priceLbl;
+
+  const extra = document.getElementById(`extra-${code}`);
+  if (status === 'watching') {
+    // 观察不需要日期/价格，直接提交
+    if (extra) extra.style.display = 'none';
+    _doStatusUpdate(code, status, null, null);
+  } else {
+    // 持有/卖出：显示日期+价格确认栏
+    _pendingStatus[code] = status;
+    if (extra) {
+      // 更新 placeholder
+      const priceInp = document.getElementById(`extra-price-${code}`);
+      if (priceInp) priceInp.placeholder = status === 'holding' ? '买入价(选填)' : '卖出价(选填)';
+      extra.style.display = 'flex';
+      const dateInp = document.getElementById(`extra-date-${code}`);
+      if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0,10);
+      dateInp?.focus();
+    }
+  }
 }
-async function confirmMove() {
-  const statusBtn = document.querySelector('.move-status-btn.active');
-  if (!statusBtn) { alert('请选择目标状态'); return; }
-  const status = statusBtn.dataset.status;
-  const date   = document.getElementById('move-date').value;
-  const price  = parseFloat(document.getElementById('move-price').value) || null;
-  const body   = { status };
+
+async function confirmStatus(code) {
+  const status = _pendingStatus[code];
+  if (!status) return;
+  const date  = document.getElementById(`extra-date-${code}`)?.value || null;
+  const price = parseFloat(document.getElementById(`extra-price-${code}`)?.value) || null;
+  const body  = { status };
   if (status === 'holding') { if (date) body.buy_date = date; if (price) body.buy_price = price; }
   if (status === 'sold')    { if (date) body.sell_date = date; if (price) body.sell_price = price; }
-  const resp = await fetch(`/api/stock/${_moveCode}/status`, {
+  await _doStatusUpdate(code, status, date, price, body);
+}
+
+async function _doStatusUpdate(code, status, date, price, bodyOverride) {
+  const body = bodyOverride || { status };
+  const resp = await fetch(`/api/stock/${code}/status`, {
     method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
   });
-  if (resp.ok) {
-    _moveModal?.hide();
-    location.reload();
-  }
+  if (resp.ok) location.reload();
 }
 
 // ── 排序 ─────────────────────────────────────────────
