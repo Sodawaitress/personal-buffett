@@ -4,70 +4,84 @@
 {% block content %}
 <div class="watchlist-layout">
 
-  {# ── 左侧边栏 ── #}
+  {# ── 目录侧边栏 ── #}
   <aside class="watchlist-sidebar" id="watchlist-sidebar">
 
-    <div class="wl-section wl-section-title">
-      <span class="wl-title">我的选股</span>
-      <span class="wl-badge">{{ stocks | length }}</span>
-    </div>
-
-    <div class="wl-section">
-      <div class="wl-label">排序</div>
-      <label class="wl-option"><input type="radio" name="wl-sort" value="default" checked> 默认顺序</label>
-      <label class="wl-option"><input type="radio" name="wl-sort" value="grade"> 评级（高→低）</label>
-      <label class="wl-option"><input type="radio" name="wl-sort" value="change"> 涨跌幅</label>
-      <label class="wl-option"><input type="radio" name="wl-sort" value="date"> 最近分析</label>
-    </div>
-
-    <div class="wl-section">
-      <div class="wl-label">筛选</div>
-      <label class="wl-option"><input type="checkbox" id="filter-stale"> 待更新（&gt;7天）</label>
-      <label class="wl-option"><input type="checkbox" id="filter-good"> 评级 B+ 以上</label>
-    </div>
-
-    <div class="wl-section">
-      <div class="wl-label">批量操作</div>
-      <button class="wl-action-btn" onclick="selectAll()">全选</button>
-      <button class="wl-action-btn" onclick="selectNone()">取消选择</button>
-      <div id="batch-selected-info" style="display:none;font-size:11px;color:var(--ink-muted);margin:6px 0 4px">
-        已选 <span id="batch-count">0</span> 只
+    {# 顶部：标题 + 操作图标 #}
+    <div class="wl-sidebar-header">
+      <span class="wl-sidebar-title">我的选股 <span class="wl-badge">{{ stocks | length }}</span></span>
+      <div class="wl-sidebar-actions">
+        {# 排序 #}
+        <div class="wl-popover-wrap">
+          <button class="wl-icon-btn" id="btn-sort" title="排序" onclick="togglePopover('sort-popover', this)">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="2" y1="4" x2="12" y2="4"/><line x1="4" y1="7" x2="12" y2="7"/><line x1="6" y1="10" x2="12" y2="10"/>
+            </svg>
+          </button>
+          <div class="wl-popover" id="sort-popover">
+            <div class="wl-pop-title">排序方式</div>
+            <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="default" checked> 默认顺序</label>
+            <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="grade"> 评级 高→低</label>
+            <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="change"> 涨跌幅</label>
+            <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="date"> 最近分析</label>
+          </div>
+        </div>
+        {# 筛选 #}
+        <div class="wl-popover-wrap">
+          <button class="wl-icon-btn" id="btn-filter" title="筛选" onclick="togglePopover('filter-popover', this)">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M1 2h12l-4.5 5v4l-3-1.5V7L1 2z"/>
+            </svg>
+          </button>
+          <div class="wl-popover" id="filter-popover">
+            <div class="wl-pop-title">筛选</div>
+            <label class="wl-pop-opt"><input type="checkbox" id="filter-stale"> 待更新（>7天）</label>
+            <label class="wl-pop-opt"><input type="checkbox" id="filter-good"> 仅 B+ 以上</label>
+          </div>
+        </div>
+        {# 视图切换 #}
+        <div class="wl-popover-wrap">
+          <button class="wl-icon-btn" id="btn-view" title="视图" onclick="togglePopover('view-popover', this)">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <rect x="0" y="0" width="6" height="6"/><rect x="8" y="0" width="6" height="6"/>
+              <rect x="0" y="8" width="6" height="6"/><rect x="8" y="8" width="6" height="6"/>
+            </svg>
+          </button>
+          <div class="wl-popover" id="view-popover">
+            <div class="wl-pop-title">显示方式</div>
+            <label class="wl-pop-opt"><input type="radio" name="wl-view" value="card" checked> 卡片</label>
+            <label class="wl-pop-opt"><input type="radio" name="wl-view" value="thumb"> 缩略图</label>
+          </div>
+        </div>
       </div>
-      <button class="wl-action-btn primary" id="btn-batch-analyze" onclick="batchAnalyze()" disabled>各自重新分析</button>
-      <button class="wl-action-btn" id="btn-batch-portfolio" onclick="batchPortfolio()" disabled>组合分析</button>
     </div>
 
-    <div class="wl-section wl-section-add">
-      <button class="btn-ink" style="width:100%;justify-content:center"
-              onclick="toggleAddPanel()">＋ 添加股票</button>
+    {# 股票目录列表 #}
+    <div class="wl-directory" id="wl-directory">
+      {% for s in stocks %}
+      <div class="wl-dir-item" data-code="{{ s.code }}" onclick="scrollToCard('{{ s.code }}')"
+           data-grade-sort="{{ s.grade_sort }}" data-change="{{ s.change_pct or 0 }}"
+           data-date="{{ s.analysis_date or '' }}">
+        <span class="wl-dir-grade grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','',None) else 'c' }}">
+          {{ s.grade or '—' }}
+        </span>
+        <span class="wl-dir-name">{{ s.name }}</span>
+        {% if s.conclusion %}
+        <span class="wl-dir-conclusion wl-dir-{{ s.conclusion }}">{{ s.conclusion }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {# 底部添加按钮 #}
+    <div class="wl-sidebar-footer">
+      <button class="wl-add-btn" onclick="toggleAddPanel()">＋ 添加股票</button>
     </div>
 
   </aside>
 
   {# ── 主内容区 ── #}
   <main class="watchlist-main">
-
-    {# 顶部：视图切换 #}
-    <div class="wl-main-header">
-      <div class="wl-view-btns">
-        <button class="wl-view-btn active" id="btn-card-view" onclick="setView('card')" title="卡片模式">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-            <rect x="0" y="0" width="6" height="6"/><rect x="8" y="0" width="6" height="6"/>
-            <rect x="0" y="8" width="6" height="6"/><rect x="8" y="8" width="6" height="6"/>
-          </svg>
-          卡片
-        </button>
-        <button class="wl-view-btn" id="btn-thumb-view" onclick="setView('thumb')" title="缩略图模式">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-            <rect x="0" y="0" width="3" height="3"/><rect x="4" y="0" width="3" height="3"/><rect x="8" y="0" width="3" height="3"/><rect x="12" y="0" width="2" height="3"/>
-            <rect x="0" y="4" width="3" height="3"/><rect x="4" y="4" width="3" height="3"/><rect x="8" y="4" width="3" height="3"/><rect x="12" y="4" width="2" height="3"/>
-            <rect x="0" y="8" width="3" height="3"/><rect x="4" y="8" width="3" height="3"/><rect x="8" y="8" width="3" height="3"/><rect x="12" y="8" width="2" height="3"/>
-          </svg>
-          缩略图
-        </button>
-      </div>
-      <span class="wl-main-date">{{ now[:10] }}</span>
-    </div>
 
     {# 添加股票面板 #}
     <div id="add-panel" class="add-panel hidden" style="margin-bottom:20px">
@@ -95,18 +109,17 @@
     <div class="holding-grid" id="holding-grid" data-view="card">
       {% for s in stocks %}
       <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }}"
+           id="card-{{ s.code }}"
            data-code="{{ s.code }}"
            data-grade-sort="{{ s.grade_sort }}"
            data-change="{{ s.change_pct or 0 }}"
            data-date="{{ s.analysis_date or '' }}"
            {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
 
-        {# checkbox（始终在 DOM，通过 CSS 控制可见性）#}
         <label class="holding-checkbox">
           <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
         </label>
 
-        {# 卡片主体 #}
         <div class="card-main">
           <div class="holding-top">
             <div class="holding-name-wrap">
@@ -129,6 +142,7 @@
           <div class="holding-analysis-pending">
             <span class="spinner"></span>
             <span class="pending-text">巴菲特分析中…</span>
+            <button class="btn-cancel-job" onclick="cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="取消">✕</button>
           </div>
           {% elif s.conclusion %}
           <div class="holding-analysis">
@@ -142,7 +156,6 @@
           <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">尚无分析</div>
           {% endif %}
 
-          {# 信号行（A股专属，有数据才显示）#}
           {% if s.moat_direction or s.roic_latest %}
           <div class="holding-signals">
             {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
@@ -160,7 +173,6 @@
           </div>
         </div>
 
-        {# 快捷操作（hover 显示）#}
         <div class="card-quick-actions">
           <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="qa-btn">↻</button>
           <a href="{{ url_for('stock_page', code=s.code) }}" title="详情" class="qa-btn">→</a>
@@ -188,8 +200,13 @@
   </main>
 </div>
 
-{# 移动端侧边栏触发按钮 #}
-<button class="wl-sidebar-toggle" id="wl-mob-toggle" onclick="toggleMobileSidebar()" title="筛选排序">☰</button>
+{# 批量操作底部栏（有勾选时才出现）#}
+<div class="batch-bar" id="batch-bar">
+  <span class="batch-bar-info">已选 <strong id="batch-count">0</strong> 只</span>
+  <button class="batch-bar-btn" onclick="batchAnalyze()">各自重新分析</button>
+  <button class="batch-bar-btn" onclick="batchPortfolio()">组合分析</button>
+  <button class="batch-bar-btn batch-bar-cancel" onclick="selectNone()">取消选择</button>
+</div>
 
 {# 巴菲特信 Modal #}
 <div id="letter-modal" class="modal fade" tabindex="-1">
@@ -207,19 +224,41 @@
 
 {% block scripts %}
 <script>
+// ── Popover 开关 ──────────────────────────────────────
+function togglePopover(id, btn) {
+  const pop = document.getElementById(id);
+  const isOpen = pop.classList.contains('open');
+  // 关闭所有
+  document.querySelectorAll('.wl-popover').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.wl-icon-btn').forEach(b => b.classList.remove('active'));
+  if (!isOpen) {
+    pop.classList.add('open');
+    btn.classList.add('active');
+  }
+}
+// 点击外部关闭
+document.addEventListener('click', e => {
+  if (!e.target.closest('.wl-popover-wrap')) {
+    document.querySelectorAll('.wl-popover').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.wl-icon-btn').forEach(b => b.classList.remove('active'));
+  }
+});
+
 // ── 视图切换 ──────────────────────────────────────────
+document.querySelectorAll('input[name="wl-view"]').forEach(r => {
+  r.addEventListener('change', () => { setView(r.value); });
+});
 function setView(v) {
   const grid = document.getElementById('holding-grid');
   if (!grid) return;
   grid.dataset.view = v;
-  document.getElementById('btn-card-view').classList.toggle('active', v === 'card');
-  document.getElementById('btn-thumb-view').classList.toggle('active', v === 'thumb');
+  document.querySelectorAll('input[name="wl-view"]').forEach(r => r.checked = r.value === v);
   localStorage.setItem('wl-view', v);
 }
 
 // ── 排序 ─────────────────────────────────────────────
 document.querySelectorAll('input[name="wl-sort"]').forEach(r => {
-  r.addEventListener('change', () => { sortCards(r.value); localStorage.setItem('wl-sort', r.value); });
+  r.addEventListener('change', () => { sortCards(r.value); sortDirectory(r.value); localStorage.setItem('wl-sort', r.value); });
 });
 
 function sortCards(by) {
@@ -230,9 +269,22 @@ function sortCards(by) {
     if (by === 'grade')  return (+(a.dataset.gradeSort||99)) - (+(b.dataset.gradeSort||99));
     if (by === 'change') return (+(b.dataset.change||0))    - (+(a.dataset.change||0));
     if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
-    return 0; // default: keep order
+    return 0;
   });
   cards.forEach(c => grid.appendChild(c));
+}
+
+function sortDirectory(by) {
+  const dir = document.getElementById('wl-directory');
+  if (!dir) return;
+  const items = [...dir.querySelectorAll('.wl-dir-item')];
+  items.sort((a, b) => {
+    if (by === 'grade')  return (+(a.dataset.gradeSort||99)) - (+(b.dataset.gradeSort||99));
+    if (by === 'change') return (+(b.dataset.change||0))    - (+(a.dataset.change||0));
+    if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
+    return 0;
+  });
+  items.forEach(i => dir.appendChild(i));
 }
 
 // ── 筛选 ─────────────────────────────────────────────
@@ -244,33 +296,35 @@ function applyFilters() {
     let show = true;
     if (stale) {
       const d = card.dataset.date;
-      if (d) {
-        const days = (today - new Date(d)) / 86400000;
-        if (days <= 7) show = false;
-      }
+      if (d && (today - new Date(d)) / 86400000 <= 7) show = false;
     }
-    if (good) {
-      const gs = +(card.dataset.gradeSort || 99);
-      if (gs > 2) show = false; // 只显示 A(1) 和 B+(2)
-    }
+    if (good && (+(card.dataset.gradeSort||99)) > 2) show = false;
     card.style.display = show ? '' : 'none';
   });
+  // 同步目录
+  document.querySelectorAll('.wl-dir-item').forEach(item => {
+    const card = document.getElementById(`card-${item.dataset.code}`);
+    item.style.display = card ? card.style.display : '';
+  });
 }
-
 document.getElementById('filter-stale')?.addEventListener('change', applyFilters);
 document.getElementById('filter-good')?.addEventListener('change', applyFilters);
 
-// ── 批量操作 ─────────────────────────────────────────
-function selectAll() {
-  document.querySelectorAll('.stock-checkbox').forEach(cb => {
-    const card = cb.closest('.holding-card');
-    if (!card || card.style.display === 'none') return;
-    cb.checked = true;
-    card.classList.add('card-selected');
-  });
-  _updateBatch();
+// ── 目录点击 → 滚动+高亮 ─────────────────────────────
+function scrollToCard(code) {
+  const card = document.getElementById(`card-${code}`);
+  if (!card) return;
+  // 高亮目录条目
+  document.querySelectorAll('.wl-dir-item').forEach(i => i.classList.remove('active'));
+  document.querySelector(`.wl-dir-item[data-code="${code}"]`)?.classList.add('active');
+  // 滚动
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // 闪烁高亮
+  card.classList.add('card-highlight');
+  setTimeout(() => card.classList.remove('card-highlight'), 1000);
 }
 
+// ── 批量操作 ─────────────────────────────────────────
 function selectNone() {
   document.querySelectorAll('.stock-checkbox').forEach(cb => {
     cb.checked = false;
@@ -289,19 +343,14 @@ function onCheckChange() {
 
 function _updateBatch() {
   const n = document.querySelectorAll('.stock-checkbox:checked').length;
-  const info = document.getElementById('batch-selected-info');
-  const cnt  = document.getElementById('batch-count');
-  if (cnt) cnt.textContent = n;
-  if (info) info.style.display = n > 0 ? 'block' : 'none';
-  document.getElementById('btn-batch-analyze').disabled   = n === 0;
-  document.getElementById('btn-batch-portfolio').disabled = n === 0;
+  document.getElementById('batch-count').textContent = n;
+  const bar = document.getElementById('batch-bar');
+  bar.classList.toggle('visible', n > 0);
 }
 
 async function batchAnalyze() {
   const codes = [...document.querySelectorAll('.stock-checkbox:checked')].map(cb => cb.value);
   if (!codes.length) return;
-  const btn = document.getElementById('btn-batch-analyze');
-  btn.disabled = true; btn.textContent = '启动中…';
   const resp = await fetch('/api/analyze-batch', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({codes})
@@ -313,13 +362,24 @@ async function batchAnalyze() {
       if (card) { card.dataset.job = job_id; card.classList.add('holding-pending'); pollJob(job_id, code); }
     });
     selectNone();
-    btn.textContent = '各自重新分析';
   }
 }
 
 function batchPortfolio() {
   const codes = [...document.querySelectorAll('.stock-checkbox:checked')].map(cb => cb.value);
   if (codes.length) window.location.href = '/portfolio?codes=' + codes.join(',');
+}
+
+// ── 取消 job ─────────────────────────────────────────
+async function cancelJob(jobId, code) {
+  await fetch(`/api/job/${jobId}/cancel`, { method: 'POST' });
+  const card = document.querySelector(`[data-code="${code}"]`);
+  if (card) {
+    card.classList.remove('holding-pending');
+    delete card.dataset.job;
+    const pendingEl = card.querySelector('.holding-analysis-pending');
+    if (pendingEl) pendingEl.innerHTML = '<span style="font-size:12px;color:var(--ink-muted)">已取消，点 ↻ 重新分析</span>';
+  }
 }
 
 // ── 单股操作 ─────────────────────────────────────────
@@ -375,11 +435,6 @@ async function showLetter(code, name) {
   }
 }
 
-// ── 移动端侧边栏 ──────────────────────────────────────
-function toggleMobileSidebar() {
-  document.getElementById('watchlist-sidebar').classList.toggle('mobile-open');
-}
-
 // ── 搜索框 ────────────────────────────────────────────
 function clearSelection() {
   ['add-code','add-name','add-market'].forEach(id => document.getElementById(id).value = '');
@@ -387,23 +442,19 @@ function clearSelection() {
   document.getElementById('btn-add-submit').disabled = true;
 }
 
-// ── 初始化：恢复偏好 ──────────────────────────────────
+// ── 初始化 ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // 恢复视图
   const savedView = localStorage.getItem('wl-view') || 'card';
   setView(savedView);
 
-  // 恢复排序
   const savedSort = localStorage.getItem('wl-sort') || 'default';
   const r = document.querySelector(`input[name="wl-sort"][value="${savedSort}"]`);
-  if (r) { r.checked = true; sortCards(savedSort); }
+  if (r) { r.checked = true; sortCards(savedSort); sortDirectory(savedSort); }
 
-  // 启动 pending 轮询
   document.querySelectorAll('[data-job]').forEach(card => {
     if (card.dataset.job && card.dataset.code) pollJob(card.dataset.job, card.dataset.code);
   });
 
-  // 搜索框
   initSearch('search-q','search-dropdown','add-code','add-name','add-market','add-selected','add-selected-label','btn-add-submit');
 });
 

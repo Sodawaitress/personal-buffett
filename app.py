@@ -651,6 +651,18 @@ def api_job(job_id):
     })
 
 
+@app.route("/api/job/<int:job_id>/cancel", methods=["POST"])
+@login_required
+def api_job_cancel(job_id):
+    """强制将 running/pending 的 job 标记为 done，让前端停止轮询。"""
+    job = db.get_job(job_id)
+    if not job:
+        return jsonify({"error": "not found"}), 404
+    if job["status"] in ("running", "pending"):
+        db.update_job(job_id, status="done", log=(job.get("log") or "") + "\n⚠️ 用户手动取消")
+    return jsonify({"status": "cancelled"})
+
+
 @app.route("/api/analyze-batch", methods=["POST"])
 @login_required
 def api_analyze_batch():

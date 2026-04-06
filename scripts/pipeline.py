@@ -5,6 +5,7 @@
 pipeline_jobs 表追踪状态，前端轮询 /api/job/<id>。
 """
 import sys, os, time, threading
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import db
@@ -212,18 +213,43 @@ def _run_analysis(code, market, log):
         log(f"       ⚠️ 分析失败: {e}")
 
 
+# ── 超时包装 ──────────────────────────────────────────
+
+STEP_TIMEOUT = 35  # 每步最长等待秒数
+
+def _run_with_timeout(fn, args, label: str, log, timeout: int = STEP_TIMEOUT):
+    """在独立线程执行 fn(*args)，超过 timeout 秒则跳过并记录日志。"""
+    with ThreadPoolExecutor(max_workers=1) as ex:
+        future = ex.submit(fn, *args)
+        try:
+            future.result(timeout=timeout)
+        except FuturesTimeoutError:
+            log(f"  ⏱ {label} 超时（>{timeout}s），跳过")
+        except Exception as e:
+            log(f"  ⚠️ {label} 失败: {e}")
+
+
+def _is_st(code: str) -> bool:
+    """*ST / ST 股判断——这类股票高级财务API通常质量差或会卡住。"""
+    pure = code.split(".")[0]
+    try:
+        stock = db.get_stock(code)
+        name = (stock or {}).get("name", "")
+        return "ST" in name.upper()
+    except Exception:
+        return False
+
+
 # ── 主 pipeline ────────────────────────────────────────
 
 def run_pipeline(job_id: int, code: str, market: str):
     """
-    在后台线程中运行。
-    job_id: pipeline_jobs 表的 id，用于状态追踪。
+    在后台线程中运行。每步有独立超时（35s），不会因单步卡住拖死整个分析。
     """
     logs = []
 
     def log(msg):
         logs.append(msg)
-        # 只保留最后 500 字符
         snippet = "\n".join(logs)[-500:]
         db.update_job(job_id, status="running", log=snippet)
 
@@ -231,25 +257,20 @@ def run_pipeline(job_id: int, code: str, market: str):
         db.update_job(job_id, status="running")
         log(f"▶ pipeline 开始: {code} ({market})")
 
-        _fetch_price(code, market, log)
-        time.sleep(0.5)
+        is_st = _is_st(code)
+        if is_st:
+            log("  ℹ️ ST股检测到，跳过高级财务和信号步骤")
 
-        _fetch_news(code, market, log)
-        time.sleep(0.5)
+        _run_with_timeout(_fetch_price,    [code, market, log], "价格",    log, 20)
+        _run_with_timeout(_fetch_news,     [code, market, log], "新闻",    log, 30)
+        _run_with_timeout(_fetch_fund_flow,[code, market, log], "主力资金", log, 30)
+        _run_with_timeout(_fetch_financials,[code, market, log], "财务数据",log, 45)
 
-        _fetch_fund_flow(code, market, log)
-        time.sleep(0.5)
+        if not is_st:
+            _run_with_timeout(_fetch_advanced,[code, market, log], "高级财务",log, 40)
+            _run_with_timeout(_fetch_signals, [code, market, log], "投行信号",log, 40)
 
-        _fetch_financials(code, market, log)
-        time.sleep(1)
-
-        _fetch_advanced(code, market, log)
-        time.sleep(1)
-
-        _fetch_signals(code, market, log)
-        time.sleep(1)
-
-        _run_analysis(code, market, log)
+        _run_with_timeout(_run_analysis,   [code, market, log], "AI分析",  log, 40)
 
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
