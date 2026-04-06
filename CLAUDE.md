@@ -44,6 +44,10 @@
 - US-24 预测追踪（backfill_returns.py + /report/accuracy + launchd daily 17:00 NZT）
 - US-25 源代码保护（.env.example 重写 + requirements.txt 补 yfinance + README.md 英文）
 - US-26 About 页（/about 无需登录 + 英文 + 项目背景/贡献/技术栈）
+- US-29 Pipeline 超时保护（可取消后台 job）
+- US-30 我的选股侧边栏重设计（目录式导航 + 过滤 + Popover 操作）
+- US-31 我的选股：搜索过滤 + 列表模式（卡片/列表切换 + 实时搜索）
+- US-32 股票详情页重设计（删侧边栏，评级/数据融入头部，Tab 全宽）
 
 ### ❌ UI 待做（暂停，转数据/模型方向）
 - US-07 组合分析 /portfolio（无路由，较大功能）

@@ -4,28 +4,33 @@
 {% block content %}
 <div class="stock-page">
 
-  {# ── 面包屑 US-22 ── #}
+  {# ── 面包屑 ── #}
   <div class="stock-breadcrumb">
-    <a href="{{ url_for('index') }}">←</a>
-    <span class="bc-sep">/</span>
     <a href="{{ url_for('watchlist_page') }}">← 全部选股</a>
     <span class="bc-sep">/</span>
     <span>{{ stock.name }}</span>
   </div>
 
-  {# ── 头部：股票名称 + 价格 ── #}
+  {# ── 头部 ── #}
   <div class="stock-header">
+
+    {# 左：名称 + 标签 + 评级 #}
     <div class="stock-header-left">
-      <h1 class="stock-title">
-        <a href="{{ url_for('stock_fundamentals', code=stock.code) }}" class="stock-title-link" title="查看价值档案">{{ stock.name }}</a>
-      </h1>
+      <h1 class="stock-title">{{ stock.name }}</h1>
       <div class="stock-meta">
         <span class="market-tag">{{ stock.market | upper }}</span>
         <span class="stock-code-tag">{{ stock.code }}</span>
         {% if stock.sector %}<span class="stock-sector">{{ stock.sector }}</span>{% endif %}
-        {% if stock.exchange %}<span class="stock-exch">{{ stock.exchange }}</span>{% endif %}
+        {% if analysis and analysis.grade %}
+        <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') }}" style="margin-left:6px">
+          {{ analysis.grade }}
+        </span>
+        <span class="stock-conclusion-tag">{{ analysis.conclusion }}</span>
+        {% endif %}
       </div>
     </div>
+
+    {# 右：价格 + 操作 #}
     <div class="stock-header-right">
       {% if price and price.price %}
       <div class="stock-price-big">{{ currency }}{{ "%.2f"|format(price.price) }}</div>
@@ -37,14 +42,13 @@
       {% else %}
       <div class="stock-price-big" style="font-size:14px;color:var(--ink-faint)">暂无报价</div>
       {% endif %}
+
       <div class="stock-header-actions">
         {% if pending_job %}
         <span class="spinner" style="display:inline-block"></span>
         <span style="font-size:12px;color:var(--ink-muted)">巴菲特分析中…</span>
         {% else %}
-        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-outline-ink btn-sm">
-          重新分析
-        </button>
+        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-outline-ink btn-sm">重新分析</button>
         {% endif %}
         {% if not in_watchlist %}
         <form method="post" action="{{ url_for('add_stock') }}" style="display:inline">
@@ -63,218 +67,173 @@
     </div>
   </div>
 
-  <hr class="section-rule" style="margin:0 0 24px">
+  {# ── Stats bar：关键数据一行展示 ── #}
+  {% set has_stats = (price and (price.pe_ratio or price.pb_ratio or price.market_cap)) or (fund_flow and fund_flow.main_net is not none) %}
+  {% if has_stats %}
+  <div class="stock-stats-bar">
+    {% if price %}
+      {% if price.pe_ratio %}<span class="stat-item"><span class="stat-label">PE</span> {{ "%.1f"|format(price.pe_ratio) }}x</span>{% endif %}
+      {% if price.pb_ratio %}<span class="stat-item"><span class="stat-label">PB</span> {{ "%.2f"|format(price.pb_ratio) }}x</span>{% endif %}
+      {% if price.market_cap %}<span class="stat-item"><span class="stat-label">市值</span> {{ "%.0f"|format(price.market_cap / 1e8) }}亿</span>{% endif %}
+    {% endif %}
+    {% if fund_flow and fund_flow.main_net is not none %}
+    <span class="stat-item">
+      <span class="stat-label">主力</span>
+      <span class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">{{ "%+.2f"|format(fund_flow.main_net) }}亿</span>
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
 
-  {# ══════════════════════════════
-     主体：侧边栏 + 内容区
-     ══════════════════════════════ #}
-  <div class="stock-body" id="stock-body">
+  <hr class="section-rule" style="margin:0 0 0">
 
-    {# ── 侧边栏（可收起）── #}
-    <aside class="stock-sidebar" id="stock-sidebar">
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="收起侧边栏">
-        <i class="bi bi-layout-sidebar-inset-reverse"></i>
-      </button>
+  {# ── Tab 导航 ── #}
+  <div class="tab-nav" id="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('brief', this)">今日简报</button>
+    <button class="tab-btn" onclick="switchTab('news', this)">新闻 <span class="tab-count">{{ news | length }}</span></button>
+    <button class="tab-btn" onclick="switchTab('history', this)">历史分析 <span class="tab-count">{{ history | length }}</span></button>
+    <button class="tab-btn" onclick="switchTab('data', this)">数据</button>
+    <a href="{{ url_for('stock_fundamentals', code=stock.code) }}" class="tab-btn tab-link">价值档案 →</a>
+  </div>
 
-      {% if analysis and analysis.grade %}
-      {# 巴菲特评级卡 #}
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">巴菲特评级</div>
-        <div class="sidebar-grade-row">
-          <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') }}">
-            {{ analysis.grade }}
+  {# ── Tab 内容区 ── #}
+  <div class="stock-tabs-body">
+
+    {# 今日简报 #}
+    <div id="tab-brief" class="tab-content active">
+      {% if pending_job %}
+      <div class="analysis-pending-block" id="pending-block" data-job="{{ pending_job.id }}">
+        <span class="spinner"></span>
+        <span>巴菲特正在研究 {{ stock.name }}…</span>
+      </div>
+      {% elif analysis %}
+      <div class="brief-block">
+        <div class="brief-header">
+          <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
+            {{ analysis.grade or '—' }}
           </span>
-          <span class="sidebar-conclusion">{{ analysis.conclusion }}</span>
+          <span class="brief-conclusion">{{ analysis.conclusion }}</span>
+          <span class="brief-date">{{ analysis.analysis_date }}</span>
+          {% if analysis.letter_html %}
+          <button onclick="showLetter()" class="btn-ink btn-sm" style="margin-left:auto">读巴菲特信</button>
+          {% endif %}
         </div>
-        <p class="sidebar-reasoning">{{ (analysis.reasoning or '')[:200] }}</p>
-        {% if analysis.letter_html %}
-        <button onclick="showLetter()" class="btn-text" style="font-size:12px">读巴菲特信 →</button>
+        <p class="brief-reasoning">{{ analysis.reasoning }}</p>
+        {% set dims = [
+          ('护城河', analysis.moat),
+          ('管理层', analysis.management),
+          ('估值', analysis.valuation),
+          ('资金流向', analysis.fund_flow_summary),
+          ('行为金融', analysis.behavioral),
+          ('宏观敏感度', analysis.macro_sensitivity),
+        ] %}
+        {% set has_dims = dims | selectattr(1) | list %}
+        {% if has_dims %}
+        <div class="brief-dims">
+          {% for label, val in has_dims %}
+          <div class="brief-dim">
+            <span class="dim-label">{{ label }}</span>
+            <span class="dim-val">{{ val }}</span>
+          </div>
+          {% endfor %}
+        </div>
         {% endif %}
-        <div class="sidebar-date">{{ analysis.analysis_date }}</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:60px 0;text-align:center">
+        <p style="color:var(--ink-muted);margin-bottom:16px">尚无分析结果</p>
+        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-ink">巴菲特怎么看</button>
       </div>
       {% endif %}
+    </div>
 
-      {# 关键数据 #}
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">关键数据</div>
-        {% if price %}
-        <table class="sidebar-table">
-          {% if price.pe_ratio %}<tr><td>市盈率 P/E</td><td>{{ "%.1f"|format(price.pe_ratio) }}</td></tr>{% endif %}
-          {% if price.pb_ratio %}<tr><td>市净率 P/B</td><td>{{ "%.2f"|format(price.pb_ratio) }}</td></tr>{% endif %}
-          {% if price.market_cap %}<tr><td>市值</td><td>{{ "%.1f"|format(price.market_cap / 1e8) }}亿</td></tr>{% endif %}
-          {% if price.volume %}<tr><td>成交量</td><td>{{ "%.0f"|format(price.volume) }}</td></tr>{% endif %}
-        </table>
+    {# 新闻 #}
+    <div id="tab-news" class="tab-content" style="display:none">
+      {% if news %}
+      {% for n in news %}
+      <div class="news-article">
+        <div class="news-kicker">{{ n.source }}</div>
+        {% if n.link %}
+        <a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
+        {% else %}
+        <div class="news-headline-plain">{{ n.title }}</div>
         {% endif %}
-        {% if fund_flow and fund_flow.main_net is not none %}
-        <div class="sidebar-ff">
-          <span class="ff-label">主力净流入</span>
-          <span class="ff-val {{ 'ff-in' if fund_flow.main_net >= 0 else 'ff-out' }}">
-            {{ "%+.2f"|format(fund_flow.main_net) }}亿
-            ({{ "%+.1f"|format(fund_flow.main_ratio) }}%)
+        <div class="news-byline">{{ n.publish_time[:10] if n.publish_time else '' }}</div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="empty-state" style="padding:60px 0;text-align:center;color:var(--ink-muted)">暂无相关新闻</p>
+      {% endif %}
+    </div>
+
+    {# 历史分析 #}
+    <div id="tab-history" class="tab-content" style="display:none">
+      {% if history %}
+      {% for h in history %}
+      <div class="history-item {{ 'history-current' if loop.first else '' }}">
+        <div class="history-header">
+          <span class="grade-tag grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
+            {{ h.grade or '—' }}
           </span>
-          <div class="sidebar-date">{{ fund_flow.date }}</div>
+          <span class="history-conclusion">{{ h.conclusion }}</span>
+          <span class="history-date">{{ h.analysis_date }}</span>
         </div>
-        {% endif %}
+        <p class="history-reasoning">{{ (h.reasoning or '')[:300] }}</p>
       </div>
+      {% endfor %}
+      {% else %}
+      <p class="empty-state" style="padding:60px 0;text-align:center;color:var(--ink-muted)">暂无历史分析</p>
+      {% endif %}
+    </div>
 
-    </aside>
-
-    {# ── 主内容区：Tab ── #}
-    <div class="stock-main" id="stock-main">
-
-      {# Tab 导航 #}
-      <div class="tab-nav" id="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('brief', this)">今日简报</button>
-        <button class="tab-btn" onclick="switchTab('news', this)">新闻 <span class="tab-count">{{ news | length }}</span></button>
-        <button class="tab-btn" onclick="switchTab('history', this)">历史分析 <span class="tab-count">{{ history | length }}</span></button>
-        <button class="tab-btn" onclick="switchTab('data', this)">数据</button>
-      </div>
-
-      {# ── Tab: 今日简报 ── #}
-      <div id="tab-brief" class="tab-content active">
-        {% if pending_job %}
-        <div class="analysis-pending-block" id="pending-block" data-job="{{ pending_job.id }}">
-          <span class="spinner"></span>
-          <span>巴菲特正在研究 {{ stock.name }}…</span>
-        </div>
-        {% elif analysis %}
-        <div class="brief-block">
-          <div class="brief-header">
-            <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
-              {{ analysis.grade or '—' }}
-            </span>
-            <span class="brief-conclusion">{{ analysis.conclusion }}</span>
-            <span class="brief-date">{{ analysis.analysis_date }}</span>
-          </div>
-          <p class="brief-reasoning">{{ analysis.reasoning }}</p>
-          {% if analysis.letter_html %}
-          <div class="brief-letter-hint">
-            <button onclick="showLetter()" class="btn-ink" style="font-size:13px">读巴菲特完整分析信</button>
-          </div>
-          {% endif %}
-          {# 分析维度 #}
-          {% set dims = [
-            ('护城河', analysis.moat),
-            ('管理层', analysis.management),
-            ('估值', analysis.valuation),
-            ('资金流向', analysis.fund_flow_summary),
-            ('行为金融', analysis.behavioral),
-            ('宏观敏感度', analysis.macro_sensitivity),
-          ] %}
-          {% set has_dims = dims | selectattr(1) | list %}
-          {% if has_dims %}
-          <div class="brief-dims">
-            {% for label, val in has_dims %}
-            <div class="brief-dim">
-              <span class="dim-label">{{ label }}</span>
-              <span class="dim-val">{{ val }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-        </div>
-        {% else %}
-        <div class="empty-state" style="padding:40px 0;text-align:center">
-          <p style="color:var(--ink-muted);margin-bottom:16px">尚无分析结果</p>
-          <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-ink">巴菲特怎么看</button>
-        </div>
-        {% endif %}
-      </div>
-
-      {# ── Tab: 新闻 ── #}
-      <div id="tab-news" class="tab-content" style="display:none">
-        {% if news %}
-        {% for n in news %}
-        <div class="news-article">
-          <div class="news-kicker">{{ n.source }}</div>
-          {% if n.link %}
-          <a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
-          {% else %}
-          <div class="news-headline-plain">{{ n.title }}</div>
-          {% endif %}
-          <div class="news-byline">{{ n.publish_time[:10] if n.publish_time else '' }}</div>
-        </div>
+    {# 数据 #}
+    <div id="tab-data" class="tab-content" style="display:none">
+      {% if prices %}
+      <div class="data-section-title">价格历史</div>
+      <table class="data-table">
+        <thead><tr><th>时间</th><th>价格</th><th>涨跌</th><th>成交量</th></tr></thead>
+        <tbody>
+        {% for p in prices %}
+        <tr>
+          <td>{{ p.fetched_at[:16] if p.fetched_at else '—' }}</td>
+          <td>{{ currency }}{{ "%.2f"|format(p.price) if p.price else '—' }}</td>
+          <td class="{{ 'up' if p.change_pct and p.change_pct >= 0 else 'down' if p.change_pct else '' }}">
+            {{ "%+.2f"|format(p.change_pct) + '%' if p.change_pct is not none else '—' }}
+          </td>
+          <td>{{ "%.0f"|format(p.volume) if p.volume else '—' }}</td>
+        </tr>
         {% endfor %}
-        {% else %}
-        <p class="empty-state" style="padding:40px 0;text-align:center">暂无相关新闻</p>
-        {% endif %}
-      </div>
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">暂无价格数据</p>
+      {% endif %}
 
-      {# ── Tab: 历史分析 ── #}
-      <div id="tab-history" class="tab-content" style="display:none">
-        {% if history %}
-        {% for h in history %}
-        <div class="history-item {{ 'history-current' if loop.first else '' }}">
-          <div class="history-header">
-            <span class="grade-tag grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
-              {{ h.grade or '—' }}
-            </span>
-            <span class="history-conclusion">{{ h.conclusion }}</span>
-            <span class="history-date">{{ h.analysis_date }}</span>
-          </div>
-          <p class="history-reasoning">{{ (h.reasoning or '')[:300] }}</p>
-        </div>
-        {% endfor %}
-        {% else %}
-        <p class="empty-state" style="padding:40px 0;text-align:center">暂无历史分析</p>
-        {% endif %}
-      </div>
+      {% if fund_flow and fund_flow.main_net is not none %}
+      <div class="data-section-title" style="margin-top:24px">主力资金</div>
+      <table class="data-table">
+        <thead><tr><th>日期</th><th>净流入（亿）</th><th>净占比</th></tr></thead>
+        <tbody>
+        <tr>
+          <td>{{ fund_flow.date }}</td>
+          <td class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">{{ "%+.2f"|format(fund_flow.main_net) }}</td>
+          <td class="{{ 'up' if fund_flow.main_ratio >= 0 else 'down' }}">{{ "%+.1f"|format(fund_flow.main_ratio) }}%</td>
+        </tr>
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
 
-      {# ── Tab: 数据 ── #}
-      <div id="tab-data" class="tab-content" style="display:none">
-        {% if prices %}
-        <div class="data-section-title">价格历史</div>
-        <table class="data-table">
-          <thead><tr><th>时间</th><th>价格</th><th>涨跌</th><th>成交量</th></tr></thead>
-          <tbody>
-          {% for p in prices %}
-          <tr>
-            <td>{{ p.fetched_at[:16] if p.fetched_at else '—' }}</td>
-            <td>{{ currency }}{{ "%.2f"|format(p.price) if p.price else '—' }}</td>
-            <td class="{{ 'up' if p.change_pct and p.change_pct >= 0 else 'down' if p.change_pct else '' }}">
-              {{ "%+.2f"|format(p.change_pct) + '%' if p.change_pct is not none else '—' }}
-            </td>
-            <td>{{ "%.0f"|format(p.volume) if p.volume else '—' }}</td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% else %}
-        <p class="empty-state" style="padding:40px 0;text-align:center">暂无价格数据</p>
-        {% endif %}
-
-        {% if fund_flow and fund_flow.main_net is not none %}
-        <div class="data-section-title" style="margin-top:24px">主力资金（最新）</div>
-        <table class="data-table">
-          <thead><tr><th>日期</th><th>净流入（亿）</th><th>净占比</th></tr></thead>
-          <tbody>
-          <tr>
-            <td>{{ fund_flow.date }}</td>
-            <td class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">
-              {{ "%+.2f"|format(fund_flow.main_net) }}
-            </td>
-            <td class="{{ 'up' if fund_flow.main_ratio >= 0 else 'down' }}">
-              {{ "%+.1f"|format(fund_flow.main_ratio) }}%
-            </td>
-          </tr>
-          </tbody>
-        </table>
-        {% endif %}
-      </div>
-
-    </div>{# end stock-main #}
-  </div>{# end stock-body #}
+  </div>{# end stock-tabs-body #}
 
 </div>{# end stock-page #}
 
-{# ── 巴菲特信 Modal ── #}
+{# 巴菲特信 Modal #}
 <div id="letter-modal" class="modal fade" tabindex="-1">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content letter-modal-content">
       <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
-        <h6 class="modal-title" style="font-family:Georgia,serif">
-          致你 — 关于 {{ stock.name }}
-        </h6>
+        <h6 class="modal-title" style="font-family:Georgia,serif">致你 — 关于 {{ stock.name }}</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body letter-body" id="letter-modal-body"></div>
@@ -285,7 +244,6 @@
 
 {% block scripts %}
 <script>
-// ── Tab 切换 ─────────────────────────────────────────
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -293,57 +251,31 @@ function switchTab(name, btn) {
   btn.classList.add('active');
 }
 
-// ── 侧边栏收起 ────────────────────────────────────────
-function toggleSidebar() {
-  const body = document.getElementById('stock-body');
-  const btn  = document.getElementById('sidebar-toggle');
-  body.classList.toggle('sidebar-collapsed');
-  btn.title = body.classList.contains('sidebar-collapsed') ? '展开侧边栏' : '收起侧边栏';
-}
-
-// 桌面默认展开，移动端默认收起
-if (window.innerWidth < 768) {
-  document.getElementById('stock-body').classList.add('sidebar-collapsed');
-}
-
-// ── 触发分析 ────────────────────────────────────────
 async function triggerAnalysis(code) {
   const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
-    // 显示 pending 状态
-    const pb = document.getElementById('pending-block');
-    if (pb) {
-      pb.dataset.job = data.job_id;
-    } else {
-      // 创建一个 pending 块
-      const tab = document.getElementById('tab-brief');
-      tab.innerHTML = `<div class="analysis-pending-block" id="pending-block" data-job="${data.job_id}">
-        <span class="spinner"></span><span>巴菲特正在研究中…</span></div>`;
-    }
+    const tab = document.getElementById('tab-brief');
+    tab.innerHTML = `<div class="analysis-pending-block" id="pending-block" data-job="${data.job_id}">
+      <span class="spinner"></span><span>巴菲特正在研究中…</span></div>`;
     pollJob(data.job_id);
   }
 }
 
-// ── 轮询 pipeline ────────────────────────────────────
 function pollJob(jobId) {
-  const interval = setInterval(async () => {
+  const iv = setInterval(async () => {
     try {
-      const resp = await fetch(`/api/job/${jobId}`);
-      const data = await resp.json();
-      if (data.status === 'done') {
-        clearInterval(interval);
-        location.reload();
-      } else if (data.status === 'failed') {
-        clearInterval(interval);
+      const d = await (await fetch(`/api/job/${jobId}`)).json();
+      if (d.status === 'done') { clearInterval(iv); location.reload(); }
+      else if (d.status === 'failed') {
+        clearInterval(iv);
         const pb = document.getElementById('pending-block');
         if (pb) pb.innerHTML = '<span style="color:var(--red)">分析失败，请重试</span>';
       }
-    } catch(e) { clearInterval(interval); }
+    } catch(e) { clearInterval(iv); }
   }, 5000);
 }
 
-// ── 读巴菲特信 ────────────────────────────────────────
 function showLetter() {
   const body = document.getElementById('letter-modal-body');
   {% if analysis and analysis.letter_html %}
@@ -354,9 +286,7 @@ function showLetter() {
       <div class="letter-body-text">{{ analysis.letter_html | replace('\n','<br>') | safe }}</div>
       <div class="letter-sig">沃伦·巴菲特（私人版）<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
       <div class="letter-grade">
-        <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">
-          {{ analysis.grade or '—' }}
-        </span>
+        <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade or '—' }}</span>
         <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion }}</span>
       </div>
       <div class="letter-footer">数据截至 {{ analysis.analysis_date }} · 本分析不构成投资建议</div>
@@ -367,7 +297,6 @@ function showLetter() {
   new bootstrap.Modal(document.getElementById('letter-modal')).show();
 }
 
-// 页面加载时启动 pending job 轮询
 document.addEventListener('DOMContentLoaded', () => {
   const pb = document.getElementById('pending-block');
   if (pb && pb.dataset.job) pollJob(pb.dataset.job);
