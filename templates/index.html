@@ -56,170 +56,78 @@
 {% block content %}
 <div class="page-container">
 
-  {# ── 报头 ── #}
-  {% if stocks %}
-  {# 有持仓：简洁题头，日期 + 大按钮 #}
-  <div class="front-masthead front-masthead-compact">
-    <div class="front-compact-top">
-      <span class="front-compact-date">{{ now[:10] }}</span>
-      {% if latest_report %}
-      <a href="{{ url_for('report') }}" class="report-hint">今日简报已更新 · 查看 →</a>
-      {% endif %}
+  {# ── 简洁报头 ── #}
+  <div class="home-masthead">
+    <div>
+      <span class="home-brand">{{ t.brand }}</span>
+      <span class="home-date">{{ now[:10] }}</span>
     </div>
-    <button id="btn-fetch" onclick="triggerFetch()" class="btn-buffett-hero">
-      {{ t.btn_refresh }}
+    <button id="btn-fetch" onclick="triggerFetch()" class="btn-text home-refresh-btn" title="{{ t.btn_refresh }}">
+      <i class="bi bi-arrow-repeat"></i>
     </button>
   </div>
-  {% else %}
-  {# 无持仓：完整报头 #}
-  <div class="front-masthead">
-    <div class="front-dateline">{{ now[:10] }}</div>
-    <h1 class="front-title">{{ t.brand }}</h1>
-    <div class="front-tagline">{{ t.tagline }}</div>
-    <div class="front-rule"></div>
-    <div class="front-actions">
-      <button id="btn-fetch" onclick="triggerFetch()" class="btn-ink">
-        <i class="bi bi-arrow-repeat"></i> {{ t.btn_refresh }}
-      </button>
-    </div>
-  </div>
-  {% endif %}
 
   <div id="fetch-log" class="fetch-log" style="display:none"></div>
 
   {# ══════════════════════════════════
-     持仓简报 / 空状态引导
+     三卡片行（横向滑动）
      ══════════════════════════════════ #}
-  {% if stocks %}
-  <div class="watchlist-section">
-    <div class="watchlist-header">
-      <span class="section-label">我的持仓</span>
-    </div>
-    <hr class="section-rule">
+  <div class="home-cards-row">
 
-    {# 添加股票面板（点 + 卡后展开，选中即提交）#}
-    <div id="add-panel" class="add-panel hidden">
-      <form id="add-form" method="post" action="{{ url_for('add_stock') }}">
+    {# 卡片 1：今日简报 #}
+    <a href="{{ url_for('brief_page') }}" class="home-card home-card-brief">
+      <div class="hc-icon">📊</div>
+      <div class="hc-title">{{ t.home_card_brief }}</div>
+      <div class="hc-sub">
+        {% if stocks %}
+          {% set warn_count = stocks | selectattr('alert_level','eq','warn') | list | length %}
+          {% if warn_count > 0 %}
+          <span class="hc-alert-badge">{{ warn_count }} ⚠</span>
+          {% endif %}
+          {{ t.home_card_brief_sub }}
+        {% else %}
+          {{ t.home_card_brief_none }}
+        {% endif %}
+      </div>
+      <div class="hc-arrow">›</div>
+    </a>
+
+    {# 卡片 2：我的选股 #}
+    <a href="{{ url_for('watchlist_page') }}" class="home-card home-card-watchlist">
+      <div class="hc-icon">📋</div>
+      <div class="hc-title">{{ t.home_card_watchlist }}</div>
+      <div class="hc-sub">
+        {{ stocks | length }} {{ t.home_card_watchlist_sub }}
+        {% if stocks %}
+        <div class="hc-grades">
+          {% for s in stocks[:5] %}
+          <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade and s.grade != '—' else 'c' }}" style="font-size:10px;padding:1px 5px">{{ s.grade }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="hc-arrow">›</div>
+    </a>
+
+    {# 卡片 3：添加股票 #}
+    <div class="home-card home-card-add" id="add-card" onclick="focusSearch(event)">
+      <div class="hc-icon">＋</div>
+      <div class="hc-title">{{ t.home_card_add }}</div>
+      <form id="add-form" method="post" action="{{ url_for('add_stock') }}" onclick="event.stopPropagation()">
         <input type="hidden" name="code" id="add-code">
         <input type="hidden" name="name" id="add-name">
         <input type="hidden" name="market" id="add-market">
-        <div class="stock-search-wrap">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" id="search-q" class="search-input search-input-icon"
-                 placeholder="搜索股票代码或名称（如：茅台 / AAPL / 600519）"
-                 autocomplete="off">
+        <div class="hc-search-wrap">
+          <input type="text" id="search-q" class="hc-search-input"
+                 placeholder="{{ t.search_placeholder }}"
+                 autocomplete="off"
+                 onclick="event.stopPropagation()">
           <div id="search-dropdown" class="search-dropdown"></div>
-        </div>
-        <div style="text-align:right;margin-top:6px">
-          <button type="button" class="btn-text" onclick="closeAddPanel()">取消</button>
         </div>
       </form>
     </div>
 
-    <div class="holding-grid" id="holding-grid">
-      {% for s in stocks %}
-      <div class="holding-card {{ 'holding-pending' if s.pending_job else '' }}"
-           data-code="{{ s.code }}"
-           {% if s.pending_job %}data-job="{{ s.pending_job.id }}"{% endif %}>
-
-        {# 顶部：名称 + 价格 #}
-        <div class="holding-top">
-          <div>
-            <span class="holding-name">{{ s.name }}</span>
-            <span class="market-tag" style="margin-left:6px">{{ s.market | upper }}</span>
-          </div>
-          <div class="stock-price-block">
-            {% if s.price %}
-            <div class="stock-price">{{ s.currency }}{{ "%.2f"|format(s.price) }}</div>
-            {% if s.change_pct is not none %}
-            <div class="stock-change {{ 'up' if s.change_pct >= 0 else 'down' }}">{{ "%+.2f"|format(s.change_pct) }}%</div>
-            {% endif %}
-            {% else %}
-            <div class="stock-price" style="font-size:12px;color:var(--ink-faint)">{{ t.no_quote }}</div>
-            {% endif %}
-          </div>
-        </div>
-
-        {# 分析状态 #}
-        {% if s.pending_job %}
-        <div class="holding-analysis-pending">
-          <span class="spinner"></span>
-          <span class="pending-text">巴菲特分析中…</span>
-        </div>
-        {% elif s.conclusion %}
-        <div class="holding-analysis">
-          <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade else 'c' }}">
-            {{ s.grade }}
-          </span>
-          <span class="holding-conclusion">{{ s.conclusion }}</span>
-        </div>
-        <p class="holding-reasoning">{{ s.reasoning }}</p>
-        {% if s.has_letter %}
-        <button onclick="showLetter('{{ s.code }}', '{{ s.name }}')" class="btn-text">
-          读巴菲特信 →
-        </button>
-        {% endif %}
-        {% else %}
-        <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">
-          暂无分析 — <button onclick="triggerAnalysis('{{ s.code }}')" class="btn-text">立即分析</button>
-        </div>
-        {% endif %}
-
-        {# 底部操作 #}
-        <div class="holding-actions">
-          <a href="{{ url_for('stock_page', code=s.code) }}" class="btn-text" style="font-size:11px">详情 →</a>
-          <span style="font-size:10px;color:var(--ink-faint)">
-            {% if s.analysis_date %}{{ s.analysis_date }}{% endif %}
-          </span>
-          <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
-                onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:inline">
-            <button type="submit" class="btn-text danger">移除</button>
-          </form>
-        </div>
-      </div>
-      {% endfor %}
-
-      {# + 卡：空白卡片，大加号，点击展开搜索面板 #}
-      <div class="holding-card add-card" onclick="openAddPanel()">
-        <i class="bi bi-plus-lg add-card-icon"></i>
-      </div>
-    </div>
-
-  </div>
-
-  {% else %}
-  {# 空状态 #}
-  <div class="empty-hero">
-    <div class="empty-hero-inner">
-      <div class="empty-hero-icon">📊</div>
-      <h2 class="empty-hero-title">还没有添加股票</h2>
-      <p class="empty-hero-sub">搜索你关注的公司，让巴菲特帮你分析。</p>
-      <button onclick="document.getElementById('add-panel-hero').classList.remove('hidden')"
-              class="btn-ink" style="font-size:14px;padding:10px 24px">
-        巴菲特怎么看
-      </button>
-      <div id="add-panel-hero" class="add-panel hidden" style="margin-top:20px">
-        <div class="stock-search-wrap">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" id="search-q-hero" class="search-input search-input-icon"
-                 placeholder="搜索股票代码或名称（如：茅台 / AAPL / 600519）"
-                 autocomplete="off">
-          <div id="search-dropdown-hero" class="search-dropdown"></div>
-        </div>
-        <form id="add-form-hero" method="post" action="{{ url_for('add_stock') }}" class="add-watchlist-form" style="margin-top:10px">
-          <input type="hidden" name="code" id="add-code-hero">
-          <input type="hidden" name="name" id="add-name-hero">
-          <input type="hidden" name="market" id="add-market-hero">
-          <div id="add-selected-hero" class="add-selected" style="display:none">
-            <span id="add-selected-label-hero"></span>
-            <button type="button" class="btn-text" onclick="clearSelectionHero()">×</button>
-          </div>
-          <button type="submit" id="btn-add-submit-hero" class="btn-ink" disabled>巴菲特怎么看</button>
-        </form>
-      </div>
-    </div>
-  </div>
-  {% endif %}
+  </div>{# /home-cards-row #}
 
   {# ══════════════════════════════════
      市场信息流 — NYT 双栏
@@ -296,18 +204,6 @@
 
 </div>
 
-{# ── 巴菲特信 Modal ── #}
-<div id="letter-modal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg">
-    <div class="modal-content letter-modal-content">
-      <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
-        <h6 class="modal-title" id="letter-modal-title" style="font-family:Georgia,serif">巴菲特来信</h6>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body letter-body" id="letter-modal-body">{{ t.loading }}</div>
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -317,7 +213,6 @@ async function triggerFetch() {
   const btn = document.getElementById('btn-fetch');
   const log = document.getElementById('fetch-log');
   btn.disabled = true;
-  btn.textContent = '{{ t.loading }}';
   log.style.display = 'block';
   log.textContent = 'Connecting…\n';
   try {
@@ -325,102 +220,27 @@ async function triggerFetch() {
     const data = await resp.json();
     log.textContent = data.stdout || '(no output)';
     if (!data.ok) log.textContent += '\n' + data.stderr;
-    btn.textContent = data.ok ? '{{ t.done_reloading }}' : '{{ t.error }}';
     btn.disabled = false;
     if (data.ok) setTimeout(() => location.reload(), 1500);
   } catch(e) {
     log.textContent = 'Failed: ' + e;
-    btn.textContent = '{{ t.btn_refresh }}';
     btn.disabled = false;
   }
 }
 
-// ── 手动触发单股分析 ──────────────────────────────────
-async function triggerAnalysis(code) {
-  const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
-  const data = await resp.json();
-  if (data.job_id) {
-    // 找到对应卡片，显示 pending 状态
-    const card = document.querySelector(`[data-code="${code}"]`) ||
-                 document.querySelector('.holding-card');
-    if (card) {
-      card.dataset.job = data.job_id;
-      card.classList.add('holding-pending');
-      pollJob(data.job_id, code);
-    }
-  }
+function focusSearch(e) {
+  document.getElementById('search-q').focus();
 }
 
-// ── Pipeline 状态轮询 ─────────────────────────────────
-function pollJob(jobId, code) {
-  const card = document.querySelector(`[data-job="${jobId}"]`);
-  if (!card) return;
-
-  const interval = setInterval(async () => {
-    try {
-      const resp = await fetch(`/api/job/${jobId}`);
-      const data = await resp.json();
-
-      if (data.status === 'done') {
-        clearInterval(interval);
-        location.reload();  // 重载显示分析结果
-      } else if (data.status === 'failed') {
-        clearInterval(interval);
-        const el = card.querySelector('.pending-text');
-        if (el) el.textContent = '分析失败，请重试';
-      }
-    } catch(e) {
-      clearInterval(interval);
-    }
-  }, 5000);
-}
-
-// ── 读巴菲特信 ────────────────────────────────────────
-async function showLetter(code, name) {
-  document.getElementById('letter-modal-title').textContent = `致你 — 关于 ${name}`;
-  document.getElementById('letter-modal-body').textContent  = '正在取信…';
-  new bootstrap.Modal(document.getElementById('letter-modal')).show();
-
-  const resp = await fetch(`/api/letter/${code}`);
-  const data = await resp.json();
-  if (data.letter) {
-    document.getElementById('letter-modal-body').innerHTML = `
-      <div class="letter-paper">
-        <div class="letter-location">奥马哈，内布拉斯加州 · ${data.date || ''}</div>
-        <div class="letter-salutation">致你，</div>
-        <div class="letter-body-text">${data.letter.replace(/\n/g,'<br>')}</div>
-        <div class="letter-sig">沃伦·巴菲特（私人版）<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
-        <div class="letter-grade">
-          <span class="grade-tag grade-${(data.grade||'c').toLowerCase().replace('+','-plus').replace('-','-minus')}">
-            ${data.grade || '—'}
-          </span>
-          <span style="margin-left:8px;font-size:13px">${data.conclusion || ''}</span>
-        </div>
-        <div class="letter-footer">数据截至 ${data.date || ''} · 本分析不构成投资建议</div>
-      </div>
-    `;
-  } else {
-    document.getElementById('letter-modal-body').textContent = '暂无分析信件';
-  }
-}
-
-// ── 页面加载时启动所有 pending job 的轮询 ─────────────
+// ── 页面加载时绑定搜索框 ───────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-job]').forEach(card => {
-    const jobId = card.dataset.job;
-    const code  = card.dataset.code;
-    if (jobId && code) pollJob(jobId, code);
-  });
-
-  // 绑定搜索框（+ 卡 和 空状态 hero）
-  initSearch('search-q',    'search-dropdown',    'add-code',    'add-name',    'add-market',    'add-selected',    'add-selected-label',    'btn-add-submit');
-  initSearch('search-q-hero','search-dropdown-hero','add-code-hero','add-name-hero','add-market-hero','add-selected-hero','add-selected-label-hero','btn-add-submit-hero');
+  initSearch('search-q', 'search-dropdown', 'add-code', 'add-name', 'add-market');
 });
 
-// ── 股票搜索（两个表单共用）─────────────────────────────
-function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, labelId, btnId) {
-  const inp   = document.getElementById(inputId);
-  const drop  = document.getElementById(dropId);
+// ── 股票搜索 ───────────────────────────────────────────
+function initSearch(inputId, dropId, codeId, nameId, marketId) {
+  const inp  = document.getElementById(inputId);
+  const drop = document.getElementById(dropId);
   if (!inp || !drop) return;
 
   let timer;
@@ -428,63 +248,45 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, label
     clearTimeout(timer);
     const q = inp.value.trim();
     if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp), 350);
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId), 350);
   });
 
-  // 点外部关闭
   document.addEventListener('click', e => {
     if (!inp.contains(e.target) && !drop.contains(e.target))
       drop.classList.remove('open');
   });
 }
 
-async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp) {
-  // 立刻给用户反馈
+async function doSearch(q, drop, codeId, nameId, marketId) {
   drop.innerHTML = '<div class="search-loading"><span class="spinner-sm"></span> 搜索中…</div>';
   drop.classList.add('open');
   try {
     const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
     const data = await resp.json();
-    // API 可能返回 {loading: true} 表示 A股数据还在加载
     if (data.loading) {
       drop.innerHTML = '<div class="search-empty"><i class="bi bi-hourglass-split"></i> A股数据加载中，请稍候再试…</div>';
-      drop.classList.add('open');
       return;
     }
     const items = Array.isArray(data) ? data : [];
-    if (!items.length) { drop.innerHTML='<div class="search-empty">没有找到结果</div>'; drop.classList.add('open'); return; }
+    if (!items.length) { drop.innerHTML='<div class="search-empty">没有找到结果</div>'; return; }
     drop.innerHTML = items.map(r => `
-      <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
+      <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}')">
         <span class="search-item-code">${r.code}</span>
         <span class="search-item-name">${r.name}</span>
         <span class="market-tag">${r.market.toUpperCase()}</span>
       </div>
     `).join('');
-    drop.classList.add('open');
   } catch(e) {
     drop.innerHTML = '<div class="search-empty">搜索失败，请重试</div>';
-    drop.classList.add('open');
   }
 }
 
-function selectStock(code, name, market, codeId, nameId, marketId, selectedId, labelId, btnId, inputId) {
+function selectStock(code, name, market, codeId, nameId, marketId) {
   document.getElementById(codeId).value   = code;
   document.getElementById(nameId).value   = name;
   document.getElementById(marketId).value = market;
-  // 关闭下拉
-  const dropId = inputId === 'search-q' ? 'search-dropdown' : 'search-dropdown-hero';
-  const drop = document.getElementById(dropId);
-  if (drop) drop.classList.remove('open');
-  // 主添加表单：直接提交
-  if (inputId === 'search-q') {
-    document.getElementById('add-form').submit();
-    return;
-  }
-  // hero 表单：保留旧逻辑（显示选中状态 + 手动提交按钮）
-  document.getElementById(inputId).value = '';
-  document.getElementById(labelId).textContent = name + ' (' + code + ') · ' + market.toUpperCase();
-  document.getElementById(selectedId).style.display = 'flex';
-  document.getElementById(btnId).disabled = false;
+  document.getElementById('search-dropdown').classList.remove('open');
+  document.getElementById('add-form').submit();
 }
 
 function openAddPanel() {

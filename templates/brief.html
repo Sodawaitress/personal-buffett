@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.brief_page_title }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:720px">
+
+  <div class="stock-breadcrumb">
+    <a href="{{ url_for('index') }}">← {{ t.brand }}</a>
+  </div>
+
+  <div class="brief-page-header">
+    <h1 class="brief-page-title">{{ t.brief_page_title }}</h1>
+    <span class="brief-page-date">{{ now[:10] }}</span>
+  </div>
+
+  {% if not stocks %}
+  <p class="brief-empty-msg">{{ t.brief_no_stocks }}</p>
+  {% else %}
+
+  {# ── 宏观数据 ── #}
+  {% set fg = market.get("fear_greed", {}) %}
+  {% set cn_idx = market.get("cn_indices", {}) %}
+  {% set cny = market.get("cny_usd", {}) %}
+  {% if fg or cn_idx or cny %}
+  <section class="brief-section">
+    <div class="brief-section-label">{{ t.brief_macro_label }}</div>
+    <hr class="section-rule">
+    <div class="brief-macro-pills">
+      {% if fg and fg.score is defined %}
+      <span class="macro-pill {{ 'pill-fear' if fg.score <= 40 else ('pill-greed' if fg.score >= 60 else 'pill-neutral') }}">
+        F&amp;G {{ fg.score }} — {{ fg.label }}
+      </span>
+      {% endif %}
+      {% if cn_idx %}
+        {% for key, name in [('sh','SSE'),('sz','SZSE'),('cyb','ChiNext')] %}
+          {% set i = cn_idx.get(key) %}{% if i %}
+          <span class="macro-pill {{ 'pill-down' if i.change < 0 else 'pill-up' }}">
+            {{ name }} {{ "%+.2f"|format(i.change) }}%
+          </span>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if cny and cny.rate %}
+      <span class="macro-pill pill-neutral">USD/CNY {{ cny.rate }}</span>
+      {% endif %}
+    </div>
+    {% if portfolio_brief and portfolio_brief.macro_headline %}
+    <p class="brief-macro-text">{{ portfolio_brief.macro_headline }}</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {# ── 持仓警示 ── #}
+  <section class="brief-section">
+    <div class="brief-section-label">{{ t.brief_portfolio_label }}</div>
+    <hr class="section-rule">
+    <div class="brief-alerts">
+      {% for s in stocks %}
+      <div class="brief-alert-row {{ 'brief-warn' if s.alert_level == 'warn' else 'brief-ok' }}"
+           onclick="location.href='{{ url_for('stock_page', code=s.code) }}'">
+        <span class="brief-alert-icon">{{ t.brief_warn_icon if s.alert_level == 'warn' else t.brief_ok_icon }}</span>
+        <div class="brief-alert-body">
+          <span class="brief-alert-name">{{ s.name }}</span>
+          <span class="brief-alert-reason">{{ s.alert_reason }}</span>
+        </div>
+        <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade and s.grade != '—' else 'c' }}" style="font-size:11px">
+          {{ s.grade }}
+        </span>
+        <span class="brief-alert-arrow">›</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── 巴菲特总结 ── #}
+  <section class="brief-section">
+    <div class="brief-section-label brief-buffett-header-row">
+      {{ t.brief_buffett_label }}
+      <button id="btn-gen-brief" onclick="generateBrief()" class="btn-text brief-gen-btn">
+        {% if portfolio_brief and portfolio_brief.buffett_summary %}{{ t.brief_regenerate }}{% else %}{{ t.brief_generate }}{% endif %}
+      </button>
+    </div>
+    <hr class="section-rule">
+    <div id="brief-buffett-body">
+    {% if portfolio_brief and portfolio_brief.buffett_summary %}
+    <p class="brief-buffett-text">{{ portfolio_brief.buffett_summary }}</p>
+    {% if portfolio_brief.created_at_cst %}
+    <p class="brief-buffett-time">{{ t.brief_page_title }} · {{ portfolio_brief.created_at_cst }} CST</p>
+    {% endif %}
+    {% else %}
+    <p class="brief-buffett-placeholder">{{ t.brief_no_brief }}</p>
+    {% endif %}
+    </div>
+    <div id="brief-gen-status" style="display:none;font-size:12px;color:var(--ink-muted);margin-top:8px"></div>
+  </section>
+
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function generateBrief() {
+  const btn    = document.getElementById('btn-gen-brief');
+  const status = document.getElementById('brief-gen-status');
+  btn.disabled = true;
+  btn.textContent = '{{ t.brief_generating }}';
+  status.style.display = 'block';
+  status.textContent = '…';
+  try {
+    const resp = await fetch('/api/generate-brief', { method: 'POST' });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById('brief-buffett-body').innerHTML =
+        `<p class="brief-buffett-text">${data.summary}</p>`;
+      if (data.macro) {
+        const mt = document.querySelector('.brief-macro-text');
+        if (mt) mt.textContent = data.macro;
+      }
+      status.style.display = 'none';
+      btn.textContent = '{{ t.brief_regenerate }}';
+      btn.disabled = false;
+    } else {
+      status.textContent = data.error || 'Error';
+      btn.disabled = false;
+      btn.textContent = '{{ t.brief_regenerate }}';
+    }
+  } catch(e) {
+    status.textContent = String(e);
+    btn.disabled = false;
+    btn.textContent = '{{ t.brief_regenerate }}';
+  }
+}
+</script>
+{% endblock %}

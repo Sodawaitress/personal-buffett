@@ -321,6 +321,7 @@
 {# 批量操作底部栏 #}
 <div class="batch-bar" id="batch-bar">
   <span class="batch-bar-info">已选 <strong id="batch-count">0</strong> 只</span>
+  <button class="batch-bar-btn" id="select-all-btn" onclick="toggleSelectAll()">全选</button>
   <button class="batch-bar-btn" onclick="batchAnalyze()">各自重新分析</button>
   <button class="batch-bar-btn" onclick="batchPortfolio()">组合分析</button>
   <button class="batch-bar-btn batch-bar-cancel" onclick="selectNone()">取消选择</button>
@@ -499,6 +500,8 @@ function exitSelectMode() {
   document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = 'none');
   const btn = document.getElementById('analyze-mode-btn');
   if (btn) { btn.textContent = '分析'; btn.classList.remove('active'); }
+  const saBtn = document.getElementById('select-all-btn');
+  if (saBtn) saBtn.textContent = '全选';
   _updateBatch();
 }
 
@@ -521,6 +524,14 @@ function rowClick(e, row) {
 }
 
 // ── 批量操作 ─────────────────────────────────────────
+function toggleSelectAll() {
+  const all = document.querySelectorAll('.stock-checkbox');
+  const allChecked = [...all].every(cb => cb.checked);
+  all.forEach(cb => { cb.checked = !allChecked; });
+  const btn = document.getElementById('select-all-btn');
+  if (btn) btn.textContent = allChecked ? '全选' : '取消全选';
+  onCheckChange();
+}
 function onCheckChange() {
   document.querySelectorAll('.holding-card').forEach(card => {
     const cb = card.querySelector('.stock-checkbox');

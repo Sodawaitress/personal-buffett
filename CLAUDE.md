@@ -50,6 +50,17 @@
 - US-32 股票详情页重设计（删侧边栏，评级/数据融入头部，Tab 全宽）
 - US-33 三段式自选股（持有/观察/卖出）+ 算账页（/watchlist/performance）
 - US-34 行为经济学分析（Kahneman 损失厌恶/沉没成本/锚定/FOMO，ST股检测，预计算提示）
+- US-40 技术支撑位 + 机构成本参考（MA20/60/120/250 + 60/120日VWAP，新浪K线，fundamentals页Price Ladder展示，注入巴菲特信）
+- US-37 持仓成本注入分析（entry_price + buy_date → analyze_stock_v2，pipeline查user_watchlist，浮盈/亏自动更新behavioral_hint）
+- Bug fix: 主力资金 NoneType 错误（`.SS` 判断改为 `pure.startswith("6","9")`）
+- Bug fix: 卡死 job 自动过期（`db.expire_stale_jobs()`，app 启动时调用）
+- Bug fix: 机构持仓季度计算错误（4月传"20263"未来季度→改为正确的"20254"；quarter逻辑按月份判断最近完整季）
+- Bug fix: A股价格缺失（_fetch_price 对 market=cn 改用 Sina hq.sinajs.cn，000333/000793/688981/688102 已补价格）
+- Bug fix: fundamentals页ROE/净利率/负债率/FCF全为"积累中"（app.py补传annual/pe_current等，模板改用真实数据）
+- UX fix: fundamentals护城河假进度条→改用moat_direction标签+reasoning文本；财务指标增加6年历年趋势对比表
+- US-41 交互体验修复（首页卡片整体可点击进详情；去掉首页"详情"/"移除"按钮；选择模式加"全选/取消全选"toggle）
+- US-43 价值档案并入详情页 Tab（stock.html 新增 tab-fundamentals；stock_page 路由合并数据查询；/fundamentals 重定向；Chart.js 懒加载）
+- US-42 个性化首页日报（portfolio_analysis 表；db.get/save_portfolio_brief；scripts/portfolio_brief.py LLM合成；_compute_alert 规则引擎；/api/generate-brief 端点；index.html 今日简报区块 + generateBrief() JS；style.css .daily-brief 样式）
 
 ### ❌ UI 待做（暂停，转数据/模型方向）
 - US-07 组合分析 /portfolio（无路由，较大功能）

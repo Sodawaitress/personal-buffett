@@ -93,7 +93,7 @@
     <button class="tab-btn" onclick="switchTab('news', this)">新闻 <span class="tab-count">{{ news | length }}</span></button>
     <button class="tab-btn" onclick="switchTab('history', this)">历史分析 <span class="tab-count">{{ history | length }}</span></button>
     <button class="tab-btn" onclick="switchTab('data', this)">数据</button>
-    <a href="{{ url_for('stock_fundamentals', code=stock.code) }}" class="tab-btn tab-link">价值档案 →</a>
+    <button class="tab-btn" onclick="switchTab('fundamentals', this)">价值档案</button>
   </div>
 
   {# ── Tab 内容区 ── #}
@@ -224,6 +224,321 @@
       {% endif %}
     </div>
 
+    {# 价值档案 #}
+    <div id="tab-fundamentals" class="tab-content" style="display:none">
+
+      {# 一、评级时间线 #}
+      <section class="fund-section">
+        <div class="fund-section-label">巴菲特评级时间线</div>
+        <hr class="section-rule">
+        {% if history %}
+        <div class="rating-timeline">
+          {% for a in history %}
+          <div class="rating-entry">
+            <div class="rating-date">{{ a.analysis_date }}</div>
+            <div class="rating-dot-wrap">
+              <div class="rating-dot grade-dot-{{ a.grade | lower | replace('+','-plus') | replace('-','-minus') if a.grade else 'c' }}"></div>
+              {% if not loop.last %}<div class="rating-line"></div>{% endif %}
+            </div>
+            <div class="rating-body">
+              <span class="grade-tag grade-{{ a.grade | lower | replace('+','-plus') | replace('-','-minus') if a.grade else 'c' }}">{{ a.grade }}</span>
+              <span class="rating-conclusion">{{ a.conclusion }}</span>
+              {% if a.reasoning %}<p class="rating-snippet">{{ a.reasoning[:120] }}…</p>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="fund-empty">数据积累中 — 分析后自动更新</div>
+        {% endif %}
+      </section>
+
+      {# 二、基本面指标 #}
+      {% if market == "cn" %}
+      <section class="fund-section">
+        <div class="fund-section-label">基本面指标</div>
+        <hr class="section-rule">
+        {% set lat = annual[0] if annual else none %}
+        <div class="fund-metrics-grid">
+
+          <div class="fund-metric-card">
+            <div class="fund-metric-label">市盈率 PE</div>
+            <div class="fund-metric-value">
+              {% if pe_current %}{{ "%.1f"|format(pe_current) }}x
+              {% elif price and price.pe_ratio %}{{ "%.1f"|format(price.pe_ratio) }}x
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if pe_percentile_5y is not none %}
+            <div class="fund-metric-note">5年 {{ pe_percentile_5y }}% 分位
+              <span style="color:{% if pe_percentile_5y > 70 %}#c62828{% elif pe_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
+                {% if pe_percentile_5y > 70 %}偏贵{% elif pe_percentile_5y < 30 %}偏便宜{% else %}中性{% endif %}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="fund-metric-card">
+            <div class="fund-metric-label">市净率 PB</div>
+            <div class="fund-metric-value">
+              {% if pb_current %}{{ "%.2f"|format(pb_current) }}x
+              {% elif price and price.pb_ratio %}{{ "%.2f"|format(price.pb_ratio) }}x
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if pb_percentile_5y is not none %}
+            <div class="fund-metric-note">5年 {{ pb_percentile_5y }}% 分位
+              <span style="color:{% if pb_percentile_5y > 70 %}#c62828{% elif pb_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
+                {% if pb_percentile_5y > 70 %}偏贵{% elif pb_percentile_5y < 30 %}偏便宜{% else %}中性{% endif %}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="fund-metric-card">
+            <div class="fund-metric-label">ROE <span style="font-weight:400;font-size:10px">（{{ lat.year if lat else '—' }}）</span></div>
+            <div class="fund-metric-value">
+              {% if lat and lat.roe %}{{ lat.roe }}
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if annual | length >= 2 and lat and lat.roe and annual[1].roe %}
+            <div class="fund-metric-note">
+              {{ annual[1].year }}: {{ annual[1].roe }}
+              {% set cur_v = lat.roe | replace('%','') | float %}
+              {% set prev_v = annual[1].roe | replace('%','') | float %}
+              <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="fund-metric-card">
+            <div class="fund-metric-label">净利润率</div>
+            <div class="fund-metric-value">
+              {% if lat and lat.net_margin %}{{ lat.net_margin }}
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if annual | length >= 2 and lat and lat.net_margin and annual[1].net_margin %}
+            <div class="fund-metric-note">
+              {{ annual[1].year }}: {{ annual[1].net_margin }}
+              {% set cur_v = lat.net_margin | replace('%','') | float %}
+              {% set prev_v = annual[1].net_margin | replace('%','') | float %}
+              <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="fund-metric-card">
+            <div class="fund-metric-label">资产负债率</div>
+            <div class="fund-metric-value">
+              {% if lat and lat.debt_ratio %}{{ lat.debt_ratio }}
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="fund-metric-card">
+            <div class="fund-metric-label">ROIC</div>
+            <div class="fund-metric-value">
+              {% set roic = signals.get("roic_latest") if signals else none %}
+              {% if roic %}{{ roic }}%{% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% set rt = signals.get("roic_trend",[]) if signals else [] %}
+            {% if rt | length >= 2 %}
+            <div class="fund-metric-note">
+              {{ rt[1].year }}: {{ rt[1].roic }}%
+              <span style="color:{% if rt[0].roic >= rt[1].roic %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if rt[0].roic >= rt[1].roic else '↓' }}</span>
+            </div>
+            {% endif %}
+          </div>
+
+        </div>
+
+        {% if annual | length > 1 %}
+        <div style="margin-top:20px;overflow-x:auto">
+          <table style="font-size:12px;font-family:-apple-system,sans-serif;border-collapse:collapse;min-width:480px">
+            <tr style="color:var(--ink-muted);border-bottom:1px solid var(--rule-light)">
+              <th style="text-align:left;padding:4px 8px;font-weight:600">年份</th>
+              {% for row in annual %}<th style="text-align:right;padding:4px 8px;font-weight:400">{{ row.year }}</th>{% endfor %}
+            </tr>
+            {% for field, label in [("roe","ROE"),("net_margin","净利率"),("debt_ratio","负债率"),("profit_growth","利润增长")] %}
+            <tr style="border-bottom:1px solid var(--rule-light)">
+              <td style="padding:4px 8px;color:var(--ink-muted)">{{ label }}</td>
+              {% for row in annual %}
+              <td style="text-align:right;padding:4px 8px;font-variant-numeric:tabular-nums">
+                {% if row.get(field) %}{{ row.get(field) }}{% else %}—{% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+        {% endif %}
+      </section>
+
+      {# 三、主力资金历史（仅 A 股）#}
+      <section class="fund-section">
+        <div class="fund-section-label">主力资金历史</div>
+        <hr class="section-rule">
+        {% if ff_hist %}
+        <div class="fund-chart-wrap">
+          <canvas id="ffChart" height="100"></canvas>
+        </div>
+        <div class="ff-summary">
+          {% set total = namespace(v=0) %}
+          {% for f in ff_hist %}{% set total.v = total.v + f.main_net %}{% endfor %}
+          近 {{ ff_hist|length }} 个交易日累计主力净
+          <strong class="{{ 'fund-in' if total.v >= 0 else 'fund-out' }}">
+            {{ '流入' if total.v >= 0 else '流出' }} {{ "%.2f"|format(total.v | abs) }} 亿
+          </strong>
+        </div>
+        {% else %}
+        <div class="fund-empty">暂无资金流数据 — 收盘后自动更新</div>
+        {% endif %}
+      </section>
+      {% endif %}{# end market == cn #}
+
+      {# 四、护城河评估 #}
+      <section class="fund-section">
+        <div class="fund-section-label">护城河评估</div>
+        <hr class="section-rule">
+        {% set latest_a = history[0] if history else none %}
+        {% set moat_dir = signals.get("moat_direction") if signals else none %}
+        {% if latest_a and latest_a.moat %}
+        <p class="fund-text">{{ latest_a.moat }}</p>
+        {% elif moat_dir or (latest_a and latest_a.reasoning) %}
+        {% if moat_dir %}
+        <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;font-weight:600;color:var(--ink)">方向判断：</span>
+          <span style="font-size:13px;padding:3px 10px;border-radius:12px;font-weight:600;
+            background:{% if '拓宽' in moat_dir %}#e8f5e9{% elif '收窄' in moat_dir %}#fdecea{% else %}#f5f0e8{% endif %};
+            color:{% if '拓宽' in moat_dir %}#2e7d32{% elif '收窄' in moat_dir %}#c62828{% else %}var(--ink-2){% endif %}">
+            {{ moat_dir }}
+          </span>
+        </div>
+        {% endif %}
+        {% if latest_a and latest_a.reasoning %}
+        <p class="fund-text" style="margin-top:8px">{{ latest_a.reasoning }}</p>
+        {% endif %}
+        {% else %}
+        <p class="fund-note" style="padding:12px 0">护城河分析将在下次运行「巴菲特怎么看」后自动生成</p>
+        {% endif %}
+      </section>
+
+      {# 五、技术支撑位（A股专属）#}
+      {% if market == "cn" %}
+      {% set tech = signals.get("technicals", {}) if signals else {} %}
+      <section class="fund-section" style="margin-top:32px">
+        <div class="fund-section-label">技术支撑位 &amp; 机构成本参考</div>
+        <hr class="section-rule">
+        {% if tech %}
+        {% set cur = price.price if price else none %}
+        {% set ns = namespace(above=0, total=0) %}
+        {% for key in ["ma20","ma60","ma120","ma250"] %}
+          {% set pct = tech.get("price_vs_" ~ key) %}
+          {% if tech.get(key) and pct is not none %}
+            {% set ns.total = ns.total + 1 %}
+            {% if pct < 0 %}{% set ns.above = ns.above + 1 %}{% endif %}
+          {% endif %}
+        {% endfor %}
+
+        <div class="tech-ladder">
+          {% set above_levels = [] %}
+          {% for key, name, desc in [
+              ("ma60","MA60","季线（60日均线）"),("ma120","MA120","半年线（120日均线）"),
+              ("ma250","MA250","年线（250日均线）"),("ma20","MA20","月线（20日均线）")] %}
+            {% set val = tech.get(key) %}
+            {% set pct = tech.get("price_vs_" ~ key) %}
+            {% if val and pct is not none and pct < 0 %}
+              {% set _ = above_levels.append((val, pct, name, desc)) %}
+            {% endif %}
+          {% endfor %}
+          {% for val, pct, name, desc in above_levels | sort(attribute=0, reverse=True) %}
+          {% set bar_w = [pct|abs / 20 * 100, 100]|min %}
+          <div class="tech-level">
+            <span class="tech-price-val">¥{{ val }}</span>
+            <span class="tech-dot tech-dot-above"></span>
+            <div class="tech-label-wrap"><span class="tech-label-name">{{ name }}</span><span class="tech-label-desc">{{ desc }}</span></div>
+            <div class="tech-bar-wrap"><div class="tech-bar tech-bar-above" style="width:{{ bar_w }}%"></div></div>
+            <span class="tech-pct-badge tech-pct-above">▲ {{ pct|abs|round(1) }}%</span>
+          </div>
+          {% endfor %}
+
+          {% if cur %}
+          <div class="tech-current-row">
+            <div class="tech-current-dot"></div>
+            <span class="tech-current-price">¥{{ "%.2f"|format(cur) }}</span>
+            <span class="tech-current-label">现价</span>
+            {% if ns.above == ns.total and ns.total > 0 %}
+              <span style="font-size:11px;color:#c62828;margin-left:auto;font-weight:600">⚠ 全部均线跌穿</span>
+            {% elif ns.above == 0 %}
+              <span style="font-size:11px;color:#2e7d32;margin-left:auto;font-weight:600">✓ 全部均线上方</span>
+            {% else %}
+              <span style="font-size:11px;color:var(--ink-muted);margin-left:auto">{{ ns.above }} 压 / {{ ns.total - ns.above }} 撑</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% for key, name, desc in [
+              ("ma60","MA60","季线（60日均线）"),("ma120","MA120","半年线（120日均线）"),
+              ("ma250","MA250","年线（250日均线）"),("ma20","MA20","月线（20日均线）")] %}
+            {% set val = tech.get(key) %}
+            {% set pct = tech.get("price_vs_" ~ key) %}
+            {% if val and pct is not none and pct >= 0 %}
+            {% set bar_w = [pct / 20 * 100, 100]|min %}
+            <div class="tech-level">
+              <span class="tech-price-val">¥{{ val }}</span>
+              <span class="tech-dot tech-dot-below"></span>
+              <div class="tech-label-wrap"><span class="tech-label-name">{{ name }}</span><span class="tech-label-desc">{{ desc }}</span></div>
+              <div class="tech-bar-wrap"><div class="tech-bar tech-bar-below" style="width:{{ bar_w }}%"></div></div>
+              <span class="tech-pct-badge tech-pct-below">▼ {{ pct|round(1) }}%</span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% if ns.above == ns.total and ns.total > 0 %}
+        <div class="tech-danger-banner">⚠ 现价已跌穿全部 {{ ns.total }} 条均线支撑，各均线从"地板"变成"天花板"——反弹后可能遇阻，需要新增成交量才能收复。</div>
+        {% elif ns.above == 0 and ns.total > 0 %}
+        <div class="tech-safe-banner">✓ 现价在全部均线之上，形成多层支撑，趋势健康。</div>
+        {% endif %}
+
+        {% set v60 = tech.get("vwap60") %}{% set p60 = tech.get("price_vs_vwap60") %}
+        {% set v120 = tech.get("vwap120") %}{% set p120 = tech.get("price_vs_vwap120") %}
+        {% if v60 or v120 %}
+        <div class="tech-vwap-block">
+          {% if v60 %}
+          <div class="tech-vwap-item">
+            <span class="tech-vwap-label">近期机构成本 (60日 VWAP)</span>
+            <span class="tech-vwap-val">¥{{ v60 }}</span>
+            {% if p60 is not none %}
+            <span class="tech-vwap-note" style="color:{% if p60 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
+              现价{% if p60 >= 0 %}高于 +{{ p60|round(1) }}%，近期买入机构普遍盈利{% else %}低于 {{ p60|abs|round(1) }}%，{% if p60 < -5 %}近期买入者大多套牢{% else %}近期买入成本略高{% endif %}{% endif %}
+            </span>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if v120 %}
+          <div class="tech-vwap-item">
+            <span class="tech-vwap-label">中期机构成本 (120日 VWAP)</span>
+            <span class="tech-vwap-val">¥{{ v120 }}</span>
+            {% if p120 is not none %}
+            <span class="tech-vwap-note" style="color:{% if p120 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
+              现价{% if p120 >= 0 %}高于 +{{ p120|round(1) }}%，中期持仓整体盈利{% else %}低于 {{ p120|abs|round(1) }}%，{% if p120 < -5 %}中期持仓普遍套牢{% else %}中期成本略高{% endif %}{% endif %}
+            </span>
+            {% endif %}
+          </div>
+          {% endif %}
+          <p class="tech-vwap-footnote">
+            <strong>VWAP（成交量加权均价）</strong>= 把每天价格按成交量加权平均，反映该时间段市场实际成交的平均成本。60/120 日 VWAP 可视为"大户近期平均建仓成本"的参考——若现价低于 VWAP，说明大多数近期买入者处于亏损状态，有一定解套抛压。
+          </p>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <p class="fund-note">技术数据尚未生成，重新分析后自动填充</p>
+        {% endif %}
+      </section>
+      {% endif %}{# end market == cn #}
+
+    </div>{# end tab-fundamentals #}
+
   </div>{# end stock-tabs-body #}
 
 </div>{# end stock-page #}
@@ -243,12 +558,46 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+let _ffChartInited = false;
+function _initFfChart() {
+  if (_ffChartInited) return;
+  _ffChartInited = true;
+  const canvas = document.getElementById('ffChart');
+  if (!canvas) return;
+  const labels = {{ (ff_hist | map(attribute='date') | list) | tojson if ff_hist else '[]' }};
+  const nets   = {{ (ff_hist | map(attribute='main_net') | list) | tojson if ff_hist else '[]' }};
+  if (!nets.length) return;
+  const colors = nets.map(v => v >= 0 ? 'rgba(45,122,45,0.75)' : 'rgba(192,57,43,0.75)');
+  new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '主力净流入（亿）', data: nets, backgroundColor: colors, borderWidth: 1 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '流入 +' : '流出 ') + Math.abs(ctx.raw).toFixed(2) + ' 亿' } } },
+      scales: {
+        x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#666', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '亿' }, grid: { color: '#e8e4de' } }
+      }
+    }
+  });
+}
+
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).style.display = 'block';
   btn.classList.add('active');
+  if (name === 'fundamentals') _initFfChart();
+}
+
+// 若 URL hash 指向价值档案，直接激活
+if (location.hash === '#tab-fundamentals') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.querySelector('.tab-btn[onclick*="fundamentals"]');
+    if (btn) switchTab('fundamentals', btn);
+  });
 }
 
 async function triggerAnalysis(code) {

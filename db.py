@@ -183,6 +183,17 @@ def init_db():
             updated_at       TEXT DEFAULT (datetime('now'))
         );
 
+        -- 组合每日简报（per-user LLM 合成）
+        CREATE TABLE IF NOT EXISTS portfolio_analysis (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id         INTEGER REFERENCES users(id),
+            analysis_date   TEXT,
+            macro_headline  TEXT,
+            buffett_summary TEXT,
+            created_at      TEXT DEFAULT (datetime('now')),
+            UNIQUE(user_id, analysis_date)
+        );
+
         -- Pipeline 任务追踪
         CREATE TABLE IF NOT EXISTS pipeline_jobs (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -696,6 +707,17 @@ def get_job(job_id):
         return dict(row) if row else None
 
 
+def expire_stale_jobs(max_age_minutes=120):
+    """将超过 max_age_minutes 还在 running/pending 的 job 标记为 failed（防止页面永久转圈）"""
+    with get_conn() as c:
+        c.execute("""
+            UPDATE pipeline_jobs
+            SET status='failed', error='超时自动终止（超过 {}分钟未完成）'
+            WHERE status IN ('running','pending')
+              AND started_at < datetime('now', '-{} minutes')
+        """.format(max_age_minutes, max_age_minutes))
+
+
 # ══════════════════════════════════════════════════
 # 兼容旧代码的别名
 # ══════════════════════════════════════════════════
@@ -834,6 +856,36 @@ def get_performance_data(user_id):
             ORDER BY w.buy_date DESC NULLS LAST
         """, (user_id,)).fetchall()
     return [dict(r) for r in rows]
+
+
+# ══════════════════════════════════════════════════
+# 组合日报 brief
+# ══════════════════════════════════════════════════
+
+def get_portfolio_brief(user_id, date=None):
+    with get_conn() as c:
+        if date:
+            row = c.execute("""
+                SELECT * FROM portfolio_analysis
+                WHERE user_id=? AND analysis_date=?
+            """, (user_id, date)).fetchone()
+        else:
+            row = c.execute("""
+                SELECT * FROM portfolio_analysis
+                WHERE user_id=? ORDER BY analysis_date DESC LIMIT 1
+            """, (user_id,)).fetchone()
+        return dict(row) if row else None
+
+def save_portfolio_brief(user_id, analysis_date, macro_headline, buffett_summary):
+    with get_conn() as c:
+        c.execute("""
+            INSERT INTO portfolio_analysis(user_id, analysis_date, macro_headline, buffett_summary)
+            VALUES(?,?,?,?)
+            ON CONFLICT(user_id, analysis_date)
+            DO UPDATE SET macro_headline=excluded.macro_headline,
+                          buffett_summary=excluded.buffett_summary,
+                          created_at=datetime('now')
+        """, (user_id, analysis_date, macro_headline, buffett_summary))
 
 
 def _migrate():

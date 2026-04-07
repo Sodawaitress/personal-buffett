@@ -5,10 +5,7 @@
 <div class="container py-4">
 
   <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i>Dashboard
-    </a>
-    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-2 text-gold"></i>{{ report.date }} Daily Report</h5>
+<h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-2 text-gold"></i>{{ report.date }} Daily Report</h5>
     <a href="{{ url_for('accuracy') }}" class="btn btn-sm btn-outline-secondary ms-auto" title="预测准确率追踪">
       <i class="bi bi-graph-up-arrow me-1"></i>准确率
     </a>

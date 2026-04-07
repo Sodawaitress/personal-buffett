@@ -445,14 +445,20 @@ def fetch_cn_signals(code: str, annual: list = None) -> dict:
     # ── 3. 机构持仓季度变化 ─────────────────────────────
     try:
         from datetime import datetime as dt
-        # 最近已发布的季度：Q4=前年12月末，Q1=3月末，Q2=6月末，Q3=9月末
+        # 最近已完整披露的季度：Q4数据在次年1-4月发布，Q1在5-7月，Q2在8-10月，Q3在11月-次年1月
         now = dt.now()
-        q_map = {1: f"{now.year-1}4", 2: f"{now.year}1",
-                 3: f"{now.year}2", 4: f"{now.year}3",
-                 5: f"{now.year}4", 6: f"{now.year+1}1"}  # fallback ladder
-        quarter = q_map.get(now.month, f"{now.year-1}4")
-        quarters_to_try = [quarter,
-                           f"{int(quarter[:-1])-1 if quarter[-1]=='1' else quarter[:-1]}{int(quarter[-1])-1 if quarter[-1]!='1' else '4'}"]
+        m = now.month
+        if m <= 4:    quarter = f"{now.year - 1}4"
+        elif m <= 7:  quarter = f"{now.year}1"
+        elif m <= 10: quarter = f"{now.year}2"
+        else:         quarter = f"{now.year}3"
+        # 往前退一个季度备用
+        prev_q_num = int(quarter[-1]) - 1
+        if prev_q_num == 0:
+            prev_q = f"{int(quarter[:-1]) - 1}4"
+        else:
+            prev_q = f"{quarter[:-1]}{prev_q_num}"
+        quarters_to_try = [quarter, prev_q]
 
         df_inst = None
         for q in quarters_to_try:
@@ -637,6 +643,71 @@ def fetch_fund_flow(code: str, name: str) -> dict:
         }
         direction = "📈流入" if result["main_net"] >= 0 else "📉流出"
         print(f"    💰 {name} 主力 {direction} {abs(result['main_net']):.2f}亿")
+        return result
+    except Exception:
+        return {}
+
+
+# ── 技术支撑位（MA均线 + VWAP成本参考）────────────────
+def fetch_cn_technicals(code: str) -> dict:
+    """
+    用新浪K线接口（NZ IP可用）计算技术支撑位：
+      - ma20 / ma60 / ma120 / ma250: 均线支撑
+      - vwap60 / vwap120: 近60/120日成交量加权均价（机构成本参考）
+      - price_vs_ma*: 当前价偏离均线的百分比
+    返回空 dict 表示失败。
+    """
+    import requests as req
+    try:
+        prefix = "sh" if code.startswith(("6", "9")) else "sz"
+        r = req.get(
+            "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData",
+            params={"symbol": f"{prefix}{code}", "scale": 240, "ma": 5, "datalen": 280},
+            headers={"Referer": "https://finance.sina.com.cn"},
+            timeout=12,
+        )
+        bars = r.json()
+        if not bars or len(bars) < 20:
+            return {}
+
+        closes  = [float(b["close"])  for b in bars]
+        volumes = [float(b["volume"]) for b in bars]
+
+        def _ma(n):
+            if len(closes) < n:
+                return None
+            return round(sum(closes[-n:]) / n, 2)
+
+        def _vwap(n):
+            if len(closes) < n:
+                return None
+            cv = sum(closes[-n][i] * volumes[-n:][i] for i in range(n)) if False else None
+            c_slice = closes[-n:]
+            v_slice = volumes[-n:]
+            total_v = sum(v_slice)
+            if total_v == 0:
+                return None
+            return round(sum(c * v for c, v in zip(c_slice, v_slice)) / total_v, 2)
+
+        current = closes[-1]
+
+        def _pct(ma_val):
+            if ma_val is None or ma_val == 0:
+                return None
+            return round((current - ma_val) / ma_val * 100, 1)
+
+        result = {
+            "ma20":  _ma(20),   "ma60":  _ma(60),
+            "ma120": _ma(120),  "ma250": _ma(250),
+            "vwap60":  _vwap(60),
+            "vwap120": _vwap(120),
+        }
+        result["price_vs_ma20"]  = _pct(result["ma20"])
+        result["price_vs_ma60"]  = _pct(result["ma60"])
+        result["price_vs_ma120"] = _pct(result["ma120"])
+        result["price_vs_ma250"] = _pct(result["ma250"])
+        result["price_vs_vwap60"]  = _pct(result["vwap60"])
+        result["price_vs_vwap120"] = _pct(result["vwap120"])
         return result
     except Exception:
         return {}

@@ -21,6 +21,7 @@ from nz_fetch import (fetch_all_nz_quotes, fetch_nz_quote,
                       fetch_rbnz_news)
 from macro_fetch import fetch_fomc_news
 from pipeline import start_pipeline
+from portfolio_brief import generate_portfolio_brief
 import stock_search as _stock_search  # 触发 A股列表后台预热
 
 # ── i18n ──────────────────────────────────────────────
@@ -215,25 +216,7 @@ def home():
 @app.route("/stock/<path:code>/fundamentals")
 @login_required
 def stock_fundamentals(code):
-    code  = code.upper()
-    stock = db.get_stock(code)
-    if not stock:
-        flash("Stock not found.", "warning")
-        return redirect(url_for("index"))
-
-    market  = stock.get("market", "us")
-    history = db.get_analysis_history(code, period="daily", limit=20)
-    ff_hist = db.get_fund_flow_history(code, days=60)
-    price   = db.get_latest_price(code)
-
-    return render_template("fundamentals.html",
-        stock=stock,
-        history=history,
-        ff_hist=ff_hist,
-        price=price,
-        currency=MARKET_CURRENCY.get(market, "$"),
-        now=datetime.now(CN_TZ).strftime("%Y-%m-%d"),
-    )
+    return redirect(url_for("stock_page", code=code.upper()) + "#tab-fundamentals")
 
 
 @app.route("/stock/<path:code>")
@@ -249,15 +232,23 @@ def stock_page(code):
     price    = db.get_latest_price(code)
     news     = db.get_stock_news(code, days=7)
     analysis = db.get_latest_analysis(code, period="daily")
-    history  = db.get_analysis_history(code, period="daily", limit=10)
+    history  = db.get_analysis_history(code, period="daily", limit=20)
     prices   = db.get_price_history(code, days=30)
     ff       = db.get_fund_flow(code) if market == "cn" else {}
+    ff_hist  = db.get_fund_flow_history(code, days=60) if market == "cn" else []
+    fund     = db.get_fundamentals(code) if market == "cn" else {}
+    signals  = fund.get("signals", {}) if fund else {}
+    annual   = fund.get("annual",  []) if fund else []
+    pe_current       = fund.get("pe_current")       if fund else None
+    pe_percentile_5y = fund.get("pe_percentile_5y") if fund else None
+    pb_current       = fund.get("pb_current")       if fund else None
+    pb_percentile_5y = fund.get("pb_percentile_5y") if fund else None
 
     # pending pipeline job?
     with db.get_conn() as c:
         j = c.execute("""
             SELECT id, status FROM pipeline_jobs
-            WHERE code=? AND status IN ('pending','running')
+            WHERE code=? AND status IN ('pending','running') AND started_at > datetime('now','-15 minutes')
             ORDER BY id DESC LIMIT 1
         """, (code,)).fetchone()
         pending_job = dict(j) if j else None
@@ -268,8 +259,12 @@ def stock_page(code):
     return render_template("stock.html",
         stock=stock, price=price, news=news,
         analysis=analysis, history=history, prices=prices,
-        fund_flow=ff, pending_job=pending_job,
-        in_watchlist=in_wl,
+        fund_flow=ff, ff_hist=ff_hist,
+        signals=signals, annual=annual,
+        pe_current=pe_current, pe_percentile_5y=pe_percentile_5y,
+        pb_current=pb_current, pb_percentile_5y=pb_percentile_5y,
+        pending_job=pending_job, in_watchlist=in_wl,
+        market=market,
         currency=MARKET_CURRENCY.get(market, "$"),
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
     )
@@ -282,7 +277,9 @@ def index():
     db.init_db()
     db._migrate()
     region    = session.get("region", "nz")
-    watchlist = db.get_user_watchlist(session["user_id"])
+    # 首页只展示 holding + watching（不含已卖出）
+    watchlist = [w for w in db.get_user_watchlist(session["user_id"])
+                 if w.get("status", "watching") != "sold"]
     quote_map = {q["code"]: q for q in db.get_quotes()}
     reports   = db.list_reports(limit=10)
     latest    = db.get_report()
@@ -303,7 +300,7 @@ def index():
         with db.get_conn() as c:
             j = c.execute("""
                 SELECT id, status FROM pipeline_jobs
-                WHERE code=? AND status IN ('pending','running')
+                WHERE code=? AND status IN ('pending','running') AND started_at > datetime('now','-15 minutes')
                 ORDER BY id DESC LIMIT 1
             """, (code,)).fetchone()
             if j:
@@ -327,6 +324,37 @@ def index():
 
     local_stocks = [s for s in stocks if s["market"] == region]
     intl_stocks  = [s for s in stocks if s["market"] != region]
+
+    # ── 持仓警示等级（规则引擎，无需 LLM）────────────────
+    def _compute_alert(s):
+        grade = (s.get("grade") or "—").replace("+","").replace("-","")
+        if grade in ("C","D"):
+            return "warn", f"评级{s.get('grade','—')}，基本面需关注"
+        net = s.get("main_net")
+        if net is not None and net < -0.5:
+            return "warn", f"主力净流出 {net:.2f}亿，资金出逃"
+        conc = s.get("conclusion") or ""
+        if conc in ("卖出","减持"):
+            return "warn", f"结论「{conc}」，关注执行时机"
+        r = (s.get("reasoning") or "")[:45]
+        return "ok", (r + "…") if r else "持续关注"
+
+    for s in stocks:
+        s["alert_level"], s["alert_reason"] = _compute_alert(s)
+
+    # ── 加载今日组合简报 ──────────────────────────────────
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    portfolio_brief = db.get_portfolio_brief(session["user_id"], date=today)
+    # 将 brief 的 created_at（SQLite UTC）转为 CST 显示
+    if portfolio_brief and portfolio_brief.get("created_at"):
+        try:
+            from datetime import timedelta
+            _utc = datetime.strptime(portfolio_brief["created_at"][:16], "%Y-%m-%d %H:%M")
+            portfolio_brief = dict(portfolio_brief)
+            portfolio_brief["created_at_cst"] = (_utc + timedelta(hours=8)).strftime("%H:%M")
+        except Exception:
+            portfolio_brief = dict(portfolio_brief)
+            portfolio_brief["created_at_cst"] = ""
 
     # ── Market pulse（轻量，只拉 NZX50）─────────────────
     market = {}
@@ -414,6 +442,72 @@ def index():
         monthly_report=monthly_report,
         quarterly_report=quarterly_report,
         market=market,
+        portfolio_brief=portfolio_brief,
+        now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+    )
+
+
+# ── Daily Brief Page ──────────────────────────────────
+@app.route("/brief")
+@login_required
+def brief_page():
+    db.init_db(); db._migrate()
+    user_id  = session["user_id"]
+    watchlist = [w for w in db.get_user_watchlist(user_id)
+                 if w.get("status", "watching") != "sold"]
+
+    stocks = []
+    for row in watchlist:
+        code   = row.get("stock_code") or row.get("code")
+        market = row.get("market") or _detect_market(code)
+        a  = db.get_latest_analysis(code, period="daily")
+        ff = db.get_fund_flow(code) if market == "cn" else {}
+        stocks.append({
+            "code":       code,
+            "name":       row.get("name", code),
+            "market":     market,
+            "currency":   MARKET_CURRENCY.get(market, "$"),
+            "grade":      a.get("grade", "—") if a else "—",
+            "conclusion": a.get("conclusion", "") if a else "",
+            "reasoning":  (a.get("reasoning","") or "")[:80] if a else "",
+            "main_net":   ff.get("main_net") if ff else None,
+        })
+
+    def _compute_alert(s):
+        grade = (s.get("grade") or "—").replace("+","").replace("-","")
+        if grade in ("C","D"):
+            return "warn", f"Grade {s['grade']} — review fundamentals"
+        net = s.get("main_net")
+        if net is not None and net < -0.5:
+            return "warn", f"Institutional outflow {net:.2f}B"
+        conc = s.get("conclusion","")
+        if conc in ("卖出","减持","Sell","Reduce"):
+            return "warn", conc
+        r = (s.get("reasoning") or "")[:60]
+        return "ok", (r+"…") if r else "No issues"
+
+    for s in stocks:
+        s["alert_level"], s["alert_reason"] = _compute_alert(s)
+
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    portfolio_brief = db.get_portfolio_brief(user_id, date=today)
+    if portfolio_brief and portfolio_brief.get("created_at"):
+        try:
+            from datetime import timedelta
+            _utc = datetime.strptime(portfolio_brief["created_at"][:16], "%Y-%m-%d %H:%M")
+            portfolio_brief = dict(portfolio_brief)
+            portfolio_brief["created_at_cst"] = (_utc + timedelta(hours=8)).strftime("%H:%M")
+        except Exception:
+            portfolio_brief = dict(portfolio_brief)
+            portfolio_brief["created_at_cst"] = ""
+
+    snap = db.get_market_snapshot()
+    market = snap.get("data", {}) if snap else {}
+
+    return render_template("brief.html",
+        stocks=stocks,
+        portfolio_brief=portfolio_brief,
+        market=market,
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
     )
 
@@ -433,7 +527,7 @@ def watchlist_page():
         analysis  = db.get_latest_analysis(code, period="daily")
         with db.get_conn() as c:
             j = c.execute("""SELECT id,status FROM pipeline_jobs
-                WHERE code=? AND status IN ('pending','running')
+                WHERE code=? AND status IN ('pending','running') AND started_at > datetime('now','-15 minutes')
                 ORDER BY id DESC LIMIT 1""", (code,)).fetchone()
             pending_job = dict(j) if j else None
         grade = analysis.get("grade", "") if analysis else ""
@@ -497,14 +591,14 @@ def add_stock():
     # 触发后台分析 pipeline
     job_id = start_pipeline(session["user_id"], code, market)
     flash(f"{name} ({code}) 已添加，巴菲特正在分析中…", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("watchlist_page"))
 
 
 @app.route("/remove/<code>", methods=["POST"])
 @login_required
 def remove_stock(code):
     db.remove_user_stock(session["user_id"], code)
-    return redirect(url_for("index"))
+    return redirect(url_for("watchlist_page"))
 
 
 # ── 状态移动 API ───────────────────────────────────────
@@ -821,6 +915,44 @@ def about():
     return render_template("about.html")
 
 
+@app.route("/api/generate-brief", methods=["POST"])
+@login_required
+def api_generate_brief():
+    """手动触发组合日报 LLM 合成，存入 portfolio_analysis 表。"""
+    user_id = session["user_id"]
+    watchlist = db.get_user_watchlist(user_id)
+    stocks_data = []
+    for row in watchlist:
+        code   = row.get("stock_code") or row.get("code")
+        market = row.get("market") or _detect_market(code)
+        a  = db.get_latest_analysis(code, period="daily")
+        ff = db.get_fund_flow(code) if market == "cn" else {}
+        if a:
+            stocks_data.append({
+                "code":       code,
+                "name":       row.get("name", code),
+                "grade":      a.get("grade"),
+                "conclusion": a.get("conclusion"),
+                "reasoning":  a.get("reasoning"),
+                "moat":       a.get("moat"),
+                "behavioral": a.get("behavioral"),
+                "main_net":   ff.get("main_net") if ff else None,
+            })
+
+    snap = db.get_market_snapshot()
+    market_data = snap.get("data", {}) if snap else {}
+    locale = session.get("locale", "zh")
+
+    try:
+        macro, summary = generate_portfolio_brief(stocks_data, market_data, locale=locale)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    db.save_portfolio_brief(user_id, today, macro, summary)
+    return jsonify({"ok": True, "macro": macro, "summary": summary})
+
+
 @app.route("/api/search")
 @login_required
 def api_search():
@@ -839,5 +971,6 @@ def api_search():
 
 if __name__ == "__main__":
     db.init_db()
+    db.expire_stale_jobs()
     print("🚀 Personal Buffett → http://127.0.0.1:5001")
     app.run(debug=True, port=5001)

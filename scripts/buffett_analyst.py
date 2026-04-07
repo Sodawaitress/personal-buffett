@@ -232,7 +232,8 @@ def _score_news(news: list) -> list:
 
 def analyze_stock_v2(code: str, name: str, market: str,
                      price: dict, news: list, fund_flow: dict,
-                     fundamentals: dict = None, signals: dict = None) -> dict:
+                     fundamentals: dict = None, signals: dict = None,
+                     entry_price: float = None, buy_date: str = None) -> dict:
     """
     pipeline 调用的新版分析函数。
     返回 dict，可直接传给 db.save_analysis(**result)。
@@ -427,7 +428,35 @@ def analyze_stock_v2(code: str, name: str, market: str,
             quality = "良好" if fcf >= 0.8 else ("偏低" if fcf >= 0.5 else "差——利润质量存疑")
             signals_lines.append(f"FCF质量（现金流/净利润）：均值{fcf:.2f}x，{quality}")
 
-    signals_str = "\n".join(signals_lines)
+    # 技术支撑位
+    tech = signals.get("technicals", {}) if signals else {}
+    tech_lines = []
+    if tech:
+        current_price = price.get("price") if price else None
+        ma_labels = [("ma250", "年线MA250"), ("ma120", "半年线MA120"),
+                     ("ma60", "季线MA60"),   ("ma20", "月线MA20")]
+        for key, label in ma_labels:
+            val = tech.get(key)
+            pct = tech.get(f"price_vs_{key}")
+            if val is not None and pct is not None:
+                pos = "高于" if pct >= 0 else "低于"
+                tech_lines.append(f"{label}：¥{val}，现价{pos}{abs(pct):.1f}%")
+        vwap60  = tech.get("vwap60")
+        pv60    = tech.get("price_vs_vwap60")
+        vwap120 = tech.get("vwap120")
+        pv120   = tech.get("price_vs_vwap120")
+        if vwap60 and pv60 is not None:
+            pos = "高于" if pv60 >= 0 else "低于"
+            tech_lines.append(f"60日VWAP（近期机构成本参考）：¥{vwap60}，现价{pos}{abs(pv60):.1f}%")
+        if vwap120 and pv120 is not None:
+            pos = "高于" if pv120 >= 0 else "低于"
+            tech_lines.append(f"120日VWAP（中期机构成本参考）：¥{vwap120}，现价{pos}{abs(pv120):.1f}%")
+
+    tech_str = ""
+    if tech_lines:
+        tech_str = "\n【技术支撑位与机构成本参考】\n" + "\n".join(tech_lines)
+
+    signals_str = "\n".join(signals_lines) + tech_str
 
     # ST 股检测
     is_st = "ST" in name.upper() or code.upper().startswith(("ST", "*ST"))
@@ -445,13 +474,37 @@ def analyze_stock_v2(code: str, name: str, market: str,
     else:
         behavioral_hint = "常规持有状态。分析投资者最常见的锚定效应（以买入价而非内在价值为参考锚）。"
 
+    # 用户持仓成本段落
+    entry_str = ""
+    if entry_price and entry_price > 0:
+        cur_price = price.get("price") if price else None
+        if cur_price:
+            pnl_pct = (cur_price - entry_price) / entry_price * 100
+            pnl_sign = "浮盈" if pnl_pct >= 0 else "浮亏"
+            pnl_color = "赚" if pnl_pct >= 0 else "亏"
+            days_str = f"，持有自 {buy_date}" if buy_date else ""
+            entry_str = (
+                f"\n【用户持仓成本】\n"
+                f"买入价：¥{entry_price:.2f}{days_str}\n"
+                f"现价：¥{cur_price:.2f}，{pnl_sign} {abs(pnl_pct):.1f}%（即每股{pnl_color}¥{abs(cur_price - entry_price):.2f}）\n"
+                f"→ 分析结论必须基于用户实际持仓成本。给出明确建议：是加仓、继续持有、减仓、还是止损？"
+            )
+            # 同时更新 behavioral_hint（有成本时才有意义做亏损/锚定分析）
+            if not is_st:
+                if pnl_pct < -15:
+                    behavioral_hint = f"用户已亏损{abs(pnl_pct):.1f}%（买入价¥{entry_price:.2f}）。诊断损失厌恶（亏损不甘止损）vs 理性止损的边界——何时该认输？"
+                elif pnl_pct > 30:
+                    behavioral_hint = f"用户浮盈{pnl_pct:.1f}%（买入价¥{entry_price:.2f}）。诊断处置效应（过早锁定利润）——利润是继续跑还是落袋为安？"
+                else:
+                    behavioral_hint = f"用户持仓成本¥{entry_price:.2f}，{pnl_sign}{abs(pnl_pct):.1f}%。分析以买入价为锚点的锚定效应——正确参考锚是内在价值，不是买入价。"
+
     user_msg = f"""公司：{name}（{code}）
 市场：{market.upper()}{st_warning}
 {price_str}
 {ff_str}
 {profile_str}
 {fundamentals_str}
-{signals_str}
+{signals_str}{entry_str}
 
 近期新闻（已过滤噪音，按信号重要性排序）：
 {news_lines}

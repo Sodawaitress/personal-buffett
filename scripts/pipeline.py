@@ -26,6 +26,29 @@ def _fetch_price(code, market, log):
                 db.upsert_price(code, q["price"], change_pct=q.get("change_pct"),
                                 volume=q.get("amount"))
                 log(f"       {q['price']} ({q.get('change_pct',0):+.2f}%)")
+        elif market == "cn":
+            import requests as req
+            pure = code.split(".")[0]
+            prefix = "sh" if pure.startswith(("6", "9")) else "sz"
+            r = req.get(
+                f"https://hq.sinajs.cn/list={prefix}{pure}",
+                headers={"Referer": "https://finance.sina.com.cn"},
+                timeout=10,
+            )
+            for line in r.text.strip().splitlines():
+                if '="' not in line:
+                    continue
+                fields = line.split('"')[1].split(",")
+                if len(fields) < 10:
+                    continue
+                price = float(fields[3])
+                prev  = float(fields[2])
+                chg   = round((price - prev) / prev * 100, 2) if prev else None
+                vol   = float(fields[8]) if fields[8] else None   # 成交量(股)
+                amt   = float(fields[9]) / 1e8 if fields[9] else None  # 成交额(亿)
+                if price:
+                    db.upsert_price(code, price, change_pct=chg, volume=amt)
+                    log(f"       ¥{price} ({chg:+.2f}%)" if chg else f"       ¥{price}")
         else:
             import yfinance as yf
             t = yf.Ticker(code)
@@ -92,7 +115,7 @@ def _fetch_fund_flow(code, market, log):
     try:
         import akshare as ak
         pure = code.split(".")[0]
-        df = ak.stock_individual_fund_flow(stock=pure, market="sh" if code.endswith(".SS") else "sz")
+        df = ak.stock_individual_fund_flow(stock=pure, market="sh" if pure.startswith(("6", "9")) else "sz")
         if df is not None and not df.empty:
             row = df.iloc[-1]
             date = str(row.get("日期", datetime.now(CN_TZ).strftime("%Y-%m-%d")))[:10]
@@ -152,6 +175,28 @@ def _fetch_advanced(code, market, log):
         log(f"       ⚠️ 高级财务失败: {e}")
 
 
+def _fetch_technicals(code, market, log):
+    """Step 3.7: 技术支撑位（MA均线 + VWAP成本参考）"""
+    if market != "cn":
+        return
+    log("  [3.7/4] 计算技术支撑位…")
+    try:
+        from stock_fetch import fetch_cn_technicals
+        tech = fetch_cn_technicals(code)
+        if tech:
+            db.upsert_signals(code, {"technicals": tech})
+            parts = []
+            if tech.get("ma250") is not None:
+                parts.append(f"年线¥{tech['ma250']} ({tech.get('price_vs_ma250',0):+.1f}%)")
+            if tech.get("vwap60") is not None:
+                parts.append(f"60日VWAP¥{tech['vwap60']} ({tech.get('price_vs_vwap60',0):+.1f}%)")
+            log(f"       {' | '.join(parts)}")
+        else:
+            log("       ⚠️ 无数据")
+    except Exception as e:
+        log(f"       ⚠️ 技术支撑位失败: {e}")
+
+
 def _fetch_signals(code, market, log):
     """Step 3.8: A股华尔街级信号（质押 + 融资 + 机构持仓 + FCF质量）"""
     if market != "cn":
@@ -179,7 +224,7 @@ def _fetch_signals(code, market, log):
         log(f"       ⚠️ 投行信号获取失败: {e}")
 
 
-def _run_analysis(code, market, log):
+def _run_analysis(code, market, log, user_id=None):
     """Step 4: 巴菲特++分析"""
     log("  [4/4] 运行巴菲特分析…")
     try:
@@ -190,6 +235,22 @@ def _run_analysis(code, market, log):
         fundamentals= db.get_fundamentals(code) if market == "cn" else {}
         stock       = db.get_stock(code)
 
+        # 查用户持仓成本
+        entry_price, buy_date = None, None
+        if user_id:
+            try:
+                with db.get_conn() as c:
+                    row = c.execute(
+                        "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
+                        (user_id, code)
+                    ).fetchone()
+                    if row and row["buy_price"]:
+                        entry_price = float(row["buy_price"])
+                        buy_date    = row["buy_date"]
+                        log(f"       持仓成本 ¥{entry_price:.2f}（{buy_date or '未记日期'}）")
+            except Exception:
+                pass
+
         result = analyze_stock_v2(
             code=code,
             name=stock.get("name", code) if stock else code,
@@ -199,6 +260,8 @@ def _run_analysis(code, market, log):
             fund_flow=ff,
             fundamentals=fundamentals,
             signals=fundamentals.get("signals", {}),
+            entry_price=entry_price,
+            buy_date=buy_date,
         )
         if result:
             today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
@@ -242,7 +305,7 @@ def _is_st(code: str) -> bool:
 
 # ── 主 pipeline ────────────────────────────────────────
 
-def run_pipeline(job_id: int, code: str, market: str):
+def run_pipeline(job_id: int, code: str, market: str, user_id: int = None):
     """
     在后台线程中运行。每步有独立超时（35s），不会因单步卡住拖死整个分析。
     """
@@ -267,10 +330,11 @@ def run_pipeline(job_id: int, code: str, market: str):
         _run_with_timeout(_fetch_financials,[code, market, log], "财务数据",log, 45)
 
         if not is_st:
-            _run_with_timeout(_fetch_advanced,[code, market, log], "高级财务",log, 40)
-            _run_with_timeout(_fetch_signals, [code, market, log], "投行信号",log, 40)
+            _run_with_timeout(_fetch_advanced,   [code, market, log], "高级财务",  log, 40)
+            _run_with_timeout(_fetch_technicals, [code, market, log], "技术支撑位",log, 20)
+            _run_with_timeout(_fetch_signals,    [code, market, log], "投行信号",  log, 40)
 
-        _run_with_timeout(_run_analysis,   [code, market, log], "AI分析",  log, 40)
+        _run_with_timeout(_run_analysis,   [code, market, log, user_id], "AI分析",  log, 40)
 
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
@@ -286,7 +350,7 @@ def start_pipeline(user_id: int, code: str, market: str) -> int:
     返回 job_id 供前端轮询。
     """
     job_id = db.create_job(user_id, code, "add_stock")
-    t = threading.Thread(target=run_pipeline, args=(job_id, code, market), daemon=True)
+    t = threading.Thread(target=run_pipeline, args=(job_id, code, market, user_id), daemon=True)
     t.start()
     return job_id
 
