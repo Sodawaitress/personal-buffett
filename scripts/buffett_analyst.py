@@ -230,6 +230,7 @@ def _analyze_news_signals(news: list) -> dict:
         "summary": "..."                             # 新闻总结一句话
     }
     """
+    # 中文关键词
     HIGH_NEG  = ["辞职", "离职", "被查", "立案", "违规", "处罚", "诉讼", "商誉减值", "暴雷"]
     MID_NEG   = ["减持", "亏损", "下滑", "下降", "降级", "失败", "撤回", "退出"]
     HIGH_POS  = ["回购", "增持", "大额分红", "创历史新高", "重大中标", "获批上市"]
@@ -237,39 +238,51 @@ def _analyze_news_signals(news: list) -> dict:
     NOISE     = ["只个股", "家公司", "突破年线", "牛熊分界", "资金流向日报",
                  "盘中播报", "技术分析", "K线", "涨跌幅排名"]
 
+    # 英文关键词（用于摩根大通等英文新闻源）
+    EN_HIGH_NEG = ["resign", "fired", "scandal", "lawsuit", "fraud", "downgrade",
+                   "investigation", "bankruptcy", "loss", "crisis", "collapse"]
+    EN_MID_NEG = ["decline", "miss", "lower", "reduce", "weak", "challenge", "concern"]
+    EN_HIGH_POS = ["upgrade", "acquisition", "record profit", "breakthrough", "approval",
+                   "deal", "expansion", "beat estimate"]
+    EN_MID_POS = ["partnership", "growth", "earnings", "profit", "revenue", "profit"]
+
     signal_counts = {"high_neg": 0, "mid_neg": 0, "high_pos": 0, "mid_pos": 0}
     sentiments = []
     key_signals = []
     impact_scores = []
 
     for n in news:
-        title = n.get("title", "")
+        title = n.get("title", "").lower()  # 转小写便于英文匹配
 
         # 过滤噪音
         if any(k in title for k in NOISE):
             continue
 
-        # 信号分类
-        if any(k in title for k in HIGH_NEG):
+        # 信号分类（先检查中文，再检查英文）
+        if any(k in title for k in HIGH_NEG) or any(k in title for k in EN_HIGH_NEG):
             signal_counts["high_neg"] += 1
             sentiments.append(-1.0)
-            impact_scores.append(8)  # 高负面 = 高影响力
-            key_signals.append(next((k for k in HIGH_NEG if k in title), "负面信号"))
-        elif any(k in title for k in MID_NEG):
+            impact_scores.append(8)
+            key_signals.append(next((k for k in HIGH_NEG if k in title),
+                                   next((k for k in EN_HIGH_NEG if k in title), "负面信号")))
+        elif any(k in title for k in MID_NEG) or any(k in title for k in EN_MID_NEG):
             signal_counts["mid_neg"] += 1
             sentiments.append(-0.5)
             impact_scores.append(5)
-            key_signals.append(next((k for k in MID_NEG if k in title), "中性负面"))
-        elif any(k in title for k in HIGH_POS):
+            key_signals.append(next((k for k in MID_NEG if k in title),
+                                   next((k for k in EN_MID_NEG if k in title), "中性负面")))
+        elif any(k in title for k in HIGH_POS) or any(k in title for k in EN_HIGH_POS):
             signal_counts["high_pos"] += 1
             sentiments.append(1.0)
-            impact_scores.append(7)  # 高正面 = 中等影响力
-            key_signals.append(next((k for k in HIGH_POS if k in title), "正面信号"))
-        elif any(k in title for k in MID_POS):
+            impact_scores.append(7)
+            key_signals.append(next((k for k in HIGH_POS if k in title),
+                                   next((k for k in EN_HIGH_POS if k in title), "正面信号")))
+        elif any(k in title for k in MID_POS) or any(k in title for k in EN_MID_POS):
             signal_counts["mid_pos"] += 1
             sentiments.append(0.5)
             impact_scores.append(3)
-            key_signals.append(next((k for k in MID_POS if k in title), "中性正面"))
+            key_signals.append(next((k for k in MID_POS if k in title),
+                                   next((k for k in EN_MID_POS if k in title), "中性正面")))
         else:
             sentiments.append(0.0)
             impact_scores.append(1)
