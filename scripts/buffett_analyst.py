@@ -167,39 +167,142 @@ def analyze_period(period_label: str, days: int, news_by_code: dict,
     return _call_groq(SYSTEM_PERIOD, user_msg, max_tokens=600)
 
 
-SYSTEM_LETTER = """你是沃伦·巴菲特，用第一人称写一封给持仓者的私人分析信，同时附上结构化维度评估。
+SYSTEM_LETTER = """你是沃伦·巴菲特。用第一人称、自信而冷静的语气写分析信。
 
-【第一部分：分析信正文】
-分析框架（贯穿全文，不要列清单）：
-1. 生意分类：GREAT（高ROE、低资本消耗）/ GOOD（稳固但需持续再投入）/ GRUESOME（高增长、吃资本、不赚钱）
-2. 护城河方向：变宽还是变窄？有没有竞争者逼近、技术替代、政策打压的信号？
-3. 管理层信号：机构惰性迹象（高点并购、CFO离职、频繁"一次性费用"）？还是真金白银回购/增持？
-4. 资金面（A股）：主力净流入/流出的幅度和趋势说明什么？
-5. 估值常识：PE/PB跟历史均值比是便宜还是贵？没数据不猜。
+【核心原则】
+写得像在给朋友讲投资逻辑——清晰、有深度、会质疑。不是报告，是思考过程的展现。
 
-写作要求：
-- 开头直接切入最重要的一件事
-- 有数据就用，没有就说"数据不足"，不编造
-- 该犀利时犀利，不和稀泥
-- 偶尔可提查理芒格
-- 结尾一句话给出明确立场
-- 署名「沃伦·巴菲特（私人版）」
-- 总字数 250-350 字（中文），纯文字无 Markdown
+【结构（必须包含）】
+1. 开头：一句核心判断（如"这家公司陷入困境"或"护城河在加固"）
+2. 基本面分析：用数字说话
+   - 赚钱能力（ROE、利润率、现金流）
+   - 竞争优势（护城河是宽/窄/变窄/变宽）
+   - 管理层信号（回购、派息、离职等关键行动）
+3. 估值判断：PE/PB对标，当前是高估/合理/低估，52周位置的风险
+4. 新闻权重：情绪值、关键信号、对基本面的实际影响（往往被高估）
+5. 结尾：一句明确立场（买入/持有/减持/卖出），理由是什么
 
-【第二部分：结构化维度（信件正文结束后，另起一行）】
-在信件最后，必须输出以下格式（每行一个字段，冒号后直接接内容，不超过25字）：
+【数据准则】
+- 有数据就用，会变得有说服力（"净利率-0.5%"比"利润下滑"有力100倍）
+- 没有数据就直说"数据不足"，不要编造
+- 对比是核心：不是看绝对值，是看 vs 历史、vs 同行、vs 债券收益率
+- 关键数字要加粗或强调，但不要写"数据显示"这种填充词
 
-===DIMS===
-护城河：[一句话，说明宽/窄/稳及核心依据]
-管理层：[一句话，信号正面/中性/有红旗]
-估值：[一句话，便宜/合理/偏贵，引用PE/PB数据]
-资金流向：[一句话，流入/流出/中性，引用主力数据]
-行为金融：[一句话，从Kahneman行为经济学视角——当前持有者最可能犯什么心理偏差？理性人应该怎么看？若是卖出/D级，必须点名沉没成本陷阱]
-宏观敏感度：[一句话，对利率/政策/汇率的敏感程度]
-评级：[A/B+/B/B-/C/D] | 结论：[买入/持有/减持/卖出]
-===END===
+【巴菲特式质疑】
+当看到好消息时，问自己：
+- "但这改变了基本面的坏处吗？"
+- "这是真的竞争优势还是一次性利好？"
+- "管理层这个决定对我有利吗？"
 
-行为金融字段由调用方注入上下文提示，你只需基于该提示写一句有力的行为学诊断（≤25字），语气直接，不含糊。"""
+【🚨 红旗检查清单（必须提及）】
+如果提供的数据中包含以下任何一项，必须在分析中明确指出，不能忽视：
+- ROE < 5% 或 ROE < 0（赚钱能力弱或亏损）→ 必须说"赚钱能力几乎为零"
+- 净利率 < 0%（公司在亏损）→ 必须说"公司在烧钱"
+- 债务比 > 20（高杠杆）→ 必须说"高杠杆风险"
+- 52周价格位置 > 90%（接近年高）→ 必须说"风险位置"
+- 护城河变窄（市占率下降等）→ 必须说"竞争地位恶化"
+- 情绪值 < -0.5 或关键负面信号 → 必须量化提及
+
+这些红旗不能被好消息（如新闻利好、战略合作）所掩盖。
+好消息最多只能"部分抵消"这些风险，不能"消除"它们。
+
+【禁止】
+- 模糊词：不要说"较强""相对好"，说"是否比对手强"
+- 空承诺：不要说"值得关注"，说"值不值得现在买"
+- 编造数据：没有就说没有，宁可简洁也不要虚构
+- 超过 400 字：言简意赅是高手
+
+【输出格式】
+自然段落，但最后一段务必是：
+「基于以上，我的判断是：[买入/持有/减持/卖出]。因为[最关键的1-2个因素]。」
+"""
+
+
+def _analyze_news_signals(news: list) -> dict:
+    """
+    从新闻中提取量化信号：
+    返回 {
+        "sentiment_avg": float (-1 ~ +1),           # 平均情绪
+        "signal_count": {"high_pos": int, "high_neg": int, "mid_pos": int, "mid_neg": int},
+        "key_signals": ["CFO离职", "回购¥10亿", ...],  # 关键信号列表
+        "impact_score": float (0-10),                # 对股价的预测影响力（0=无 10=极高）
+        "momentum": "accelerating" | "stable" | "decelerating",  # 信号动态
+        "summary": "..."                             # 新闻总结一句话
+    }
+    """
+    HIGH_NEG  = ["辞职", "离职", "被查", "立案", "违规", "处罚", "诉讼", "商誉减值", "暴雷"]
+    MID_NEG   = ["减持", "亏损", "下滑", "下降", "降级", "失败", "撤回", "退出"]
+    HIGH_POS  = ["回购", "增持", "大额分红", "创历史新高", "重大中标", "获批上市"]
+    MID_POS   = ["派息", "分红", "签约", "战略合作", "净利润增长", "获批", "中标"]
+    NOISE     = ["只个股", "家公司", "突破年线", "牛熊分界", "资金流向日报",
+                 "盘中播报", "技术分析", "K线", "涨跌幅排名"]
+
+    signal_counts = {"high_neg": 0, "mid_neg": 0, "high_pos": 0, "mid_pos": 0}
+    sentiments = []
+    key_signals = []
+    impact_scores = []
+
+    for n in news:
+        title = n.get("title", "")
+
+        # 过滤噪音
+        if any(k in title for k in NOISE):
+            continue
+
+        # 信号分类
+        if any(k in title for k in HIGH_NEG):
+            signal_counts["high_neg"] += 1
+            sentiments.append(-1.0)
+            impact_scores.append(8)  # 高负面 = 高影响力
+            key_signals.append(next((k for k in HIGH_NEG if k in title), "负面信号"))
+        elif any(k in title for k in MID_NEG):
+            signal_counts["mid_neg"] += 1
+            sentiments.append(-0.5)
+            impact_scores.append(5)
+            key_signals.append(next((k for k in MID_NEG if k in title), "中性负面"))
+        elif any(k in title for k in HIGH_POS):
+            signal_counts["high_pos"] += 1
+            sentiments.append(1.0)
+            impact_scores.append(7)  # 高正面 = 中等影响力
+            key_signals.append(next((k for k in HIGH_POS if k in title), "正面信号"))
+        elif any(k in title for k in MID_POS):
+            signal_counts["mid_pos"] += 1
+            sentiments.append(0.5)
+            impact_scores.append(3)
+            key_signals.append(next((k for k in MID_POS if k in title), "中性正面"))
+        else:
+            sentiments.append(0.0)
+            impact_scores.append(1)
+
+    # 计算综合指标
+    sentiment_avg = sum(sentiments) / len(sentiments) if sentiments else 0.0
+    impact_score = sum(impact_scores) / len(impact_scores) if impact_scores else 0.0
+
+    # 动态判断：正负信号的趋势
+    neg_count = signal_counts["high_neg"] + signal_counts["mid_neg"]
+    pos_count = signal_counts["high_pos"] + signal_counts["mid_pos"]
+
+    if neg_count > pos_count * 1.5:
+        momentum = "accelerating_negative"  # 负面加速
+    elif pos_count > neg_count * 1.5:
+        momentum = "accelerating_positive"  # 正面加速
+    else:
+        momentum = "stable"  # 平衡
+
+    # 生成摘要
+    if key_signals:
+        summary = f"最近关键信号：{', '.join(set(key_signals[:3]))}"
+    else:
+        summary = "暂无重大信号"
+
+    return {
+        "sentiment_avg": round(sentiment_avg, 2),
+        "signal_count": signal_counts,
+        "key_signals": list(set(key_signals[:5])),  # 去重，最多5个
+        "impact_score": round(impact_score, 1),
+        "momentum": momentum,
+        "summary": summary,
+    }
 
 
 def _score_news(news: list) -> list:
@@ -224,7 +327,35 @@ def _score_news(news: list) -> list:
         if any(k in t for k in MID_POS):  return 2
         return 1  # 中性
 
+    def sentiment(n):
+        """返回 sentiment 分值：-1（负）/ 0（中性）/ 1（正）"""
+        score_val = score(n)
+        if score_val in (5, 4):
+            return -1.0  # 负面
+        elif score_val in (3, 2):
+            return 1.0   # 正面
+        elif score_val == 1:
+            return 0.0   # 中性
+        else:
+            return 0.0   # 噪音当中性处理
+
     scored = [(score(n), n) for n in news]
+
+    # 同时更新新闻的 sentiment 字段（供后续存储）
+    import db
+    for s, n in scored:
+        if s > 0:  # 只对有效新闻计算情绪
+            n_sentiment = sentiment(n)
+            # 尝试更新数据库（如果新闻已存在）
+            try:
+                with db.get_conn() as c:
+                    c.execute(
+                        "UPDATE stock_news SET sentiment=? WHERE id=?",
+                        (n_sentiment, n.get("id"))
+                    )
+            except:
+                pass  # 如果更新失败，继续处理
+
     filtered = [(s, n) for s, n in scored if s > 0]  # 去噪音
     filtered.sort(key=lambda x: x[0], reverse=True)
     return [n for _, n in filtered]
@@ -243,11 +374,42 @@ def analyze_stock_v2(code: str, name: str, market: str,
     ).strftime("%Y-%m-%d")
 
     # 新闻：先排序过滤，再取前8
+    # 新闻量化分析
     sorted_news = _score_news(news)
-    news_lines = "\n".join(
-        f"- {n.get('title','')[:100]}（{n.get('source','')}）"
-        for n in sorted_news[:8]
-    ) or "（暂无近期新闻）"
+    news_signals = _analyze_news_signals(news)
+
+    # 新闻显示（带情绪标签）
+    news_lines_list = []
+    for n in sorted_news[:8]:
+        title = n.get('title','')[:100]
+        source = n.get('source','')
+        sentiment = n.get('sentiment')
+
+        # 添加情绪标签
+        if sentiment is not None:
+            if sentiment > 0.5:
+                emoji = "📈"  # 正面
+            elif sentiment < -0.5:
+                emoji = "📉"  # 负面
+            else:
+                emoji = "➖"  # 中性
+        else:
+            emoji = "📰"
+
+        news_lines_list.append(f"{emoji} {title}（{source}）")
+
+    news_lines = "\n".join(news_lines_list) or "（暂无近期新闻）"
+
+    # 新闻量化摘要
+    news_summary = f"""
+【新闻量化信号】
+- 情绪平均值：{news_signals['sentiment_avg']}（-1为极负，+1为极正）
+- 关键信号：{', '.join(news_signals['key_signals']) if news_signals['key_signals'] else '无'}
+- 信号计数：高正面{news_signals['signal_count']['high_pos']}条 | 中正面{news_signals['signal_count']['mid_pos']}条 | 中负面{news_signals['signal_count']['mid_neg']}条 | 高负面{news_signals['signal_count']['high_neg']}条
+- 影响力评分：{news_signals['impact_score']}/10（0=无 10=极高）
+- 动态趋势：{news_signals['momentum']}（accelerating_positive/stable/accelerating_negative）
+- 总结：{news_signals['summary']}
+"""
 
     price_str = ""
     pe_str    = ""
@@ -324,20 +486,93 @@ def analyze_stock_v2(code: str, name: str, market: str,
             # 亏损公司：PE 无意义，明确告诉 LLM
             fund_lines.append("⚠️ 估值注意：公司当前ROE为负（亏损状态），PE指标无意义，不可用于估值判断。")
             fund_lines.append("  请聚焦于：何时能扭亏、资产负债表能否支撑、管理层是否有可信的转型计划。")
-            if pb_now and pb_pct is not None:
-                cheap_pb = "偏低" if pb_pct < 30 else ("偏高" if pb_pct > 70 else "历史中位")
-                fund_lines.append(f"  PB {pb_now}x（5年历史{pb_pct}%分位，{cheap_pb}）——亏损时PB是主要参考锚")
+            if pb_now:
+                if pb_pct is not None:
+                    cheap_pb = "偏低" if pb_pct < 30 else ("偏高" if pb_pct > 70 else "历史中位")
+                    fund_lines.append(f"  PB {pb_now}x（5年历史{pb_pct}%分位，{cheap_pb}）——亏损时PB是主要参考锚")
+                else:
+                    fund_lines.append(f"  PB {pb_now}x（历史数据不足）——亏损时PB是主要参考锚")
         else:
-            if pe_now and pe_pct is not None:
-                cheap = "偏低估" if pe_pct < 30 else ("偏高估" if pe_pct > 70 else "处于历史中位")
-                fund_lines.append(f"估值：PE {pe_now}x（5年历史{pe_pct}%分位，{cheap}）")
-            if pb_now and pb_pct is not None:
-                fund_lines.append(f"       PB {pb_now}x（5年历史{pb_pct}%分位）")
+            if pe_now is not None:
+                if pe_pct is not None:
+                    cheap = "偏低估" if pe_pct < 30 else ("偏高估" if pe_pct > 70 else "处于历史中位")
+                    fund_lines.append(f"估值：PE {pe_now}x（5年历史{pe_pct}%分位，{cheap}）")
+                else:
+                    fund_lines.append(f"估值：PE {pe_now}x（历史数据不足）")
+            if pb_now is not None:
+                if pb_pct is not None:
+                    fund_lines.append(f"       PB {pb_now}x（5年历史{pb_pct}%分位）")
+                else:
+                    fund_lines.append(f"       PB {pb_now}x（历史数据不足）")
 
     fundamentals_str = "\n".join(fund_lines)
 
     # 华尔街级信号
     signals_lines = []
+
+    # 非A股的通用财务指标（来自 signals）
+    if signals and market != "cn":
+        metric_lines = []
+        red_flags = []  # 关键风险指标单独列出
+
+        # ROE
+        roe = signals.get("roe")
+        if roe is not None:
+            roe_pct = roe * 100
+            if roe_pct < 5:
+                red_flags.append(f"🚨 ROE 仅 {roe_pct:.2f}%（赚钱能力几乎为零）")
+            else:
+                metric_lines.append(f"  ROE（股东权益回报率）：{roe_pct:.2f}%")
+
+        # 利润率
+        pm = signals.get("profit_margin")
+        if pm is not None:
+            pm_pct = pm * 100
+            if pm_pct < 0:
+                red_flags.append(f"🚨 净利率 {pm_pct:.2f}%（公司在亏损烧钱）")
+            else:
+                metric_lines.append(f"  净利率：{pm_pct:.2f}%")
+
+        # 毛利率
+        gm = signals.get("gross_margin")
+        if gm is not None:
+            gm_pct = gm * 100
+            metric_lines.append(f"  毛利率：{gm_pct:.2f}%")
+
+        # 债务比
+        de = signals.get("debt_to_equity")
+        if de is not None:
+            if de > 20:
+                red_flags.append(f"🚨 债务比 {de:.2f}x（极度高杠杆，融资风险高）")
+            else:
+                metric_lines.append(f"  债务比（D/E）：{de:.2f}x")
+
+        # 流动比
+        cr = signals.get("current_ratio")
+        if cr is not None:
+            metric_lines.append(f"  流动比：{cr:.2f}x")
+
+        # 52周价格位置
+        pos = signals.get("price_position")
+        if pos is not None:
+            pos_pct = pos
+            if pos_pct >= 90:
+                red_flags.append(f"📊 52周价格位置 {pos_pct:.1f}%（接近年高，买入风险大）")
+            elif pos_pct <= 10:
+                metric_lines.append(f"  📊 52周价格位置：{pos_pct:.1f}%（接近年低，买入机会）")
+            else:
+                metric_lines.append(f"  📊 52周价格位置：{pos_pct:.1f}%")
+
+        # 先显示红旗（强制 LLM 关注）
+        if red_flags:
+            signals_lines.append("【⚠️ 关键风险指标】")
+            signals_lines.extend(red_flags)
+
+        # 再显示普通指标
+        if metric_lines:
+            signals_lines.append("【财务指标概览】")
+            signals_lines.extend(metric_lines)
+
     if signals:
         pledge = signals.get("pledge_ratio")
         if pledge is not None:
@@ -506,16 +741,66 @@ def analyze_stock_v2(code: str, name: str, market: str,
 {fundamentals_str}
 {signals_str}{entry_str}
 
+【新闻分析】
 近期新闻（已过滤噪音，按信号重要性排序）：
 {news_lines}
+{news_summary}
 
 行为金融提示（仅用于 ===DIMS=== 中的「行为金融」字段）：{behavioral_hint}
 
 请按格式输出：先写分析信正文，再输出 ===DIMS=== 结构化维度块。"""
 
+    # 🔍 DEBUG: 打印完整的 user_msg 供诊断
+    import os
+    if os.environ.get("DEBUG_BUFFETT") == "1":
+        print(f"\n{'='*80}")
+        print(f"DEBUG: user_msg 内容（共{len(user_msg)}字）")
+        print(f"{'='*80}")
+        print(user_msg)
+        print(f"{'='*80}\n")
+
     raw = _call_groq(SYSTEM_LETTER, user_msg, max_tokens=900)
     if not raw:
-        return {}
+        # LLM 失败时，返回一个最小可行的分析
+        # 基于提供的数据进行简单分类
+        grade = "C"
+        conclusion = "待分析"
+
+        # 检查红旗数据来推断等级
+        if signals:
+            roe = signals.get("roe", 0)
+            pm = signals.get("profit_margin", 0)
+            de = signals.get("debt_to_equity", 0)
+
+            red_flags = sum([
+                roe < 0.05 or roe < 0,
+                pm < 0,
+                de > 20,
+            ])
+
+            if red_flags >= 2:
+                grade = "C"
+                conclusion = "卖出"
+            elif red_flags == 1:
+                grade = "C+"
+                conclusion = "减持"
+            else:
+                grade = "B"
+                conclusion = "持有"
+
+        return {
+            "conclusion": conclusion,
+            "grade": grade,
+            "reasoning": f"分析服务暂时不可用。基于可用财务数据的自动判断：{conclusion}",
+            "letter_html": f"分析服务暂时不可用。基于可用财务数据的自动判断：{conclusion}",
+            "raw_output": "（分析服务暂时不可用）",
+            "moat": "—",
+            "management": "—",
+            "valuation": "—",
+            "fund_flow_summary": "—",
+            "behavioral": "—",
+            "macro_sensitivity": "—",
+        }
 
     import re
 

@@ -236,13 +236,47 @@ def stock_page(code):
     prices   = db.get_price_history(code, days=30)
     ff       = db.get_fund_flow(code) if market == "cn" else {}
     ff_hist  = db.get_fund_flow_history(code, days=60) if market == "cn" else []
-    fund     = db.get_fundamentals(code) if market == "cn" else {}
+    fund     = db.get_fundamentals(code)  # 所有市场都支持
     signals  = fund.get("signals", {}) if fund else {}
     annual   = fund.get("annual",  []) if fund else []
     pe_current       = fund.get("pe_current")       if fund else None
     pe_percentile_5y = fund.get("pe_percentile_5y") if fund else None
     pb_current       = fund.get("pb_current")       if fund else None
     pb_percentile_5y = fund.get("pb_percentile_5y") if fund else None
+
+    # 对非A股数据，格式化百分比为模板期望的格式
+    if signals and not annual:
+        # 转换财务指标为百分比字符串
+        if "roe" in signals and isinstance(signals["roe"], (int, float)):
+            signals["roe"] = f"{signals['roe']*100:.1f}%"
+        if "roa" in signals and isinstance(signals["roa"], (int, float)):
+            signals["roa"] = f"{signals['roa']*100:.1f}%"
+        if "gross_margin" in signals and isinstance(signals["gross_margin"], (int, float)):
+            signals["gross_margin"] = f"{signals['gross_margin']*100:.1f}%"
+        if "profit_margin" in signals and isinstance(signals["profit_margin"], (int, float)):
+            # 添加 net_margin 别名（模板期望这个字段）
+            signals["net_margin"] = f"{signals['profit_margin']*100:.1f}%"
+            signals["profit_margin"] = signals["net_margin"]
+        if "debt_to_equity" in signals and isinstance(signals["debt_to_equity"], (int, float)):
+            # 添加 debt_ratio 别名
+            signals["debt_ratio"] = f"{signals['debt_to_equity']:.1f}"
+        # 为非A股添加 year 字段（使用分析日期）
+        if analysis and "analysis_date" in analysis:
+            signals["year"] = analysis["analysis_date"][:4]
+        else:
+            from datetime import timezone, timedelta
+            CN_TZ = timezone(timedelta(hours=8))
+            signals["year"] = datetime.now(CN_TZ).strftime("%Y")
+
+        # 对非A股，创建一个 "虚拟年度" 记录放入 annual 数组，这样模板就能统一处理
+        virtual_annual = {
+            "year": signals.get("year", "—"),
+            "roe": signals.get("roe", "—"),
+            "net_margin": signals.get("net_margin", "—"),
+            "debt_ratio": signals.get("debt_ratio", "—"),
+            "profit_growth": "—",
+        }
+        annual = [virtual_annual]
 
     # pending pipeline job?
     with db.get_conn() as c:

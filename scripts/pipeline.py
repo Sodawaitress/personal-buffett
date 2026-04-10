@@ -93,15 +93,56 @@ def _fetch_news(code, market, log):
             import yfinance as yf
             t = yf.Ticker(code)
             for n in t.news[:15]:
-                db.upsert_stock_news(
-                    code,
-                    n.get("title", "")[:200],
-                    n.get("publisher", ""),
-                    n.get("link", ""),
-                    datetime.fromtimestamp(n.get("providerPublishTime", 0)).strftime("%Y-%m-%d %H:%M"),
-                    today,
-                )
-                count += 1
+                # yfinance v1.2.0+ 返回嵌套结构：{'id': ..., 'content': {...}}
+                content = n.get("content") if isinstance(n, dict) and "content" in n else n
+
+                # 安全的字段提取（添加 None 检查）
+                if isinstance(content, dict):
+                    title = content.get("title", "")
+                    publisher = content.get("provider", {})
+                    if isinstance(publisher, dict):
+                        publisher = publisher.get("displayName", "")
+                    else:
+                        publisher = ""
+
+                    link_obj = content.get("clickThroughUrl", {})
+                    if isinstance(link_obj, dict):
+                        link = link_obj.get("url", "")
+                    else:
+                        link = ""
+                    if not link:
+                        link_obj = content.get("canonicalUrl", {})
+                        if isinstance(link_obj, dict):
+                            link = link_obj.get("url", "")
+                else:
+                    title = n.get("title", "") if n else ""
+                    publisher = n.get("publisher", "") if n else ""
+                    link = n.get("link", "") if n else ""
+
+                # 时间处理：支持新旧版本
+                pub_time = today
+                if isinstance(content, dict) and "pubDate" in content:
+                    try:
+                        pub_time = datetime.fromisoformat(content["pubDate"].replace("Z", "+00:00")).strftime("%Y-%m-%d %H:%M")
+                    except:
+                        pub_time = today
+                elif n and n.get("providerPublishTime"):
+                    try:
+                        pub_time = datetime.fromtimestamp(n.get("providerPublishTime")).strftime("%Y-%m-%d %H:%M")
+                    except:
+                        pub_time = today
+
+                # 仅保存有意义的新闻（至少有标题）
+                if title:
+                    db.upsert_stock_news(
+                        code,
+                        title[:200],
+                        publisher,
+                        link,
+                        pub_time,
+                        today,
+                    )
+                    count += 1
         log(f"       {count} 条新闻")
     except Exception as e:
         log(f"       ⚠️ 新闻获取失败: {e}")
@@ -129,77 +170,136 @@ def _fetch_fund_flow(code, market, log):
 
 
 def _fetch_financials(code, market, log):
-    """Step 3.5: A股财务数据（ROE/净利率/负债率 + PE/PB百分位）"""
-    if market != "cn":
-        return
+    """Step 3.5: 财务数据（A股/美股/港股/NZ股）"""
     log("  [3.5/4] 爬取财务数据…")
     try:
-        from stock_fetch import fetch_cn_financials
-        data = fetch_cn_financials(code)
-        if data:
+        if market == "cn":
+            # A股财务数据
+            from stock_fetch import fetch_cn_financials
+            data = fetch_cn_financials(code)
+            if data:
+                db.upsert_fundamentals(
+                    code,
+                    annual          = data.get("annual", []),
+                    pe_current      = data.get("pe_current"),
+                    pe_percentile_5y= data.get("pe_percentile_5y"),
+                    pb_current      = data.get("pb_current"),
+                    pb_percentile_5y= data.get("pb_percentile_5y"),
+                )
+                log(f"       PE={data.get('pe_current','?')}x ({data.get('pe_percentile_5y','?')}%分位)")
+        else:
+            # 美股/港股/NZ股财务数据（yfinance）
+            import yfinance as yf
+            ticker = yf.Ticker(code)
+            info = ticker.info
+
+            fundamentals = {
+                "pe_current": info.get("trailingPE"),
+                "pb_current": info.get("priceToBook"),
+                "roe": info.get("returnOnEquity"),
+                "roa": info.get("returnOnAssets"),
+                "gross_margin": info.get("grossMargins"),
+                "profit_margin": info.get("profitMargins"),
+            }
+
+            # 通过 signals 参数保存其他财务指标
             db.upsert_fundamentals(
                 code,
-                annual          = data.get("annual", []),
-                pe_current      = data.get("pe_current"),
-                pe_percentile_5y= data.get("pe_percentile_5y"),
-                pb_current      = data.get("pb_current"),
-                pb_percentile_5y= data.get("pb_percentile_5y"),
+                annual=[],
+                pe_current=fundamentals.get("pe_current"),
+                pb_current=fundamentals.get("pb_current"),
+                signals={k:v for k,v in fundamentals.items() if v is not None}
             )
-            log(f"       PE={data.get('pe_current','?')}x ({data.get('pe_percentile_5y','?')}%分位)")
+            pe = fundamentals.get("pe_current")
+            pb = fundamentals.get("pb_current")
+            log(f"       PE={pe if pe else '?'} PB={pb if pb else '?'}")
     except Exception as e:
         log(f"       ⚠️ 财务数据获取失败: {e}")
 
 
 def _fetch_advanced(code, market, log):
-    """Step 3.6: ROIC / Owner Earnings / 留存利润检验（新浪财务报表）"""
-    if market != "cn":
-        return
+    """Step 3.6: 高级财务数据（A股用高级算法，其他用yfinance）"""
     log("  [3.6/4] 拉取高级财务数据…")
     try:
-        from stock_fetch import fetch_cn_advanced
-        fundamentals = db.get_fundamentals(code)
-        annual = fundamentals.get("annual", []) if fundamentals else []
-        adv = fetch_cn_advanced(code, annual=annual)
-        if adv:
-            db.upsert_signals(code, adv)
-            parts = []
-            if "roic_latest" in adv:
-                parts.append(f"ROIC {adv['roic_latest']}%")
-            if adv.get("owner_earnings"):
-                oe = adv["owner_earnings"][0]
-                parts.append(f"OE {oe['oe_bn']}亿")
-            if "retained_efficiency" in adv:
-                parts.append(f"留存效率{adv['retained_efficiency']:.2f}")
-            log(f"       {' | '.join(parts)}")
+        if market == "cn":
+            # A股高级数据
+            from stock_fetch import fetch_cn_advanced
+            fundamentals = db.get_fundamentals(code)
+            annual = fundamentals.get("annual", []) if fundamentals else []
+            adv = fetch_cn_advanced(code, annual=annual)
+            if adv:
+                db.upsert_signals(code, adv)
+                parts = []
+                if "roic_latest" in adv:
+                    parts.append(f"ROIC {adv['roic_latest']}%")
+                if adv.get("owner_earnings"):
+                    oe = adv["owner_earnings"][0]
+                    parts.append(f"OE {oe['oe_bn']}亿")
+                if "retained_efficiency" in adv:
+                    parts.append(f"留存效率{adv['retained_efficiency']:.2f}")
+                log(f"       {' | '.join(parts)}")
+        else:
+            # 美股/港股/NZ股简化处理
+            import yfinance as yf
+            ticker = yf.Ticker(code)
+            info = ticker.info
+
+            adv = {
+                "debt_to_equity": info.get("debtToEquity"),
+                "current_ratio": info.get("currentRatio"),
+                "quick_ratio": info.get("quickRatio"),
+            }
+
+            db.upsert_signals(code, {k:v for k,v in adv.items() if v is not None})
+            log(f"       D/E={adv.get('debt_to_equity','?')} 流动比={adv.get('current_ratio','?')}")
     except Exception as e:
         log(f"       ⚠️ 高级财务失败: {e}")
 
 
 def _fetch_technicals(code, market, log):
-    """Step 3.7: 技术支撑位（MA均线 + VWAP成本参考）"""
-    if market != "cn":
-        return
+    """Step 3.7: 技术支撑位（A股用均线，其他用yfinance数据）"""
     log("  [3.7/4] 计算技术支撑位…")
     try:
-        from stock_fetch import fetch_cn_technicals
-        tech = fetch_cn_technicals(code)
-        if tech:
-            db.upsert_signals(code, {"technicals": tech})
-            parts = []
-            if tech.get("ma250") is not None:
-                parts.append(f"年线¥{tech['ma250']} ({tech.get('price_vs_ma250',0):+.1f}%)")
-            if tech.get("vwap60") is not None:
-                parts.append(f"60日VWAP¥{tech['vwap60']} ({tech.get('price_vs_vwap60',0):+.1f}%)")
-            log(f"       {' | '.join(parts)}")
+        if market == "cn":
+            # A股技术指标
+            from stock_fetch import fetch_cn_technicals
+            tech = fetch_cn_technicals(code)
+            if tech:
+                db.upsert_signals(code, {"technicals": tech})
+                parts = []
+                if tech.get("ma250") is not None:
+                    parts.append(f"年线¥{tech['ma250']} ({tech.get('price_vs_ma250',0):+.1f}%)")
+                if tech.get("vwap60") is not None:
+                    parts.append(f"60日VWAP¥{tech['vwap60']} ({tech.get('price_vs_vwap60',0):+.1f}%)")
+                log(f"       {' | '.join(parts)}")
+            else:
+                log("       ⚠️ 无数据")
         else:
-            log("       ⚠️ 无数据")
+            # 美股/港股/NZ股：获取近期价格区间
+            import yfinance as yf
+            ticker = yf.Ticker(code)
+            info = ticker.info
+
+            current_price = info.get("currentPrice")
+            fifty_two_week_low = info.get("fiftyTwoWeekLow")
+            fifty_two_week_high = info.get("fiftyTwoWeekHigh")
+
+            if current_price and fifty_two_week_low and fifty_two_week_high:
+                pos = (current_price - fifty_two_week_low) / (fifty_two_week_high - fifty_two_week_low) * 100
+                log(f"       52周价格区间: {fifty_two_week_low:.2f} - {fifty_two_week_high:.2f} (当前位置 {pos:.0f}%)")
+                db.upsert_signals(code, {
+                    "week_52_low": fifty_two_week_low,
+                    "week_52_high": fifty_two_week_high,
+                    "price_position": pos
+                })
     except Exception as e:
         log(f"       ⚠️ 技术支撑位失败: {e}")
 
 
 def _fetch_signals(code, market, log):
-    """Step 3.8: A股华尔街级信号（质押 + 融资 + 机构持仓 + FCF质量）"""
+    """Step 3.8: 投行信号（仅A股完整，其他市场跳过）"""
     if market != "cn":
+        log("  [3.8/4] 跳过（仅A股支持投行信号）")
         return
     log("  [3.8/4] 爬取投行信号…")
     try:
@@ -232,7 +332,7 @@ def _run_analysis(code, market, log, user_id=None):
         news        = db.get_stock_news(code, days=7)
         price       = db.get_latest_price(code)
         ff          = db.get_fund_flow(code) if market == "cn" else {}
-        fundamentals= db.get_fundamentals(code) if market == "cn" else {}
+        fundamentals= db.get_fundamentals(code)  # 所有市场都支持基本面数据
         stock       = db.get_stock(code)
 
         # 查用户持仓成本

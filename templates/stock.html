@@ -254,11 +254,14 @@
       </section>
 
       {# 二、基本面指标 #}
-      {% if market == "cn" %}
       <section class="fund-section">
         <div class="fund-section-label">基本面指标</div>
         <hr class="section-rule">
         {% set lat = annual[0] if annual else none %}
+        {# 对非A股，从signals里提取财务指标 #}
+        {% if not lat and signals %}
+          {% set lat = signals %}
+        {% endif %}
         <div class="fund-metrics-grid">
 
           <div class="fund-metric-card">
@@ -373,6 +376,7 @@
       </section>
 
       {# 三、主力资金历史（仅 A 股）#}
+      {% if market == "cn" %}
       <section class="fund-section">
         <div class="fund-section-label">主力资金历史</div>
         <hr class="section-rule">
