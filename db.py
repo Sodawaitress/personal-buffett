@@ -573,14 +573,14 @@ def get_market_news(region, category=None, days=3):
 # ══════════════════════════════════════════════════
 
 def save_analysis(code, period, analysis_date, **kwargs):
+    # 不使用 ON CONFLICT，每次都插入新记录（测试阶段保留所有分析历史）
+    # 用户可以手动删除不好的报告
     cols = ["code","period","analysis_date"] + list(kwargs.keys())
     vals = [code, period, analysis_date] + list(kwargs.values())
     placeholders = ",".join(["?"]*len(vals))
-    update_fields = ",".join(f"{k}=excluded.{k}" for k in kwargs)
     with get_conn() as c:
         c.execute(f"""
             INSERT INTO analysis_results({",".join(cols)}) VALUES({placeholders})
-            ON CONFLICT(code,period,analysis_date) DO UPDATE SET {update_fields}
         """, vals)
 
 def get_latest_analysis(code, period="daily"):
