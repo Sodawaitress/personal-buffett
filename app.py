@@ -264,8 +264,6 @@ def stock_page(code):
         if analysis and "analysis_date" in analysis:
             signals["year"] = analysis["analysis_date"][:4]
         else:
-            from datetime import timezone, timedelta
-            CN_TZ = timezone(timedelta(hours=8))
             signals["year"] = datetime.now(CN_TZ).strftime("%Y")
 
         # 对非A股，创建一个 "虚拟年度" 记录放入 annual 数组，这样模板就能统一处理
