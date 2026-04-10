@@ -774,46 +774,123 @@ def analyze_stock_v2(code: str, name: str, market: str,
 
     raw = _call_groq(SYSTEM_LETTER, user_msg, max_tokens=900)
     if not raw:
-        # LLM 失败时，返回一个最小可行的分析
-        # 基于提供的数据进行简单分类
-        grade = "C"
-        conclusion = "待分析"
+        # LLM 失败时，使用纯数据驱动的定量评级系统
+        print(f"    ⚠️ LLM 无响应，切换到定量评级系统...")
+        from quantitative_rating import QuantitativeRater
 
-        # 检查红旗数据来推断等级
-        if signals:
-            roe = signals.get("roe", 0)
-            pm = signals.get("profit_margin", 0)
-            de = signals.get("debt_to_equity", 0)
+        rater = QuantitativeRater()
 
-            red_flags = sum([
-                roe < 0.05 or roe < 0,
-                pm < 0,
-                de > 20,
-            ])
+        # 准备数据
+        annual_data_list = []
+        if fundamentals and "annual" in fundamentals:
+            annual_data_list = fundamentals.get("annual", [])
 
-            if red_flags >= 2:
-                grade = "C"
-                conclusion = "卖出"
-            elif red_flags == 1:
-                grade = "C+"
-                conclusion = "减持"
-            else:
-                grade = "B"
-                conclusion = "持有"
+        # 提取百分位数
+        pe_percentile = None
+        pb_percentile = None
+        price_52week_pct = None
 
-        return {
-            "conclusion": conclusion,
-            "grade": grade,
-            "reasoning": f"分析服务暂时不可用。基于可用财务数据的自动判断：{conclusion}",
-            "letter_html": f"分析服务暂时不可用。基于可用财务数据的自动判断：{conclusion}",
-            "raw_output": "（分析服务暂时不可用）",
-            "moat": "—",
-            "management": "—",
-            "valuation": "—",
-            "fund_flow_summary": "—",
-            "behavioral": "—",
-            "macro_sensitivity": "—",
+        if fundamentals:
+            pe_percentile = fundamentals.get("pe_percentile_5y")
+            pb_percentile = fundamentals.get("pb_percentile_5y")
+
+        # 计算 52 周价格位置（如果有价格数据）
+        if price and "price" in price:
+            # 简化：如果没有 52 周高低，用当前价格相对估计
+            # 实际应该从历史数据计算
+            price_52week_pct = 50  # 默认中点
+
+        # 转换新闻信号为评级系统需要的格式
+        news_signals_for_rating = {
+            "high_pos_buyback": 1 if "回购" in news_signals.get("summary", "") else 0,
+            "mid_pos_dividend": 1 if "分红" in news_signals.get("summary", "") else 0,
+            "high_neg_resignation": 1 if "离职" in news_signals.get("summary", "") else 0,
+            "mid_neg_reduction": 1 if "减持" in news_signals.get("summary", "") else 0,
         }
+
+        # 调用定量评级系统
+        try:
+            rating_result = rater.rate_stock(
+                code=code,
+                name=name,
+                annual_data=annual_data_list,
+                pe_percentile=pe_percentile,
+                pb_percentile=pb_percentile,
+                price_52week_pct=price_52week_pct,
+                news_signals=news_signals_for_rating
+            )
+
+            grade = rating_result["grade"]
+            conclusion = rating_result["conclusion"]
+            reasoning = rating_result["reasoning"]
+
+            # 从维度信息中提取描述
+            moat_desc = rating_result["components"]["moat"][1][0] if rating_result["components"]["moat"][1] else "—"
+            growth_desc = rating_result["components"]["growth_management"][1][0] if rating_result["components"]["growth_management"][1] else "—"
+            valuation_desc = rating_result["components"]["valuation"][1][0] if rating_result["components"]["valuation"][1] else "—"
+            safety_desc = rating_result["components"]["safety"][1][0] if rating_result["components"]["safety"][1] else "—"
+
+            # 生成分析信
+            letter_html = f"""
+【定量化评级分析】
+综合得分：{rating_result['score']}/100
+
+护城河：{moat_desc}
+增长：{growth_desc}
+安全性：{safety_desc}
+估值：{valuation_desc}
+
+{reasoning}
+
+评级：{grade} 级，建议{conclusion}
+"""
+
+            if rating_result.get("red_flags"):
+                letter_html += f"\n⚠️ 风险信号：{rating_result['red_flags'][0]}"
+
+            return {
+                "conclusion": conclusion,
+                "grade": grade,
+                "reasoning": reasoning,
+                "letter_html": letter_html,
+                "raw_output": f"（定量评级系统 - 分数{rating_result['score']}）",
+                "moat": moat_desc,
+                "management": growth_desc,
+                "valuation": valuation_desc,
+                "fund_flow_summary": safety_desc,
+                "behavioral": "—",
+                "macro_sensitivity": "—",
+            }
+        except Exception as e:
+            print(f"    ⚠️ 定量评级系统出错: {e}")
+            # 最后的防线：基础规则
+            grade = "C"
+            conclusion = "待分析"
+            if signals:
+                roe = signals.get("roe", 0)
+                pm = signals.get("profit_margin", 0)
+                de = signals.get("debt_to_equity", 0)
+                red_flags = sum([roe < 0.05 or roe < 0, pm < 0, de > 20])
+                if red_flags >= 2:
+                    grade, conclusion = "C", "卖出"
+                elif red_flags == 1:
+                    grade, conclusion = "C+", "减持"
+                else:
+                    grade, conclusion = "B", "持有"
+
+            return {
+                "conclusion": conclusion,
+                "grade": grade,
+                "reasoning": "分析服务异常，基于基础规则判断",
+                "letter_html": f"基础判断：{conclusion}",
+                "raw_output": "（备用方案）",
+                "moat": "—",
+                "management": "—",
+                "valuation": "—",
+                "fund_flow_summary": "—",
+                "behavioral": "—",
+                "macro_sensitivity": "—",
+            }
 
     import re
 
