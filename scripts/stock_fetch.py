@@ -713,6 +713,13 @@ def fetch_cn_technicals(code: str) -> dict:
         return {}
 
 
+# ── 新闻源配置 ────────────────────────────────────────
+# 摩根大通研究报告 RSS
+JPMORGANCHASE_SOURCES = [
+    ("https://www.jpmorganchase.com/en/about/news/rss.xml", "摩根大通新闻"),
+    ("https://research.jpmorgan.com/c/feeds", "摩根大通研究"),
+]
+
 # ── 国际信息源（Google News RSS）─────────────────────
 # 每只股 / 每个板块的英文查询词
 INTL_QUERIES = {
@@ -774,6 +781,40 @@ def fetch_international_news() -> dict:
             print(f"    🌐 {tag}: {len(items)} 条国际资讯")
 
     return result
+
+
+def fetch_jpmorganchase_news() -> list:
+    """从摩根大通官方 RSS 抓取最新新闻和研究报告"""
+    print("  📊 摩根大通新闻...")
+    items = []
+    seen = set()
+
+    for url, source_label in JPMORGANCHASE_SOURCES:
+        try:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:5]:
+                title = entry.get("title", "")[:120]
+                link = entry.get("link", "")
+                pub = entry.get("published", "")[:10]
+                summary = entry.get("summary", "")[:200]
+
+                key = title[:40]
+                if key and key not in seen:
+                    seen.add(key)
+                    items.append({
+                        "title": title,
+                        "summary": summary,
+                        "link": link,
+                        "source": "摩根大通",
+                        "time": pub,
+                    })
+        except Exception as e:
+            pass  # 静默失败
+        time.sleep(0.3)
+
+    if items:
+        print(f"    📊 摩根大通: {len(items)} 条新闻")
+    return items
 
 
 # ── A股财报日历 ───────────────────────────────────────
@@ -852,6 +893,10 @@ def main():
     # 国际资讯
     print("\n  🌐 国际信息源：")
     output["intl_news"] = fetch_international_news()
+
+    # 摩根大通新闻
+    print("\n  📊 专业机构资讯：")
+    output["jpm_news"] = fetch_jpmorganchase_news()
 
     # A股财报日历
     print("\n  📅 财报日历：")

@@ -466,6 +466,11 @@ def main():
             _db.upsert_intl_news(scope, n["title"], n.get("label",""),
                                  n.get("link",""), n.get("source",""), date_str)
 
+    # 摩根大通新闻（作为市场洞察保存）
+    for n in data.get("jpm_news", []):
+        _db.upsert_intl_news("jpm_news", n["title"], "摩根大通",
+                            n.get("link",""), n.get("source","摩根大通"), date_str)
+
     # 主力资金
     for code, ff in data.get("fund_flow", {}).items():
         if ff:
