@@ -664,6 +664,11 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, label
 async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp) {
   try {
     const items = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
+
+    if (items && items.loading) {
+      drop.innerHTML='<div class="search-empty">搜索中…</div>'; drop.classList.add('open'); return;
+    }
+
     if (!Array.isArray(items) || !items.length) {
       drop.innerHTML='<div class="search-empty">没有找到结果</div>'; drop.classList.add('open'); return;
     }

@@ -715,10 +715,9 @@ def fetch_cn_technicals(code: str) -> dict:
 
 # ── 新闻源配置 ────────────────────────────────────────
 # 摩根大通研究报告 RSS
-JPMORGANCHASE_SOURCES = [
-    ("https://www.jpmorganchase.com/en/about/news/rss.xml", "摩根大通新闻"),
-    ("https://research.jpmorgan.com/c/feeds", "摩根大通研究"),
-]
+# 注意: JPMorgan 官方 RSS 已下线，改用 Google News 聚合 (见 INTL_QUERIES)
+# 英文新闻分析已在 _analyze_news_signals() 中支持
+JPMORGANCHASE_SOURCES = []  # 暂时禁用，等待替换为可用来源
 
 # ── 国际信息源（Google News RSS）─────────────────────
 # 每只股 / 每个板块的英文查询词

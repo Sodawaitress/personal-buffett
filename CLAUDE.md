@@ -53,7 +53,9 @@
 - US-40 技术支撑位 + 机构成本参考（MA20/60/120/250 + 60/120日VWAP，新浪K线，fundamentals页Price Ladder展示，注入巴菲特信）
 - US-37 持仓成本注入分析（entry_price + buy_date → analyze_stock_v2，pipeline查user_watchlist，浮盈/亏自动更新behavioral_hint）
 - Bug fix: 主力资金 NoneType 错误（`.SS` 判断改为 `pure.startswith("6","9")`）
-- Bug fix: 卡死 job 自动过期（`db.expire_stale_jobs()`，app 启动时调用）
+- Bug fix: 601083 锦江航运卡住 6+ 个月（Job 134 在投行信号超时后未继续 AI 分析→手动标记为 failed，新建 Job 135 成功完成→详见 FIX_601083_STUCK_ANALYSIS.md）
+- Bug fix: 英文股票新闻为空（yfinance v1.2.0+ 改变 API 结构→修复 pipeline.py 第 92-131 行以支持新 API 嵌套格式→详见 FIX_YFINANCE_NEWS_EMPTY.md）
+- 新闻情绪分析升级（_score_news 添加 sentiment 计算与数据库持久化；LLM prompt 增强指示 LLM 必须参考新闻做护城河/管理层判断；新闻显示添加情绪emoji标签 📈/📉/➖）
 - Bug fix: 机构持仓季度计算错误（4月传"20263"未来季度→改为正确的"20254"；quarter逻辑按月份判断最近完整季）
 - Bug fix: A股价格缺失（_fetch_price 对 market=cn 改用 Sina hq.sinajs.cn，000333/000793/688981/688102 已补价格）
 - Bug fix: fundamentals页ROE/净利率/负债率/FCF全为"积累中"（app.py补传annual/pe_current等，模板改用真实数据）
@@ -124,6 +126,63 @@
 - 每个 User Story 确认后才实现
 - 硬编码股票数据（BUFFETT_PROFILES、NZ_PROFILES）逐步迁移到 DB，不新增硬编码
 - LLM 调用走 Groq API（groq_client），30 RPM 限制，注意加 sleep
+
+---
+
+## Git 版本管理与质量防护
+
+### 关键功能版本标记
+
+功能表现满意时，打标签备份：
+```bash
+git tag -a "feature-good-YYYY-MM-DD" -m "质量评分: X/10"
+```
+
+质量下降时对比差异：
+```bash
+git diff feature-good-YYYY-MM-DD..HEAD -- file.py
+```
+
+### 修改规范
+
+一个逻辑 = 一个提交。禁止混合多个无关改动。
+
+修改关键功能（搜索、分析、信件）时：
+- [ ] 修改前检查是否有现成标签版本
+- [ ] 运行对应的测试（`python3 tests/test_*.py`）
+- [ ] 手工验证功能正常
+- [ ] 一个提交对应一个逻辑改动
+
+### 防退化测试
+
+搜索功能：`python3 tests/test_search.py`
+
+跑通所有检查后才提交。
+
+---
+
+## 市场覆盖与数据完整性
+
+### 支持的股票市场
+
+| 市场 | 代码 | 财务数据 | 完整分析 | 例子 |
+|------|------|--------|--------|------|
+| A股 | CN | ✅ | ✅ 完整 | 600519（茅台） |
+| 美股 | US | ⚠️ 基础 | ⚠️ 部分 | INTC（英特尔） |
+| 港股 | HK | ⚠️ 基础 | ⚠️ 部分 | 0700.HK（腾讯） |
+| NZ股 | NZ | ⚠️ 基础 | ⚠️ 部分 | CYM.NZ（Countdown） |
+
+**⚠️ 重要**：非 A股股票缺少高级财务数据（ROIC、技术支撑位、信号分析）。
+
+### 添加新股票前检查
+
+1. 确认市场代码（CN/US/HK/NZ）
+2. 检查 `scripts/pipeline.py` 中 `_fetch_financials` 是否支持该市场
+3. 如不支持，需先补充数据源再添加股票
+
+### 数据缺失处理
+
+页面上显示"数据不足，无法评估"时，说明 pipeline 该步骤被跳过了。不是数据爬取失败，是功能范围限制。
 
 ---
 
