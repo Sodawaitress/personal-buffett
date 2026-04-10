@@ -76,44 +76,41 @@
 
     {# 卡片 1：今日简报 #}
     <a href="{{ url_for('brief_page') }}" class="home-card home-card-brief">
-      <div class="hc-icon">📊</div>
-      <div class="hc-title">{{ t.home_card_brief }}</div>
-      <div class="hc-sub">
+      <div class="hc-main">
+        <div class="hc-title">{{ t.home_card_brief }}</div>
+        <div class="hc-sub">{{ t.home_card_brief_sub if stocks else t.home_card_brief_none }}</div>
+      </div>
+      <div class="hc-right">
         {% if stocks %}
           {% set warn_count = stocks | selectattr('alert_level','eq','warn') | list | length %}
-          {% if warn_count > 0 %}
-          <span class="hc-alert-badge">{{ warn_count }} ⚠</span>
-          {% endif %}
-          {{ t.home_card_brief_sub }}
-        {% else %}
-          {{ t.home_card_brief_none }}
+          {% if warn_count > 0 %}<span class="hc-alert-badge">{{ warn_count }} ⚠</span>{% endif %}
         {% endif %}
+        ›
       </div>
-      <div class="hc-arrow">›</div>
     </a>
 
     {# 卡片 2：我的选股 #}
     <a href="{{ url_for('watchlist_page') }}" class="home-card home-card-watchlist">
-      <div class="hc-icon">📋</div>
-      <div class="hc-title">{{ t.home_card_watchlist }}</div>
-      <div class="hc-sub">
-        {{ stocks | length }} {{ t.home_card_watchlist_sub }}
+      <div class="hc-main">
+        <div class="hc-title">{{ t.home_card_watchlist }}</div>
+        <div class="hc-sub">{{ stocks | length }} {{ t.home_card_watchlist_sub }}</div>
         {% if stocks %}
         <div class="hc-grades">
-          {% for s in stocks[:5] %}
+          {% for s in stocks[:6] %}
           <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade and s.grade != '—' else 'c' }}" style="font-size:10px;padding:1px 5px">{{ s.grade }}</span>
           {% endfor %}
         </div>
         {% endif %}
       </div>
-      <div class="hc-arrow">›</div>
+      <div class="hc-right">›</div>
     </a>
 
     {# 卡片 3：添加股票 #}
     <div class="home-card home-card-add" id="add-card" onclick="focusSearch(event)">
-      <div class="hc-icon">＋</div>
-      <div class="hc-title">{{ t.home_card_add }}</div>
-      <form id="add-form" method="post" action="{{ url_for('add_stock') }}" onclick="event.stopPropagation()">
+      <div class="hc-main">
+        <div class="hc-title">{{ t.home_card_add }}</div>
+      </div>
+      <form id="add-form" method="post" action="{{ url_for('add_stock') }}" onclick="event.stopPropagation()" style="flex:1">
         <input type="hidden" name="code" id="add-code">
         <input type="hidden" name="name" id="add-name">
         <input type="hidden" name="market" id="add-market">

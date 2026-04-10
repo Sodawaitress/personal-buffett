@@ -61,6 +61,7 @@
 - US-41 交互体验修复（首页卡片整体可点击进详情；去掉首页"详情"/"移除"按钮；选择模式加"全选/取消全选"toggle）
 - US-43 价值档案并入详情页 Tab（stock.html 新增 tab-fundamentals；stock_page 路由合并数据查询；/fundamentals 重定向；Chart.js 懒加载）
 - US-42 个性化首页日报（portfolio_analysis 表；db.get/save_portfolio_brief；scripts/portfolio_brief.py LLM合成；_compute_alert 规则引擎；/api/generate-brief 端点；index.html 今日简报区块 + generateBrief() JS；style.css .daily-brief 样式）
+- US-44 首页三卡片「影院感」重设计（垂直堆叠全宽；左边彩色竖条；横排左文右数据布局；今日简报大字体；我的选股右侧显示总数；搜索框内嵌添加卡片）
 
 ### ❌ UI 待做（暂停，转数据/模型方向）
 - US-07 组合分析 /portfolio（无路由，较大功能）

@@ -3015,65 +3015,75 @@ footer small {
 }
 .home-refresh-btn:hover { color: var(--ink); }
 
-/* Card row */
+/* ── Home cards ── */
 .home-cards-row {
   display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 28px;
-  scrollbar-width: none;
 }
-.home-cards-row::-webkit-scrollbar { display: none; }
 
 .home-card {
-  flex: 0 0 220px;
-  background: var(--paper);
   border: 1px solid var(--rule-light);
-  border-radius: 10px;
-  padding: 18px 16px 14px;
+  padding: 14px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s, border-color 0.15s;
-  position: relative;
-  min-height: 130px;
+  transition: opacity 0.15s, border-color 0.15s;
 }
-.home-card:hover {
-  box-shadow: 0 2px 12px rgba(0,0,0,.07);
-  border-color: var(--rule);
-  text-decoration: none;
-  color: inherit;
-}
-.home-card-brief  { border-top: 3px solid #2d6a4f; }
-.home-card-watchlist { border-top: 3px solid #b5838d; }
-.home-card-add    { border-top: 3px solid #457b9d; cursor: default; }
+.home-card:hover { text-decoration: none; color: inherit; }
 
-.hc-icon {
-  font-size: 22px;
-  line-height: 1;
-  margin-bottom: 2px;
+/* Brief: black gradient */
+.home-card-brief {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+  border-color: var(--rule);
+  color: #fff;
 }
+.home-card-brief:hover { opacity: .88; color: #fff; }
+
+/* Watchlist: white, same as stock cards */
+.home-card-watchlist {
+  background: var(--paper-2);
+  border-color: var(--rule-light);
+}
+.home-card-watchlist:hover { border-color: var(--rule); }
+
+/* Add: dark grey */
+.home-card-add {
+  background: #3a3a3a;
+  border-color: #3a3a3a;
+  color: #fff;
+  cursor: default;
+}
+.home-card-add:hover { opacity: 1; color: #fff; }
+
+.hc-main { flex: 1; min-width: 0; }
+
 .hc-title {
   font-family: Georgia, serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--ink);
 }
+.home-card-brief  .hc-title { color: #fff; }
+.home-card-watchlist .hc-title { color: var(--ink); }
+.home-card-add    .hc-title { color: #fff; }
+
 .hc-sub {
   font-size: 12px;
-  color: var(--ink-muted);
   font-family: -apple-system, sans-serif;
-  line-height: 1.4;
-  flex: 1;
+  margin-top: 3px;
 }
+.home-card-brief  .hc-sub { color: rgba(255,255,255,.5); }
+.home-card-watchlist .hc-sub { color: var(--ink-muted); }
+.home-card-add    .hc-sub { color: rgba(255,255,255,.5); }
+
 .hc-alert-badge {
   display: inline-block;
-  background: #fdecea;
-  color: #c62828;
+  background: rgba(255,255,255,.15);
+  color: #ffb3b3;
   font-size: 11px;
   font-weight: 700;
   padding: 1px 6px;
@@ -3084,34 +3094,35 @@ footer small {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
-  margin-top: 6px;
+  margin-top: 5px;
 }
-.hc-arrow {
-  position: absolute;
-  top: 14px;
-  right: 14px;
+.hc-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
   font-size: 18px;
-  color: var(--ink-faint);
 }
+.home-card-brief  .hc-right { color: rgba(255,255,255,.35); }
+.home-card-watchlist .hc-right { color: var(--ink-faint); }
+.home-card-add    .hc-right { color: rgba(255,255,255,.35); }
 
 /* Add card search */
-.hc-search-wrap {
-  position: relative;
-  margin-top: 6px;
-}
+.hc-search-wrap { position: relative; flex: 1; }
 .hc-search-input {
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
   padding: 7px 10px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: var(--paper);
-  color: var(--ink);
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07);
+  color: #fff;
   outline: none;
   box-sizing: border-box;
+  font-family: -apple-system, sans-serif;
+  border-radius: 4px;
 }
-.hc-search-input:focus { border-color: #457b9d; }
-.hc-search-input::placeholder { color: var(--ink-faint); }
+.hc-search-input:focus { border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.12); }
+.hc-search-input::placeholder { color: rgba(255,255,255,.35); }
 
 /* ══════════════════════════════════════════════
    Brief Page

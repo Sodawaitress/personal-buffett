@@ -6,3 +6,4 @@ feedparser==6.0.12
 akshare==1.18.49
 yfinance>=0.2.40
 python-dotenv==1.2.2
+gunicorn==23.0.0
