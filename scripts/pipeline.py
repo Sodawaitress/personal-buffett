@@ -143,6 +143,29 @@ def _fetch_news(code, market, log):
                         today,
                     )
                     count += 1
+        # Google News 补充（美股专属，按公司名搜索）
+        if market not in ("cn", "hk"):
+            try:
+                import feedparser, requests as _req
+                stock = db.get_stock(code)
+                name_en = (stock or {}).get("name", code)
+                query = _req.utils.quote(f"{name_en} {code} stock news 2026")
+                rss_url = f"https://news.google.com/rss/search?q={query}&hl=en&gl=US&ceid=US:en"
+                feed = feedparser.parse(rss_url)
+                added = 0
+                for entry in feed.entries[:15]:
+                    title = entry.get("title", "")[:200]
+                    link  = entry.get("link", "")
+                    pub   = entry.get("published", today)[:10]
+                    src   = entry.get("source", {}).get("title", "Google News") if isinstance(entry.get("source"), dict) else "Google News"
+                    if title:
+                        db.upsert_stock_news(code, title, src, link, pub, today)
+                        count += 1
+                        added += 1
+                log(f"       +Google News {added} 条")
+            except Exception as e:
+                log(f"       ⚠️ Google News: {e}")
+
         log(f"       {count} 条新闻")
     except Exception as e:
         log(f"       ⚠️ 新闻获取失败: {e}")
