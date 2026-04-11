@@ -719,6 +719,15 @@ def fetch_cn_technicals(code: str) -> dict:
 # 英文新闻分析已在 _analyze_news_signals() 中支持
 JPMORGANCHASE_SOURCES = []  # 暂时禁用，等待替换为可用来源
 
+# Google News 搜索词，用于抓取摩根大通市场观点
+JPMORGANCHASE_QUERIES = [
+    "JPMorgan market outlook 2026",
+    "JPMorgan research report investment",
+    "Jamie Dimon economy forecast",
+    "JPMorgan China market analysis",
+    "JPMorgan Asia investment strategy",
+]
+
 # ── 国际信息源（Google News RSS）─────────────────────
 # 每只股 / 每个板块的英文查询词
 INTL_QUERIES = {
@@ -788,15 +797,17 @@ def fetch_jpmorganchase_news() -> list:
     items = []
     seen = set()
 
-    for url, source_label in JPMORGANCHASE_SOURCES:
+    import requests as _req
+    for query in JPMORGANCHASE_QUERIES:
         try:
+            q = _req.utils.quote(query)
+            url = f"https://news.google.com/rss/search?q={q}&hl=en&gl=US&ceid=US:en"
             feed = feedparser.parse(url)
-            for entry in feed.entries[:5]:
+            for entry in feed.entries[:3]:
                 title = entry.get("title", "")[:120]
                 link = entry.get("link", "")
                 pub = entry.get("published", "")[:10]
                 summary = entry.get("summary", "")[:200]
-
                 key = title[:40]
                 if key and key not in seen:
                     seen.add(key)
@@ -808,7 +819,7 @@ def fetch_jpmorganchase_news() -> list:
                         "time": pub,
                     })
         except Exception as e:
-            pass  # 静默失败
+            pass
         time.sleep(0.3)
 
     if items:
