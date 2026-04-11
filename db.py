@@ -620,7 +620,7 @@ def save_analysis(code, period, analysis_date, **kwargs):
     placeholders = ",".join(["?"]*len(vals))
     with get_conn() as c:
         c.execute(f"""
-            INSERT INTO analysis_results({",".join(cols)}) VALUES({placeholders})
+            INSERT OR REPLACE INTO analysis_results({",".join(cols)}) VALUES({placeholders})
         """, vals)
 
 def get_latest_analysis(code, period="daily"):
