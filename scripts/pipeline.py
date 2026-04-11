@@ -430,11 +430,11 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None):
         _run_with_timeout(_fetch_financials,[code, market, log], "财务数据",log, 45)
 
         if not is_st:
-            _run_with_timeout(_fetch_advanced,   [code, market, log], "高级财务",  log, 40)
+            _run_with_timeout(_fetch_advanced,   [code, market, log], "高级财务",  log, 30)
             _run_with_timeout(_fetch_technicals, [code, market, log], "技术支撑位",log, 20)
-            _run_with_timeout(_fetch_signals,    [code, market, log], "投行信号",  log, 40)
+            _run_with_timeout(_fetch_signals,    [code, market, log], "投行信号",  log, 30)
 
-        _run_with_timeout(_run_analysis,   [code, market, log, user_id], "AI分析",  log, 40)
+        _run_with_timeout(_run_analysis,   [code, market, log, user_id], "AI分析",  log, 180)
 
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])

@@ -206,7 +206,47 @@ def init_db():
             finished_at TEXT,
             error       TEXT
         );
+
+        -- 【新增】历史案例库 - 用于案例匹配和概率推导
+        CREATE TABLE IF NOT EXISTS historical_cases (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_name          TEXT NOT NULL UNIQUE,      -- 案例名称（如 *ST云网）
+            code               TEXT,                       -- 股票代码
+            event_type         TEXT NOT NULL,             -- 事件类型：reorganization/suspension/delisting/etc
+            event_date         TEXT,                       -- 事件发生日期
+            outcome            TEXT NOT NULL,             -- 结果：success/partial_success/failure/delisted
+
+            -- 重整前财务指标
+            initial_roe        REAL,                       -- ROE (%)
+            initial_net_margin REAL,                       -- 净利润率 (%)
+            revenue_decline_pct REAL,                      -- 收入下滑幅度 (%)
+            initial_debt_ratio REAL,                       -- 债务比 (%)
+            industry           TEXT,                       -- 行业
+            market_cap_initial REAL,                       -- 重整前市值
+
+            -- 重整过程
+            reorganization_duration_months INTEGER,        -- 重整耗时（月）
+            key_events         TEXT,                       -- JSON: 重整过程中的关键事件时间线
+
+            -- 结果数据
+            final_price        REAL,                       -- 最终股价
+            stock_price_path   TEXT,                       -- JSON: {month_3, month_6, month_12, month_24, month_36}
+            multiple_achieved  REAL,                       -- 实现的倍数（最终价/初始价）
+
+            -- 经验教训
+            lessons_learned    TEXT,                       -- 文字总结
+            success_factors    TEXT,                       -- JSON: 成功要素列表
+            failure_signals    TEXT,                       -- JSON: 失败信号列表
+
+            created_at         TEXT DEFAULT (datetime('now')),
+            updated_at         TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_historical_cases_event_type ON historical_cases(event_type);
+        CREATE INDEX IF NOT EXISTS idx_historical_cases_outcome ON historical_cases(outcome);
+        CREATE INDEX IF NOT EXISTS idx_historical_cases_industry ON historical_cases(industry);
         """)
+
 
 
 # ══════════════════════════════════════════════════
@@ -588,7 +628,7 @@ def get_latest_analysis(code, period="daily"):
         row = c.execute("""
             SELECT * FROM analysis_results
             WHERE code=? AND period=?
-            ORDER BY analysis_date DESC LIMIT 1
+            ORDER BY analysis_date DESC, id DESC LIMIT 1
         """, (code, period)).fetchone()
         return dict(row) if row else {}
 
@@ -624,7 +664,7 @@ def get_report(date=None, period="daily"):
             """, (date, period)).fetchone()
         else:
             row = c.execute("""
-                SELECT * FROM reports WHERE period=? ORDER BY analysis_date DESC LIMIT 1
+                SELECT * FROM reports WHERE period=? ORDER BY analysis_date DESC, id DESC LIMIT 1
             """, (period,)).fetchone()
         if not row:
             return None
@@ -872,7 +912,7 @@ def get_portfolio_brief(user_id, date=None):
         else:
             row = c.execute("""
                 SELECT * FROM portfolio_analysis
-                WHERE user_id=? ORDER BY analysis_date DESC LIMIT 1
+                WHERE user_id=? ORDER BY analysis_date DESC, id DESC LIMIT 1
             """, (user_id,)).fetchone()
         return dict(row) if row else None
 
@@ -886,6 +926,76 @@ def save_portfolio_brief(user_id, analysis_date, macro_headline, buffett_summary
                           buffett_summary=excluded.buffett_summary,
                           created_at=datetime('now')
         """, (user_id, analysis_date, macro_headline, buffett_summary))
+
+
+# ══════════════════════════════════════════════════
+# 【新增】历史案例库 - 可复用的案例匹配框架
+# ══════════════════════════════════════════════════
+
+def insert_historical_case(case_name, code, event_type, event_date, outcome,
+                          initial_roe, initial_net_margin, revenue_decline_pct,
+                          initial_debt_ratio, industry, market_cap_initial,
+                          reorganization_duration_months, key_events,
+                          final_price, stock_price_path, multiple_achieved,
+                          lessons_learned, success_factors, failure_signals):
+    """插入历史案例（幂等）"""
+    with get_conn() as c:
+        c.execute("""
+            INSERT OR IGNORE INTO historical_cases(
+                case_name, code, event_type, event_date, outcome,
+                initial_roe, initial_net_margin, revenue_decline_pct,
+                initial_debt_ratio, industry, market_cap_initial,
+                reorganization_duration_months, key_events,
+                final_price, stock_price_path, multiple_achieved,
+                lessons_learned, success_factors, failure_signals
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (case_name, code, event_type, event_date, outcome,
+              initial_roe, initial_net_margin, revenue_decline_pct,
+              initial_debt_ratio, industry, market_cap_initial,
+              reorganization_duration_months, key_events,
+              final_price, stock_price_path, multiple_achieved,
+              lessons_learned, success_factors, failure_signals))
+
+def get_all_historical_cases():
+    """获取所有历史案例"""
+    with get_conn() as c:
+        rows = c.execute("SELECT * FROM historical_cases ORDER BY event_date DESC").fetchall()
+        return [dict(r) for r in rows]
+
+def get_historical_cases_by_type(event_type):
+    """按事件类型筛选历史案例"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT * FROM historical_cases
+            WHERE event_type=?
+            ORDER BY event_date DESC
+        """, (event_type,)).fetchall()
+        return [dict(r) for r in rows]
+
+def get_historical_cases_by_outcome(outcome):
+    """按结果筛选历史案例"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT * FROM historical_cases
+            WHERE outcome=?
+            ORDER BY event_date DESC
+        """, (outcome,)).fetchall()
+        return [dict(r) for r in rows]
+
+def get_historical_cases_by_industry(industry):
+    """按行业筛选历史案例"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT * FROM historical_cases
+            WHERE industry=?
+            ORDER BY event_date DESC
+        """, (industry,)).fetchall()
+        return [dict(r) for r in rows]
+
+def count_historical_cases():
+    """统计历史案例总数"""
+    with get_conn() as c:
+        return c.execute("SELECT COUNT(*) FROM historical_cases").fetchone()[0]
 
 
 def _migrate():
