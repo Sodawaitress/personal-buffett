@@ -216,6 +216,37 @@ def _fetch_financials(code, market, log):
             ticker = yf.Ticker(code)
             info = ticker.info
 
+            # 尝试抓取年度数据
+            annual_rows = []
+            try:
+                fin = ticker.financials
+                bs  = ticker.balance_sheet
+                # 财务报表的列是日期（最新在前）
+                for col in fin.columns:
+                    year_str = str(col.year)
+                    net_income = fin.loc['Net Income', col] if 'Net Income' in fin.index else None
+                    revenue = fin.loc['Total Revenue', col] if 'Total Revenue' in fin.index else None
+                    equity = bs.loc['Stockholders Equity', col] if 'Stockholders Equity' in bs.index else None
+                    debt = bs.loc['Total Debt', col] if 'Total Debt' in bs.index else None
+                    eps = fin.loc['Diluted EPS', col] if 'Diluted EPS' in fin.index else None
+
+                    row = {"year": year_str}
+                    if net_income is not None and equity:
+                        row["roe"] = f"{net_income / equity * 100:.2f}%"
+                    if net_income is not None and revenue:
+                        row["net_margin"] = f"{net_income / revenue * 100:.2f}%"
+                    if debt is not None and equity:
+                        row["debt_ratio"] = f"{debt / equity * 100:.2f}%"
+                    if net_income is not None:
+                        row["net_profit"] = f"{net_income / 1e8:.2f}亿" if abs(net_income) > 1e7 else f"{net_income}"
+                    if eps is not None:
+                        row["eps"] = f"{eps:.4f}"
+                    
+                    if len(row) > 1:
+                        annual_rows.append(row)
+            except Exception as ex:
+                log(f"       ⚠️ 年度财务抓取部分失败: {ex}")
+
             fundamentals = {
                 "pe_current": info.get("trailingPE"),
                 "pb_current": info.get("priceToBook"),
@@ -228,14 +259,14 @@ def _fetch_financials(code, market, log):
             # 通过 signals 参数保存其他财务指标
             db.upsert_fundamentals(
                 code,
-                annual=[],
+                annual=annual_rows,
                 pe_current=fundamentals.get("pe_current"),
                 pb_current=fundamentals.get("pb_current"),
                 signals={k:v for k,v in fundamentals.items() if v is not None}
             )
             pe = fundamentals.get("pe_current")
             pb = fundamentals.get("pb_current")
-            log(f"       PE={pe if pe else '?'} PB={pb if pb else '?'}")
+            log(f"       PE={pe if pe else '?'} PB={pb if pb else '?'} ({len(annual_rows)}年年报)")
     except Exception as e:
         log(f"       ⚠️ 财务数据获取失败: {e}")
 
