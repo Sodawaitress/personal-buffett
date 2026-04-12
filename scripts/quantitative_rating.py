@@ -112,15 +112,13 @@ class QuantitativeRater:
             return -2, "⚠️ 利润质量差（FCF < 0.5x）"
 
     @classmethod
-    def score_moat(cls, annual_data: List[Dict]) -> Tuple[int, List[str]]:
+    def score_moat(cls, annual_data: List[Dict], signals: Dict = None) -> Tuple[int, List[str]]:
         """
         护城河总分 (40 分)
 
         Args:
-            annual_data: 财务数据列表，格式：
-                [{"year": "2025", "roe": "20.5%", "net_margin": "12.3%",
-                  "ocf_per_share": 2.5, "bvps": 10}, ...]
-                从新到旧排列（最新的在第一位）
+            annual_data: 财务数据列表
+            signals: 实时信号（如 yfinance 数据）
 
         Returns:
             (总分, 明细说明列表)
@@ -128,13 +126,35 @@ class QuantitativeRater:
         details = []
         total = 0
 
-        if not annual_data:
+        if not annual_data and not signals:
             return 0, ["护城河数据不足"]
 
-        # 解析最新年度数据
-        latest = annual_data[0]
-        roe_pct = float(latest.get("roe", "0%").strip("%"))
-        margin_pct = float(latest.get("net_margin", "0%").strip("%"))
+        # 优先从 annual_data 获取最新数据
+        if annual_data:
+            latest = annual_data[0]
+            roe_pct = float(str(latest.get("roe", "0%")).strip("%"))
+            margin_pct = float(str(latest.get("net_margin", "0%")).strip("%"))
+            roe_list = [float(str(y.get("roe", "0%")).strip("%")) for y in annual_data[:5]]
+        elif signals:
+            # 从 signals (yfinance) 获取
+            # yfinance 的 roe 通常是 0.25 (25%)，也可能是 1.5 (150%)
+            roe_val = signals.get("roe")
+            if roe_val is not None:
+                roe_pct = roe_val * 100
+            else:
+                roe_pct = 0
+            
+            margin_val = signals.get("profit_margin")
+            if margin_val is not None:
+                margin_pct = margin_val * 100
+            else:
+                margin_pct = 0
+            
+            roe_list = [roe_pct] # 只有当前数据
+        else:
+            roe_pct = 0
+            margin_pct = 0
+            roe_list = []
 
         # ROE 评分
         roe_score, roe_desc = cls.score_roe(roe_pct)
@@ -147,26 +167,27 @@ class QuantitativeRater:
         total += margin_score
 
         # ROE 稳定性
-        roe_list = [float(y.get("roe", "0%").strip("%")) for y in annual_data[:5]]
         stability_score, stability_desc = cls.score_roe_stability(roe_list)
         details.append(f"ROE 稳定性: {stability_score}/10 分 - {stability_desc}")
         total += stability_score
 
-        # FCF 质量（如果有数据）
-        if "ocf_per_share" in latest and "eps" in latest:
+        # FCF 质量
+        fcf_score = 3
+        fcf_desc = "数据不足"
+        if annual_data and "ocf_per_share" in annual_data[0] and "eps" in annual_data[0]:
             try:
+                latest = annual_data[0]
                 ocf = float(latest["ocf_per_share"])
                 eps = float(latest["eps"])
                 fcf_ratio = ocf / eps if eps != 0 else None
                 fcf_score, fcf_desc = cls.score_fcf_quality(fcf_ratio)
-                details.append(f"现金流质量: {fcf_score}/5 分 - {fcf_desc}")
-                total += fcf_score
             except:
-                total += 3  # 默认
-                details.append("现金流质量: 3/5 分 - 数据不足")
-        else:
-            total += 3
-            details.append("现金流质量: 3/5 分 - 数据缺失")
+                pass
+        elif signals and "fcf_quality_avg" in signals:
+            fcf_score, fcf_desc = cls.score_fcf_quality(signals["fcf_quality_avg"])
+        
+        details.append(f"现金流质量: {fcf_score}/5 分 - {fcf_desc}")
+        total += fcf_score
 
         return total, details
 
@@ -344,38 +365,62 @@ class QuantitativeRater:
             return -5, "🚨 破产风险（连续亏损）"
 
     @classmethod
-    def score_safety(cls, annual_data: List[Dict]) -> Tuple[int, List[str]]:
+    def score_safety(cls, annual_data: List[Dict], signals: Dict = None) -> Tuple[int, List[str]]:
         """
         财务安全性总分 (20 分)
         """
         details = []
         total = 0
 
-        if not annual_data:
+        if not annual_data and not signals:
             return 0, ["安全性数据不足"]
 
-        latest = annual_data[0]
-
         # 负债评分
-        try:
-            debt_ratio = float(latest.get("debt_ratio", "0%").strip("%")) / 100
+        debt_ratio = None
+        if annual_data:
+            latest = annual_data[0]
+            try:
+                # A股通常是 "61.17%"
+                debt_ratio = float(str(latest.get("debt_ratio", "0%")).strip("%")) / 100
+            except:
+                pass
+        
+        if debt_ratio is None and signals:
+            # yfinance: debtToEquity (e.g., 102.63 for 102.63%)
+            # 或者是 0.5 (50%)
+            de = signals.get("debt_to_equity")
+            if de is not None:
+                if de > 2.0: # 认为是百分比
+                    debt_ratio = de / 100
+                else:
+                    debt_ratio = de
+
+        if debt_ratio is not None:
             debt_score, debt_desc = cls.score_debt(debt_ratio)
             details.append(f"负债风险: {debt_score}/10 分 - {debt_desc}")
             total += debt_score
-        except:
+        else:
             total += 5
             details.append("负债风险: 5/10 分 - 数据缺失")
 
         # 盈利可持续性
         profit_list = []
-        for year_data in annual_data:
-            try:
-                np_str = year_data.get("net_profit", "0")
-                if isinstance(np_str, str):
-                    np_str = np_str.replace("亿", "").replace("万", "")
-                profit_list.append(float(np_str))
-            except:
-                pass
+        if annual_data:
+            for year_data in annual_data:
+                try:
+                    np_str = year_data.get("net_profit", "0")
+                    if isinstance(np_str, str):
+                        np_str = np_str.replace("亿", "").replace("万", "")
+                    profit_list.append(float(np_str))
+                except:
+                    pass
+        elif signals:
+            # 如果没有历史数据，至少根据当前判断
+            pm = signals.get("profit_margin", 0)
+            if pm is not None and pm > 0:
+                profit_list = [1.0, 1.0, 1.0] # 模拟盈利
+            elif pm is not None and pm < 0:
+                profit_list = [-1.0, -1.0, -1.0] # 模拟亏损
 
         if profit_list:
             sust_score, sust_desc = cls.score_profitability_sustainability(profit_list)
@@ -616,7 +661,8 @@ class QuantitativeRater:
     def rate_stock(cls, code: str, name: str, annual_data: List[Dict],
                    pe_percentile: Optional[int], pb_percentile: Optional[int],
                    price_52week_pct: Optional[float],
-                   news_signals: Dict) -> Dict:
+                   news_signals: Dict,
+                   signals: Dict = None) -> Dict:
         """
         完整评级函数
 
@@ -628,30 +674,13 @@ class QuantitativeRater:
             pb_percentile: PB 百分位（0-100）
             price_52week_pct: 52周价格位置（0-100）
             news_signals: 新闻信号字典
-
-        Returns:
-            {
-                "code": "600031",
-                "name": "三一重工",
-                "score": 72,
-                "grade": "B",
-                "conclusion": "持有",
-                "components": {
-                    "moat": (32, [...]),
-                    "growth_management": (18, [...]),
-                    "safety": (14, [...]),
-                    "valuation": (8, [...]),
-                },
-                "red_flags": [...],
-                "reasoning": "...",
-                "timestamp": "2026-04-10"
-            }
+            signals: 实时信号（如 yfinance 数据）
         """
 
         # 四个维度评分
-        moat_score, moat_details = cls.score_moat(annual_data)
+        moat_score, moat_details = cls.score_moat(annual_data, signals=signals)
         growth_score, growth_details = cls.score_growth_and_management(annual_data, news_signals)
-        safety_score, safety_details = cls.score_safety(annual_data)
+        safety_score, safety_details = cls.score_safety(annual_data, signals=signals)
         valuation_score, valuation_details = cls.score_valuation(pe_percentile, pb_percentile, price_52week_pct)
 
         # 总分
