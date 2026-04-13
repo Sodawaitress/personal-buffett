@@ -4,20 +4,17 @@ echo "🔄 重启 Flask 应用..."
 
 # 杀死旧的进程
 echo "1️⃣ 杀死旧的 Flask 进程..."
-pkill -f "python3 app.py"
+pkill -f "app.py" 2>/dev/null || true
 echo "   ✓ 旧进程已杀死"
 
 # 等待进程完全退出
 sleep 2
 
-# 确保真的杀死了
-pkill -9 -f "python3 app.py" 2>/dev/null || true
-
 # 启动新的
 echo ""
 echo "2️⃣ 启动新的 Flask 应用..."
 cd /Users/poluovoila/.claude/skills/stock-radar
-python3 app.py &
+nohup /opt/homebrew/bin/python3 app.py >> /tmp/flask-radar.log 2>&1 &
 
 sleep 2
 

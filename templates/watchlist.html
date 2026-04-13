@@ -1,46 +1,51 @@
 {% extends 'base.html' %}
-{% block title %}我的选股 — {{ t.brand }}{% endblock %}
+{% block title %}{{ t.wl_title }} — {{ t.brand }}{% endblock %}
 
 {% block content %}
 <div class="watchlist-wrap">
 
   {# ── 顶部工具栏 ── #}
   <div class="wl-toolbar">
-    <span class="wl-toolbar-title">我的选股 <span class="wl-badge">{{ stocks | length }}</span></span>
-    <a href="{{ url_for('performance_page') }}" class="wl-perf-link">算账 →</a>
+    <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>
+    <a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>
 
     {# 搜索框 #}
     <div class="wl-search-wrap">
-      <input type="text" id="wl-search" class="wl-search-input" placeholder="搜索名称 / 代码…" oninput="filterBySearch(this.value)" autocomplete="off">
+      <input type="text" id="wl-search" class="wl-search-input" placeholder="{{ t.wl_search_placeholder }}" oninput="filterBySearch(this.value)" autocomplete="off">
       <button class="wl-search-clear" id="wl-search-clear" onclick="clearSearch()" style="display:none">×</button>
     </div>
 
     <div class="wl-toolbar-controls">
       {# 排序 #}
       <div class="wl-popover-wrap">
-        <button class="wl-icon-btn" id="sort-btn" title="排序" onclick="togglePopover('sort-popover', this); event.stopPropagation()">
-          排序
+        <button class="wl-icon-btn" id="sort-btn" title="{{ t.wl_sort_label }}" onclick="togglePopover('sort-popover', this); event.stopPropagation()">
+          {{ t.wl_sort_label }}
         </button>
         <div class="wl-popover" id="sort-popover">
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="default" checked> 默认顺序</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="grade"> 评级 高→低</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="change"> 涨跌幅</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="date"> 最近分析</label>
+          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="default" checked> {{ t.wl_sort_default }}</label>
+          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="grade"> {{ t.wl_sort_grade }}</label>
+          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="change"> {{ t.wl_sort_change }}</label>
+          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="date"> {{ t.wl_sort_date }}</label>
         </div>
       </div>
 
       {# 视图切换（单按钮） #}
-      <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">列表</button>
+      <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">{{ t.wl_view_toggle }}</button>
 
       {# 分析（进入选择模式） #}
-      <button class="wl-icon-btn wl-analyze-btn" id="analyze-mode-btn" onclick="toggleSelectMode()">分析</button>
+      <button class="wl-icon-btn wl-analyze-btn" id="analyze-mode-btn" onclick="toggleSelectMode()">{{ t.wl_analyze_btn }}</button>
+
+      {# 全部重跑（admin only） #}
+      {% if session.role == 'admin' %}
+      <button class="wl-icon-btn" id="rerun-all-btn" onclick="rerunAll()" title="{{ t.wl_rerun_tooltip }}">{{ t.wl_rerun_all }}</button>
+      {% endif %}
 
       {# 添加 #}
       <button class="wl-icon-btn wl-add-btn" onclick="toggleAddPanel()">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" pointer-events="none">
           <line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/>
         </svg>
-        添加
+        {{ t.wl_add_btn }}
       </button>
     </div>
   </div>
@@ -49,7 +54,7 @@
   <div id="add-panel" class="add-panel hidden">
     <div class="stock-search-wrap">
       <input type="text" id="search-q" class="search-input"
-             placeholder="搜索股票代码或名称（如：茅台 / AAPL / ATM.NZ）"
+             placeholder="{{ t.search_placeholder }}"
              autocomplete="off">
       <div id="search-dropdown" class="search-dropdown"></div>
     </div>
@@ -87,13 +92,13 @@
     <div class="card-main">
       <div class="card-status-row" onclick="event.stopPropagation()">
         <div class="status-tabs">
-          <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">观察</button>
-          <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">持有</button>
-          <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">卖出</button>
+          <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">{{ t.status_watching }}</button>
+          <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">{{ t.status_holding }}</button>
+          <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">{{ t.status_sold }}</button>
         </div>
         <div class="status-extra" id="extra-{{ s.code }}" style="display:none">
           <input type="date"   class="status-date-input"  id="extra-date-{{ s.code }}"  value="{{ now_date or '' }}">
-          <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="价格(选填)" step="0.01" min="0">
+          <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="{{ t.lbl_buy_price_placeholder }}" step="0.01" min="0">
           <button class="status-confirm-btn" onclick="confirmStatus('{{ s.code }}')">✓</button>
         </div>
       </div>
@@ -119,7 +124,7 @@
       {% if s.status == 'holding' and s.buy_price and s.price %}
       {% set ret = (s.price - s.buy_price) / s.buy_price * 100 %}
       <div class="card-return-bar">
-        <span class="return-label">买入 {{ s.currency }}{{ "%.2f"|format(s.buy_price) }}</span>
+        <span class="return-label">{{ t.lbl_buy_price }} {{ s.currency }}{{ "%.2f"|format(s.buy_price) }}</span>
         <span class="return-val {{ 'up' if ret >= 0 else 'down' }}">{{ "%+.1f"|format(ret) }}%</span>
       </div>
       {% endif %}
@@ -127,8 +132,8 @@
       {% if s.pending_job %}
       <div class="holding-analysis-pending">
         <span class="spinner"></span>
-        <span class="pending-text">巴菲特分析中…</span>
-        <button class="btn-cancel-job" onclick="event.stopPropagation(); cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="取消">✕</button>
+        <span class="pending-text">{{ t.lbl_analysing }}</span>
+        <button class="btn-cancel-job" onclick="event.stopPropagation(); cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="{{ t.btn_cancel }}">✕</button>
       </div>
       {% elif s.conclusion %}
       <div class="holding-analysis">
@@ -139,7 +144,7 @@
       </div>
       <p class="holding-reasoning">{{ s.reasoning }}</p>
       {% else %}
-      <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">尚无分析</div>
+      <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">{{ t.lbl_no_analysis }}</div>
       {% endif %}
 
       {% if s.moat_direction or s.roic_latest %}
@@ -155,14 +160,14 @@
         {% endif %}
         <div class="holding-actions" onclick="event.stopPropagation()">
           {% if s.has_letter %}
-          <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">读信 →</button>
+          <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">{{ t.btn_read_letter }}</button>
           {% endif %}
           {% if s.status != 'sold' %}
-          <button onclick="triggerAnalysis('{{ s.code }}')" title="重新分析" class="btn-text" style="font-size:11px">↻ 分析</button>
+          <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.wl_analyze_btn }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
           {% endif %}
           <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
                 onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
-            <button type="submit" class="btn-text" style="font-size:11px;color:var(--ink-muted)">移除</button>
+            <button type="submit" class="btn-text" style="font-size:11px;color:var(--ink-muted)">{{ t.btn_remove }}</button>
           </form>
         </div>
       </div>
@@ -179,7 +184,7 @@
     {% if holding %}
     <div class="wl-section">
       <div class="wl-section-header">
-        我的持有 <span class="wl-badge">{{ holding | length }}</span>
+        {{ t.wl_section_holding }} <span class="wl-badge">{{ holding | length }}</span>
       </div>
       <div class="holding-grid" id="grid-holding">
         {% for s in holding %}{{ render_card(s) }}{% endfor %}
@@ -190,13 +195,13 @@
     {# 我的观察 #}
     <div class="wl-section">
       <div class="wl-section-header">
-        我的观察 <span class="wl-badge">{{ watching | length }}</span>
+        {{ t.wl_section_watching }} <span class="wl-badge">{{ watching | length }}</span>
       </div>
       <div class="holding-grid" id="grid-watching">
         {% if watching %}
           {% for s in watching %}{{ render_card(s) }}{% endfor %}
         {% else %}
-          <p class="wl-section-empty">还没有观察中的股票</p>
+          <p class="wl-section-empty">{{ t.wl_empty_watching }}</p>
         {% endif %}
       </div>
     </div>
@@ -205,8 +210,8 @@
     {% if sold %}
     <div class="wl-section">
       <div class="wl-section-header">
-        已卖出 <span class="wl-badge">{{ sold | length }}</span>
-        <a href="{{ url_for('performance_page') }}" class="wl-section-link">查看算账 →</a>
+        {{ t.wl_section_sold }} <span class="wl-badge">{{ sold | length }}</span>
+        <a href="{{ url_for('performance_page') }}" class="wl-section-link">{{ t.wl_view_perf }}</a>
       </div>
       <div class="holding-grid" id="grid-sold">
         {% for s in sold %}{{ render_card(s) }}{% endfor %}
@@ -222,15 +227,15 @@
       <thead>
         <tr>
           <th class="wl-list-cb-col" style="width:28px;display:none"></th>
-          <th style="width:44px">评级</th>
-          <th>名称</th>
-          <th style="width:44px">市场</th>
-          <th style="width:80px;text-align:right">价格</th>
-          <th style="width:62px;text-align:right">涨跌</th>
-          <th style="width:52px">结论</th>
-          <th style="width:64px">日期</th>
-          <th style="width:52px">状态</th>
-          <th style="width:100px">操作</th>
+          <th style="width:44px">{{ t.col_grade }}</th>
+          <th>{{ t.col_name }}</th>
+          <th style="width:44px">{{ t.col_market }}</th>
+          <th style="width:80px;text-align:right">{{ t.col_price }}</th>
+          <th style="width:62px;text-align:right">{{ t.col_change }}</th>
+          <th style="width:52px">{{ t.wl_analyze_btn }}</th>
+          <th style="width:64px">{{ t.wl_sort_date }}</th>
+          <th style="width:52px">{{ t.wl_sort_label }}</th>
+          <th style="width:100px">{{ t.btn_remove }}</th>
         </tr>
       </thead>
       <tbody id="wl-list-body">
@@ -275,41 +280,41 @@
           </td>
           <td style="font-size:11px;color:var(--ink-muted)">{{ (s.analysis_date or '')[-5:] }}</td>
           <td style="font-size:11px">
-            {% if s.status == 'holding' %}<span style="color:var(--ink)">持有</span>
-            {% elif s.status == 'sold' %}<span style="color:var(--ink-muted)">已卖</span>
-            {% else %}<span style="color:var(--ink-muted)">观察</span>{% endif %}
+            {% if s.status == 'holding' %}<span style="color:var(--ink)">{{ t.status_holding }}</span>
+            {% elif s.status == 'sold' %}<span style="color:var(--ink-muted)">{{ t.status_sold }}</span>
+            {% else %}<span style="color:var(--ink-muted)">{{ t.status_watching }}</span>{% endif %}
           </td>
           <td class="wl-list-ops" onclick="event.stopPropagation()">
             <div class="status-tabs status-tabs-sm">
-              <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">观</button>
-              <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">持</button>
-              <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">卖</button>
+              <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">{{ t.status_watching_short }}</button>
+              <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">{{ t.status_holding_short }}</button>
+              <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">{{ t.status_sold_short }}</button>
             </div>
             {% if s.status != 'sold' %}
-            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="重新分析">↻</button>
+            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="{{ t.wl_analyze_btn }}">↻</button>
             {% endif %}
             {% if s.has_letter %}
-            <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn">信</button>
+            <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn" title="{{ t.btn_read_letter }}">✉</button>
             {% endif %}
             <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
                   onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
-              <button type="submit" class="wl-op-btn wl-op-danger">移除</button>
+              <button type="submit" class="wl-op-btn wl-op-danger">✕</button>
             </form>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    <div id="wl-list-empty" style="display:none;text-align:center;padding:2rem;color:var(--ink-muted);font-size:.9rem">没有匹配的股票</div>
+    <div id="wl-list-empty" style="display:none;text-align:center;padding:2rem;color:var(--ink-muted);font-size:.9rem">{{ t.wl_no_match }}</div>
   </div>
 
   {% else %}
   <div class="empty-hero">
     <div class="empty-hero-inner">
       <div class="empty-hero-icon">📊</div>
-      <h2 class="empty-hero-title">还没有添加股票</h2>
-      <p class="empty-hero-sub">搜索你关注的公司，让巴菲特帮你分析。</p>
-      <button onclick="toggleAddPanel()" class="btn-ink">巴菲特怎么看</button>
+      <h2 class="empty-hero-title">{{ t.wl_empty_stocks }}</h2>
+      <p class="empty-hero-sub">{{ t.wl_empty_sub }}</p>
+      <button onclick="toggleAddPanel()" class="btn-ink">{{ t.btn_buffett_check }}</button>
     </div>
   </div>
   {% endif %}
@@ -320,11 +325,11 @@
 
 {# 批量操作底部栏 #}
 <div class="batch-bar" id="batch-bar">
-  <span class="batch-bar-info">已选 <strong id="batch-count">0</strong> 只</span>
-  <button class="batch-bar-btn" id="select-all-btn" onclick="toggleSelectAll()">全选</button>
-  <button class="batch-bar-btn" onclick="batchAnalyze()">各自重新分析</button>
-  <button class="batch-bar-btn" onclick="batchPortfolio()">组合分析</button>
-  <button class="batch-bar-btn batch-bar-cancel" onclick="selectNone()">取消选择</button>
+  <span class="batch-bar-info"><strong id="batch-count">0</strong> {{ t.batch_selected }}</span>
+  <button class="batch-bar-btn" id="select-all-btn" onclick="toggleSelectAll()">{{ t.batch_select_all }}</button>
+  <button class="batch-bar-btn" onclick="batchAnalyze()">{{ t.batch_analyse_each }}</button>
+  <button class="batch-bar-btn" onclick="batchPortfolio()">{{ t.batch_analyse_portfolio }}</button>
+  <button class="batch-bar-btn batch-bar-cancel" onclick="selectNone()">{{ t.batch_cancel }}</button>
 </div>
 
 {# 巴菲特信 Modal #}
@@ -332,7 +337,7 @@
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content letter-modal-content">
       <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
-        <h6 class="modal-title" id="letter-modal-title" style="font-family:Georgia,serif">巴菲特来信</h6>
+        <h6 class="modal-title" id="letter-modal-title" style="font-family:Georgia,serif">{{ t.letter_modal_title }}</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body letter-body" id="letter-modal-body">{{ t.loading }}</div>
@@ -343,6 +348,35 @@
 
 {% block scripts %}
 <script>
+// ── i18n 桥接（Jinja → JS）────────────────────────────
+const T = {
+  viewCards:        "{{ t.wl_view_cards }}",
+  viewList:         "{{ t.wl_view_toggle }}",
+  selectAll:        "{{ t.batch_select_all }}",
+  deselectAll:      "{{ t.batch_deselect_all }}",
+  analyzeBtn:       "{{ t.wl_analyze_btn }}",
+  cancelSelect:     "{{ t.batch_cancel }}",
+  buyPlaceholder:   "{{ t.price_buy_placeholder }}",
+  sellPlaceholder:  "{{ t.price_sell_placeholder }}",
+  rerunConfirm:     "{{ t.rerun_confirm }}",
+  rerunStarted:     "{{ t.rerun_started }}",
+  rerunAll:         "{{ t.wl_rerun_all }}",
+  rerunFailed:      "{{ t.rerun_failed }}",
+  rerunNetworkErr:  "{{ t.rerun_network_error }}",
+  jobCancelled:     "{{ t.job_cancelled }}",
+  analysisFailed:   "{{ t.analysis_failed }}",
+  letterLoading:    "{{ t.letter_loading }}",
+  letterNone:       "{{ t.letter_none }}",
+  searchLoading:    "{{ t.search_loading }}",
+  searchNoResults:  "{{ t.search_no_results }}",
+  searchError:      "{{ t.search_error }}",
+  letterTitlePrefix:"{{ t.letter_title_prefix }}",
+  letterLocation:   "{{ t.letter_location }}",
+  letterSalutation: "{{ t.letter_salutation }}",
+  letterSig:        "{{ t.letter_sig }}",
+  letterDataAsOf:   "{{ t.letter_data_as_of }}",
+  letterDisclaimer: "{{ t.letter_disclaimer }}",
+};
 // ── 全局状态 ──────────────────────────────────────────
 let _selectMode = false;
 let _currentView = 'card';
@@ -374,7 +408,7 @@ function setView(v) {
   if (sections) sections.style.display = v === 'list' ? 'none' : '';
   if (listView) listView.style.display = v === 'list' ? ''     : 'none';
   const btn = document.getElementById('view-toggle-btn');
-  if (btn) btn.textContent = v === 'list' ? '卡片' : '列表';
+  if (btn) btn.textContent = v === 'list' ? T.viewCards : T.viewList;
   localStorage.setItem('wl-view', v);
 }
 
@@ -398,7 +432,7 @@ function switchStatus(code, status, btn) {
     if (extra) {
       // 更新 placeholder
       const priceInp = document.getElementById(`extra-price-${code}`);
-      if (priceInp) priceInp.placeholder = status === 'holding' ? '买入价(选填)' : '卖出价(选填)';
+      if (priceInp) priceInp.placeholder = status === 'holding' ? T.buyPlaceholder : T.sellPlaceholder;
       extra.style.display = 'flex';
       const dateInp = document.getElementById(`extra-date-${code}`);
       if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0,10);
@@ -488,7 +522,7 @@ function enterSelectMode() {
   // 显示列表复选框列
   document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = '');
   const btn = document.getElementById('analyze-mode-btn');
-  if (btn) { btn.textContent = '取消选择'; btn.classList.add('active'); }
+  if (btn) { btn.textContent = T.cancelSelect; btn.classList.add('active'); }
 }
 function exitSelectMode() {
   _selectMode = false;
@@ -499,9 +533,9 @@ function exitSelectMode() {
   document.getElementById('wl-list-view')?.classList.remove('select-mode');
   document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = 'none');
   const btn = document.getElementById('analyze-mode-btn');
-  if (btn) { btn.textContent = '分析'; btn.classList.remove('active'); }
+  if (btn) { btn.textContent = T.analyzeBtn; btn.classList.remove('active'); }
   const saBtn = document.getElementById('select-all-btn');
-  if (saBtn) saBtn.textContent = '全选';
+  if (saBtn) saBtn.textContent = T.selectAll;
   _updateBatch();
 }
 
@@ -529,7 +563,7 @@ function toggleSelectAll() {
   const allChecked = [...all].every(cb => cb.checked);
   all.forEach(cb => { cb.checked = !allChecked; });
   const btn = document.getElementById('select-all-btn');
-  if (btn) btn.textContent = allChecked ? '全选' : '取消全选';
+  if (btn) btn.textContent = allChecked ? T.selectAll : T.deselectAll;
   onCheckChange();
 }
 function onCheckChange() {
@@ -567,6 +601,29 @@ function batchPortfolio() {
   if (codes.length) window.location.href = '/portfolio?codes=' + codes.join(',');
 }
 
+// ── 全部重跑（admin only） ─────────────────────────────
+async function rerunAll() {
+  const btn = document.getElementById('rerun-all-btn');
+  if (!confirm(T.rerunConfirm)) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const data = await (await fetch('/api/rerun-all', { method: 'POST' })).json();
+    if (data.ok) {
+      btn.textContent = T.rerunStarted;
+      alert(data.message || T.rerunStarted);
+    } else {
+      btn.disabled = false;
+      btn.textContent = T.rerunAll;
+      alert(T.rerunFailed + (data.error || ''));
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = T.rerunAll;
+    alert(T.rerunNetworkErr);
+  }
+}
+
 // ── 单股操作 ─────────────────────────────────────────
 async function triggerAnalysis(code) {
   const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
@@ -583,18 +640,34 @@ async function cancelJob(jobId, code) {
     card.classList.remove('holding-pending');
     delete card.dataset.job;
     const el = card.querySelector('.holding-analysis-pending');
-    if (el) el.innerHTML = '<span style="font-size:12px;color:var(--ink-muted)">已取消，点「↻ 分析」重新运行</span>';
+    if (el) el.innerHTML = `<span style="font-size:12px;color:var(--ink-muted)">${T.jobCancelled}</span>`;
   }
+}
+function _isSearching() {
+  const inp = document.getElementById('search-q');
+  return inp && (document.activeElement === inp || inp.value.trim() !== '');
+}
+function _showReloadBanner() {
+  if (document.getElementById('reload-banner')) return;
+  const bar = document.createElement('div');
+  bar.id = 'reload-banner';
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#2e7d32;color:#fff;text-align:center;padding:8px;font-size:14px;cursor:pointer';
+  bar.textContent = '✓ 分析完成 · 点击刷新';
+  bar.onclick = () => location.reload();
+  document.body.prepend(bar);
 }
 function pollJob(jobId, code) {
   const interval = setInterval(async () => {
     try {
       const data = await (await fetch(`/api/job/${jobId}`)).json();
-      if (data.status === 'done') { clearInterval(interval); location.reload(); }
-      else if (data.status === 'failed') {
+      if (data.status === 'done') {
+        clearInterval(interval);
+        if (_isSearching()) { _showReloadBanner(); }
+        else { location.reload(); }
+      } else if (data.status === 'failed') {
         clearInterval(interval);
         const el = document.querySelector(`[data-job="${jobId}"] .pending-text`);
-        if (el) el.textContent = '分析失败，请重试';
+        if (el) el.textContent = T.analysisFailed;
       }
     } catch(e) { clearInterval(interval); }
   }, 5000);
@@ -612,25 +685,25 @@ function clearSelection() {
 
 // ── 巴菲特信 Modal ────────────────────────────────────
 async function showLetter(code, name) {
-  document.getElementById('letter-modal-title').textContent = `致你 — 关于 ${name}`;
-  document.getElementById('letter-modal-body').textContent  = '正在取信…';
+  document.getElementById('letter-modal-title').textContent = `${T.letterTitlePrefix} ${name}`;
+  document.getElementById('letter-modal-body').textContent  = T.letterLoading;
   new bootstrap.Modal(document.getElementById('letter-modal')).show();
   const data = await (await fetch(`/api/letter/${code}`)).json();
   if (data.letter) {
     document.getElementById('letter-modal-body').innerHTML = `
       <div class="letter-paper">
-        <div class="letter-location">奥马哈，内布拉斯加州 · ${data.date || ''}</div>
-        <div class="letter-salutation">致你，</div>
+        <div class="letter-location">${T.letterLocation} · ${data.date || ''}</div>
+        <div class="letter-salutation">${T.letterSalutation}</div>
         <div class="letter-body-text">${data.letter.replace(/\n/g,'<br>')}</div>
-        <div class="letter-sig">沃伦·巴菲特（私人版）<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
+        <div class="letter-sig">${T.letterSig}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
         <div class="letter-grade">
           <span class="grade-tag grade-${(data.grade||'c').toLowerCase().replace('+','-plus').replace('-','-minus')}">${data.grade||'—'}</span>
           <span style="margin-left:8px;font-size:13px">${data.conclusion||''}</span>
         </div>
-        <div class="letter-footer">数据截至 ${data.date||''} · 本分析不构成投资建议</div>
+        <div class="letter-footer">${T.letterDataAsOf} ${data.date||''} · ${T.letterDisclaimer}</div>
       </div>`;
   } else {
-    document.getElementById('letter-modal-body').textContent = '暂无分析信件';
+    document.getElementById('letter-modal-body').textContent = T.letterNone;
   }
 }
 
@@ -651,6 +724,7 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, label
   const drop = document.getElementById(dropId);
   if (!inp || !drop) return;
   let timer;
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
   inp.addEventListener('input', () => {
     clearTimeout(timer);
     const q = inp.value.trim();
@@ -666,11 +740,11 @@ async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, 
     const items = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
 
     if (items && items.loading) {
-      drop.innerHTML='<div class="search-empty">搜索中…</div>'; drop.classList.add('open'); return;
+      drop.innerHTML=`<div class="search-empty">${T.searchLoading}</div>`; drop.classList.add('open'); return;
     }
 
     if (!Array.isArray(items) || !items.length) {
-      drop.innerHTML='<div class="search-empty">没有找到结果</div>'; drop.classList.add('open'); return;
+      drop.innerHTML=`<div class="search-empty">${T.searchNoResults}</div>`; drop.classList.add('open'); return;
     }
     drop.innerHTML = items.map(r => `
       <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
@@ -679,7 +753,7 @@ async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, 
         <span class="market-tag">${r.market.toUpperCase()}</span>
       </div>`).join('');
     drop.classList.add('open');
-  } catch(e) { drop.innerHTML='<div class="search-empty">搜索失败</div>'; drop.classList.add('open'); }
+  } catch(e) { drop.innerHTML=`<div class="search-empty">${T.searchError}</div>`; drop.classList.add('open'); }
 }
 function selectStock(code, name, market, codeId, nameId, marketId, selectedId, labelId, btnId, inputId) {
   document.getElementById(codeId).value   = code;

@@ -22,12 +22,17 @@ def _sina_prefix(code: str) -> str:
     """A股代码加交易所前缀"""
     return ("sh" if code.startswith(("6", "9")) else "sz") + code
 
-def fetch_quotes():
-    """一次请求拉全部自选股行情（新浪财经接口）"""
+def fetch_quotes(cn_stocks: list = None):
+    """
+    一次请求拉全部自选股行情（新浪财经接口）。
+    cn_stocks: [(name, code), ...] 列表。为 None 时回退到硬编码 WATCHLIST（兼容旧调用）。
+    """
     print("  📊 拉取行情...")
-    codes   = [c for _, c, _ in WATCHLIST]
-    symbols = ",".join(_sina_prefix(c) for c in codes)
-    name_map = {c: n for n, c, _ in WATCHLIST}
+    if cn_stocks is None:
+        cn_stocks = [(n, c) for n, c, _ in WATCHLIST]
+    codes    = [c for _, c in cn_stocks]
+    name_map = {c: n for n, c in cn_stocks}
+    symbols  = ",".join(_sina_prefix(c) for c in codes)
     quotes = {}
     try:
         r = requests.get(
@@ -526,17 +531,38 @@ def fetch_cn_signals(code: str, annual: list = None) -> dict:
 
 # ── 北向资金（陆股通）────────────────────────────────
 def fetch_north_bound() -> dict:
+    """
+    AKShare stock_hsgt_fund_flow_summary_em() 返回列：
+    交易日 | 类型 | 板块 | 资金方向 | 成交净买额 | 资金净流入 | ...
+    北向 = 资金方向=='北向'；沪股通/深股通 由 板块 区分。
+    资金净流入 单位：百万元，转亿元需 /100。
+    """
     try:
         df = ak.stock_hsgt_fund_flow_summary_em()
-        today = df.iloc[0]
+        north = df[df["资金方向"] == "北向"]
+        if north.empty:
+            print("  ⚠️ 北向资金：无北向数据行")
+            return {}
+
+        def _get_net(board: str) -> float:
+            row = north[north["板块"] == board]
+            if row.empty:
+                return 0.0
+            val = row.iloc[0].get("资金净流入", 0)
+            return float(val) / 100  # 百万→亿
+
+        sh_net = _get_net("沪股通")
+        sz_net = _get_net("深股通")
+        date_str = str(north.iloc[0].get("交易日", ""))
+        total_net = sh_net + sz_net
         result = {
-            "date":         str(today.get("日期", "")),
-            "sh_net":       float(today.get("沪股通净买入", 0)),   # 亿元
-            "sz_net":       float(today.get("深股通净买入", 0)),
-            "total_net":    float(today.get("北向资金净买入", today.get("沪深港通净买入", 0))),
+            "date":      date_str,
+            "sh_net":    sh_net,
+            "sz_net":    sz_net,
+            "total_net": total_net,
         }
-        sign = "📈" if result["total_net"] >= 0 else "📉"
-        print(f"  {sign} 北向资金净买入: {result['total_net']:.2f} 亿")
+        sign = "📈" if total_net >= 0 else "📉"
+        print(f"  {sign} 北向资金净买入: {total_net:.2f} 亿（沪 {sh_net:.1f} + 深 {sz_net:.1f}）")
         return result
     except Exception as e:
         print(f"  ⚠️ 北向资金: {e}")
@@ -856,9 +882,37 @@ def fetch_cn_earnings_calendar(codes: list) -> list:
 
 
 # ── 主逻辑 ────────────────────────────────────────────
+def _load_cn_stocks_from_db() -> list:
+    """
+    从 DB 读取所有用户自选股中市场为 cn 的股票，返回 [(name, code), ...]（去重）。
+    找不到 DB 时回退到 WATCHLIST。
+    """
+    try:
+        root = os.path.dirname(os.path.dirname(__file__))
+        sys.path.insert(0, root)
+        import db
+        rows = db.get_all_cn_watchlist_stocks()   # [(code, name), ...]
+        if rows:
+            seen = set()
+            result = []
+            for code, name in rows:
+                if code not in seen:
+                    seen.add(code)
+                    result.append((name or code, code))
+            return result
+    except Exception as e:
+        print(f"  ⚠️ 从DB读股票列表失败，回退到 WATCHLIST: {e}")
+    return [(n, c) for n, c, _ in WATCHLIST]
+
+
 def main():
     now = datetime.now(CN_TZ)
     print(f"\n📈 股票雷达 抓取开始 {now.strftime('%Y-%m-%d %H:%M CST')}")
+
+    # 从 DB 动态读所有用户的 A 股自选股
+    cn_stocks = _load_cn_stocks_from_db()
+    codes     = [c for _, c in cn_stocks]
+    print(f"  📋 本次抓取 {len(cn_stocks)} 只 A 股：{[c for _,c in cn_stocks]}")
 
     output = {
         "date":           now.strftime("%Y-%m-%d"),
@@ -876,13 +930,12 @@ def main():
     }
 
     # 行情
-    output["quotes"] = fetch_quotes()
+    output["quotes"] = fetch_quotes(cn_stocks)
     time.sleep(1)
 
     # 个股新闻 + 公告 + 增减持 + 资金流向
     print("\n  📰 个股动态：")
-    codes = [code for _, code, _ in WATCHLIST]
-    for name, code, _ in WATCHLIST:
+    for name, code in cn_stocks:
         output["news"][code]          = fetch_stock_news(code, name)
         output["announcements"][code] = fetch_announcements(code, name)
         output["insider"][code]       = fetch_insider_changes(code, name)

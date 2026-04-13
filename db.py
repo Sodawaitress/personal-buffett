@@ -207,44 +207,47 @@ def init_db():
             error       TEXT
         );
 
-        -- 【新增】历史案例库 - 用于案例匹配和概率推导
-        CREATE TABLE IF NOT EXISTS historical_cases (
-            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-            case_name          TEXT NOT NULL UNIQUE,      -- 案例名称（如 *ST云网）
-            code               TEXT,                       -- 股票代码
-            event_type         TEXT NOT NULL,             -- 事件类型：reorganization/suspension/delisting/etc
-            event_date         TEXT,                       -- 事件发生日期
-            outcome            TEXT NOT NULL,             -- 结果：success/partial_success/failure/delisted
-
-            -- 重整前财务指标
-            initial_roe        REAL,                       -- ROE (%)
-            initial_net_margin REAL,                       -- 净利润率 (%)
-            revenue_decline_pct REAL,                      -- 收入下滑幅度 (%)
-            initial_debt_ratio REAL,                       -- 债务比 (%)
-            industry           TEXT,                       -- 行业
-            market_cap_initial REAL,                       -- 重整前市值
-
-            -- 重整过程
-            reorganization_duration_months INTEGER,        -- 重整耗时（月）
-            key_events         TEXT,                       -- JSON: 重整过程中的关键事件时间线
-
-            -- 结果数据
-            final_price        REAL,                       -- 最终股价
-            stock_price_path   TEXT,                       -- JSON: {month_3, month_6, month_12, month_24, month_36}
-            multiple_achieved  REAL,                       -- 实现的倍数（最终价/初始价）
-
-            -- 经验教训
-            lessons_learned    TEXT,                       -- 文字总结
-            success_factors    TEXT,                       -- JSON: 成功要素列表
-            failure_signals    TEXT,                       -- JSON: 失败信号列表
-
-            created_at         TEXT DEFAULT (datetime('now')),
+        -- 公司分类元数据（US-46）
+        CREATE TABLE IF NOT EXISTS stock_meta (
+            code               TEXT PRIMARY KEY REFERENCES stocks(code),
+            company_type       TEXT,
+            industry           TEXT,
+            market_tier        TEXT,
+            st_status          TEXT,
+            st_since           TEXT,
+            name_history_json  TEXT,
+            ipo_date           TEXT,
+            total_shares       REAL,
+            float_shares       REAL,
+            last_classified    TEXT,
+            manual_override    INTEGER DEFAULT 0,
             updated_at         TEXT DEFAULT (datetime('now'))
         );
 
-        CREATE INDEX IF NOT EXISTS idx_historical_cases_event_type ON historical_cases(event_type);
-        CREATE INDEX IF NOT EXISTS idx_historical_cases_outcome ON historical_cases(outcome);
-        CREATE INDEX IF NOT EXISTS idx_historical_cases_industry ON historical_cases(industry);
+        -- 股票事件数据层（US-49）
+        CREATE TABLE IF NOT EXISTS stock_events (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            code         TEXT REFERENCES stocks(code),
+            event_type   TEXT NOT NULL,
+            event_date   TEXT,
+            summary      TEXT,
+            detail_json  TEXT,
+            source       TEXT DEFAULT 'manual',
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_stock_events_code ON stock_events(code);
+
+        -- 数据质量日志（US-48）
+        CREATE TABLE IF NOT EXISTS data_quality_log (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            code       TEXT,
+            field      TEXT,    -- 'pe_ratio'|'roe'|'debt_ratio'|'price' 等
+            value      TEXT,    -- 原始值（字符串，兼容 NULL/Inf）
+            flag       TEXT,    -- 'outlier'|'missing'|'conflict'
+            reason     TEXT,    -- 人类可读说明
+            logged_at  TEXT DEFAULT (datetime('now'))
+        );
+
         """)
 
 
@@ -364,7 +367,7 @@ def upsert_push_settings(user_id, **kwargs):
 # ══════════════════════════════════════════════════
 
 def upsert_stock(code, name, market, name_cn=None, exchange=None, sector=None, currency=None):
-    currency = currency or {"nz":"NZD","cn":"CNY","hk":"HKD","us":"USD"}.get(market,"USD")
+    currency = currency or {"nz":"NZD","cn":"CNY","hk":"HKD","us":"USD","kr":"KRW"}.get(market,"USD")
     with get_conn() as c:
         c.execute("""
             INSERT INTO stocks(code,name,name_cn,market,exchange,sector,currency,last_fetched)
@@ -417,6 +420,67 @@ def all_watched_codes():
         return [r[0] for r in c.execute(
             "SELECT DISTINCT stock_code FROM user_watchlist")]
 
+def get_all_cn_watchlist_stocks() -> list:
+    """
+    所有用户自选股中市场为 cn 的去重列表，返回 [(code, name), ...]。
+    stock_fetch.py 用此替代硬编码 WATCHLIST。
+    """
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT DISTINCT w.stock_code, COALESCE(s.name_cn, s.name, w.stock_code)
+            FROM user_watchlist w
+            JOIN stocks s ON s.code = w.stock_code
+            WHERE s.market = 'cn'
+            ORDER BY w.stock_code
+        """).fetchall()
+        return [(r[0], r[1]) for r in rows]
+
+def get_users_with_daily_push():
+    """返回所有开启每日推送的用户及其推送设置。pipeline 用。"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT u.id, u.email, u.display_name,
+                   p.wecom_webhook, p.discord_webhook, p.bear_enabled
+            FROM users u
+            JOIN user_push_settings p ON p.user_id = u.id
+            WHERE p.notify_daily = 1
+        """).fetchall()
+        return [dict(r) for r in rows]
+
+def get_user_holdings(user_id):
+    """返回某用户 status='holding' 的股票代码列表。"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT stock_code FROM user_watchlist
+            WHERE user_id=? AND status='holding'
+        """, (user_id,)).fetchall()
+        return [r[0] for r in rows]
+
+def get_user_watching(user_id):
+    """返回某用户 status='watching' 的股票代码列表。"""
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT stock_code FROM user_watchlist
+            WHERE user_id=? AND status='watching'
+        """, (user_id,)).fetchall()
+        return [r[0] for r in rows]
+
+def set_stock_status(user_id, code, status, buy_price=None, buy_date=None,
+                     sell_price=None, sell_date=None):
+    """设置用户自选股状态（holding/watching/sold）。"""
+    fields = {"status": status}
+    if status == "holding":
+        if buy_price: fields["buy_price"] = buy_price
+        if buy_date:  fields["buy_date"]  = buy_date
+    elif status == "sold":
+        if sell_price: fields["sell_price"] = sell_price
+        if sell_date:  fields["sell_date"]  = sell_date
+    set_clause = ", ".join(f"{k}=?" for k in fields)
+    vals = list(fields.values()) + [user_id, code]
+    with get_conn() as c:
+        c.execute(f"UPDATE user_watchlist SET {set_clause} WHERE user_id=? AND stock_code=?",
+                  vals)
+
 
 # ══════════════════════════════════════════════════
 # 价格快照
@@ -426,6 +490,7 @@ def _guess_market(code):
     import re
     if code.endswith(".NZ"): return "nz"
     if code.endswith(".HK"): return "hk"
+    if code.endswith(".KS") or code.endswith(".KQ"): return "kr"
     if re.match(r"^\d{6}$", code): return "cn"
     return "us"
 
@@ -928,85 +993,82 @@ def save_portfolio_brief(user_id, analysis_date, macro_headline, buffett_summary
         """, (user_id, analysis_date, macro_headline, buffett_summary))
 
 
-# ══════════════════════════════════════════════════
-# 【新增】历史案例库 - 可复用的案例匹配框架
-# ══════════════════════════════════════════════════
-
-def insert_historical_case(case_name, code, event_type, event_date, outcome,
-                          initial_roe, initial_net_margin, revenue_decline_pct,
-                          initial_debt_ratio, industry, market_cap_initial,
-                          reorganization_duration_months, key_events,
-                          final_price, stock_price_path, multiple_achieved,
-                          lessons_learned, success_factors, failure_signals):
-    """插入历史案例（幂等）"""
+def add_stock_event(code: str, event_type: str, event_date: str,
+                    summary: str, detail: dict = None, source: str = "manual"):
+    """手动或自动记录一条股票事件。"""
     with get_conn() as c:
-        c.execute("""
-            INSERT OR IGNORE INTO historical_cases(
-                case_name, code, event_type, event_date, outcome,
-                initial_roe, initial_net_margin, revenue_decline_pct,
-                initial_debt_ratio, industry, market_cap_initial,
-                reorganization_duration_months, key_events,
-                final_price, stock_price_path, multiple_achieved,
-                lessons_learned, success_factors, failure_signals
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """, (case_name, code, event_type, event_date, outcome,
-              initial_roe, initial_net_margin, revenue_decline_pct,
-              initial_debt_ratio, industry, market_cap_initial,
-              reorganization_duration_months, key_events,
-              final_price, stock_price_path, multiple_achieved,
-              lessons_learned, success_factors, failure_signals))
+        c.execute(
+            "INSERT INTO stock_events(code, event_type, event_date, summary, detail_json, source) "
+            "VALUES(?,?,?,?,?,?)",
+            (code, event_type, event_date, summary,
+             json.dumps(detail, ensure_ascii=False) if detail else None, source)
+        )
 
-def get_all_historical_cases():
-    """获取所有历史案例"""
+
+def get_stock_events(code: str, limit: int = 20) -> list:
+    """返回该股票的事件列表，按日期倒序。"""
     with get_conn() as c:
-        rows = c.execute("SELECT * FROM historical_cases ORDER BY event_date DESC").fetchall()
+        rows = c.execute(
+            "SELECT * FROM stock_events WHERE code=? ORDER BY event_date DESC, id DESC LIMIT ?",
+            (code, limit)
+        ).fetchall()
         return [dict(r) for r in rows]
 
-def get_historical_cases_by_type(event_type):
-    """按事件类型筛选历史案例"""
-    with get_conn() as c:
-        rows = c.execute("""
-            SELECT * FROM historical_cases
-            WHERE event_type=?
-            ORDER BY event_date DESC
-        """, (event_type,)).fetchall()
-        return [dict(r) for r in rows]
 
-def get_historical_cases_by_outcome(outcome):
-    """按结果筛选历史案例"""
+def get_stock_meta(code: str) -> dict:
     with get_conn() as c:
-        rows = c.execute("""
-            SELECT * FROM historical_cases
-            WHERE outcome=?
-            ORDER BY event_date DESC
-        """, (outcome,)).fetchall()
-        return [dict(r) for r in rows]
+        row = c.execute("SELECT * FROM stock_meta WHERE code=?", (code,)).fetchone()
+        return dict(row) if row else {}
 
-def get_historical_cases_by_industry(industry):
-    """按行业筛选历史案例"""
-    with get_conn() as c:
-        rows = c.execute("""
-            SELECT * FROM historical_cases
-            WHERE industry=?
-            ORDER BY event_date DESC
-        """, (industry,)).fetchall()
-        return [dict(r) for r in rows]
 
-def count_historical_cases():
-    """统计历史案例总数"""
+def upsert_stock_meta(code: str, **fields):
+    """插入或更新 stock_meta，manual_override=1 时只更新非分类字段。"""
     with get_conn() as c:
-        return c.execute("SELECT COUNT(*) FROM historical_cases").fetchone()[0]
+        existing = c.execute(
+            "SELECT manual_override FROM stock_meta WHERE code=?", (code,)
+        ).fetchone()
+        if existing and existing["manual_override"] == 1:
+            # 手动覆盖：只允许更新非分类字段
+            safe_fields = {k: v for k, v in fields.items()
+                           if k not in ("company_type", "st_status", "market_tier")}
+            if not safe_fields:
+                return
+            fields = safe_fields
+
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        fields["updated_at"] = now
+        if "company_type" in fields or "st_status" in fields:
+            fields["last_classified"] = now
+
+        cols = ", ".join(fields.keys())
+        placeholders = ", ".join("?" * len(fields))
+        updates = ", ".join(f"{k}=excluded.{k}" for k in fields)
+        c.execute(
+            f"INSERT INTO stock_meta(code, {cols}) VALUES(?, {placeholders}) "
+            f"ON CONFLICT(code) DO UPDATE SET {updates}",
+            (code, *fields.values())
+        )
+
+
+def log_data_quality(code: str, field: str, value, flag: str, reason: str):
+    """记录一条数据质量异常到 data_quality_log。value 转成字符串存储。"""
+    with get_conn() as c:
+        c.execute(
+            "INSERT INTO data_quality_log(code, field, value, flag, reason) VALUES(?,?,?,?,?)",
+            (code, field, str(value), flag, reason)
+        )
 
 
 def _migrate():
     """向旧 DB 补加新字段（ALTER TABLE 幂等）。"""
     new_cols = [
-        ("user_watchlist", "status",      "TEXT DEFAULT 'watching'"),
-        ("user_watchlist", "buy_date",    "TEXT"),
-        ("user_watchlist", "buy_price",   "REAL"),
-        ("user_watchlist", "sell_date",   "TEXT"),
-        ("user_watchlist", "sell_price",  "REAL"),
-        ("user_watchlist", "entry_grade", "TEXT"),
+        ("user_watchlist",   "status",         "TEXT DEFAULT 'watching'"),
+        ("user_watchlist",   "buy_date",        "TEXT"),
+        ("user_watchlist",   "buy_price",       "REAL"),
+        ("user_watchlist",   "sell_date",       "TEXT"),
+        ("user_watchlist",   "sell_price",      "REAL"),
+        ("user_watchlist",   "entry_grade",     "TEXT"),
+        ("analysis_results", "framework_used",  "TEXT"),  # US-50
     ]
     with get_conn() as c:
         for table, col, typedef in new_cols:

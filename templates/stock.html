@@ -11,6 +11,19 @@
     <span>{{ stock.name }}</span>
   </div>
 
+  {# ── 高风险横幅（GEM/speculative 专属）── #}
+  {% if meta and (meta.company_type == 'speculative' or meta.market_tier == 'gem') %}
+  <div class="risk-banner">
+    <span class="risk-banner-icon">⚠️</span>
+    <div class="risk-banner-text">
+      <strong>高风险警告：港股 GEM 创业板</strong>
+      此股票在香港 GEM 创业板上市，监管门槛低于主板，存在壳股、流动性不足、以及被第三方用于非正常商业计划（积分兑换/直销返利等）的风险。
+      {% if meta.company_type == 'speculative' %}财务数据显示当前存在亏损或高负债，请谨慎对待分析结论。{% endif %}
+      如发现相关风险证据，请在下方「事件」Tab 录入「传销/商业盘风险」事件。
+    </div>
+  </div>
+  {% endif %}
+
   {# ── 头部 ── #}
   <div class="stock-header">
 
@@ -20,12 +33,43 @@
       <div class="stock-meta">
         <span class="market-tag">{{ stock.market | upper }}</span>
         <span class="stock-code-tag">{{ stock.code }}</span>
+        {% if meta and meta.market_tier and meta.market_tier != 'main' %}
+        <span class="market-tier-tag">{{ meta.market_tier | upper }}</span>
+        {% endif %}
+        {% if meta and meta.st_status %}
+        <span class="st-badge st-badge-{{ meta.st_status | replace('*','star') | lower }}">{{ meta.st_status }}</span>
+        {% endif %}
+        {% if meta and meta.company_type %}
+        {% set type_labels = {
+          'mature_value': '价值股',
+          'growth_tech':  '成长股',
+          'financial':    '金融股',
+          'cyclical':     '周期股',
+          'utility':      '公用事业',
+          'pre_profit':   '未盈利',
+          'distressed':   '困境重整',
+          'speculative':  '⚠️ 高风险'
+        } %}
+        <span class="company-type-tag company-type-{{ meta.company_type }}">{{ type_labels.get(meta.company_type, meta.company_type) }}</span>
+        {% endif %}
         {% if stock.sector %}<span class="stock-sector">{{ stock.sector }}</span>{% endif %}
         {% if analysis and analysis.grade %}
         <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') }}" style="margin-left:6px">
           {{ analysis.grade }}
         </span>
         <span class="stock-conclusion-tag">{{ analysis.conclusion }}</span>
+        {% endif %}
+        {% if analysis and analysis.framework_used and analysis.framework_used != 'buffett' %}
+        {% set fw_labels = {
+          'event_driven':    '事件驱动',
+          'growth_quality':  '成长质量',
+          'bank_insurance':  '银行保险',
+          'cycle_position':  '周期定位',
+          'dividend_safety': '股息安全',
+          'survival_check':  '生存检验',
+          'speculative':     '风控扫描'
+        } %}
+        <span class="framework-tag">{{ fw_labels.get(analysis.framework_used, analysis.framework_used) }}</span>
         {% endif %}
       </div>
     </div>
@@ -46,9 +90,11 @@
       <div class="stock-header-actions">
         {% if pending_job %}
         <span class="spinner" style="display:inline-block"></span>
-        <span style="font-size:12px;color:var(--ink-muted)">巴菲特分析中…</span>
+        <span style="font-size:12px;color:var(--ink-muted)">分析中…</span>
         {% else %}
-        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-outline-ink btn-sm">重新分析</button>
+        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="用已有数据重新生成分析，不重爬，约20秒">分析数据</button>
+        <button onclick="triggerNewsRefresh('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="重新抓取最新新闻（1小时内有缓存）">更新新闻</button>
+        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="全量重爬：数据+新闻+分析，约3分钟" style="color:var(--ink-muted);font-size:11px">全量刷新</button>
         {% endif %}
         {% if not in_watchlist %}
         <form method="post" action="{{ url_for('add_stock') }}" style="display:inline">
@@ -94,6 +140,9 @@
     <button class="tab-btn" onclick="switchTab('history', this)">历史分析 <span class="tab-count">{{ history | length }}</span></button>
     <button class="tab-btn" onclick="switchTab('data', this)">数据</button>
     <button class="tab-btn" onclick="switchTab('fundamentals', this)">价值档案</button>
+    <button class="tab-btn" onclick="switchTab('events', this)">事件
+      {% if events %}<span class="tab-count">{{ events | length }}</span>{% endif %}
+    </button>
   </div>
 
   {# ── Tab 内容区 ── #}
@@ -543,6 +592,67 @@
 
     </div>{# end tab-fundamentals #}
 
+    {# ── 事件时间线 tab ── #}
+    <div id="tab-events" class="tab-content" style="display:none">
+
+      {% if events %}
+      <div class="event-timeline">
+        {% set type_labels = {
+          'st_trigger':               'ST触发',
+          'st_lifted':                'ST解除',
+          'restructuring_announced':  '重整公告',
+          'restructuring_vote':       '重整表决',
+          'restructuring_approved':   '重整批准',
+          'rights_issue':             '供股/配股',
+          'bonus_share':              '转增股本',
+          'name_change':              '公司改名',
+          'delist_warning':           '退市警示',
+          'delist_final':             '退市',
+          'major_shareholder_change': '大股东变动',
+          'scheme_risk':              '⚠️ 传销/商业盘风险'
+        } %}
+        {% for ev in events %}
+        <div class="event-item event-type-{{ ev.event_type }}">
+          <div class="event-meta">
+            <span class="event-date">{{ ev.event_date or '日期未知' }}</span>
+            <span class="event-type-label">{{ type_labels.get(ev.event_type, ev.event_type) }}</span>
+            <span class="event-source">{{ ev.source }}</span>
+          </div>
+          <div class="event-summary">{{ ev.summary }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-hint">暂无记录事件。如有重整进展、供股、改名等重要事件，可在下方手动录入。</p>
+      {% endif %}
+
+      {% if session.role == 'admin' %}
+      <div class="event-add-form">
+        <h4>录入事件</h4>
+        <div class="event-form-row">
+          <select id="evType">
+            <option value="restructuring_announced">重整公告</option>
+            <option value="restructuring_vote">重整表决</option>
+            <option value="restructuring_approved">重整批准</option>
+            <option value="st_trigger">ST触发</option>
+            <option value="st_lifted">ST解除</option>
+            <option value="rights_issue">供股/配股</option>
+            <option value="bonus_share">转增股本</option>
+            <option value="name_change">公司改名</option>
+            <option value="delist_warning">退市警示</option>
+            <option value="major_shareholder_change">大股东变动</option>
+            <option value="scheme_risk">⚠️ 传销/商业盘风险</option>
+          </select>
+          <input type="date" id="evDate" placeholder="事件日期">
+        </div>
+        <textarea id="evSummary" rows="2" placeholder="一句话摘要（例：重整计划草案获法院受理，债权申报截止 2025-06-30）"></textarea>
+        <button onclick="submitEvent('{{ stock.code }}')">录入</button>
+        <span id="evMsg" style="font-size:12px;margin-left:8px"></span>
+      </div>
+      {% endif %}
+
+    </div>{# end tab-events #}
+
   </div>{# end stock-tabs-body #}
 
 </div>{# end stock-page #}
@@ -608,10 +718,34 @@ async function triggerAnalysis(code) {
   const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
-    const tab = document.getElementById('tab-brief');
-    tab.innerHTML = `<div class="analysis-pending-block" id="pending-block" data-job="${data.job_id}">
-      <span class="spinner"></span><span>巴菲特正在研究中…</span></div>`;
+    _showPending('全量刷新中（约3分钟）…', data.job_id);
     pollJob(data.job_id);
+  }
+}
+
+async function triggerAnalysisOnly(code) {
+  const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
+  const data = await resp.json();
+  if (data.job_id) {
+    _showPending('分析数据中（约20秒）…', data.job_id);
+    pollJob(data.job_id);
+  }
+}
+
+async function triggerNewsRefresh(code) {
+  const resp = await fetch(`/api/refresh-news/${code}`, { method: 'POST' });
+  const data = await resp.json();
+  if (data.job_id) {
+    _showPending('更新新闻中…', data.job_id);
+    pollJob(data.job_id);
+  }
+}
+
+function _showPending(msg, jobId) {
+  const tab = document.getElementById('tab-brief');
+  if (tab) {
+    tab.innerHTML = `<div class="analysis-pending-block" id="pending-block" data-job="${jobId}">
+      <span class="spinner"></span><span>${msg}</span></div>`;
   }
 }
 
@@ -654,5 +788,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const pb = document.getElementById('pending-block');
   if (pb && pb.dataset.job) pollJob(pb.dataset.job);
 });
+
+function submitEvent(code) {
+  const type    = document.getElementById('evType').value;
+  const date    = document.getElementById('evDate').value;
+  const summary = document.getElementById('evSummary').value.trim();
+  const msg     = document.getElementById('evMsg');
+  if (!summary) { msg.textContent = '请填写摘要'; return; }
+  fetch(`/api/stock/${code}/events`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({event_type: type, event_date: date, summary})
+  }).then(r => r.json()).then(d => {
+    if (d.ok) { msg.textContent = '✓ 已录入'; location.reload(); }
+    else       msg.textContent = '错误: ' + (d.error || '未知');
+  });
+}
 </script>
 {% endblock %}

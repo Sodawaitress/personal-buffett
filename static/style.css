@@ -1310,6 +1310,108 @@ footer small {
 .stock-sector { font-size: 11px; color: var(--ink-faint); }
 .stock-exch { font-size: 11px; color: var(--ink-faint); }
 
+/* US-46 · 公司分类标签 */
+.market-tier-tag {
+  font-size: 10px; font-weight: 600; letter-spacing: .04em;
+  color: #2563eb; background: #eff6ff;
+  padding: 1px 5px; border-radius: 3px;
+  border: 1px solid #bfdbfe;
+}
+.st-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: .03em;
+  padding: 2px 6px; border-radius: 3px;
+}
+.st-badge-st     { color: #b45309; background: #fffbeb; border: 1px solid #fcd34d; }
+.st-badge-starst { color: #dc2626; background: #fef2f2; border: 1px solid #fca5a5; }
+.st-badge-sst    { color: #dc2626; background: #fef2f2; border: 1px solid #fca5a5; }
+
+.company-type-tag {
+  font-size: 10px; color: var(--ink-muted);
+  background: var(--paper); border: 1px solid var(--rule-light);
+  padding: 1px 5px; border-radius: 3px;
+}
+.company-type-distressed  { color: #dc2626; background: #fef2f2; border-color: #fca5a5; font-weight: 600; }
+.company-type-speculative { color: #dc2626; background: #fef2f2; border-color: #fca5a5; font-weight: 700; }
+.company-type-pre_profit  { color: #7c3aed; background: #f5f3ff; border-color: #c4b5fd; }
+.company-type-growth_tech { color: #059669; background: #ecfdf5; border-color: #6ee7b7; }
+
+/* GEM / speculative 高风险横幅 */
+.risk-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff7ed; border: 1px solid #fb923c;
+  border-left: 4px solid #ea580c;
+  border-radius: 6px; padding: 12px 16px;
+  margin-bottom: 16px; font-size: 13px; line-height: 1.6;
+  color: #7c2d12;
+}
+.risk-banner-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.risk-banner-text strong { display: block; margin-bottom: 2px; color: #9a3412; }
+
+/* 事件类型：传销风险 */
+.event-type-scheme_risk .event-type-label {
+  color: #dc2626; font-weight: 700;
+}
+.event-item.event-type-scheme_risk {
+  border-left-color: #dc2626; background: #fef2f2;
+}
+
+/* US-50 · 分析框架标签 */
+.framework-tag {
+  font-size: 10px; font-weight: 600; letter-spacing: .04em;
+  color: #6d28d9; background: #f5f3ff;
+  padding: 1px 5px; border-radius: 3px;
+  border: 1px solid #c4b5fd;
+}
+
+/* US-49 · 事件时间线 */
+.event-timeline { display: flex; flex-direction: column; gap: 12px; padding: 16px 0; }
+.event-item {
+  border-left: 3px solid var(--rule-light);
+  padding: 8px 14px;
+  background: var(--paper);
+}
+.event-item.event-type-restructuring_vote,
+.event-item.event-type-restructuring_approved { border-left-color: #2563eb; }
+.event-item.event-type-st_trigger,
+.event-item.event-type-delist_warning,
+.event-item.event-type-delist_final { border-left-color: #dc2626; }
+.event-item.event-type-st_lifted,
+.event-item.event-type-restructuring_announced { border-left-color: #d97706; }
+.event-item.event-type-name_change,
+.event-item.event-type-rights_issue,
+.event-item.event-type-bonus_share { border-left-color: #7c3aed; }
+
+.event-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
+.event-date { font-size: 12px; font-family: "SF Mono", monospace; color: var(--ink-muted); }
+.event-type-label {
+  font-size: 11px; font-weight: 600; color: var(--ink);
+  background: var(--bg); padding: 1px 6px; border-radius: 3px;
+}
+.event-source { font-size: 11px; color: var(--ink-faint); }
+.event-summary { font-size: 14px; color: var(--ink); line-height: 1.5; }
+
+.event-add-form {
+  margin-top: 24px; padding: 16px;
+  border: 1px dashed var(--rule-light); border-radius: 4px;
+}
+.event-add-form h4 { margin: 0 0 12px; font-size: 13px; color: var(--ink-muted); }
+.event-form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.event-add-form select, .event-add-form input[type=date] {
+  font-size: 13px; padding: 4px 8px;
+  border: 1px solid var(--rule-light); border-radius: 3px; background: var(--paper);
+}
+.event-add-form textarea {
+  width: 100%; font-size: 13px; padding: 6px 8px;
+  border: 1px solid var(--rule-light); border-radius: 3px;
+  background: var(--paper); resize: vertical; box-sizing: border-box;
+}
+.event-add-form button {
+  margin-top: 8px; font-size: 13px; padding: 5px 14px;
+  background: var(--ink); color: var(--paper); border: none;
+  border-radius: 3px; cursor: pointer;
+}
+.empty-hint { font-size: 13px; color: var(--ink-faint); padding: 16px 0; }
+
 .stock-header-right { text-align: right; flex-shrink: 0; }
 
 .stock-price-big {

@@ -225,10 +225,42 @@ def _fetch_financials(code, market, log):
                 "profit_margin": info.get("profitMargins"),
             }
 
+            # 抓取历史年报数据构建 annual_data
+            annual = []
+            try:
+                fin = ticker.financials
+                bs  = ticker.balance_sheet
+                years = list(fin.columns)[:4]  # 最近4年
+                for col in years:
+                    try:
+                        net_income   = fin.loc["Net Income", col] if "Net Income" in fin.index else None
+                        total_rev    = fin.loc["Total Revenue", col] if "Total Revenue" in fin.index else None
+                        equity       = bs.loc["Stockholders Equity", col] if "Stockholders Equity" in bs.index else None
+                        total_assets = bs.loc["Total Assets", col] if "Total Assets" in bs.index else None
+
+                        roe = (net_income / equity * 100) if net_income and equity and equity > 0 else None
+                        npm = (net_income / total_rev * 100) if net_income and total_rev and total_rev > 0 else None
+                        dar = ((total_assets - equity) / total_assets * 100) if total_assets and equity and total_assets > 0 else None
+
+                        annual.append({
+                            "year":       str(col.year) if hasattr(col, "year") else str(col)[:4],
+                            "roe":        round(roe, 2) if roe else None,
+                            "net_margin": round(npm, 2) if npm else None,
+                            "debt_ratio": round(dar, 2) if dar else None,
+                            "revenue":    round(total_rev / 1e8, 2) if total_rev else None,
+                            "net_profit": round(net_income / 1e8, 2) if net_income else None,
+                        })
+                    except Exception:
+                        pass
+                if annual:
+                    log(f"       年报数据: {len(annual)} 年")
+            except Exception as e:
+                log(f"       ⚠️ 年报获取失败: {e}")
+
             # 通过 signals 参数保存其他财务指标
             db.upsert_fundamentals(
                 code,
-                annual=[],
+                annual=annual,
                 pe_current=fundamentals.get("pe_current"),
                 pb_current=fundamentals.get("pb_current"),
                 signals={k:v for k,v in fundamentals.items() if v is not None}
@@ -347,6 +379,182 @@ def _fetch_signals(code, market, log):
         log(f"       ⚠️ 投行信号获取失败: {e}")
 
 
+def _validate_signals(code: str, fundamentals: dict) -> list:
+    """
+    US-48：Pipeline 前置数据验证。
+    检查财务数据合理性，返回人类可读警告列表注入分析 prompt，并写入 data_quality_log。
+    不阻塞 pipeline，只是标注问题。
+    """
+    warnings = []
+    if not fundamentals:
+        return warnings
+
+    import json
+
+    pe = fundamentals.get("pe_current")
+    pb = fundamentals.get("pb_current")
+
+    # PE 检查
+    if pe is None:
+        warnings.append("PE数据缺失，无法进行市盈率估值，改用PB或其他指标")
+        db.log_data_quality(code, "pe_ratio", None, "missing", "PE为NULL")
+    elif pe < 0:
+        warnings.append(f"PE为负（{pe:.1f}x），公司当前亏损，PE无估值意义")
+        db.log_data_quality(code, "pe_ratio", pe, "outlier", "PE<0，亏损状态")
+    elif pe > 150:
+        warnings.append(f"PE异常高（{pe:.1f}x），通常为利润骤降或数据错误，不纳入PE估值判断，改用PB")
+        db.log_data_quality(code, "pe_ratio", pe, "outlier", f"PE={pe:.1f}x >150")
+
+    # PB 检查
+    if pb is not None and pb > 30:
+        warnings.append(f"PB异常高（{pb:.1f}x），估值溢价极大，需有护城河支撑")
+        db.log_data_quality(code, "pb_ratio", pb, "outlier", f"PB={pb:.1f}x >30")
+
+    # ROE / 财务指标检查（annual_json）
+    try:
+        annual = json.loads(fundamentals.get("annual_json") or "[]")
+        if annual:
+            latest_roe = annual[0].get("roe") if annual else None
+            if latest_roe is not None and latest_roe > 80:
+                warnings.append(f"ROE异常高（{latest_roe:.1f}%），可能存在数据错误，谨慎参考")
+                db.log_data_quality(code, "roe", latest_roe, "outlier", f"ROE={latest_roe:.1f}% >80%")
+            latest_debt = annual[0].get("debt_ratio") if annual else None
+            if latest_debt is not None and latest_debt > 90:
+                warnings.append(f"资产负债率极高（{latest_debt:.1f}%），财务风险显著，重点评估偿债能力")
+                db.log_data_quality(code, "debt_ratio", latest_debt, "outlier", f"负债率={latest_debt:.1f}% >90%")
+            latest_margin = annual[0].get("net_margin") if annual else None
+            if latest_margin is not None and latest_margin < -50:
+                warnings.append(f"净利率深度亏损（{latest_margin:.1f}%），重点关注现金流而非利润")
+                db.log_data_quality(code, "net_margin", latest_margin, "outlier", f"净利率={latest_margin:.1f}% <-50%")
+    except Exception:
+        pass
+
+    return warnings
+
+
+def _analyze_earnings_quality(annual: list) -> list:
+    """
+    预计算利润质量标签，注入 prompt 作为事实，不让 LLM 自己判断。
+    防止把低基数暴增、一次性收益当护城河正面信号。
+    """
+    flags = []
+    if not annual or len(annual) < 2:
+        return flags
+
+    def _f(s):
+        """字符串 → float，失败返回 None"""
+        try:
+            return float(str(s).replace('%', '').replace('亿', '').strip())
+        except Exception:
+            return None
+
+    latest = annual[0]
+    prev   = annual[1]
+
+    growth     = _f(latest.get('profit_growth'))
+    margin_now = _f(latest.get('net_margin'))
+    margin_old = _f(prev.get('net_margin'))
+    rev_now    = _f(latest.get('revenue'))
+    rev_old    = _f(prev.get('revenue'))
+    roe_vals   = [_f(y.get('roe')) for y in annual[:5]]
+    roe_vals   = [v for v in roe_vals if v is not None]
+
+    # ── 1. 利润增速 > 200%：低基数，增速本身无意义 ──────────
+    if growth is not None and growth > 200:
+        flags.append(
+            f"【利润质量⚠️】净利润增速{growth:.0f}%属极端值，通常为上年亏损/极低基数所致，"
+            f"增速数字本身无参考价值。分析时必须改用利润绝对值，不得将此增速解读为业务加速增长。"
+        )
+    # ── 2. 利润增速 > 50% 且远超营收增速：疑含一次性收益 ────
+    elif growth is not None and growth > 50 and rev_now and rev_old and rev_old > 0:
+        rev_growth = (rev_now - rev_old) / abs(rev_old) * 100
+        if growth > rev_growth * 2.5 and growth - rev_growth > 40:
+            flags.append(
+                f"【利润质量⚠️】净利润增速{growth:.0f}%，但营收仅增{rev_growth:.0f}%，"
+                f"差值{growth - rev_growth:.0f}pp。利润增速大幅超过营收，"
+                f"高度疑似含一次性收益（资产出售/政府补贴/汇兑/减值冲回等）。"
+                f"分析时必须注明此利润可持续性存疑，不得将其当作竞争优势证据。"
+            )
+
+    # ── 3. 净利率单年跳升 > 10pp ────────────────────────────
+    if margin_now is not None and margin_old is not None:
+        jump = margin_now - margin_old
+        if jump > 10:
+            flags.append(
+                f"【利润质量⚠️】净利率从{margin_old:.1f}%跳升至{margin_now:.1f}%（+{jump:.1f}pp），"
+                f"主营业务毛利改善极少达到此幅度，请核实是否含一次性收益，不得将此净利率改善归因于竞争力提升。"
+            )
+
+    # ── 4. ROE 连续2年下滑后突然反弹 ───────────────────────
+    if len(roe_vals) >= 4:
+        # roe_vals[0]=最新, roe_vals[1]=上年, roe_vals[2]=上上年, roe_vals[3]=3年前
+        declining = roe_vals[3] >= roe_vals[2] >= roe_vals[1]  # 连续3年下滑
+        rebounded = roe_vals[0] > roe_vals[1] * 1.4             # 最新年反弹40%以上
+        if declining and rebounded:
+            yr_old = annual[3].get("year", "")
+            yr_mid = annual[1].get("year", "")
+            flags.append(
+                f"【ROE趋势\u26a0\ufe0f】ROE在{yr_old}-{yr_mid}连续3年下滑"
+                f"({roe_vals[3]:.1f}%->{roe_vals[2]:.1f}%->{roe_vals[1]:.1f}%)，"
+                f"最新年反弹至{roe_vals[0]:.1f}%。反弹原因需核实是否一次性，不得直接定性为护城河加固。"
+            )
+
+    return flags
+
+
+def _compute_trading_params(price: dict, signals: dict) -> dict:
+    """
+    预计算操作参数，全部基于均线数学，不让 LLM 自己算价格。
+    返回 dict，注入 prompt 后由 LLM 写进 ===TRADE=== 输出块。
+    """
+    if not price or not signals:
+        return {}
+
+    tech    = signals.get('technicals', {}) if signals else {}
+    current = price.get('price')
+    if not current or not tech:
+        return {}
+
+    ma20  = tech.get('ma20')
+    ma60  = tech.get('ma60')
+    ma250 = tech.get('ma250')
+
+    params = {'current': current}
+
+    if ma60:
+        params['entry_1_low']   = round(ma60 * 0.98, 2)
+        params['entry_1_high']  = round(ma60 * 1.02, 2)
+        params['entry_1_label'] = f"¥{ma60 * 0.98:.2f}–{ma60 * 1.02:.2f}（季线MA60附近，回调首选入场区）"
+
+    if ma250:
+        params['entry_2_low']   = round(ma250 * 0.98, 2)
+        params['entry_2_high']  = round(ma250 * 1.02, 2)
+        params['entry_2_label'] = f"¥{ma250 * 0.98:.2f}–{ma250 * 1.02:.2f}（年线MA250附近，强支撑区）"
+        params['stop_loss']     = round(ma250 * 0.92, 2)
+        params['stop_loss_label'] = f"¥{ma250 * 0.92:.2f}（年线MA250下方8%，跌破则基本面需重评）"
+
+    # 当前价格位置
+    if ma20 and ma60 and ma250:
+        above_all = current > ma20 and current > ma60 and current > ma250
+        below_year = current < ma250
+        if above_all:
+            pct_above_ma60 = (current - ma60) / ma60 * 100
+            params['position_label'] = (
+                f"当前价¥{current:.2f}高于所有均线（比MA60高{pct_above_ma60:.1f}%），"
+                f"不是理想进场时机，建议等回调"
+            )
+        elif below_year:
+            params['position_label'] = (
+                f"当前价¥{current:.2f}低于年线¥{ma250:.2f}，需确认基本面是否变化"
+            )
+        else:
+            params['position_label'] = (
+                f"当前价¥{current:.2f}处于MA60(¥{ma60:.2f})与MA250(¥{ma250:.2f})之间，可分批介入"
+            )
+
+    return params
+
+
 def _run_analysis(code, market, log, user_id=None):
     """Step 4: 巴菲特++分析"""
     log("  [4/4] 运行巴菲特分析…")
@@ -374,6 +582,34 @@ def _run_analysis(code, market, log, user_id=None):
             except Exception:
                 pass
 
+        data_warnings = _validate_signals(code, fundamentals)
+        if data_warnings:
+            log(f"       数据质量警告 ({len(data_warnings)}条): {data_warnings[0]}")
+
+        # 利润质量预计算
+        import json as _json
+        _annual = []
+        try:
+            _annual = _json.loads(fundamentals.get("annual_json") or "[]") if fundamentals else []
+        except Exception:
+            pass
+        earnings_flags = _analyze_earnings_quality(_annual)
+        if earnings_flags:
+            log(f"       利润质量标签 ({len(earnings_flags)}条): {earnings_flags[0][:50]}…")
+
+        # 操作参数预计算
+        _signals = fundamentals.get("signals", {}) if fundamentals else {}
+        trading_params = _compute_trading_params(price, _signals)
+        if trading_params.get("entry_1_label"):
+            log(f"       买入区间1: {trading_params['entry_1_label']}")
+
+        events = db.get_stock_events(code, limit=10)
+
+        meta         = db.get_stock_meta(code)
+        company_type = meta.get("company_type") if meta else None
+        if company_type:
+            log(f"       分析框架: {company_type}")
+
         result = analyze_stock_v2(
             code=code,
             name=stock.get("name", code) if stock else code,
@@ -382,9 +618,14 @@ def _run_analysis(code, market, log, user_id=None):
             news=news,
             fund_flow=ff,
             fundamentals=fundamentals,
-            signals=fundamentals.get("signals", {}),
+            signals=_signals,
             entry_price=entry_price,
             buy_date=buy_date,
+            data_warnings=data_warnings,
+            earnings_flags=earnings_flags,
+            trading_params=trading_params,
+            events=events,
+            company_type=company_type,
         )
         if result:
             today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
@@ -452,6 +693,14 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None):
         _run_with_timeout(_fetch_fund_flow,[code, market, log], "主力资金", log, 30)
         _run_with_timeout(_fetch_financials,[code, market, log], "财务数据",log, 45)
 
+        # 财务数据加载后重新分类，确保 speculative 等判断用上真实数字
+        try:
+            from classifier import classify_stock
+            meta = classify_stock(code)
+            log(f"  ✦ 重新分类: {meta.get('company_type')} / tier={meta.get('market_tier')}")
+        except Exception as _ce:
+            log(f"  ⚠️ 重新分类失败: {_ce}")
+
         if not is_st:
             _run_with_timeout(_fetch_advanced,   [code, market, log], "高级财务",  log, 30)
             _run_with_timeout(_fetch_technicals, [code, market, log], "技术支撑位",log, 20)
@@ -474,6 +723,87 @@ def start_pipeline(user_id: int, code: str, market: str) -> int:
     """
     job_id = db.create_job(user_id, code, "add_stock")
     t = threading.Thread(target=run_pipeline, args=(job_id, code, market, user_id), daemon=True)
+    t.start()
+    return job_id
+
+
+# ── US-45：分析层（用已有数据）────────────────────────
+
+def run_analysis_only(job_id: int, code: str, market: str, user_id: int = None):
+    """
+    只跑 LLM 分析，不重爬任何数据。
+    用 DB 里已有的财务/价格/新闻数据，<30s 完成。
+    """
+    logs = []
+
+    def log(msg):
+        logs.append(msg)
+        db.update_job(job_id, status="running", log="\n".join(logs)[-500:])
+
+    try:
+        db.update_job(job_id, status="running")
+        log(f"▶ 分析数据（用缓存）: {code}")
+        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, 180)
+        log("✅ 完成")
+        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+    except Exception as e:
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+
+
+def start_analysis_only(user_id: int, code: str, market: str) -> int:
+    """启动「只跑分析」job，返回 job_id。"""
+    job_id = db.create_job(user_id, code, "analyze_only")
+    t = threading.Thread(target=run_analysis_only, args=(job_id, code, market, user_id), daemon=True)
+    t.start()
+    return job_id
+
+
+# ── US-45：新闻层（1小时缓存）────────────────────────
+
+def run_news_update(job_id: int, code: str, market: str):
+    """
+    只更新新闻，1小时内重复触发直接返回缓存结果。
+    """
+    logs = []
+
+    def log(msg):
+        logs.append(msg)
+        db.update_job(job_id, status="running", log="\n".join(logs)[-500:])
+
+    try:
+        db.update_job(job_id, status="running")
+
+        # 1小时缓存检查
+        with db.get_conn() as c:
+            row = c.execute(
+                "SELECT MAX(fetch_date) as last_date FROM stock_news WHERE code=?", (code,)
+            ).fetchone()
+        last = (row["last_date"] or "") if row else ""
+        now_str = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M")
+        if last:
+            try:
+                from datetime import datetime as dt
+                last_dt = dt.fromisoformat(last) if "T" not in last else dt.fromisoformat(last)
+                diff = (datetime.now(CN_TZ) - last_dt.replace(tzinfo=CN_TZ if last_dt.tzinfo is None else last_dt.tzinfo)).total_seconds()
+                if diff < 3600:
+                    log(f"  ℹ️ 新闻已是 {int(diff/60)} 分钟前抓取的，使用缓存（1小时内不重复抓取）")
+                    db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+                    return
+            except Exception:
+                pass
+
+        log(f"▶ 更新新闻: {code}")
+        _run_with_timeout(_fetch_news, [code, market, log], "新闻", log, 30)
+        log("✅ 新闻更新完成")
+        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+    except Exception as e:
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+
+
+def start_news_update(user_id: int, code: str, market: str) -> int:
+    """启动「更新新闻」job，返回 job_id。"""
+    job_id = db.create_job(user_id, code, "news_update")
+    t = threading.Thread(target=run_news_update, args=(job_id, code, market), daemon=True)
     t.start()
     return job_id
 

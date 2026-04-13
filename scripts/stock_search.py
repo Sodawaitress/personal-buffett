@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 _CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks.json")
 _PINYIN_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks_pinyin.json")
-_CACHE_TTL   = 86400  # 24 小时
+_CACHE_TTL   = 604800  # 7 天（A股列表变化极慢）
 
 _CN_CACHE    = None   # [(code, name), ...]
 _PY_INDEX    = None   # [(code, name, initials, full_pinyin), ...]
@@ -41,6 +41,7 @@ HK_NAMES = {
     "中芯国际": "0981.HK",
     "网易": "9999.HK",
     "百度": "9888.HK",
+    "九福来": "8611.HK",
 }
 
 # ── 常见拼音别名（不规则或简称）────────────────────────
@@ -183,6 +184,13 @@ def _search_hk_names(q: str) -> list:
 def _search_yf(ticker: str) -> list:
     try:
         import yfinance as yf
+        # 港股GEM代码如 08611.HK → yfinance需要 8611.HK（去前导零）
+        # 主板4位代码 0981/0700.HK 保持原样，yfinance 需要完整4位
+        if ticker.endswith(".HK"):
+            parts = ticker.split(".")
+            if len(parts[0]) >= 5:   # GEM: 5位 → 去前导零
+                parts[0] = parts[0].lstrip("0") or "0"
+            ticker = ".".join(parts)
         info = yf.Ticker(ticker).info
         short = info.get("shortName") or info.get("longName")
         if not short:
@@ -194,6 +202,8 @@ def _search_yf(ticker: str) -> list:
             market = "nz"
         elif code.endswith(".HK") or exch in ("HKG", "HKSE") or curr == "HKD":
             market = "hk"
+        elif code.endswith((".KS", ".KQ")) or curr == "KRW":
+            market = "kr"
         else:
             market = "us"
         return [{"code": code, "name": short,
@@ -247,7 +257,7 @@ def search(q: str, limit: int = 10) -> list:
         if has_dot or not results:
             _add(_search_yf(ticker))
         if not has_dot and len(results) < limit:
-            for sfx in (".HK", ".NZ"):
+            for sfx in (".HK", ".NZ", ".KS"):
                 if len(results) < limit:
                     _add(_search_yf(ticker + sfx))
 

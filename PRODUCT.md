@@ -1671,5 +1671,563 @@ def _fetch_technicals(code, market, log):
 
 ---
 
-*本文档由 Claude Code 起草，最终以用户确认版本为准。*
-*最后更新：2026-04-07*
+---
+
+### US-45 · 分析系统架构重设计（数据层 × 分析层分离）
+
+**As a** 用户
+**I want to** 点「分析数据」和「更新新闻」是两个独立动作
+**So that** 财务数据不需要每次重新爬，新闻可以按需更新，系统更快更准
+
+**背景：**
+- 现状：每次点分析都全量重爬（财报+新闻+价格），慢且浪费
+- 财报数据是季度级，新闻是小时级，不应该同一个触发器
+
+**数据分层：**
+| 层级 | 内容 | 更新频率 | 触发方式 |
+|---|---|---|---|
+| 财务数据层 | ROE/净利率/ROIC/PE/PB/机构持仓 | 每季度 | 添加时 + launchd 季度 |
+| 市场数据层 | 股价/成交量/主力资金/技术位 | 每天 | launchd 每日自动 |
+| 新闻舆情层 | 新闻标题/情绪/来源 | 按需+1小时缓存 | 用户点「更新新闻」 |
+
+**新闻缓存逻辑：**
+- 用户点「更新新闻」→ 检查距上次抓取是否 < 1小时
+- 是：直接用缓存 / 否：重新抓取，去重后追加到 stock_news 表
+- 分析时取最近 7 天所有新闻（不只是刚抓的这批）
+
+**前端两个按钮：**
+- `[分析数据]`：用现有财务+市场数据跑定量评分 + 巴菲特信，不触发任何爬取
+- `[更新新闻]`：按缓存规则决定是否重爬，输出新闻情绪摘要
+
+**Acceptance Criteria:**
+- `stock_news` 表建立，新闻按条追加不覆盖
+- `[分析数据]` 响应时间 < 30s（因为不爬数据）
+- `[更新新闻]` 1小时内重复点击直接返回缓存结果
+- 两个分析结果可单独查看，也可合并进完整报告
+
+---
+
+### US-46 · 公司分类器（stock_meta）✅ 2026-04-13
+
+**As a** 系统
+**I want to** 在用户添加股票时自动判断公司类型、监管状态、市场层级，每季度重新校验
+**So that** 不同类型的公司走不同的分析模型，ST/重整股不再错误地走巴菲特框架
+
+**背景（真实案例触发）：**
+- `*ST华闻 (000793)`：ST重整股被送进巴菲特框架，输出完全错误
+- `九福来 (8611.HK)`：GEM股被误认为大陆传销公司，改名历史缺失导致背景判断出错
+
+**公司类型（company_type）：**
+| 类型 | 判断规则 | 分析模型 |
+|---|---|---|
+| `mature_value` | 稳定盈利，ROE > 10% | 巴菲特标准：ROE/护城河/FCF |
+| `growth_tech` | 营收 CAGR > 20% 或科创板/GEM | 营收增速/毛利率/研发占比 |
+| `financial` | 行业=银行/保险/券商 | ROA/净息差/不良率 |
+| `cyclical` | 行业=钢铁/煤炭/化工/地产 | 周期位置/现金流/大宗价格 |
+| `utility` | 行业=电力/水务/燃气 | 股息率/债务可持续性 |
+| `pre_profit` | 连续2年以上亏损 | 现金 runway/营收增速 |
+| `distressed` | ST/\*ST 状态 | 事件驱动框架（见 US-50） |
+
+**ST 状态（st_status）— 触发框架路由的关键字段：**
+- `NULL`：正常股票
+- `ST`：财务异常，退市警告
+- `*ST`：退市风险，重整/清算程序中
+- `SST`：暂停上市
+
+**市场层级（market_tier）：**
+- A股：`main`（主板）/ `star`（科创板）/ `sme`（中小板）
+- 港股：`main`（主板）/ `gem`（创业板，如九福来 8611.HK）
+- 新西兰：`main` / `nxt`
+
+**DB 变更 — `stock_meta` 表完整结构：**
+```sql
+CREATE TABLE stock_meta (
+    code               TEXT PRIMARY KEY REFERENCES stocks(code),
+    company_type       TEXT,                    -- 见上方枚举
+    industry           TEXT,                    -- 行业分类
+    market_tier        TEXT,                    -- 'main'|'gem'|'star'|'sme'|'nxt'
+    st_status          TEXT,                    -- NULL|'ST'|'*ST'|'SST'
+    st_since           TEXT,                    -- ST开始日期
+    name_history_json  TEXT,                    -- [{name, from_date, to_date}]
+    ipo_date           TEXT,
+    total_shares       REAL,                    -- 总股本（亿）
+    float_shares       REAL,                    -- 流通股本（亿）
+    last_classified    TEXT,                    -- 上次分类时间
+    manual_override    INTEGER DEFAULT 0,       -- 1=用户手动设置，不被自动覆盖
+    updated_at         TEXT DEFAULT (datetime('now'))
+);
+```
+
+**触发时机：**
+- 用户首次添加股票时自动分类
+- launchd 每季度重跑（财务变化可能改变类型；ST状态可能解除）
+- `st_status` 变化时立即触发 US-50 框架路由更新
+- 用户可手动覆盖（`manual_override=1` 保护，不被自动分类覆盖）
+
+**Acceptance Criteria:**
+- 添加股票后 `stock_meta` 有对应记录
+- 000793 分类为 `distressed`，`st_status='*ST'`
+- 8611.HK 分类为 `growth_tech`，`market_tier='gem'`，`name_history_json` 含 MINDTELL TECH 记录
+- 分类结果（类型 + ST状态）显示在股票详情页头部
+- Jupyter notebook `01_classify_watchlist.ipynb` 可跑出分类结果预览
+
+---
+
+### US-47 · ML 数据基础建设（建模埋点）
+
+**As a** 未来的分析模型
+**I want to** 现在开始积累干净的特征数据和标签数据
+**So that** 以后可以训练自己的预测模型
+
+**现在要埋的字段（feature）：**
+- `feat_roe_trend`：ROE 近3年斜率（上升/下降/平稳）
+- `feat_margin_stability`：净利率变异系数
+- `feat_news_sentiment_7d`：近7天新闻情绪均值
+- `feat_fund_flow_5d`：近5日主力资金累计净流入
+- `feat_pe_percentile`：PE 在5年历史的百分位
+
+**标签（label，事后回填）：**
+- `label_7d_return`：分析后7日收益率
+- `label_30d_return`：分析后30日收益率
+- `label_beat_market`：是否跑赢沪深300
+
+**工具：**
+- Jupyter notebook `02_feature_exploration.ipynb`：探索特征分布
+- scikit-learn 做基础分类（先用规则，积累数据后换 ML）
+
+**Acceptance Criteria:**
+- analysis_results 表有 feat_* 字段（已有，需确认是否填充）
+- label_7d/30d 由 backfill_returns.py 每日回填
+- notebook 能跑出特征相关性热力图
+
+---
+
+---
+
+### US-48 · 数据验证层（Pipeline 前置检查）✅ 2026-04-13
+
+**As a** 分析系统
+**I want to** 在将数据送进 LLM 前进行合理性验证，并将异常数据明确标注
+**So that** LLM 不再基于错误数据（如 PE 412x）生成误导性结论
+
+**背景（真实案例）：**
+- 佛塑科技 PE 412x 直接进入分析，巴菲特信基于此数据给出荒谬结论
+- ROE 重复字段（TTM vs 年度）未去重，LLM 自行选择造成不一致
+
+**验证规则：**
+| 字段 | 异常条件 | 处理方式 |
+|---|---|---|
+| PE | > 150 | 标注"估值数据异常，跳过PE估值判断，改用PB" |
+| PE | < 0 | 标注"当前亏损，PE无意义" |
+| PE | 缺失 | 标注"PE数据缺失" |
+| ROE | > 80% | 标注"ROE异常高，可能数据错误，谨慎参考" |
+| ROE | 多个数据源冲突 | 标注"以最新TTM为准，历史年度数据仅参考趋势" |
+| 负债率 | > 90% | 标注"财务杠杆极高，重点评估偿债能力" |
+| 净利率 | < -50% | 标注"深度亏损，需关注现金流而非利润" |
+| 价格 | 为0或NULL | 跳过技术分析；标注"价格数据缺失" |
+
+**实现位置：** `scripts/pipeline.py` — `_run_analysis()` 之前插入 `_validate_signals()`
+
+```python
+def _validate_signals(code, signals) -> list[str]:
+    """返回人类可读警告列表，注入分析 prompt"""
+    warnings = []
+    # ... 按上表检查
+    return warnings
+```
+
+**DB 变更：**
+```sql
+CREATE TABLE data_quality_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    code        TEXT,
+    field       TEXT,   -- 'pe_ratio'|'roe'|'debt_ratio' 等
+    value       TEXT,   -- 原始值（字符串，兼容NULL/Inf）
+    flag        TEXT,   -- 'outlier'|'missing'|'conflict'|'stale'
+    reason      TEXT,   -- 人类可读说明
+    logged_at   TEXT DEFAULT (datetime('now'))
+);
+```
+
+**Acceptance Criteria:**
+- PE > 150 时，巴菲特信中出现"估值数据存疑"字样，不基于该PE给出判断
+- ROE 冲突时，信件明确标注"以TTM为准"
+- `data_quality_log` 有对应异常记录，可在 Jupyter 里审查
+- 验证逻辑不阻塞 pipeline，只是注入警告文本
+
+---
+
+### US-49 · 股票事件数据层（stock_events）✅ 2026-04-13
+
+**As a** 分析系统
+**I want to** 记录和查询影响股票价值的关键事件（重整进展/供股/改名/ST触发）
+**So that** 事件驱动型股票（ST重整股）能基于真实进度而非财报做分析
+
+**背景（真实案例）：**
+- `*ST华闻 (000793)`：重整计划草案已出，表决日期未知，稀释比例未知——这些才是关键变量
+- `九福来 (8611.HK)`：改名自 MINDTELL TECH，容易被误认为同名传销公司，改名时间线缺失
+
+**事件类型枚举（event_type）：**
+| 类型 | 说明 | 关键字段 |
+|---|---|---|
+| `st_trigger` | ST状态触发 | st_type, trigger_reason |
+| `st_lifted` | ST解除 | lifted_date, reason |
+| `restructuring_announced` | 重整计划公告 | plan_summary |
+| `restructuring_vote` | 债权人/股东表决 | vote_date, vote_result |
+| `restructuring_approved` | 法院裁定重整完成 | approved_date, dilution_ratio |
+| `rights_issue` | 供股/配股 | ratio, price, record_date, pay_date |
+| `bonus_share` | 转增股本 | ratio, record_date |
+| `name_change` | 公司改名 | old_name, new_name, effective_date |
+| `delist_warning` | 退市警示 | warning_date, reason |
+| `delist_final` | 最终退市 | delist_date |
+| `major_shareholder_change` | 大股东变动 | from_holder, to_holder, method |
+
+**DB 变更：**
+```sql
+CREATE TABLE stock_events (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    code         TEXT REFERENCES stocks(code),
+    event_type   TEXT NOT NULL,
+    event_date   TEXT,           -- 事件发生/生效日期
+    summary      TEXT,           -- 一句话摘要（注入 prompt 用）
+    detail_json  TEXT,           -- 结构化数据，字段按 event_type 变化
+    source       TEXT,           -- 'akshare'|'manual'|'cninfo' 等
+    created_at   TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX idx_stock_events_code ON stock_events(code);
+CREATE INDEX idx_stock_events_type ON stock_events(event_type);
+```
+
+**数据来源（优先级）：**
+1. AKShare `stock_notice_report`（公告）/ `stock_restructuring`（重整）
+2. 巨潮资讯 cninfo.com.cn（A股公告）
+3. 人工录入（UI上加"记录事件"入口）
+
+**分析注入逻辑：**
+- `_fetch_signals()` 中查询该股最近12个月的 `stock_events`
+- 如存在 `restructuring_vote`，将表决日期和稀释比例注入分析 prompt
+- 如存在 `name_change`，在分析开头注明"公司原名 XXX，与同名他公司无关"
+
+**Acceptance Criteria:**
+- `stock_events` 表建立，人工可录入事件
+- 分析 000793 时，信件开头有重整进展摘要（如已录入事件）
+- 分析 8611.HK 时，信件注明"原名 MINDTELL TECH"（如已录入改名事件）
+- 事件列表显示在股票详情页"事件时间线"小区块
+
+---
+
+### US-50 · 分析框架路由（基于 stock_meta）✅ 2026-04-13
+
+**As a** 分析系统
+**I want to** 根据 `company_type` 和 `st_status` 自动选择对应的分析框架和 prompt 模板
+**So that** ST重整股不再走巴菲特框架，金融股/周期股得到专属分析逻辑
+
+**背景：**
+这个软件的核心定位是"帮助学习复利的人，理解经济系统，找到对世界有利的方式"——
+用同一套巴菲特框架分析所有股票，背离了这个定位。稳定复利股适合巴菲特，
+但重整股是博弈，周期股是时机，金融股是杠杆，用同一把尺子量截然不同的东西。
+
+**路由逻辑：**
+```python
+FRAMEWORK_MAP = {
+    'distressed':   'event_driven',      # *ST/重整：关注事件进度、稀释风险、退出时间窗口
+    'financial':    'bank_insurance',    # 银行保险：ROA/净息差/不良率/资本充足率
+    'cyclical':     'cycle_position',    # 周期股：周期位置/库存周期/大宗价格趋势
+    'utility':      'dividend_safety',   # 公用事业：股息率/债务可持续性/监管风险
+    'growth_tech':  'growth_quality',    # 成长股：营收增速/毛利率扩张/研发效率
+    'pre_profit':   'survival_check',    # 亏损早期：现金 runway/烧钱速率/催化剂
+    'mature_value': 'buffett',           # 默认：ROE/护城河/FCF/安全边际
+}
+```
+
+**各框架核心指标（注入 prompt 的不同部分）：**
+
+**`event_driven`（ST重整）：**
+- 重整计划完成度、债务减免比例、股权稀释比例
+- 表决日期 → 是否还在时间窗口内
+- 重整后存续公司的盈利能力预估
+- 核心问题："重整能成功吗？成功后值多少？"
+
+**`buffett`（价值股，现有逻辑）：**
+- ROE/净利率/FCF/护城河/安全边际
+- 保持现有巴菲特信格式
+
+**`growth_quality`（成长/GEM）：**
+- 营收 CAGR、毛利率趋势、研发占比
+- 核心问题："护城河还在扩宽吗？现在的溢价值得付吗？"
+
+**实现位置：** `scripts/buffett_analyst.py` — `analyze_stock_v2()` 接受 `framework` 参数
+
+**DB 变更：**
+- `analysis_results` 表加 `framework_used TEXT` 字段（记录本次分析用了哪个框架）
+
+**Acceptance Criteria:**
+- 分析 000793 时，`framework_used='event_driven'`，信件聚焦重整进度
+- 分析 8611.HK 时，`framework_used='growth_quality'`，信件聚焦增长质量
+- 分析 600519 时，`framework_used='buffett'`，格式不变
+- 详情页头部显示"当前分析框架：[事件驱动 / 巴菲特 / ...]"
+- 框架切换不影响现有分析结果的存储格式
+
+---
+
+---
+
+### US-51 · 多用户推送路由（按持仓动态发送）
+
+**背景**：现有 `stock_pipeline.py` 使用 `config.py` 里硬编码的 `WATCHLIST`，与 DB 的 `user_watchlist` 表完全脱节。系统有多个用户（admin、妈妈、其他），但每日推送不区分人、不区分持仓状态。
+
+**目标**：pipeline 从 DB 读取各用户当前持仓，仅向「已开启每日推送」的用户发送其持仓相关报告。
+
+**Acceptance Criteria**
+
+1. pipeline 启动时，查询 `user_push_settings.notify_daily = 1` 的所有用户
+2. 对每个推送用户，只抓取其 `user_watchlist.status = 'holding'` 的股票（非 watching/sold）
+3. 抓取的股票池 = 所有推送用户持仓的并集（避免重复抓取）
+4. 报告按用户过滤：每人只看到自己持仓的行情、新闻、分析
+5. 推送渠道：优先读用户的 `discord_webhook` / `wecom_webhook`；若为空则回退到全局 env 变量
+6. `bear_enabled = 1` 的用户额外保存到 Bear（目前只有 admin）
+7. 硬编码的 `WATCHLIST` / `HK_WATCHLIST` 保留但仅作备用（当 DB 无持仓时 fallback）
+8. 不改 DB schema，不改 web app 任何逻辑
+
+**推送规则（妈妈）**
+- 渠道：Server酱（`wecom_webhook` 字段存 Server酱 key）；不用 Bear，不用 Discord
+- 有持仓：发「持仓报告」+ 「今日 A 级观察股」两部分
+- 无持仓：只发「今日 A 级观察股」
+- A 级观察股 = `user_watchlist.status='watching'` 且今日 analysis 评级 = 'A'
+
+**不在范围内**
+- 邮件推送；新建用户 UI
+
+**技术路径**
+- `stock_pipeline.py` `main()`：查 `notify_daily=1` 用户 → 取持仓并集抓数据
+- `generate_report(allowed_codes)` 按 codes 过滤行情/新闻/分析
+- 推送：`for user in push_users: send_serverchan(user.wecom_webhook, report)`
+
+---
+
+### US-52 · admin.py — 用户持仓 CLI 管理工具
+
+**背景**：妈妈不用自己操作 web app，由管理员（周宇）在命令行维护她的持仓状态。
+
+**命令设计**
+```bash
+python3 admin.py users                          # 列出所有用户
+python3 admin.py watchlist <email>              # 查看某用户全部自选股
+python3 admin.py set <email> <code> holding [--price 12.5] [--date 2026-01-01]
+python3 admin.py set <email> <code> watching
+python3 admin.py set <email> <code> sold [--price 15.0]
+python3 admin.py add <email> <code>             # 添加股票到 watching
+python3 admin.py remove <email> <code>          # 从自选股移除
+python3 admin.py notify <email> on|off          # 开关每日推送
+```
+
+**Acceptance Criteria**
+- 不依赖 Flask，直接操作 SQLite
+- 输出表格对齐，中英文股票名都显示
+- 操作前打印「将要做什么」，操作后打印「已完成」
+
+---
+
+### US-53 · 韩股支持（.KS 市场）
+
+**背景**：韩国股票（如三星 005930.KS）无法搜索、添加、分析。
+
+**Acceptance Criteria**
+- `_detect_market("005930.KS")` → `"kr"`
+- 搜索支持韩股代码（yfinance ticker 直接搜）
+- pipeline 对 `.KS` 股票走 yfinance 抓行情 + 新闻（与 US 股票路径相同）
+- 详情页显示 KRW 货币符号 ₩
+- 分析框架：沿用 US 路径（yfinance financials）
+
+---
+
+### US-54 · 英文界面补全
+
+**背景**：i18n en.json 缺大量 key，英文模式下很多地方显示中文或空白。
+
+**Acceptance Criteria**
+- 审查 `i18n/en.json` vs `i18n/zh.json`，补全所有缺失 key
+- 模板里硬编码的中文文本提取到 i18n（主要页面：index、watchlist、stock）
+- 不改功能，不改样式，只补翻译
+
+---
+
+### US-55 · 数据三层分离 + 新闻 on-demand 缓存
+
+**背景**：目前 pipeline 一锅炖（财务/市场/新闻混跑），新闻每次都重爬，没有缓存保护，用户也无法单独触发新闻更新。
+
+**设计目标**：把数据分成三层，各自有独立触发逻辑：
+
+```
+财务数据层  quarterly
+  ROE / 净利率 / ROIC / PE / PB / 机构持仓
+  触发：添加股票时 + 每季度 launchd
+
+市场数据层  daily
+  股价 / 成交量 / 主力资金 / 技术位
+  触发：每天 launchd 自动跑（现有 pipeline）
+
+新闻舆情层  on-demand + 1小时缓存
+  新闻标题 / 情绪值 / 来源 / 发布时间
+  触发：用户点「更新新闻」按钮
+```
+
+**新闻缓存逻辑**：
+```
+用户点 [更新新闻]
+  ↓
+距上次抓取 < 1小时？
+  ├── 是 → 直接用 stock_news 表里已有数据分析
+  └── 否 → 重爬 → 去重追加到 stock_news → 分析最近7天所有新闻
+```
+
+**Acceptance Criteria**
+
+- [ ] `app.py` `/api/analyse` 路由加新闻缓存判断：查 `stock_news` 表最新 `fetched_at`，< 1小时则跳过重爬
+- [ ] 新增 `/api/news/<code>` 端点：单独触发新闻抓取+情绪分析，返回最近7天新闻
+- [ ] `stock.html` 详情页新增「更新新闻」按钮（与现有「↻ 分析」并列），调用上面端点
+- [ ] 「↻ 分析」只跑财务+市场数据，不重爬新闻
+- [ ] 新闻分析结果单独展示区块（情绪趋势 + 标题列表），不与巴菲特信混合
+
+**已有基础（不用重建）**：
+- `stock_news` 表已存在，schema 完整（`sentiment`、`fetched_at`、`category` 字段都有）
+- `db.upsert_stock_news()` 和 `db.get_stock_news()` 已存在
+- 新闻抓取逻辑在 `scripts/stock_pipeline.py` 的 `_fetch_news()` 里
+
+---
+
+### US-56 · 港股/美股财务数据补强
+
+**背景**：港股（如 SMIC 0981.HK）分析质量明显低于 A股，原因是 yfinance 只提供基础字段，缺少多年趋势数据。SMIC 分析信里出现「债务比 35.97x」这种明显错误的数字（字段含义混淆）。
+
+**问题清单**：
+1. `debt_to_equity`（D/E ratio）被错误显示为「债务比」，数值不经换算直接展示
+2. 港股/美股缺 5年 ROE/净利率趋势（只有单点快照）
+3. 港股缺技术支撑位分析（MA/VWAP）
+4. 分析信里出现 markdown 加粗（`**ROE 仅 2.96%**`），破坏信件格式
+
+**Acceptance Criteria**
+
+- [ ] 修复 `debt_to_equity` 字段展示逻辑：D/E ratio > 5 时加警告说明，避免误读为负债率百分比
+- [ ] 港股/美股 prompt 里明确告知 LLM「财务数据为单点快照，无历史趋势，分析时应降低置信度」
+- [ ] LLM system prompt 加指令：**禁止在信件正文里使用 markdown 加粗**，保持散文格式
+- [ ] `_fetch_financials()` 对港股补充尝试抓取 yfinance `income_stmt`（多年损益表），提取 3年净利率趋势
+
+---
+
+### US-57 · Server酱 微信推送接入
+
+**背景**：US-51 推送路由已完成 DB 驱动逻辑，但 `send_serverchan()` 函数是 stub，实际没发出去。妈妈的每日推送目前只到 Discord/Bear，不到微信。
+
+**推送流程**
+```
+pipeline 结束
+  ↓
+对每个 notify_daily=1 用户
+  ↓
+  读 user_push_settings.wecom_webhook（存 Server酱 SendKey）
+  ├── 有持仓 → 持仓简报 + 今日 A 级观察股
+  └── 无持仓 → 仅 A 级观察股
+  ↓
+POST https://sctapi.ftqq.com/{SendKey}.send
+  title: "巴菲特日报 {日期}"
+  desp:  markdown 正文（股票列表 + 涨跌 + 评级 + 巴菲特一句话总结）
+```
+
+**Acceptance Criteria**
+
+- [x] `stock_pipeline.py` 里真正实现 `send_serverchan(key, title, desp)`：POST 到 `sctapi.ftqq.com`，检查返回 `code=0` 确认发送成功
+- [x] 推送内容格式（markdown）：紧凑表格（持仓表格 + 巴菲特说 + A 级观察股），`build_user_push_content` 已按此格式实现
+- [x] 推送失败时 log warning，不影响主流程
+- [x] 用 `admin.py push-key <email> <serverchan_key>` 设置 SendKey（写入 wecom_webhook 字段）
+- [x] 在 `admin.py` 里加 `test-push <email>` 命令：发送一条测试消息验证 key 有效
+
+**不在范围内**：企业微信机器人、模板消息、公众号推送
+
+---
+
+### US-58 · 北向资金数据修复
+
+**背景**：pipeline 里有北向资金抓取逻辑（`_fetch_fund_flow` 或类似），但字段名核对从未完成。实际 AKShare 接口字段名已多次变更，导致北向资金数据可能一直是 NULL 或字段对不上。
+
+**问题定位**
+- AKShare `stock_hsgt_north_net_flow_in_em()` 或 `stock_em_hsgt_north_acc_flow_in()` 字段名不稳定
+- 可能字段叫 `北向资金` 或 `净流入` 或 `value`，需要实际运行检查
+
+**Acceptance Criteria**
+
+- [x] 运行确认当前字段名：`stock_hsgt_fund_flow_summary_em()` 实际列为 `交易日/类型/板块/资金方向/成交净买额/资金净流入`（与原代码预期完全不同）
+- [x] 修复 `stock_fetch.py fetch_north_bound()`：按 `资金方向=='北向'` 过滤，用 `板块` 区分沪/深股通，`资金净流入`（百万元）/100 得亿元，`交易日` 取日期
+- [ ] 在至少一只持仓 A 股上验证：pipeline 跑完后 `signals.north_flow` 不为 None（需收盘后运行 pipeline 验证）
+- [x] graceful fallback：`except Exception` 已捕获，返回空 dict，不中断 pipeline
+
+---
+
+### US-59 · 推送质量评分（避免发垃圾报告）
+
+**背景**：当前推送不论分析质量如何都发出去。遇到 pipeline 超时 / LLM 失败 / 数据全 NULL 的情况，推送出去的是一封空壳报告，信息量为零，损害用户信任。
+
+**设计**：推送前做质量门禁，低于阈值的报告不推送，改发「今日数据获取失败」摘要。
+
+**质量评分规则（0-10分）**：
+```
++3  有收盘价（price 不为 None）
++2  有巴菲特信（analysis_text 长度 > 200 字）
++2  有新闻（stock_news 当天有 ≥ 1 条）
++2  有评级（grade 不为 None）
++1  有财务数据（ROE 不为 None）
+```
+
+**Acceptance Criteria**
+
+- [ ] `stock_pipeline.py` 加 `_score_report(stock_data) → int` 函数，按上面规则打分
+- [ ] 推送逻辑：单股得分 < 5 时，从「持仓简报」里排除，移入「获取失败」列表
+- [ ] 如果用户所有持仓得分都 < 5，今日推送改为：「{date} 今日数据获取失败，请稍后在 web 查看」
+- [ ] 得分记录到 `analysis_results.data_quality_score` 字段（或 data_quality_log）
+- [ ] 不影响 web 端展示（web 端可以展示低质量数据，推送端才有门禁）
+
+---
+
+### US-60 · 买入区间 + 止损位 UI 接入（===TRADE=== 解析）
+
+**背景**：`_compute_trading_params` 已在 `pipeline.py` 里计算均线买入区间和止损位，并注入 LLM prompt。LLM 也被要求输出 `===TRADE===...===TRADE_END===` 结构块。但 `analyze_stock_v2` 的解析逻辑只处理 `===DIMS===`，TRADE 块目前混在 `letter_html` 里以原始文字渲染，没有独立的 UI 展示。
+
+**行为层缺口**：
+```
+pipeline 计算 trading_params  ✅
+→ 注入 LLM prompt              ✅
+→ LLM 输出 ===TRADE=== 块      ✅（但混在信件正文里）
+→ 解析提取 trade_block         ❌
+→ 存入 DB                      ❌
+→ stock.html 专属卡片展示       ❌
+```
+
+**Acceptance Criteria**
+
+- [ ] `buffett_analyst.py` `analyze_stock_v2` 解析段：在提取 `===DIMS===` 之后，再提取 `===TRADE===...===TRADE_END===`，把 TRADE 块从 `letter_text` 里移除，存为独立字段 `trade_block`（无则为 None）
+- [ ] `analyze_stock_v2` 返回 dict 里加 `"trade_block": trade_block`
+- [ ] `db.py` `save_analysis_result()` 把 `trade_block` 写入 `analysis_results` 表（新增列，可 nullable）
+- [ ] `db.py` `get_latest_analysis()` 返回 `trade_block` 字段
+- [ ] `app.py` `stock_page` 路由把 `analysis.trade_block` 传给模板
+- [ ] `stock.html` 在巴菲特信 brief 区块下方，当 `trade_block` 存在时渲染「操作参数」卡片：
+  ```
+  ┌─ 📌 操作参数（基于均线，系统计算）──────────────────┐
+  │ 当前位置：当前价¥xx，处于MA60与MA250之间，可分批介入  │
+  │ 买入区间1：¥xx.xx–xx.xx（季线MA60附近）             │
+  │ 买入区间2：¥xx.xx–xx.xx（年线MA250附近）            │
+  │ 止损位：¥xx.xx（年线MA250下方8%）                   │
+  │ 仓位策略：[LLM填写]                                 │
+  │ 关键监控：[LLM填写]                                 │
+  └──────────────────────────────────────────────────┘
+  ```
+- [ ] 卡片样式：灰色边框，小字，不抢主要评级视觉；标注「数据不构成投资建议」
+- [ ] 对 `company_type = distressed / speculative` 的股票不显示操作参数卡片（因 LLM 被禁止输出 TRADE 块）
+
+**DB Migration**：
+```sql
+ALTER TABLE analysis_results ADD COLUMN trade_block TEXT;
+```
+
+---
+
+*最后更新：2026-04-14（新增 US-57~60）*

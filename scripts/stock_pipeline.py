@@ -33,7 +33,12 @@ def run_fetch():
 
 
 # ── 生成报告 ──────────────────────────────────────────
-def generate_report(data: dict, ai_analysis: dict = None) -> str:
+def generate_report(data: dict, ai_analysis: dict = None,
+                    allowed_codes: set = None) -> str:
+    """
+    生成 Markdown 报告。
+    allowed_codes: 若指定，只显示该集合内的股票；None = 全部（WATCHLIST）。
+    """
     date      = data["date"]
     quotes    = data.get("quotes", {})
     news      = data.get("news", {})
@@ -100,8 +105,22 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
             return "positive"
         return "neutral"
 
+    # ── 有效自选股列表 ─────────────────────────────────
+    # allowed_codes=None → 全部（admin pipeline 默认行为）
+    # allowed_codes=set  → 只显示指定代码（per-user push）
+    if allowed_codes is None:
+        eff_watchlist = WATCHLIST
+    else:
+        # 从已抓取数据中重建 (name, code, desc) 元组
+        eff_watchlist = [
+            (quotes.get(c, {}).get("name", c), c, "")
+            for c in allowed_codes
+        ]
+        # 行情表也只显示这些代码
+        sorted_stocks = [q for q in sorted_stocks if q["code"] in allowed_codes]
+
     stock_sections = []
-    for name, code, desc in WATCHLIST:
+    for name, code, desc in eff_watchlist:
         stock_news = news.get(code, [])
         stock_ann  = ann.get(code, [])
         q          = quotes.get(code, {})
@@ -169,7 +188,7 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
     # ── 国际资讯 ──────────────────────────────────────
     intl_lines = []
     # 个股相关
-    for name, code, _ in WATCHLIST:
+    for name, code, _ in eff_watchlist:
         for item in intl.get(code, [])[:2]:
             intl_lines.append(
                 f"- 🌐 **[{item['title'][:80]}]({item['link']})**"
@@ -195,7 +214,7 @@ def generate_report(data: dict, ai_analysis: dict = None) -> str:
 
     # ── 巴菲特总评（快速扫描）────────────────────────
     alert_lines = []
-    for name, code, _ in WATCHLIST:
+    for name, code, _ in eff_watchlist:
         p = BUFFETT_PROFILES.get(code, {})
         q = quotes.get(code, {})
         stock_news = news.get(code, [])
@@ -380,6 +399,121 @@ def send_discord_chunks(content: str):
     print(f"📨 Discord 发送：{sent}/{len(chunks)} 块")
 
 
+# ── Server酱 推送（支持指定 key）─────────────────────
+def send_serverchan(key: str, title: str, content: str):
+    """推送到 Server酱。key 为 SCT 开头的 sendkey。"""
+    if not key:
+        print("  ⚠️ Server酱 key 为空，跳过")
+        return
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode    = ssl.CERT_NONE
+    # Server酱 desp 限 64KB，按 4000 字切块顺序发送
+    chunks = [content[i:i+4000] for i in range(0, len(content), 4000)] or [""]
+    for i, chunk in enumerate(chunks):
+        chunk_title = title if i == 0 else f"{title}（续{i}）"
+        payload = json.dumps({"title": chunk_title, "desp": chunk}).encode()
+        url = f"https://sctapi.ftqq.com/{key}.send"
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+                resp = json.loads(r.read().decode())
+                if resp.get("data", {}).get("errno") == 0:
+                    print(f"  📱 Server酱 [{i+1}/{len(chunks)}] 成功")
+                else:
+                    print(f"  📱 Server酱 返回: {resp}")
+        except Exception as e:
+            print(f"  ⚠️ Server酱: {e}")
+        time.sleep(0.3)
+
+
+def _get_a_grade_watching(user_id: int, date_str: str) -> list:
+    """返回某用户 watching 股票中，今日分析评级为 A 的代码列表。"""
+    watching = _db.get_user_watching(user_id)
+    if not watching:
+        return []
+    result = []
+    for code in watching:
+        a = _db.get_latest_analysis(code)
+        if a and a.get("grade") == "A" and a.get("analysis_date", "") >= date_str:
+            result.append(code)
+    return result
+
+
+def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
+                             date_str: str) -> str:
+    """
+    为某用户生成微信推送内容（紧凑格式）：
+    - 持仓表格 + 巴菲特一句话（如有持仓）
+    - 今日 A 级观察股（如有）
+    """
+    quotes     = data.get("quotes", {})
+    holdings   = _db.get_user_holdings(user_id)
+    a_watching = _get_a_grade_watching(user_id, date_str)
+
+    sections = []
+
+    if holdings:
+        rows = ["## 今日持仓\n",
+                "| 股票 | 现价 | 涨跌 | 评级 |",
+                "|------|------|------|------|"]
+        buffett_lines = []
+        news_lines = []
+        for code in holdings:
+            q = quotes.get(code, {})
+            a = _db.get_latest_analysis(code)
+            name = q.get("name", code)
+            price = q.get("price")
+            change = q.get("change")
+            grade  = a.get("grade", "—") if a else "—"
+            price_s  = f"¥{price:.2f}" if price is not None else "—"
+            change_s = (("+" if change >= 0 else "") + f"{change:.2f}%") if change is not None else "—"
+            rows.append(f"| {name}（{code}） | {price_s} | {change_s} | {grade} |")
+            if a:
+                # 用 reasoning 做摘要（比 conclusion 一个字有内容得多）
+                reasoning = (a.get("reasoning") or a.get("letter_html") or "").strip()
+                if reasoning:
+                    buffett_lines.append(f"**{name}**（{grade}）\n{reasoning[:150]}……")
+            # 今日新闻：取最新 1 条标题
+            stock_news = data.get("news", {}).get(code, [])
+            if stock_news:
+                top = stock_news[0]
+                news_lines.append(f"- **{name}**：{top.get('title', '')[:60]}")
+        sections.append("\n".join(rows))
+        if buffett_lines:
+            sections.append("### 🧠 巴菲特分析\n\n" + "\n\n---\n\n".join(buffett_lines))
+        if news_lines:
+            sections.append("### 📰 今日要闻\n\n" + "\n".join(news_lines))
+
+    if a_watching:
+        lines = ["## ⭐ 今日 A 级关注股（建议留意）\n"]
+        for code in a_watching:
+            a = _db.get_latest_analysis(code)
+            q = quotes.get(code, {})
+            name = q.get("name", code)
+            price = q.get("price")
+            change = q.get("change")
+            price_str = ""
+            if price is not None:
+                sign = "+" if (change or 0) >= 0 else ""
+                change_str = f"{sign}{change:.2f}%" if change is not None else ""
+                price_str = f" · ¥{price:.2f}（{change_str}）"
+            conclusion = (a.get("conclusion") or "")[:80] if a else ""
+            lines.append(f"- **{name}（{code}）**{price_str}")
+            if conclusion:
+                lines.append(f"  > {conclusion}")
+        sections.append("\n".join(lines))
+
+    if not sections:
+        return ""
+
+    return "\n\n---\n\n".join(sections)
+
+
 # ── Server酱 微信推送 ─────────────────────────────────
 def send_wechat(title: str, content: str):
     """通过 Server酱 推送到微信"""
@@ -482,10 +616,35 @@ def main():
     print(f"  ✅ 数据库写入完成")
 
     print("\n📨 Step 3/3：推送...")
+
+    # ── Admin：全量报告 → Bear + Discord + 全局 Server酱 ──
     save_to_bear(f"股票日报 {date_str}", report)
     send_discord_chunks(report)
+    if SERVERCHAN_KEY:
+        send_serverchan(SERVERCHAN_KEY, f"自选股日报 {date_str}", report)
 
-    send_wechat(f"自选股日报 {date_str}", report)
+    # ── Per-user：按 DB 持仓推送（notify_daily=1 的用户）──
+    try:
+        push_users = _db.get_users_with_daily_push()
+    except Exception as e:
+        push_users = []
+        print(f"  ⚠️ 查询推送用户失败: {e}")
+
+    for u in push_users:
+        uid  = u["id"]
+        name = u.get("display_name") or u["email"]
+        key  = u.get("wecom_webhook", "")   # 存 SCT sendkey
+        if not key:
+            print(f"  ⚠️ {name} 无 wecom_webhook，跳过")
+            continue
+
+        print(f"  📲 生成 {name} 的个人日报...")
+        content = build_user_push_content(uid, data, ai_analysis, date_str)
+        if not content:
+            print(f"    ⚠️ {name} 无持仓且无 A 级关注股，跳过")
+            continue
+
+        send_serverchan(key, f"股票日报 {date_str} — {name}", content)
 
     print(f"\n🎉 完成！{date_str} 股票日报已推送。")
 

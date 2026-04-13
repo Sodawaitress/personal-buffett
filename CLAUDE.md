@@ -64,28 +64,46 @@
 - US-43 价值档案并入详情页 Tab（stock.html 新增 tab-fundamentals；stock_page 路由合并数据查询；/fundamentals 重定向；Chart.js 懒加载）
 - US-42 个性化首页日报（portfolio_analysis 表；db.get/save_portfolio_brief；scripts/portfolio_brief.py LLM合成；_compute_alert 规则引擎；/api/generate-brief 端点；index.html 今日简报区块 + generateBrief() JS；style.css .daily-brief 样式）
 - US-44 首页三卡片「影院感」重设计（垂直堆叠全宽；左边彩色竖条；横排左文右数据布局；今日简报大字体；我的选股右侧显示总数；搜索框内嵌添加卡片）
+- Copilot 协作期（2026-04-08 ~ 04-11，Claude 限额期间）：
+  - 定量评级系统（quantitative_rating.py，LLM 失败时纯数据驱动打分）
+  - JPMorgan + Google News 新闻源（美股/港股/NZ 替代方案）
+  - Groq 超时从 40s 改为 180s（pipeline 层）
+  - `get_latest_analysis` 改为 `ORDER BY id DESC`
+  - 遗留问题：historical_cases 死代码（db.py 已于 2026-04-13 清除）
+- Bug fix: Groq _call_groq 超时不重试（except Exception 吞掉 Timeout→返回空）→ 分离 Timeout 捕获，信件生成 timeout 25s→90s（2026-04-13）
+- Bug fix: 评级系统全部输出 C（QuantitativeRater.rate() 方法不存在→改为正确的 rate_stock()，评级由定量分数决定，不再 parse LLM 文本）（2026-04-13）
+- db.py 清理：删除 historical_cases 建表 SQL + 5 个死函数（2026-04-13）
+- Jupyter 环境搭建（notebooks/ 目录，pandas/matplotlib/scikit-learn，2026-04-13）
+- **数据架构重设计（2026-04-13，US-46/48/49/50）：**
+  - US-48 数据验证层：`_validate_signals()` pipeline 前置检查，PE>150/ROE>80%/负债率>90% 等异常注入警告，写入 `data_quality_log` 表
+  - US-46 公司分类器：`stock_meta` 表（st_status/market_tier/name_history），`scripts/classifier.py`，添加股票时自动分类；000793→distressed/*ST，8611.HK→growth_tech/gem，688xxx→growth_tech/star
+  - US-49 股票事件数据层：`stock_events` 表，11种事件类型；详情页"事件"tab + 手动录入表单（admin）；事件摘要注入分析 prompt
+  - US-50 分析框架路由：`FRAMEWORK_MAP` 6种框架（event_driven/growth_quality/bank_insurance/cycle_position/dividend_safety/survival_check）；`analyze_stock_v2` 按 company_type 路由 system prompt；`framework_used` 字段存入 analysis_results；头部显示紫色框架标签
+- **US-51 多用户推送路由（2026-04-14）**：stock_pipeline.py DB 驱动推送；db.py 加 get_users_with_daily_push/get_user_holdings/get_user_watching/set_stock_status；generate_report(allowed_codes=) 支持按用户过滤；send_serverchan() + build_user_push_content()；pipeline 结束后 per-user 推送
+- **US-52 admin.py CLI（2026-04-14）**：新文件，users/watchlist/set/add/remove/notify/push-key 命令，直接操作 SQLite
+- **US-53 韩股支持（2026-04-14）**：.KS/.KQ market 检测全链路（app/db/search），MARKET_CURRENCY 加 ₩，KRW currency 映射
+- **US-54 英文界面补全（2026-04-14）**：i18n 补全 35 个 watchlist key，watchlist.html 硬编码中文全替换
+- **GEM高风险检测（2026-04-13）：**
+  - `classifier.py` 加 `speculative` 类型：GEM市场 + (ROE<0 OR 净利率<0 OR 负债率>85% OR PB>30+ROE<5%) → speculative（优先于 growth_tech）
+  - `buffett_analyst.py` 加 `SYSTEM_SPECULATIVE` 风控框架 + FRAMEWORK_MAP 新增 `speculative` 路由
+  - `pipeline.py` 在 `_fetch_financials` 之后自动调用 `classify_stock()` 重新分类，确保财务数据驱动路由
+  - `app.py` `VALID_EVENT_TYPES` 加 `scheme_risk`（传销/商业盘风险手动标注）
+  - `stock.html` 加 GEM/speculative 橙色警告横幅；加 `speculative`/`scheme_risk` 标签；事件录入表单加「传销/商业盘风险」选项
+  - `style.css` 加 `.risk-banner` 样式 + `.event-type-scheme_risk` 红色样式
 
-### ❌ UI 待做（暂停，转数据/模型方向）
+### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）
 - US-15 新闻情境化（标注影响哪只持仓）
 - US-16 Watchlist 缩略图模式
 - US-17 巴菲特++雷达图
 
-### 🔄 下一阶段重点：数据质量 + 模型准确性
-（详见用户需求：更准确、有参考性、有前瞻性）
-
+### 🔄 下一阶段：数据质量继续补强
 **数据层待补强：**
 - 财务指标实时拉取：AKShare stock_financial_abstract_ths 拿 ROE/净利率/资产负债率（现在全是 NULL）
 - 机构持仓变动：ak.stock_institute_hold / 大股东增减持公告
 - 估值历史：PE/PB 历史百分位（现在只有即时值，没有历史对比）
 - 北向资金：盘中运行才有数据，需调整 launchd 时间
-
-**模型层待补强：**
-- 巴菲特信已升级 prompt（GREAT/GOOD/GRUESOME + 数据诚实）
-- 待做：留存利润检验自动化（5年市值增加 ÷ 5年留存利润）
-- 待做：Owner Earnings 估算（需要资本开支数据）
-- 待做：护城河方向自动判断（对比 ROE/净利率多期趋势，自动判断 widening/narrowing）
-- 第一版暂不做推送，先把分析功能跑通
+- 接入 Server酱 微信推送
 
 ---
 

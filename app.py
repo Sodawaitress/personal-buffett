@@ -36,11 +36,12 @@ def _load_strings(locale):
             _i18n_cache[locale] = json.load(f)
     return _i18n_cache[locale]
 
-MARKET_CURRENCY = {"cn": "¥", "nz": "NZ$", "hk": "HK$", "us": "$"}
+MARKET_CURRENCY = {"cn": "¥", "nz": "NZ$", "hk": "HK$", "us": "$", "kr": "₩"}
 
 def _detect_market(code):
     if code.endswith(".NZ"):   return "nz"
     if code.endswith(".HK"):   return "hk"
+    if code.endswith(".KS") or code.endswith(".KQ"): return "kr"
     if re.match(r"^\d{5}$", code): return "hk"
     if re.match(r"^\d{6}$", code): return "cn"
     return "us"
@@ -288,6 +289,9 @@ def stock_page(code):
     in_wl = any(r.get("stock_code") == code
                 for r in db.get_user_watchlist(session["user_id"]))
 
+    meta   = db.get_stock_meta(code)
+    events = db.get_stock_events(code)
+
     return render_template("stock.html",
         stock=stock, price=price, news=news,
         analysis=analysis, history=history, prices=prices,
@@ -296,7 +300,7 @@ def stock_page(code):
         pe_current=pe_current, pe_percentile_5y=pe_percentile_5y,
         pb_current=pb_current, pb_percentile_5y=pb_percentile_5y,
         pending_job=pending_job, in_watchlist=in_wl,
-        market=market,
+        market=market, meta=meta, events=events,
         currency=MARKET_CURRENCY.get(market, "$"),
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
     )
@@ -620,6 +624,13 @@ def add_stock():
 
     db.add_user_stock(session["user_id"], code, name, market, notes=notes)
 
+    # 分类公司类型（US-46）
+    try:
+        from scripts.classifier import classify_stock
+        classify_stock(code)
+    except Exception:
+        pass
+
     # 触发后台分析 pipeline
     job_id = start_pipeline(session["user_id"], code, market)
     flash(f"{name} ({code}) 已添加，巴菲特正在分析中…", "success")
@@ -662,6 +673,36 @@ def update_stock_status(code):
         entry_grade=entry_grade,
     )
     return jsonify({"ok": True, "entry_grade": entry_grade})
+
+
+VALID_EVENT_TYPES = {
+    "st_trigger", "st_lifted", "restructuring_announced", "restructuring_vote",
+    "restructuring_approved", "rights_issue", "bonus_share", "name_change",
+    "delist_warning", "delist_final", "major_shareholder_change",
+    "scheme_risk",  # 第三方用该股票作传销/积分/直销载体的风险警告
+}
+
+@app.route("/api/stock/<path:code>/events", methods=["POST"])
+@login_required
+def add_stock_event(code):
+    """手动录入一条股票事件（admin only）。"""
+    if session.get("role") != "admin":
+        return jsonify({"error": "forbidden"}), 403
+    data = request.get_json() or {}
+    event_type = data.get("event_type", "")
+    if event_type not in VALID_EVENT_TYPES:
+        return jsonify({"error": f"invalid event_type: {event_type}"}), 400
+    summary = (data.get("summary") or "").strip()
+    if not summary:
+        return jsonify({"error": "summary required"}), 400
+    db.add_stock_event(
+        code=code.upper(),
+        event_type=event_type,
+        event_date=data.get("event_date") or "",
+        summary=summary,
+        detail=data.get("detail"),
+    )
+    return jsonify({"ok": True})
 
 
 # ── 算账面板 ──────────────────────────────────────────
@@ -880,10 +921,35 @@ def api_letter(code):
 @app.route("/api/analyze/<code>", methods=["POST"])
 @login_required
 def api_analyze(code):
+    """全量 pipeline：重爬所有数据 + 重跑 LLM"""
     stock = db.get_stock(code)
     if not stock:
         return jsonify({"error": "stock not found"}), 404
     job_id = start_pipeline(session["user_id"], code, stock["market"])
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/analyze-only/<code>", methods=["POST"])
+@login_required
+def api_analyze_only(code):
+    """US-45：只跑 LLM，用已有数据，不重爬，<30s"""
+    from scripts.pipeline import start_analysis_only
+    stock = db.get_stock(code)
+    if not stock:
+        return jsonify({"error": "stock not found"}), 404
+    job_id = start_analysis_only(session["user_id"], code, stock["market"])
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/refresh-news/<code>", methods=["POST"])
+@login_required
+def api_refresh_news(code):
+    """US-45：只更新新闻，1小时内重复触发返回缓存"""
+    from scripts.pipeline import start_news_update
+    stock = db.get_stock(code)
+    if not stock:
+        return jsonify({"error": "stock not found"}), 404
+    job_id = start_news_update(session["user_id"], code, stock["market"])
     return jsonify({"job_id": job_id})
 
 
@@ -940,6 +1006,34 @@ def api_analyze_batch():
         job_id = start_pipeline(session["user_id"], code, stock["market"])
         job_ids.append({"code": code, "job_id": job_id})
     return jsonify({"job_ids": job_ids})
+
+
+@app.route("/api/rerun-all", methods=["POST"])
+@login_required
+def api_rerun_all():
+    """Admin only：后台重跑所有自选股的完整 pipeline，顺序执行，1只/次避免Groq限速。"""
+    if session.get("role") != "admin":
+        return jsonify({"error": "forbidden"}), 403
+
+    import threading
+    from scripts.pipeline import run_pipeline
+
+    def _run():
+        codes = db.all_watched_codes()
+        import time
+        for code in codes:
+            stock = db.get_stock(code)
+            if not stock:
+                continue
+            job_id = db.create_job(user_id=None, code=code, job_type="rerun_all")
+            run_pipeline(job_id, code, stock.get("market", "cn"))
+            time.sleep(5)  # 给 Groq token 配额留恢复时间
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    count = len(db.all_watched_codes())
+    # 每只股票：数据拉取 ~20s + LLM ~10s + sleep 5s = ~35s；Groq 限流时加 65s
+    return jsonify({"ok": True, "message": f"已启动，共 {count} 只股票，顺利约 {count * 35 // 60} 分钟，限流时最多 {count * 100 // 60} 分钟"})
 
 
 @app.route("/about")
