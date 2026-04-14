@@ -5,7 +5,7 @@ import sys, os, re, subprocess
 sys.path.insert(0, os.path.dirname(__file__))
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 from functools import wraps
@@ -294,11 +294,68 @@ def stock_page(code):
     meta   = db.get_stock_meta(code)
     events = db.get_stock_events(code)
 
-    # 预计算操作参数（不依赖 LLM，仅基于均线/52周高低点）
+    # 预计算操作参数（纯数学，复用上方已查的 fund/signals）
     from scripts.pipeline import _compute_trading_params
-    _raw_signals = db.get_fundamentals(code)
-    _sig_for_trade = (_raw_signals.get("signals", {}) if _raw_signals else {})
-    trading_params = _compute_trading_params(price, _sig_for_trade, market=market)
+    trading_params = _compute_trading_params(price, signals, market=market)
+
+    # 数据新鲜度：价格 / 财务 / 分析 三个时间戳
+    now_utc = datetime.now(timezone.utc)
+
+    def _age_label(ts_str: str | None) -> str:
+        """把时间戳字符串转为「X 分钟前 / X 小时前 / X 天前」。"""
+        if not ts_str:
+            return "—"
+        try:
+            dt = datetime.fromisoformat(str(ts_str))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            diff = now_utc - dt
+            m = int(diff.total_seconds() / 60)
+            if m < 1:   return "刚刚"
+            if m < 60:  return f"{m} 分钟前"
+            if m < 1440: return f"{m // 60} 小时前"
+            return f"{m // 1440} 天前"
+        except Exception:
+            # 可能是纯日期字符串 "2026-04-15"
+            try:
+                d = datetime.strptime(str(ts_str)[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                days = (now_utc - d).days
+                if days == 0: return "今天"
+                if days == 1: return "昨天"
+                return f"{days} 天前"
+            except Exception:
+                return "—"
+
+    def _age_minutes(ts_str) -> float:
+        """返回时间戳距今分钟数，无法解析返回 inf。"""
+        if not ts_str:
+            return float('inf')
+        try:
+            dt = datetime.fromisoformat(str(ts_str))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return (now_utc - dt).total_seconds() / 60
+        except Exception:
+            try:
+                d = datetime.strptime(str(ts_str)[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                return (now_utc - d).total_seconds() / 60
+            except Exception:
+                return float('inf')
+
+    data_freshness = {
+        "price":    _age_label(price.get("fetched_at") if price else None),
+        "finance":  _age_label(fund.get("updated_at")  if fund  else None),
+        "analysis": _age_label(analysis.get("analysis_date") if analysis else None),
+    }
+    # stale: 价格>3天, 财务>7天, 分析>3天
+    _price_age    = _age_minutes(price.get("fetched_at")            if price    else None)
+    _finance_age  = _age_minutes(fund.get("updated_at")             if fund     else None)
+    _analysis_age = _age_minutes(analysis.get("analysis_date")      if analysis else None)
+    data_freshness_stale = {
+        "price":    _price_age    > 3 * 1440,
+        "finance":  _finance_age  > 7 * 1440,
+        "analysis": _analysis_age > 3 * 1440,
+    }
 
     return render_template("stock.html",
         stock=stock, price=price, news=news,
@@ -312,6 +369,8 @@ def stock_page(code):
         currency=MARKET_CURRENCY.get(market, "$"),
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
         trading_params=trading_params,
+        data_freshness=data_freshness,
+        data_freshness_stale=data_freshness_stale,
     )
 
 

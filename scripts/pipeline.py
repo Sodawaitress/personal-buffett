@@ -808,9 +808,19 @@ def _run_analysis(code, market, log, user_id=None):
 
 # ── 超时包装 ──────────────────────────────────────────
 
-STEP_TIMEOUT = 35  # 每步最长等待秒数
+# 各步骤超时（秒）。含义：
+#   T_PRICE   — 价格 API 响应快，容忍 20s 网络抖动
+#   T_NEWS    — AKShare / yfinance 新闻可能慢，30s
+#   T_FINANCE — AKShare 财务 API 偶尔慢，45s
+#   T_BASIC   — 其他基础步骤（资金流、高级财务、技术位、信号），统一 30s
+#   T_AI      — Groq LLM 生成最长，180s（含内部重试）
+T_PRICE   = 20
+T_NEWS    = 30
+T_BASIC   = 30
+T_FINANCE = 45
+T_AI      = 180
 
-def _run_with_timeout(fn, args, label: str, log, timeout: int = STEP_TIMEOUT):
+def _run_with_timeout(fn, args, label: str, log, timeout: int = T_BASIC):
     """在独立线程执行 fn(*args)，超过 timeout 秒则跳过并记录日志。"""
     with ThreadPoolExecutor(max_workers=1) as ex:
         future = ex.submit(fn, *args)
@@ -930,10 +940,10 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
         if is_st:
             log("  ℹ️ ST股检测到，跳过高级财务和信号步骤")
 
-        _maybe_run("price",        _fetch_price,     [code, market, log], "价格",    20)
-        _maybe_run("news",         _fetch_news,      [code, market, log], "新闻",    30)
-        _maybe_run("fund_flow",    _fetch_fund_flow, [code, market, log], "主力资金", 30)
-        _maybe_run("fundamentals", _fetch_financials,[code, market, log], "财务数据", 45)
+        _maybe_run("price",        _fetch_price,     [code, market, log], "价格",    T_PRICE)
+        _maybe_run("news",         _fetch_news,      [code, market, log], "新闻",    T_NEWS)
+        _maybe_run("fund_flow",    _fetch_fund_flow, [code, market, log], "主力资金", T_BASIC)
+        _maybe_run("fundamentals", _fetch_financials,[code, market, log], "财务数据", T_FINANCE)
 
         # 财务数据加载后重新分类，确保 speculative 等判断用上真实数字
         try:
@@ -944,11 +954,11 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
             log(f"  ⚠️ 重新分类失败: {_ce}")
 
         if not is_st:
-            _maybe_run("advanced",   _fetch_advanced,   [code, market, log], "高级财务",  30)
-            _maybe_run("technicals", _fetch_technicals, [code, market, log], "技术支撑位", 20)
-            _maybe_run("signals",    _fetch_signals,    [code, market, log], "投行信号",  30)
+            _maybe_run("advanced",   _fetch_advanced,   [code, market, log], "高级财务",  T_BASIC)
+            _maybe_run("technicals", _fetch_technicals, [code, market, log], "技术支撑位", T_PRICE)
+            _maybe_run("signals",    _fetch_signals,    [code, market, log], "投行信号",  T_BASIC)
 
-        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, 180)
+        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, T_AI)
 
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
@@ -985,7 +995,7 @@ def run_analysis_only(job_id: int, code: str, market: str, user_id: int = None):
     try:
         db.update_job(job_id, status="running")
         log(f"▶ 分析数据（用缓存）: {code}")
-        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, 180)
+        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, T_AI)
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
     except Exception as e:
@@ -1028,7 +1038,7 @@ def run_news_update(job_id: int, code: str, market: str):
             return
 
         log(f"▶ 更新新闻: {code}")
-        _run_with_timeout(_fetch_news, [code, market, log], "新闻", log, 30)
+        _run_with_timeout(_fetch_news, [code, market, log], "新闻", log, T_NEWS)
         log("✅ 新闻更新完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
     except Exception as e:

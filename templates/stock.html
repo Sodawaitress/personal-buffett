@@ -126,6 +126,15 @@
   </div>
   {% endif %}
 
+  {# ── 数据新鲜度指示器 ── #}
+  <div class="data-freshness-bar">
+    <span class="freshness-item {{ 'freshness-stale' if data_freshness_stale.price }}" title="最近价格更新时间">报价 {{ data_freshness.price }}</span>
+    <span class="freshness-sep">·</span>
+    <span class="freshness-item {{ 'freshness-stale' if data_freshness_stale.finance }}" title="财务数据更新时间（7天有效）">财务 {{ data_freshness.finance }}</span>
+    <span class="freshness-sep">·</span>
+    <span class="freshness-item {{ 'freshness-stale' if data_freshness_stale.analysis }}" title="最近分析日期（3天内有效）">分析 {{ data_freshness.analysis }}</span>
+  </div>
+
   <hr class="section-rule" style="margin:0 0 0">
 
   {# ── Tab 导航 ── #}
