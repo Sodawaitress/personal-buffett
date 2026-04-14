@@ -1083,7 +1083,7 @@ def api_rerun_all():
             if not stock:
                 continue
             job_id = db.create_job(user_id=None, code=code, job_type="rerun_all")
-            run_pipeline(job_id, code, stock.get("market", "cn"))
+            run_pipeline(job_id, code, stock.get("market", "cn"), force=False)
             time.sleep(5)  # 给 Groq token 配额留恢复时间
 
     t = threading.Thread(target=_run, daemon=True)

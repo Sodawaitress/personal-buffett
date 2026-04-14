@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))  # stock-radar root for db
 
 import json, subprocess, ssl, time, urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 import db as _db
 from config import (
     WATCHLIST, HK_WATCHLIST, RAW_OUTPUT, REPORT_OUTPUT,
@@ -508,6 +508,47 @@ def _stock_price_str(code: str, quotes: dict) -> tuple:
     return name, price_s, change_s
 
 
+def _score_report(code: str) -> int:
+    """
+    US-59：推送质量评分（0-100）。
+    低于 40 分的分析不推送（防止把空分析 / LLM 失败结果推给用户）。
+    评分规则：
+      - 有分析记录:            +20 分（基础）
+      - grade 字段非空非"—":  +20 分
+      - conclusion 有实际内容: +20 分
+      - reasoning >= 30 字:   +20 分
+      - 分析日期在今天或昨天:  +20 分
+    """
+    a = _db.get_latest_analysis(code)
+    if not a:
+        return 0
+
+    score = 20  # 有记录即 +20
+
+    grade = (a.get("grade") or "").strip()
+    if grade and grade != "—":
+        score += 20
+
+    conclusion = (a.get("conclusion") or "").strip()
+    if conclusion and conclusion != "—":
+        score += 20
+
+    reasoning = (a.get("reasoning") or a.get("letter_html") or "").strip()
+    if len(reasoning) >= 30:
+        score += 20
+
+    analysis_date = (a.get("analysis_date") or "")
+    today     = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    yesterday = (datetime.now(CN_TZ) - timedelta(days=1)).strftime("%Y-%m-%d")
+    if analysis_date in (today, yesterday):
+        score += 20
+
+    return score
+
+
+PUSH_QUALITY_THRESHOLD = 40   # 低于此分不推送
+
+
 def _stock_card(code: str, quotes: dict, news_data: dict) -> str:
     """
     为单只股票生成推送卡片：名称 + 价格 + 评级 + 分析摘要 + 最多2条新闻。
@@ -561,12 +602,26 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
     sections = []
 
     if holdings:
-        cards = [_stock_card(c, quotes, news_data) for c in holdings]
-        sections.append("## 📊 今日持仓\n\n" + "\n\n".join(cards))
+        cards = []
+        for c in holdings:
+            score = _score_report(c)
+            if score >= PUSH_QUALITY_THRESHOLD:
+                cards.append(_stock_card(c, quotes, news_data))
+            else:
+                print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
+        if cards:
+            sections.append("## 📊 今日持仓\n\n" + "\n\n".join(cards))
 
     if buy_watch:
-        cards = [_stock_card(c, quotes, news_data) for c in buy_watch]
-        sections.append("## ⭐ 建议关注（评级买入）\n\n" + "\n\n".join(cards))
+        cards = []
+        for c in buy_watch:
+            score = _score_report(c)
+            if score >= PUSH_QUALITY_THRESHOLD:
+                cards.append(_stock_card(c, quotes, news_data))
+            else:
+                print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
+        if cards:
+            sections.append("## ⭐ 建议关注（评级买入）\n\n" + "\n\n".join(cards))
 
     if not sections:
         return ""

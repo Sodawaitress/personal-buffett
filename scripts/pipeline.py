@@ -833,11 +833,80 @@ def _is_st(code: str) -> bool:
         return False
 
 
+# ── 数据新鲜度检查 ────────────────────────────────────────
+
+# 各步骤缓存有效期（分钟）。0 = 当日存在即视为新鲜（二值判断）。
+_CACHE_TTL = {
+    "price":        15,       # 15 分钟
+    "news":         0,        # 当日有 ≥3 条即跳过
+    "fund_flow":    0,        # 当日有数据即跳过
+    "fundamentals": 7 * 24 * 60,  # 7 天
+    "advanced":     24 * 60,  # 1 天
+    "technicals":   24 * 60,  # 1 天
+    "signals":      24 * 60,  # 1 天
+}
+
+
+def _data_age_minutes(code: str, step: str) -> float:
+    """返回缓存数据的年龄（分钟）。无数据返回 inf。"""
+    now_utc = datetime.now(timezone.utc)
+    today_cn = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    try:
+        with db.get_conn() as c:
+            if step == "price":
+                count = c.execute(
+                    "SELECT COUNT(*) FROM stock_prices WHERE code=? "
+                    "AND fetched_at > datetime('now', '-15 minutes')",
+                    (code,)
+                ).fetchone()[0]
+                return 0 if count > 0 else float('inf')
+            elif step == "news":
+                count = c.execute(
+                    "SELECT COUNT(*) FROM stock_news WHERE code=? AND fetched_date=?",
+                    (code, today_cn)
+                ).fetchone()[0]
+                return 0 if count >= 3 else float('inf')
+            elif step == "fund_flow":
+                row = c.execute(
+                    "SELECT date FROM stock_fund_flow WHERE code=? ORDER BY date DESC LIMIT 1",
+                    (code,)
+                ).fetchone()
+                return 0 if (row and row[0] == today_cn) else float('inf')
+            elif step in ("fundamentals", "advanced", "technicals", "signals"):
+                row = c.execute(
+                    "SELECT updated_at FROM stock_fundamentals WHERE code=?",
+                    (code,)
+                ).fetchone()
+                if not row or not row[0]:
+                    return float('inf')
+                try:
+                    dt = datetime.fromisoformat(row[0])
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    return (now_utc - dt).total_seconds() / 60
+                except Exception:
+                    return float('inf')
+    except Exception:
+        pass
+    return float('inf')
+
+
+def _is_stale(code: str, step: str, force: bool) -> bool:
+    """True = 需要重新抓取；False = 缓存新鲜，可跳过。"""
+    if force:
+        return True
+    age = _data_age_minutes(code, step)
+    return age > _CACHE_TTL[step]
+
+
 # ── 主 pipeline ────────────────────────────────────────
 
-def run_pipeline(job_id: int, code: str, market: str, user_id: int = None):
+def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force: bool = True):
     """
-    在后台线程中运行。每步有独立超时（35s），不会因单步卡住拖死整个分析。
+    在后台线程中运行。每步有独立超时，不会因单步卡住拖死整个分析。
+    force=True（默认）：全量重爬，忽略缓存。
+    force=False：跳过新鲜数据（价格<15min / 新闻当日已有 / 财务<7天 等），
+                 适合 admin rerun-all 批量运行节省时间。
     """
     logs = []
 
@@ -846,18 +915,25 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None):
         snippet = "\n".join(logs)[-500:]
         db.update_job(job_id, status="running", log=snippet)
 
+    def _maybe_run(step, fn, args, label, timeout):
+        if _is_stale(code, step, force):
+            _run_with_timeout(fn, args, label, log, timeout)
+        else:
+            log(f"  ⏭ {label} 缓存新鲜，跳过")
+
     try:
         db.update_job(job_id, status="running")
-        log(f"▶ pipeline 开始: {code} ({market})")
+        mode = "全量" if force else "缓存优先"
+        log(f"▶ pipeline 开始: {code} ({market}) [{mode}]")
 
         is_st = _is_st(code)
         if is_st:
             log("  ℹ️ ST股检测到，跳过高级财务和信号步骤")
 
-        _run_with_timeout(_fetch_price,    [code, market, log], "价格",    log, 20)
-        _run_with_timeout(_fetch_news,     [code, market, log], "新闻",    log, 30)
-        _run_with_timeout(_fetch_fund_flow,[code, market, log], "主力资金", log, 30)
-        _run_with_timeout(_fetch_financials,[code, market, log], "财务数据",log, 45)
+        _maybe_run("price",        _fetch_price,     [code, market, log], "价格",    20)
+        _maybe_run("news",         _fetch_news,      [code, market, log], "新闻",    30)
+        _maybe_run("fund_flow",    _fetch_fund_flow, [code, market, log], "主力资金", 30)
+        _maybe_run("fundamentals", _fetch_financials,[code, market, log], "财务数据", 45)
 
         # 财务数据加载后重新分类，确保 speculative 等判断用上真实数字
         try:
@@ -868,11 +944,11 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None):
             log(f"  ⚠️ 重新分类失败: {_ce}")
 
         if not is_st:
-            _run_with_timeout(_fetch_advanced,   [code, market, log], "高级财务",  log, 30)
-            _run_with_timeout(_fetch_technicals, [code, market, log], "技术支撑位",log, 20)
-            _run_with_timeout(_fetch_signals,    [code, market, log], "投行信号",  log, 30)
+            _maybe_run("advanced",   _fetch_advanced,   [code, market, log], "高级财务",  30)
+            _maybe_run("technicals", _fetch_technicals, [code, market, log], "技术支撑位", 20)
+            _maybe_run("signals",    _fetch_signals,    [code, market, log], "投行信号",  30)
 
-        _run_with_timeout(_run_analysis,   [code, market, log, user_id], "AI分析",  log, 180)
+        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, 180)
 
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
@@ -939,22 +1015,17 @@ def run_news_update(job_id: int, code: str, market: str):
     try:
         db.update_job(job_id, status="running")
 
-        # 1小时缓存检查
+        # 当日缓存检查：fetched_date 是日期字符串，今天有 ≥3 条即视为新鲜
+        today_cn = datetime.now(CN_TZ).strftime("%Y-%m-%d")
         with db.get_conn() as c:
-            row = c.execute(
-                "SELECT MAX(fetched_date) as last_date FROM stock_news WHERE code=?", (code,)
-            ).fetchone()
-        last = (row["last_date"] or "") if row else ""
-        if last:
-            try:
-                last_dt = datetime.fromisoformat(last)
-                diff = (datetime.now(CN_TZ) - last_dt.replace(tzinfo=CN_TZ if last_dt.tzinfo is None else last_dt.tzinfo)).total_seconds()
-                if diff < 3600:
-                    log(f"  ℹ️ 新闻已是 {int(diff/60)} 分钟前抓取的，使用缓存（1小时内不重复抓取）")
-                    db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
-                    return
-            except Exception:
-                pass
+            count = c.execute(
+                "SELECT COUNT(*) FROM stock_news WHERE code=? AND fetched_date=?",
+                (code, today_cn)
+            ).fetchone()[0]
+        if count >= 3:
+            log(f"  ℹ️ 今日已有 {count} 条新闻，跳过重复抓取")
+            db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+            return
 
         log(f"▶ 更新新闻: {code}")
         _run_with_timeout(_fetch_news, [code, market, log], "新闻", log, 30)

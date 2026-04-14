@@ -689,8 +689,7 @@ def save_analysis(code, period, analysis_date, **kwargs):
         for sql in _new_cols:
             try: c.execute(sql)
             except Exception: pass
-    # 不使用 ON CONFLICT，每次都插入新记录（测试阶段保留所有分析历史）
-    # 用户可以手动删除不好的报告
+    # INSERT OR REPLACE：UNIQUE(code, period, analysis_date) 保证同日同股只保留最新一条
     cols = ["code","period","analysis_date"] + list(kwargs.keys())
     vals = [code, period, analysis_date] + list(kwargs.values())
     placeholders = ",".join(["?"]*len(vals))

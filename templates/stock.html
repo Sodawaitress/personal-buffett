@@ -185,22 +185,29 @@
 
         {# ── 操作参数卡片 ── #}
         {# 价格线来自预计算（纯数学，不依赖LLM）；仓位策略/关键监控来自LLM #}
-        {% if trading_params and trading_params.entry_1_label %}
+        {% set has_tech  = trading_params and trading_params.entry_1_label %}
+        {% set has_trade = analysis and analysis.trade_block %}
+        {% if has_tech or has_trade %}
         <div class="trade-block">
-          <div class="trade-block-title">操作参数 <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">价格线基于{% if trading_params.entry_1_label and 'MA60' in trading_params.entry_1_label %}均线{% else %}52周区间{% endif %}计算</span></div>
+          <div class="trade-block-title">操作参数
+            {% if has_tech %}
+            <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">价格线基于{% if 'MA60' in trading_params.entry_1_label %}均线{% else %}52周区间{% endif %}计算</span>
+            {% else %}
+            <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">仅含巴菲特建议，无技术价格数据</span>
+            {% endif %}
+          </div>
           <div class="trade-rows">
+            {% if has_tech %}
             {% if trading_params.position_label %}
             <div class="trade-row"><span class="trade-label">📍 当前位置</span><span class="trade-val">{{ trading_params.position_label }}</span></div>
             {% endif %}
             {% if trading_params.reduce_label %}
             <div class="trade-row"><span class="trade-label">🟠 减仓区间</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
             {% endif %}
-            {% if trading_params.entry_1_label %}
             <div class="trade-row">
               <span class="trade-label">{{ "⚪ 反弹阻力1" if trading_params.entry_1_is_resistance else "🟢 买入区间1" }}</span>
               <span class="trade-val">{{ trading_params.entry_1_label }}</span>
             </div>
-            {% endif %}
             {% if trading_params.entry_2_label %}
             <div class="trade-row">
               <span class="trade-label">{{ "⚪ 反弹阻力2" if trading_params.entry_2_is_resistance else "🟢 买入区间2" }}</span>
@@ -210,18 +217,26 @@
             {% if trading_params.stop_loss_label %}
             <div class="trade-row"><span class="trade-label">🔴 止损位</span><span class="trade-val">{{ trading_params.stop_loss_label }}</span></div>
             {% endif %}
-            {# LLM 补充字段：仅在有 trade_block 时显示 #}
-            {% if analysis and analysis.trade_block %}
+            {% endif %}
+            {# LLM 补充字段：仓位策略/关键监控，有 trade_block 就显示 #}
+            {% if has_trade %}
             <script>
             (function(){
               var data = {{ analysis.trade_block | tojson }};
               if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e){} }
+              var rows = document.querySelector('.trade-block .trade-rows');
               var llmRows = '';
+              if (data['减仓区间'] && !rows.querySelector('[data-key="reduce"]')) {
+                llmRows += '<div class="trade-row"><span class="trade-label" data-key="reduce">🟠 减仓区间</span><span class="trade-val">' + data['减仓区间'] + '</span></div>';
+              }
+              if (data['买入区间1'] && !rows.querySelector('[data-key="entry1"]')) {
+                llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry1">🟢 买入区间1</span><span class="trade-val">' + data['买入区间1'] + '</span></div>';
+              }
+              if (data['买入区间2'] && !rows.querySelector('[data-key="entry2"]')) {
+                llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry2">🟢 买入区间2</span><span class="trade-val">' + data['买入区间2'] + '</span></div>';
+              }
               if (data['仓位策略']) llmRows += '<div class="trade-row"><span class="trade-label">⚖️ 仓位策略</span><span class="trade-val">' + data['仓位策略'] + '</span></div>';
               if (data['关键监控']) llmRows += '<div class="trade-row"><span class="trade-label">👁 关键监控</span><span class="trade-val">' + data['关键监控'] + '</span></div>';
-              if (data['减仓区间'] && !document.querySelector('.trade-row .trade-label[data-key="reduce"]')) {
-                llmRows = '<div class="trade-row"><span class="trade-label" data-key="reduce">🟠 减仓区间（LLM）</span><span class="trade-val">' + data['减仓区间'] + '</span></div>' + llmRows;
-              }
               if (llmRows) document.currentScript.insertAdjacentHTML('beforebegin', llmRows);
             })();
             </script>
