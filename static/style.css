@@ -1440,6 +1440,37 @@ footer small {
   align-items: center;
   margin-top: 8px;
 }
+.stock-full-refresh-link {
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.stock-full-refresh-link:hover { color: var(--ink-muted); text-decoration: underline; }
+
+/* ── 移除自选危险区（页面最底部）── */
+.stock-remove-zone {
+  margin-top: 60px;
+  padding: 24px 0 40px;
+  border-top: 1px solid var(--rule-light);
+  text-align: center;
+}
+.btn-remove-stock {
+  background: none;
+  border: 1px solid #ddd;
+  color: var(--ink-faint);
+  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.btn-remove-stock:hover {
+  border-color: #c62828;
+  color: #c62828;
+  background: #fff5f5;
+}
 
 /* ── tabs ── */
 .tab-nav {
@@ -1527,6 +1558,47 @@ footer small {
   font-family: Georgia, serif;
   font-size: 13px;
   color: var(--ink-2);
+}
+
+/* ── 操作参数卡片（===TRADE===） ── */
+.trade-block {
+  margin-top: 16px;
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.trade-block-title {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+}
+.trade-rows { padding: 4px 0; }
+.trade-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--rule-light);
+  font-size: 13px;
+}
+.trade-row:last-child { border-bottom: none; }
+.trade-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  min-width: 90px;
+}
+.trade-val {
+  font-family: Georgia, serif;
+  color: var(--ink);
+  line-height: 1.45;
 }
 
 .analysis-pending-block {
@@ -2109,11 +2181,53 @@ footer small {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   padding-bottom: 12px;
-  border-bottom: 2px solid var(--rule);
+  border-bottom: 1px solid var(--rule-light);
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* ── 常驻排序栏 ── */
+.wl-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 14px;
+  border-bottom: 2px solid var(--rule);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.wl-sort-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-muted);
+  margin-right: 2px;
+}
+.wl-sort-pill {
+  background: none;
+  border: 1px solid var(--rule-light);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-family: -apple-system, sans-serif;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.wl-sort-pill:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.wl-sort-pill.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
 }
 
 .wl-toolbar-title {

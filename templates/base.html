@@ -21,6 +21,12 @@
             我的选股
           </a>
 
+          {% if session.get('role') == 'admin' %}
+          <a href="{{ url_for('admin_users') }}" {% if request.endpoint in ('admin_users','admin_user_detail') %}class="active"{% endif %} style="color:#b8860b;font-weight:600">
+            <i class="bi bi-shield-lock me-1"></i>管理
+          </a>
+          {% endif %}
+
           {# Language toggle #}
           <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
             <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
@@ -39,6 +45,9 @@
             <div class="nav-dropdown">
               <div class="nav-dropdown-name">{{ session.get('display_name') }}</div>
               <a href="{{ url_for('settings') }}">设置</a>
+              {% if session.get('role') == 'admin' %}
+              <a href="{{ url_for('admin_users') }}" style="color:#b8860b">用户管理</a>
+              {% endif %}
               <a href="{{ url_for('logout') }}">退出</a>
             </div>
           </div>

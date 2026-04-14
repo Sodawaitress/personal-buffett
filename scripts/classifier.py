@@ -142,7 +142,13 @@ def classify_stock(code: str) -> dict:
     elif market_tier in ("star", "gem") or _match_kw(sector, _GROWTH_KW):
         company_type = "growth_tech"
     elif neg_roe_years >= 2:
-        company_type = "pre_profit"
+        # 区分「成熟公司暂时亏损」vs「真正的未盈利初创」：
+        # 如果历史上有3年以上盈利记录（ROE > 5%），说明是周期性困境，不是初创
+        profitable_years = sum(
+            1 for y in annual
+            if _to_float(y.get("roe")) is not None and _to_float(y["roe"]) > 5
+        )
+        company_type = "mature_value" if profitable_years >= 3 else "pre_profit"
     else:
         company_type = "mature_value"
 

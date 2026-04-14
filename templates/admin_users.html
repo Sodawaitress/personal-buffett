@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}用户管理 — Admin{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 760px">
+
+  <h2 class="fw-bold mb-4"><i class="bi bi-people me-2"></i>用户管理</h2>
+
+  <div class="add-card p-0 overflow-hidden">
+    <table class="table table-hover mb-0" style="font-size:.93rem">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">用户</th>
+          <th>角色</th>
+          <th>每日推送</th>
+          <th>Server酱</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="ps-3">
+            <div class="fw-semibold">{{ u.display_name or '—' }}</div>
+            <div class="text-muted small">{{ u.email }}</div>
+          </td>
+          <td>
+            <span class="badge {% if u.role == 'admin' %}bg-dark{% else %}bg-secondary{% endif %}">
+              {{ u.role }}
+            </span>
+          </td>
+          <td>
+            {% if u.push.get('notify_daily') %}
+              <span class="text-success fw-semibold">✓ 开启</span>
+            {% else %}
+              <span class="text-muted">— 关闭</span>
+            {% endif %}
+          </td>
+          <td class="font-monospace text-muted small">
+            {% if u.push.get('wecom_webhook') %}
+              {{ u.push.wecom_webhook[:10] }}…
+            {% else %}
+              未设置
+            {% endif %}
+          </td>
+          <td class="text-end pe-3">
+            <a href="{{ url_for('admin_user_detail', target_uid=u.id) }}"
+               class="btn btn-sm btn-outline-secondary">管理</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

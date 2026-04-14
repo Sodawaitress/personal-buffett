@@ -92,9 +92,9 @@
         <span class="spinner" style="display:inline-block"></span>
         <span style="font-size:12px;color:var(--ink-muted)">分析中…</span>
         {% else %}
-        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="用已有数据重新生成分析，不重爬，约20秒">分析数据</button>
+        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="用已有数据重新生成分析，不重爬，约20秒">巴菲特怎么看</button>
         <button onclick="triggerNewsRefresh('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="重新抓取最新新闻（1小时内有缓存）">更新新闻</button>
-        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-outline-ink btn-sm" title="全量重爬：数据+新闻+分析，约3分钟" style="color:var(--ink-muted);font-size:11px">全量刷新</button>
+        <a href="#" onclick="triggerAnalysis('{{ stock.code }}');return false" class="stock-full-refresh-link" title="全量重爬：数据+新闻+分析，约3分钟">全量刷新</a>
         {% endif %}
         {% if not in_watchlist %}
         <form method="post" action="{{ url_for('add_stock') }}" style="display:inline">
@@ -102,11 +102,6 @@
           <input type="hidden" name="name" value="{{ stock.name }}">
           <input type="hidden" name="market" value="{{ stock.market }}">
           <button type="submit" class="btn-ink btn-sm">+ 加自选</button>
-        </form>
-        {% else %}
-        <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}" style="display:inline">
-          <button type="submit" class="btn-outline-ink btn-sm danger"
-                  onclick="return confirm('移除 {{ stock.name }}？')">移除自选</button>
         </form>
         {% endif %}
       </div>
@@ -187,6 +182,54 @@
           {% endfor %}
         </div>
         {% endif %}
+
+        {# ── 操作参数卡片 ── #}
+        {# 价格线来自预计算（纯数学，不依赖LLM）；仓位策略/关键监控来自LLM #}
+        {% if trading_params and trading_params.entry_1_label %}
+        <div class="trade-block">
+          <div class="trade-block-title">操作参数 <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">价格线基于{% if trading_params.entry_1_label and 'MA60' in trading_params.entry_1_label %}均线{% else %}52周区间{% endif %}计算</span></div>
+          <div class="trade-rows">
+            {% if trading_params.position_label %}
+            <div class="trade-row"><span class="trade-label">📍 当前位置</span><span class="trade-val">{{ trading_params.position_label }}</span></div>
+            {% endif %}
+            {% if trading_params.reduce_label %}
+            <div class="trade-row"><span class="trade-label">🟠 减仓区间</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
+            {% endif %}
+            {% if trading_params.entry_1_label %}
+            <div class="trade-row">
+              <span class="trade-label">{{ "⚪ 反弹阻力1" if trading_params.entry_1_is_resistance else "🟢 买入区间1" }}</span>
+              <span class="trade-val">{{ trading_params.entry_1_label }}</span>
+            </div>
+            {% endif %}
+            {% if trading_params.entry_2_label %}
+            <div class="trade-row">
+              <span class="trade-label">{{ "⚪ 反弹阻力2" if trading_params.entry_2_is_resistance else "🟢 买入区间2" }}</span>
+              <span class="trade-val">{{ trading_params.entry_2_label }}</span>
+            </div>
+            {% endif %}
+            {% if trading_params.stop_loss_label %}
+            <div class="trade-row"><span class="trade-label">🔴 止损位</span><span class="trade-val">{{ trading_params.stop_loss_label }}</span></div>
+            {% endif %}
+            {# LLM 补充字段：仅在有 trade_block 时显示 #}
+            {% if analysis and analysis.trade_block %}
+            <script>
+            (function(){
+              var data = {{ analysis.trade_block | tojson }};
+              if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e){} }
+              var llmRows = '';
+              if (data['仓位策略']) llmRows += '<div class="trade-row"><span class="trade-label">⚖️ 仓位策略</span><span class="trade-val">' + data['仓位策略'] + '</span></div>';
+              if (data['关键监控']) llmRows += '<div class="trade-row"><span class="trade-label">👁 关键监控</span><span class="trade-val">' + data['关键监控'] + '</span></div>';
+              if (data['减仓区间'] && !document.querySelector('.trade-row .trade-label[data-key="reduce"]')) {
+                llmRows = '<div class="trade-row"><span class="trade-label" data-key="reduce">🟠 减仓区间（LLM）</span><span class="trade-val">' + data['减仓区间'] + '</span></div>' + llmRows;
+              }
+              if (llmRows) document.currentScript.insertAdjacentHTML('beforebegin', llmRows);
+            })();
+            </script>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
       </div>
       {% else %}
       <div class="empty-state" style="padding:60px 0;text-align:center">
@@ -654,6 +697,16 @@
     </div>{# end tab-events #}
 
   </div>{# end stock-tabs-body #}
+
+  {# ── 移除自选（最底部危险区）── #}
+  {% if in_watchlist %}
+  <div class="stock-remove-zone">
+    <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
+      <button type="submit" class="btn-remove-stock"
+              onclick="return confirm('从自选股移除 {{ stock.name }}？')">从自选股移除</button>
+    </form>
+  </div>
+  {% endif %}
 
 </div>{# end stock-page #}
 

@@ -80,16 +80,14 @@
   - US-49 股票事件数据层：`stock_events` 表，11种事件类型；详情页"事件"tab + 手动录入表单（admin）；事件摘要注入分析 prompt
   - US-50 分析框架路由：`FRAMEWORK_MAP` 6种框架（event_driven/growth_quality/bank_insurance/cycle_position/dividend_safety/survival_check）；`analyze_stock_v2` 按 company_type 路由 system prompt；`framework_used` 字段存入 analysis_results；头部显示紫色框架标签
 - **US-51 多用户推送路由（2026-04-14）**：stock_pipeline.py DB 驱动推送；db.py 加 get_users_with_daily_push/get_user_holdings/get_user_watching/set_stock_status；generate_report(allowed_codes=) 支持按用户过滤；send_serverchan() + build_user_push_content()；pipeline 结束后 per-user 推送
-- **US-52 admin.py CLI（2026-04-14）**：新文件，users/watchlist/set/add/remove/notify/push-key 命令，直接操作 SQLite
+- **US-52 admin.py CLI（2026-04-14）**：users/watchlist/set/add/remove/notify/push-key/test-push 命令，直接操作 SQLite
 - **US-53 韩股支持（2026-04-14）**：.KS/.KQ market 检测全链路（app/db/search），MARKET_CURRENCY 加 ₩，KRW currency 映射
 - **US-54 英文界面补全（2026-04-14）**：i18n 补全 35 个 watchlist key，watchlist.html 硬编码中文全替换
-- **GEM高风险检测（2026-04-13）：**
-  - `classifier.py` 加 `speculative` 类型：GEM市场 + (ROE<0 OR 净利率<0 OR 负债率>85% OR PB>30+ROE<5%) → speculative（优先于 growth_tech）
-  - `buffett_analyst.py` 加 `SYSTEM_SPECULATIVE` 风控框架 + FRAMEWORK_MAP 新增 `speculative` 路由
-  - `pipeline.py` 在 `_fetch_financials` 之后自动调用 `classify_stock()` 重新分类，确保财务数据驱动路由
-  - `app.py` `VALID_EVENT_TYPES` 加 `scheme_risk`（传销/商业盘风险手动标注）
-  - `stock.html` 加 GEM/speculative 橙色警告横幅；加 `speculative`/`scheme_risk` 标签；事件录入表单加「传销/商业盘风险」选项
-  - `style.css` 加 `.risk-banner` 样式 + `.event-type-scheme_risk` 红色样式
+- **GEM高风险检测（2026-04-13）**：classifier.py speculative 类型；SYSTEM_SPECULATIVE 框架；scheme_risk 事件；stock.html 橙色警告横幅
+- **US-57 Server酱 微信推送（2026-04-14）**：send_serverchan() POST 到 sctapi.ftqq.com；build_user_push_content() 紧凑表格格式（持仓表 + 巴菲特 reasoning 摘要 + 今日要闻）；admin.py test-push 命令
+- **US-58 北向资金修复（2026-04-14）**：stock_fetch.py fetch_north_bound() 字段全部修正（交易日/资金净流入/板块，百万→亿换算）
+- **stock_fetch.py DB 驱动（2026-04-14）**：_load_cn_stocks_from_db() 从 DB 读所有用户 A 股自选股，替代硬编码 WATCHLIST；db.py 加 get_all_cn_watchlist_stocks()；fetch_quotes() 改为接受参数
+- **Bug fix: 分析完成打断搜索（2026-04-14）**：watchlist.html pollJob 检测搜索框状态，搜索中时改为顶部横幅提示而非强制 location.reload()
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）
@@ -97,13 +95,19 @@
 - US-16 Watchlist 缩略图模式
 - US-17 巴菲特++雷达图
 
-### 🔄 下一阶段：数据质量继续补强
+### 🔄 下一阶段（按优先级）
+
+**⚠️ 文档声称完成但代码未实现（需补做）：**
+- **US-55 数据三层分离**：/api/news/\<code\> 路由存在但没有 1 小时缓存逻辑；stock.html 没有「更新新闻」按钮与「分析」分离
+- **US-56 港股/美股财务补强**：_fetch_financials() 未抓 yfinance income_stmt 趋势；LLM prompt 未禁 markdown 加粗；港股 debt_to_equity 展示未修
+- **US-59 推送质量门禁**：_score_report() 函数不存在；analysis_results 无 data_quality_score 字段；推送前没有质量检查
+- **US-60 买入区间+止损位 UI**：buffett_analyst.py 无 ===TRADE=== 解析；trade_block 字段未写入 DB；stock.html 无「操作参数」卡片
+
 **数据层待补强：**
 - 财务指标实时拉取：AKShare stock_financial_abstract_ths 拿 ROE/净利率/资产负债率（现在全是 NULL）
 - 机构持仓变动：ak.stock_institute_hold / 大股东增减持公告
 - 估值历史：PE/PB 历史百分位（现在只有即时值，没有历史对比）
-- 北向资金：盘中运行才有数据，需调整 launchd 时间
-- 接入 Server酱 微信推送
+- 北向资金：需收盘后运行 pipeline 才能验证 signals.north_flow 非 NULL（US-58 最后一项 AC）
 
 ---
 

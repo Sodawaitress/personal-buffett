@@ -431,87 +431,148 @@ def send_serverchan(key: str, title: str, content: str):
         time.sleep(0.3)
 
 
-def _get_a_grade_watching(user_id: int, date_str: str) -> list:
-    """返回某用户 watching 股票中，今日分析评级为 A 的代码列表。"""
+def _refresh_user_holdings_layer2(date_str: str):
+    """
+    收盘后对所有用户的持仓股跑一次 Layer 2（纯数学，零 LLM）。
+    刷新量化评级 + trading_params 存入 DB，让今日推送用上今天的数据。
+    """
+    from pipeline import _run_layer2
+    import threading
+
+    # 收集所有需要刷新的代码（去重）
+    push_users = _db.get_users_with_daily_push()
+    codes_to_refresh = set()
+    for u in push_users:
+        holdings = _db.get_user_holdings(u["id"])
+        watching = _db.get_user_watching(u["id"])
+        codes_to_refresh.update(holdings)
+        codes_to_refresh.update(watching)
+
+    if not codes_to_refresh:
+        return
+
+    print(f"  📊 Layer 2 刷新 {len(codes_to_refresh)} 只股票的量化评级...")
+    refreshed = 0
+    for code in sorted(codes_to_refresh):
+        stock = _db.get_stock(code)
+        market = (stock or {}).get("market", "cn")
+        logs = []
+        try:
+            _run_layer2(code, market, lambda msg: logs.append(msg))
+            refreshed += 1
+        except Exception as e:
+            print(f"    ⚠️ {code} Layer 2 失败: {e}")
+
+    print(f"  ✅ Layer 2 刷新完成：{refreshed}/{len(codes_to_refresh)} 只")
+
+
+def _get_buy_watching(user_id: int) -> list:
+    """
+    返回某用户 watching 股票中，建议买入的代码列表。
+    条件：grade 在 (A, B+) 或 conclusion == '买入'
+    """
     watching = _db.get_user_watching(user_id)
-    if not watching:
-        return []
     result = []
     for code in watching:
         a = _db.get_latest_analysis(code)
-        if a and a.get("grade") == "A" and a.get("analysis_date", "") >= date_str:
+        if not a:
+            continue
+        grade      = a.get("grade", "")
+        conclusion = a.get("conclusion", "")
+        if grade in ("A", "B+") or conclusion == "买入":
             result.append(code)
     return result
+
+
+def _stock_price_str(code: str, quotes: dict) -> tuple:
+    """
+    返回 (name, price_str, change_str)。
+    优先从 data quotes 读，没有就从 DB 最新价格读。
+    """
+    q = quotes.get(code, {})
+    name   = q.get("name") or code
+    price  = q.get("price")
+    change = q.get("change")
+
+    if price is None:
+        # 回退到 DB
+        p = _db.get_latest_price(code)
+        if p:
+            price  = p.get("price")
+            change = p.get("change_pct")
+            stock  = _db.get_stock(code)
+            name   = (stock or {}).get("name", code) if stock else code
+
+    price_s  = f"¥{price:.2f}" if price is not None else "—"
+    change_s = (("+" if (change or 0) >= 0 else "") + f"{change:.2f}%") if change is not None else "—"
+    return name, price_s, change_s
+
+
+def _stock_card(code: str, quotes: dict, news_data: dict) -> str:
+    """
+    为单只股票生成推送卡片：名称 + 价格 + 评级 + 分析摘要 + 最多2条新闻。
+    """
+    name, price_s, change_s = _stock_price_str(code, quotes)
+    a = _db.get_latest_analysis(code)
+
+    grade      = a.get("grade", "—") if a else "—"
+    conclusion = a.get("conclusion", "—") if a else "—"
+    reasoning  = ""
+    if a:
+        reasoning = (a.get("reasoning") or a.get("letter_html") or "").strip()
+        # 取第一句（到第一个句号/换行）
+        for sep in ("。", "\n", ".", "；"):
+            idx = reasoning.find(sep)
+            if 0 < idx < 120:
+                reasoning = reasoning[:idx + 1]
+                break
+        else:
+            reasoning = reasoning[:100]
+
+    lines = [f"**{name}（{code}）** {price_s} {change_s} | {grade} · {conclusion}"]
+    if reasoning:
+        lines.append(f"> {reasoning}")
+
+    # 最多 2 条新闻（优先从 data，没有则从 DB）
+    stock_news = news_data.get(code, [])
+    if not stock_news:
+        stock_news = _db.get_stock_news(code, days=3)
+    for n in stock_news[:2]:
+        title = (n.get("title") or "")[:60]
+        if title:
+            lines.append(f"- {title}")
+
+    return "\n".join(lines)
 
 
 def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
                              date_str: str) -> str:
     """
-    为某用户生成微信推送内容（紧凑格式）：
-    - 持仓表格 + 巴菲特一句话（如有持仓）
-    - 今日 A 级观察股（如有）
+    为某用户生成微信推送内容。
+    - 持仓股：每只一张卡片（价格 + 评级 + 分析摘要 + 最多2条新闻）
+    - 关注股中建议买入（A/B+/结论买入）：另起一节
+    任何用户均可使用，无硬编码。
     """
-    quotes     = data.get("quotes", {})
-    holdings   = _db.get_user_holdings(user_id)
-    a_watching = _get_a_grade_watching(user_id, date_str)
+    quotes    = data.get("quotes", {})
+    news_data = data.get("news", {})
+    holdings  = _db.get_user_holdings(user_id)
+    buy_watch = _get_buy_watching(user_id)
 
     sections = []
 
     if holdings:
-        rows = ["## 今日持仓\n",
-                "| 股票 | 现价 | 涨跌 | 评级 |",
-                "|------|------|------|------|"]
-        buffett_lines = []
-        news_lines = []
-        for code in holdings:
-            q = quotes.get(code, {})
-            a = _db.get_latest_analysis(code)
-            name = q.get("name", code)
-            price = q.get("price")
-            change = q.get("change")
-            grade  = a.get("grade", "—") if a else "—"
-            price_s  = f"¥{price:.2f}" if price is not None else "—"
-            change_s = (("+" if change >= 0 else "") + f"{change:.2f}%") if change is not None else "—"
-            rows.append(f"| {name}（{code}） | {price_s} | {change_s} | {grade} |")
-            if a:
-                # 用 reasoning 做摘要（比 conclusion 一个字有内容得多）
-                reasoning = (a.get("reasoning") or a.get("letter_html") or "").strip()
-                if reasoning:
-                    buffett_lines.append(f"**{name}**（{grade}）\n{reasoning[:150]}……")
-            # 今日新闻：取最新 1 条标题
-            stock_news = data.get("news", {}).get(code, [])
-            if stock_news:
-                top = stock_news[0]
-                news_lines.append(f"- **{name}**：{top.get('title', '')[:60]}")
-        sections.append("\n".join(rows))
-        if buffett_lines:
-            sections.append("### 🧠 巴菲特分析\n\n" + "\n\n---\n\n".join(buffett_lines))
-        if news_lines:
-            sections.append("### 📰 今日要闻\n\n" + "\n".join(news_lines))
+        cards = [_stock_card(c, quotes, news_data) for c in holdings]
+        sections.append("## 📊 今日持仓\n\n" + "\n\n".join(cards))
 
-    if a_watching:
-        lines = ["## ⭐ 今日 A 级关注股（建议留意）\n"]
-        for code in a_watching:
-            a = _db.get_latest_analysis(code)
-            q = quotes.get(code, {})
-            name = q.get("name", code)
-            price = q.get("price")
-            change = q.get("change")
-            price_str = ""
-            if price is not None:
-                sign = "+" if (change or 0) >= 0 else ""
-                change_str = f"{sign}{change:.2f}%" if change is not None else ""
-                price_str = f" · ¥{price:.2f}（{change_str}）"
-            conclusion = (a.get("conclusion") or "")[:80] if a else ""
-            lines.append(f"- **{name}（{code}）**{price_str}")
-            if conclusion:
-                lines.append(f"  > {conclusion}")
-        sections.append("\n".join(lines))
+    if buy_watch:
+        cards = [_stock_card(c, quotes, news_data) for c in buy_watch]
+        sections.append("## ⭐ 建议关注（评级买入）\n\n" + "\n\n".join(cards))
 
     if not sections:
         return ""
 
-    return "\n\n---\n\n".join(sections)
+    header = f"**股票日报 {date_str}**\n持仓 {len(holdings)} 只 · 买入候选 {len(buy_watch)} 只\n"
+    return header + "\n\n---\n\n".join(sections)
 
 
 # ── Server酱 微信推送 ─────────────────────────────────
@@ -549,12 +610,25 @@ def save_to_bear(title: str, content: str):
     print(f"📓 Bear: {title}")
 
 
+# ── 交易日判断 ────────────────────────────────────────
+def _is_trading_day(dt) -> bool:
+    """
+    简单判断是否 A 股交易日：排除周六/周日。
+    节假日未做精确判断（AKShare 无稳定离线日历），收盘后行情全为 0 会被后续逻辑忽略。
+    """
+    return dt.weekday() < 5   # 0=Monday … 4=Friday
+
+
 # ── 主流程 ────────────────────────────────────────────
 def main():
     now = datetime.now(CN_TZ)
     print(f"\n{'='*50}")
     print(f"📈 股票雷达 Pipeline 启动 {now.strftime('%Y-%m-%d %H:%M CST')}")
     print(f"{'='*50}\n")
+
+    trading_day = _is_trading_day(now)
+    if not trading_day:
+        print(f"📅 今日为休息日（{now.strftime('%A')}），仅收集新闻，跳过行情 & AI 分析\n")
 
     print("📡 Step 1/3：抓取数据...")
     run_fetch()
@@ -570,9 +644,28 @@ def main():
     data["nzx_announcements"] = fetch_nzx_announcements()
     data["nzx_earnings"]      = fetch_nzx_earnings_calendar()
 
+    if not trading_day:
+        # 休息日：只存新闻，不跑 AI 分析，不生成报告，不推送
+        print("  ⏭️ 休息日：跳过 AI 分析和报告生成")
+        _db.init_db()
+        date_str = data["date"]
+        for code, items in data.get("news", {}).items():
+            for n in items:
+                _db.upsert_news(code, n["title"], n.get("source",""), n.get("link",""),
+                                n.get("time",""), date_str)
+        for scope, items in data.get("intl_news", {}).items():
+            for n in items:
+                _db.upsert_intl_news(scope, n["title"], n.get("label",""),
+                                     n.get("link",""), n.get("source",""), date_str)
+        print(f"✅ 休息日新闻已入库，pipeline 结束")
+        return
+
     print("  🤖 Groq 巴菲特分析...")
     ai_analysis = analyze_all(data)
     print(f"  ✅ 分析完成：{len(ai_analysis)} 只股票")
+
+    # ── 收盘后刷新所有用户持仓的量化评级（Layer 2，零 LLM token）──
+    _refresh_user_holdings_layer2(date_str)
 
     report = generate_report(data, ai_analysis)
     with open(REPORT_OUTPUT, "w", encoding="utf-8") as f:

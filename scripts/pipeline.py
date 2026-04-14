@@ -268,6 +268,15 @@ def _fetch_financials(code, market, log):
             pe = fundamentals.get("pe_current")
             pb = fundamentals.get("pb_current")
             log(f"       PE={pe if pe else '?'} PB={pb if pb else '?'}")
+
+            # 顺手把 sector 存进 stocks 表（供分类器用）
+            yf_sector = info.get("sector") or info.get("industry")
+            if yf_sector:
+                stock = db.get_stock(code)
+                if stock:
+                    db.upsert_stock(code, stock.get("name", code),
+                                    stock.get("market", market), sector=yf_sector)
+                    log(f"       sector: {yf_sector}")
     except Exception as e:
         log(f"       ⚠️ 财务数据获取失败: {e}")
 
@@ -502,142 +511,299 @@ def _analyze_earnings_quality(annual: list) -> list:
     return flags
 
 
-def _compute_trading_params(price: dict, signals: dict) -> dict:
+_MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩"}
+
+
+def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> dict:
     """
-    预计算操作参数，全部基于均线数学，不让 LLM 自己算价格。
+    预计算操作参数，全部基于数学，不让 LLM 自己算价格。
+    A股：基于均线（MA60/MA250）；US/HK/NZ：基于52周高低点简化版。
     返回 dict，注入 prompt 后由 LLM 写进 ===TRADE=== 输出块。
     """
     if not price or not signals:
         return {}
 
+    cur  = _MARKET_CURRENCY.get(market, "$")
     tech    = signals.get('technicals', {}) if signals else {}
     current = price.get('price')
-    if not current or not tech:
+    if not current:
         return {}
 
     ma20  = tech.get('ma20')
     ma60  = tech.get('ma60')
     ma250 = tech.get('ma250')
 
-    params = {'current': current}
+    # ── 路径1：A股均线版（有MA60/MA250） ──────────────────
+    if ma60 or ma250:
+        params = {'current': current}
 
-    if ma60:
-        params['entry_1_low']   = round(ma60 * 0.98, 2)
-        params['entry_1_high']  = round(ma60 * 1.02, 2)
-        params['entry_1_label'] = f"¥{ma60 * 0.98:.2f}–{ma60 * 1.02:.2f}（季线MA60附近，回调首选入场区）"
+        if ma60:
+            params['entry_1_low']   = round(ma60 * 0.98, 2)
+            params['entry_1_high']  = round(ma60 * 1.02, 2)
+            params['entry_1_label'] = f"{cur}{ma60 * 0.98:.2f}–{ma60 * 1.02:.2f}（季线MA60附近，回调首选入场区）"
 
-    if ma250:
-        params['entry_2_low']   = round(ma250 * 0.98, 2)
-        params['entry_2_high']  = round(ma250 * 1.02, 2)
-        params['entry_2_label'] = f"¥{ma250 * 0.98:.2f}–{ma250 * 1.02:.2f}（年线MA250附近，强支撑区）"
-        params['stop_loss']     = round(ma250 * 0.92, 2)
-        params['stop_loss_label'] = f"¥{ma250 * 0.92:.2f}（年线MA250下方8%，跌破则基本面需重评）"
+        if ma250:
+            params['entry_2_low']   = round(ma250 * 0.98, 2)
+            params['entry_2_high']  = round(ma250 * 1.02, 2)
+            params['entry_2_label'] = f"{cur}{ma250 * 0.98:.2f}–{ma250 * 1.02:.2f}（年线MA250附近，强支撑区）"
+            params['stop_loss']     = round(ma250 * 0.92, 2)
+            params['stop_loss_label'] = f"{cur}{ma250 * 0.92:.2f}（年线MA250下方8%，跌破则基本面需重评）"
 
-    # 当前价格位置
-    if ma20 and ma60 and ma250:
-        above_all = current > ma20 and current > ma60 and current > ma250
-        below_year = current < ma250
-        if above_all:
-            pct_above_ma60 = (current - ma60) / ma60 * 100
-            params['position_label'] = (
-                f"当前价¥{current:.2f}高于所有均线（比MA60高{pct_above_ma60:.1f}%），"
-                f"不是理想进场时机，建议等回调"
-            )
-        elif below_year:
-            params['position_label'] = (
-                f"当前价¥{current:.2f}低于年线¥{ma250:.2f}，需确认基本面是否变化"
-            )
-        else:
-            params['position_label'] = (
-                f"当前价¥{current:.2f}处于MA60(¥{ma60:.2f})与MA250(¥{ma250:.2f})之间，可分批介入"
-            )
+        if ma20 and ma60 and ma250:
+            above_all   = current > ma20 and current > ma60 and current > ma250
+            below_stop  = params.get('stop_loss') and current < params['stop_loss']
+            below_year  = current < ma250
+
+            if above_all:
+                pct_above_ma60 = (current - ma60) / ma60 * 100
+                params['position_label'] = (
+                    f"当前价{cur}{current:.2f}高于所有均线（比MA60高{pct_above_ma60:.1f}%），"
+                    f"不是理想进场时机，建议等回调"
+                )
+                if pct_above_ma60 >= 10:
+                    reduce_low  = round(ma60 * 1.10, 2)
+                    reduce_high = round(ma60 * 1.25, 2)
+                    params['reduce_label'] = (
+                        f"{cur}{reduce_low:.2f}–{reduce_high:.2f}"
+                        f"（MA60上方10-25%，可分批减仓）"
+                    )
+            elif below_stop:
+                # 已跌破止损位：均线全部成为上方阻力，买入区间无意义
+                params['position_label'] = (
+                    f"当前价{cur}{current:.2f}已跌破止损位{cur}{params['stop_loss']:.2f}（年线MA250下方8%），"
+                    f"技术面破位，暂不建议入场"
+                )
+                # 将买入区间改为"反弹目标/阻力"
+                if params.get('entry_1_label'):
+                    params['entry_1_label'] = f"{cur}{params['entry_1_low']:.2f}–{params['entry_1_high']:.2f}（MA60附近，反弹阻力目标）"
+                if params.get('entry_2_label'):
+                    params['entry_2_label'] = f"{cur}{params['entry_2_low']:.2f}–{params['entry_2_high']:.2f}（年线MA250附近，反弹阻力目标）"
+                # 不显示买入标签，改为下探支撑提示
+                params['entry_1_is_resistance'] = True
+                params['entry_2_is_resistance'] = True
+            elif below_year:
+                params['position_label'] = (
+                    f"当前价{cur}{current:.2f}低于年线{cur}{ma250:.2f}，需确认基本面是否变化"
+                )
+            else:
+                params['position_label'] = (
+                    f"当前价{cur}{current:.2f}处于MA60({cur}{ma60:.2f})与MA250({cur}{ma250:.2f})之间，可分批介入"
+                )
+
+        return params
+
+    # ── 路径2：美股/港股/NZ简化版（52周高低点） ──────────
+    w52_low  = signals.get('week_52_low')
+    w52_high = signals.get('week_52_high')
+    if not w52_low or not w52_high or w52_low >= w52_high:
+        return {}
+
+    rng = w52_high - w52_low
+    pos_pct = (current - w52_low) / rng * 100
+
+    # 价值区间：52周低点上方20-35%（历史估值洼地）
+    entry_1_low  = round(w52_low + rng * 0.20, 2)
+    entry_1_high = round(w52_low + rng * 0.35, 2)
+    # 强支撑区：52周低点 ±3%
+    entry_2_low  = round(w52_low * 0.97, 2)
+    entry_2_high = round(w52_low * 1.03, 2)
+    # 止损：52周低点下方7%
+    stop_loss    = round(w52_low * 0.93, 2)
+
+    params = {
+        'current': current,
+        'entry_1_low':   entry_1_low,
+        'entry_1_high':  entry_1_high,
+        'entry_1_label': f"{cur}{entry_1_low:.2f}–{entry_1_high:.2f}（52周区间20-35%分位，历史价值区）",
+        'entry_2_low':   entry_2_low,
+        'entry_2_high':  entry_2_high,
+        'entry_2_label': f"{cur}{entry_2_low:.2f}–{entry_2_high:.2f}（52周低点附近，强支撑区）",
+        'stop_loss':     stop_loss,
+        'stop_loss_label': f"{cur}{stop_loss:.2f}（52周低点下方7%，跌破则趋势可能进一步恶化）",
+    }
+
+    if pos_pct >= 80:
+        params['position_label'] = (
+            f"当前价{cur}{current:.2f}处于52周区间高位（{pos_pct:.0f}%分位），"
+            f"接近年高{cur}{w52_high:.2f}，不是理想进场时机"
+        )
+        # 高位：推算减仓区（年高附近85-100%分位）并隐藏买入区间
+        reduce_low  = round(w52_low + rng * 0.85, 2)
+        reduce_high = round(w52_high, 2)
+        params['reduce_label'] = (
+            f"{cur}{reduce_low:.2f}–{reduce_high:.2f}"
+            f"（52周85-100%分位，持仓者可分批减仓）"
+        )
+        # 高位时买入区间仍保留但加注警告
+        params['entry_1_label'] += "（当前价远高于此，仅供参考）"
+        params['entry_2_label'] += "（当前价远高于此，仅供参考）"
+    elif pos_pct <= 20:
+        # 价格已低于"价值区"（20-35%分位）→ 当前价就是买入机会，entry_1改为现价附近
+        near_low  = round(current * 0.97, 2)
+        near_high = round(current * 1.03, 2)
+        params['position_label'] = (
+            f"当前价{cur}{current:.2f}处于52周极低位（{pos_pct:.0f}%分位），"
+            f"已低于历史价值区（{cur}{entry_1_low:.2f}–{entry_1_high:.2f}），当前即为买入机会"
+        )
+        params['entry_1_low']   = near_low
+        params['entry_1_high']  = near_high
+        params['entry_1_label'] = (
+            f"{cur}{near_low:.2f}–{near_high:.2f}（现价附近±3%，已低于52周价值区，性价比高）"
+        )
+    elif pos_pct <= 25:
+        params['position_label'] = (
+            f"当前价{cur}{current:.2f}处于52周低位区间（{pos_pct:.0f}%分位），"
+            f"年低{cur}{w52_low:.2f}，可关注分批建仓机会"
+        )
+    else:
+        params['position_label'] = (
+            f"当前价{cur}{current:.2f}处于52周区间中段（{pos_pct:.0f}%分位），"
+            f"年低{cur}{w52_low:.2f}，年高{cur}{w52_high:.2f}"
+        )
 
     return params
 
 
-def _run_analysis(code, market, log, user_id=None):
-    """Step 4: 巴菲特++分析"""
-    log("  [4/4] 运行巴菲特分析…")
+def _run_layer2(code, market, log, user_id=None):
+    """
+    Layer 2：纯数学，零 LLM token。
+    计算 quant 评级 + trading_params，立即存入 DB。
+    返回 (quant_result, trading_params, context) 供 Layer 3 使用。
+    """
+    import json as _json
+    from quantitative_rating import QuantitativeRater
+    from buffett_analyst import _analyze_news_signals, _analyze_earnings_quality
+
+    stock        = db.get_stock(code)
+    price        = db.get_latest_price(code)
+    fundamentals = db.get_fundamentals(code) or {}
+    news         = db.get_stock_news(code, days=7)
+    events       = db.get_stock_events(code, limit=10)
+    meta         = db.get_stock_meta(code)
+    company_type = (meta or {}).get("company_type")
+
+    _annual = []
     try:
-        from buffett_analyst import analyze_stock_v2
-        news        = db.get_stock_news(code, days=7)
-        price       = db.get_latest_price(code)
-        ff          = db.get_fund_flow(code) if market == "cn" else {}
-        fundamentals= db.get_fundamentals(code)  # 所有市场都支持基本面数据
-        stock       = db.get_stock(code)
+        _annual = _json.loads(fundamentals.get("annual_json") or "[]")
+    except Exception:
+        pass
 
-        # 查用户持仓成本
-        entry_price, buy_date = None, None
-        if user_id:
-            try:
-                with db.get_conn() as c:
-                    row = c.execute(
-                        "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
-                        (user_id, code)
-                    ).fetchone()
-                    if row and row["buy_price"]:
-                        entry_price = float(row["buy_price"])
-                        buy_date    = row["buy_date"]
-                        log(f"       持仓成本 ¥{entry_price:.2f}（{buy_date or '未记日期'}）")
-            except Exception:
-                pass
+    _signals = fundamentals.get("signals", {})
 
-        data_warnings = _validate_signals(code, fundamentals)
-        if data_warnings:
-            log(f"       数据质量警告 ({len(data_warnings)}条): {data_warnings[0]}")
-
-        # 利润质量预计算
-        import json as _json
-        _annual = []
+    # 持仓成本
+    entry_price, buy_date = None, None
+    if user_id:
         try:
-            _annual = _json.loads(fundamentals.get("annual_json") or "[]") if fundamentals else []
+            with db.get_conn() as c:
+                row = c.execute(
+                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
+                    (user_id, code)
+                ).fetchone()
+                if row and row["buy_price"]:
+                    entry_price = float(row["buy_price"])
+                    buy_date    = row["buy_date"]
         except Exception:
             pass
-        earnings_flags = _analyze_earnings_quality(_annual)
-        if earnings_flags:
-            log(f"       利润质量标签 ({len(earnings_flags)}条): {earnings_flags[0][:50]}…")
 
-        # 操作参数预计算
-        _signals = fundamentals.get("signals", {}) if fundamentals else {}
-        trading_params = _compute_trading_params(price, _signals)
-        if trading_params.get("entry_1_label"):
-            log(f"       买入区间1: {trading_params['entry_1_label']}")
+    # ── 量化评级 ──────────────────────────────────────────
+    news_signals   = _analyze_news_signals(news)
+    earnings_flags = _analyze_earnings_quality(_annual)
+    data_warnings  = _validate_signals(code, fundamentals)
 
-        events = db.get_stock_events(code, limit=10)
+    news_for_rating = {
+        "high_pos_buyback":      1 if "回购" in news_signals.get("summary", "") else 0,
+        "mid_pos_dividend":      1 if "分红" in news_signals.get("summary", "") else 0,
+        "high_neg_resignation":  1 if "离职" in news_signals.get("summary", "") else 0,
+        "mid_neg_reduction":     1 if "减持" in news_signals.get("summary", "") else 0,
+    }
 
-        meta         = db.get_stock_meta(code)
-        company_type = meta.get("company_type") if meta else None
-        if company_type:
-            log(f"       分析框架: {company_type}")
+    quant_result = QuantitativeRater().rate_stock(
+        code=code,
+        name=(stock or {}).get("name", code),
+        annual_data=_annual,
+        pe_percentile=fundamentals.get("pe_percentile_5y"),
+        pb_percentile=fundamentals.get("pb_percentile_5y"),
+        price_52week_pct=_signals.get("price_position"),
+        news_signals=news_for_rating,
+    )
+    log(f"       量化评级: {quant_result['grade']} {quant_result['score']}/100 · {quant_result['conclusion']}")
 
-        result = analyze_stock_v2(
+    # ── 操作参数 ──────────────────────────────────────────
+    trading_params = _compute_trading_params(price, _signals, market=market)
+    if trading_params.get("entry_1_label"):
+        log(f"       买入区间1: {trading_params['entry_1_label'][:50]}")
+
+    # ── 立即存入 DB（Layer 3 失败也有基础评级）────────────
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    db.save_analysis(
+        code=code,
+        period="daily",
+        analysis_date=today,
+        grade=quant_result["grade"],
+        conclusion=quant_result["conclusion"],
+        reasoning=quant_result["reasoning"],
+        moat=str(quant_result["components"]["moat"][0]) + "/35",
+        management=str(quant_result["components"]["growth_management"][0]) + "/30",
+        valuation=str(quant_result["components"]["valuation"][0]) + "/15",
+        quant_score=quant_result["score"],
+        quant_components=_json.dumps(quant_result["components"], ensure_ascii=False),
+        framework_used="quant",
+    )
+
+    # trading_params 存入 signals，供页面直接读取（不重算）
+    if trading_params:
+        db.upsert_signals(code, {"trading_params": _json.dumps(trading_params, ensure_ascii=False)})
+
+    return quant_result, trading_params, {
+        "stock": stock, "price": price, "news": news,
+        "fundamentals": fundamentals, "signals": _signals,
+        "news_signals": news_signals, "earnings_flags": earnings_flags,
+        "data_warnings": data_warnings, "events": events,
+        "company_type": company_type, "entry_price": entry_price,
+        "buy_date": buy_date, "annual": _annual,
+        "fund_flow": db.get_fund_flow(code) if market == "cn" else {},
+    }
+
+
+def _run_analysis(code, market, log, user_id=None):
+    """
+    Step 4: Layer 2（量化） + Layer 3（LLM叙事）。
+    Layer 2 必跑并立即存 DB；Layer 3 仅补充信件文本。
+    """
+    log("  [4/4] Layer 2 量化评级…")
+    try:
+        quant_result, trading_params, ctx = _run_layer2(code, market, log, user_id)
+    except Exception as e:
+        log(f"       ⚠️ Layer 2 失败: {e}")
+        return
+
+    log("  [4/4] Layer 3 LLM叙事…")
+    try:
+        from buffett_analyst import analyze_stock_v3
+        result = analyze_stock_v3(
             code=code,
-            name=stock.get("name", code) if stock else code,
+            name=(ctx["stock"] or {}).get("name", code),
             market=market,
-            price=price,
-            news=news,
-            fund_flow=ff,
-            fundamentals=fundamentals,
-            signals=_signals,
-            entry_price=entry_price,
-            buy_date=buy_date,
-            data_warnings=data_warnings,
-            earnings_flags=earnings_flags,
+            quant_result=quant_result,
             trading_params=trading_params,
-            events=events,
-            company_type=company_type,
+            news=ctx["news"],
+            news_signals=ctx["news_signals"],
+            price=ctx["price"],
+            fund_flow=ctx["fund_flow"],
+            fundamentals=ctx["fundamentals"],
+            events=ctx["events"],
+            company_type=ctx["company_type"],
+            entry_price=ctx["entry_price"],
+            buy_date=ctx["buy_date"],
+            data_warnings=ctx["data_warnings"],
+            earnings_flags=ctx["earnings_flags"],
         )
         if result:
             today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
-            db.save_analysis(
-                code=code,
-                period="daily",
-                analysis_date=today,
-                **result,
-            )
-            log(f"       评级: {result.get('grade','—')} · {result.get('conclusion','')}")
+            db.save_analysis(code=code, period="daily", analysis_date=today, **result)
+            log(f"       LLM叙事完成: {result.get('grade','—')} · {result.get('conclusion','')}")
     except Exception as e:
-        log(f"       ⚠️ 分析失败: {e}")
+        log(f"       ⚠️ Layer 3 失败（已有量化评级）: {e}")
 
 
 # ── 超时包装 ──────────────────────────────────────────
@@ -776,14 +942,12 @@ def run_news_update(job_id: int, code: str, market: str):
         # 1小时缓存检查
         with db.get_conn() as c:
             row = c.execute(
-                "SELECT MAX(fetch_date) as last_date FROM stock_news WHERE code=?", (code,)
+                "SELECT MAX(fetched_date) as last_date FROM stock_news WHERE code=?", (code,)
             ).fetchone()
         last = (row["last_date"] or "") if row else ""
-        now_str = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M")
         if last:
             try:
-                from datetime import datetime as dt
-                last_dt = dt.fromisoformat(last) if "T" not in last else dt.fromisoformat(last)
+                last_dt = datetime.fromisoformat(last)
                 diff = (datetime.now(CN_TZ) - last_dt.replace(tzinfo=CN_TZ if last_dt.tzinfo is None else last_dt.tzinfo)).total_seconds()
                 if diff < 3600:
                     log(f"  ℹ️ 新闻已是 {int(diff/60)} 分钟前抓取的，使用缓存（1小时内不重复抓取）")

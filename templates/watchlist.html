@@ -16,19 +16,6 @@
     </div>
 
     <div class="wl-toolbar-controls">
-      {# 排序 #}
-      <div class="wl-popover-wrap">
-        <button class="wl-icon-btn" id="sort-btn" title="{{ t.wl_sort_label }}" onclick="togglePopover('sort-popover', this); event.stopPropagation()">
-          {{ t.wl_sort_label }}
-        </button>
-        <div class="wl-popover" id="sort-popover">
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="default" checked> {{ t.wl_sort_default }}</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="grade"> {{ t.wl_sort_grade }}</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="change"> {{ t.wl_sort_change }}</label>
-          <label class="wl-pop-opt"><input type="radio" name="wl-sort" value="date"> {{ t.wl_sort_date }}</label>
-        </div>
-      </div>
-
       {# 视图切换（单按钮） #}
       <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">{{ t.wl_view_toggle }}</button>
 
@@ -48,6 +35,16 @@
         {{ t.wl_add_btn }}
       </button>
     </div>
+  </div>
+
+  {# ── 排序栏 ── #}
+  <div class="wl-sort-bar">
+    <span class="wl-sort-label">排序：</span>
+    <button class="wl-sort-pill active" data-sort="default"  onclick="setSortPill(this,'default')">默认</button>
+    <button class="wl-sort-pill"        data-sort="grade"    onclick="setSortPill(this,'grade')">评分</button>
+    <button class="wl-sort-pill"        data-sort="conclusion" onclick="setSortPill(this,'conclusion')">推荐操作</button>
+    <button class="wl-sort-pill"        data-sort="change"   onclick="setSortPill(this,'change')">今日涨跌</button>
+    <button class="wl-sort-pill"        data-sort="date"     onclick="setSortPill(this,'date')">最新分析</button>
   </div>
 
   {# 添加股票面板 #}
@@ -78,6 +75,7 @@
        data-code="{{ s.code }}"
        data-name="{{ s.name }}"
        data-grade-sort="{{ s.grade_sort }}"
+       data-conclusion-sort="{{ s.conclusion_sort }}"
        data-change="{{ s.change_pct or 0 }}"
        data-date="{{ s.analysis_date or '' }}"
        data-href="{{ url_for('stock_page', code=s.code) }}"
@@ -245,6 +243,7 @@
             data-code="{{ s.code }}"
             data-name="{{ s.name }}"
             data-grade-sort="{{ s.grade_sort }}"
+            data-conclusion-sort="{{ s.conclusion_sort }}"
             data-change="{{ s.change_pct or 0 }}"
             data-date="{{ s.analysis_date or '' }}"
             data-href="{{ url_for('stock_page', code=s.code) }}"
@@ -460,23 +459,12 @@ async function _doStatusUpdate(code, status, date, price, bodyOverride) {
   if (resp.ok) location.reload();
 }
 
-// ── 排序 ─────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('input[name="wl-sort"]').forEach(r => {
-    r.addEventListener('change', () => {
-      sortCards(r.value);
-      localStorage.setItem('wl-sort', r.value);
-      // 选后关闭 popover
-      document.querySelectorAll('.wl-popover').forEach(p => p.classList.remove('open'));
-      document.getElementById('sort-btn')?.classList.remove('active');
-    });
-  });
-});
 function sortCards(by) {
   const cmp = (a, b) => {
-    if (by === 'grade')  return (+(a.dataset.gradeSort||99)) - (+(b.dataset.gradeSort||99));
-    if (by === 'change') return (+(b.dataset.change||0))     - (+(a.dataset.change||0));
-    if (by === 'date')   return (b.dataset.date||'').localeCompare(a.dataset.date||'');
+    if (by === 'grade')      return (+(a.dataset.gradeSort||99))      - (+(b.dataset.gradeSort||99));
+    if (by === 'conclusion') return (+(a.dataset.conclusionSort||99)) - (+(b.dataset.conclusionSort||99));
+    if (by === 'change')     return (+(b.dataset.change||0))          - (+(a.dataset.change||0));
+    if (by === 'date')       return (b.dataset.date||'').localeCompare(a.dataset.date||'');
     return 0;
   };
   // 三分区各自排序
@@ -486,6 +474,14 @@ function sortCards(by) {
   });
   const tbody = document.getElementById('wl-list-body');
   if (tbody) [...tbody.querySelectorAll('.wl-list-row')].sort(cmp).forEach(r => tbody.appendChild(r));
+}
+
+// ── 排序栏 pill 点击 ─────────────────────────────────
+function setSortPill(btn, by) {
+  document.querySelectorAll('.wl-sort-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  sortCards(by);
+  localStorage.setItem('wl-sort', by);
 }
 
 // ── 搜索过滤 ─────────────────────────────────────────
@@ -711,8 +707,11 @@ async function showLetter(code, name) {
 document.addEventListener('DOMContentLoaded', () => {
   setView(localStorage.getItem('wl-view') || 'card');
   const savedSort = localStorage.getItem('wl-sort') || 'default';
-  const r = document.querySelector(`input[name="wl-sort"][value="${savedSort}"]`);
-  if (r) { r.checked = true; sortCards(savedSort); }
+  sortCards(savedSort);
+  // 恢复 pill 高亮
+  document.querySelectorAll('.wl-sort-pill').forEach(b => {
+    b.classList.toggle('active', b.dataset.sort === savedSort);
+  });
   document.querySelectorAll('.holding-card[data-job], .wl-list-row[data-job]').forEach(el => {
     if (el.dataset.job) pollJob(el.dataset.job, el.dataset.code);
   });

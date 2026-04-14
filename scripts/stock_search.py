@@ -181,6 +181,38 @@ def _search_hk_names(q: str) -> list:
     return []
 
 
+def _search_yf_name(query: str, limit: int = 6) -> list:
+    """用 yfinance.Search 按公司名搜索，适合含空格或模糊的输入。只返回股票类型。"""
+    try:
+        import yfinance as yf
+        results = []
+        for q in yf.Search(query, max_results=limit * 2).quotes:
+            if q.get("quoteType") not in ("EQUITY", "ETF"):
+                continue
+            symbol = q.get("symbol", "")
+            name   = q.get("shortname") or q.get("longname") or symbol
+            exch   = q.get("exchDisp", "")
+            sym_up = symbol.upper()
+            if sym_up.endswith(".NZ"):
+                market = "nz"
+            elif sym_up.endswith(".HK"):
+                market = "hk"
+            elif sym_up.endswith((".KS", ".KQ")):
+                market = "kr"
+            elif "." not in sym_up:
+                market = "us"
+            else:
+                market = "other"
+            if market == "other":
+                continue
+            results.append({"code": sym_up, "name": name, "market": market, "exchange": exch})
+            if len(results) >= limit:
+                break
+        return results
+    except Exception:
+        return []
+
+
 def _search_yf(ticker: str) -> list:
     try:
         import yfinance as yf
@@ -217,55 +249,80 @@ def search(q: str, limit: int = 10) -> list:
     if not q:
         return []
 
-    results, seen = [], set()
+    seen = set()
+    cn_results   = []   # A股 / 中文
+    intl_results = []   # 港股 / 美股 / NZ / 韩股
 
-    def _add(items):
+    def _add_cn(items):
         for r in items:
             k = r["code"]
             if k not in seen:
-                seen.add(k)
-                results.append(r)
+                seen.add(k); cn_results.append(r)
 
-    has_cn  = any('\u4e00' <= c <= '\u9fff' for c in q)
-    is_num  = q.isdigit()
-    has_dot = '.' in q
-    q_l     = q.lower()
-    alpha   = bool(re.match(r'^[A-Za-z]', q))
+    def _add_intl(items):
+        for r in items:
+            k = r["code"]
+            if k not in seen:
+                seen.add(k); intl_results.append(r)
+
+    has_cn   = any('\u4e00' <= c <= '\u9fff' for c in q)
+    is_num   = q.isdigit()
+    has_dot  = '.' in q
+    has_space = ' ' in q
+    q_l      = q.lower()
+    alpha    = bool(re.match(r'^[A-Za-z]', q))
 
     # 1. 港股中文名映射（优先，避免「腾讯」找不到）
     if has_cn:
-        _add(_search_hk_names(q))
+        _add_intl(_search_hk_names(q))
 
     # 2. A股中文名 / 代码
     if has_cn or is_num or (not alpha and len(q) <= 7):
-        _add(_search_cn(q, limit=limit))
+        _add_cn(_search_cn(q, limit=limit))
 
     # 3. 拼音首字母 / 拼音全拼（英文输入）
     if alpha and not has_dot:
-        # 固定别名（byd → 002594）
         if q_l in PINYIN_ALIAS:
-            code = PINYIN_ALIAS[q_l]
-            _add(_search_cn(code, limit=1))
-        # 拼音索引
-        _add(_search_pinyin(q_l, limit=limit))
+            _add_cn(_search_cn(PINYIN_ALIAS[q_l], limit=1))
+        _add_cn(_search_pinyin(q_l, limit=limit))
 
-    # 4. yfinance Ticker（英文 / 带点）
+    # 4. yfinance Ticker（英文 / 带点 / 6位数韩股代码）
     if alpha or has_dot:
         ticker = q.upper()
-        # 如果已经从拼音找到 A 股结果，跳过同名美股误判
-        # （除非明确带 .HK/.NZ/.US 后缀）
-        if has_dot or not results:
-            _add(_search_yf(ticker))
-        if not has_dot and len(results) < limit:
+        if has_dot:
+            _add_intl(_search_yf(ticker))
+        else:
+            # 各市场后缀：始终尝试，不因 A 股结果多少而跳过
             for sfx in (".HK", ".NZ", ".KS"):
-                if len(results) < limit:
-                    _add(_search_yf(ticker + sfx))
+                _add_intl(_search_yf(ticker + sfx))
+            # 美股裸 ticker：全大写输入 or 拼音 A 股结果少（< 3）时加入
+            cn_count = sum(1 for r in cn_results if r.get("market") == "cn")
+            if q == q.upper() or cn_count < 3:
+                _add_intl(_search_yf(ticker))
+
+    # 4b. 纯数字：可能是韩股代码（005930 等），也尝试 .KS
+    if is_num and len(q) == 6 and not cn_results:
+        _add_intl(_search_yf(q + ".KS"))
+
+    # 4c. 含空格 or 英文名称查询：用 yfinance.Search 按公司名搜索
+    if has_space or (alpha and not has_dot and not cn_results and not intl_results):
+        _add_intl(_search_yf_name(q, limit=limit))
 
     # 5. 兜底：什么都没找到再宽泛搜 A股
-    if not results:
-        _add(_search_cn(q, limit=limit))
+    if not cn_results and not intl_results:
+        _add_cn(_search_cn(q, limit=limit))
 
-    return results[:limit]
+    # 合并策略：
+    # - 中文输入 → A股优先
+    # - 拼音别名命中（byd/moutai）→ A股优先
+    # - 其他英文 ticker → 国际优先
+    pinyin_hit = alpha and not has_dot and q_l in PINYIN_ALIAS
+    if has_cn or pinyin_hit:
+        merged = cn_results + intl_results
+    else:
+        merged = intl_results + cn_results
+
+    return merged[:limit]
 
 
 if __name__ == "__main__":

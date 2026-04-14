@@ -113,6 +113,7 @@ def google_callback():
         session["user_id"]      = user["id"]
         session["display_name"] = user.get("display_name") or name
         session["avatar_url"]   = user.get("avatar_url") or avatar
+        session["role"]         = user.get("role", "member")
         return redirect(url_for("index"))
     except Exception as e:
         flash(f"Google sign-in failed: {e}", "danger")
@@ -186,6 +187,7 @@ def _set_session(user):
     session["avatar_url"]   = user.get("avatar_url", "")
     session["locale"]       = user.get("locale", "en")
     session["region"]       = user.get("region", "nz")
+    session["role"]         = user.get("role", "member")
 
 
 @app.route("/logout")
@@ -292,6 +294,12 @@ def stock_page(code):
     meta   = db.get_stock_meta(code)
     events = db.get_stock_events(code)
 
+    # 预计算操作参数（不依赖 LLM，仅基于均线/52周高低点）
+    from scripts.pipeline import _compute_trading_params
+    _raw_signals = db.get_fundamentals(code)
+    _sig_for_trade = (_raw_signals.get("signals", {}) if _raw_signals else {})
+    trading_params = _compute_trading_params(price, _sig_for_trade, market=market)
+
     return render_template("stock.html",
         stock=stock, price=price, news=news,
         analysis=analysis, history=history, prices=prices,
@@ -303,6 +311,7 @@ def stock_page(code):
         market=market, meta=meta, events=events,
         currency=MARKET_CURRENCY.get(market, "$"),
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+        trading_params=trading_params,
     )
 
 
@@ -568,6 +577,7 @@ def watchlist_page():
             pending_job = dict(j) if j else None
         grade = analysis.get("grade", "") if analysis else ""
         _GRADE_ORDER = {"A":1,"B+":2,"B":3,"B-":4,"C+":5,"C":6,"D":7}
+        _CONC_ORDER  = {"买入":1,"持有":2,"观察":3,"减持":4,"卖出":5}
         # signals data for richer card
         fund = db.get_fundamentals(code) if market == "cn" else {}
         sigs = fund.get("signals", {}) if fund else {}
@@ -579,6 +589,7 @@ def watchlist_page():
             "grade": grade or "—",
             "grade_sort": _GRADE_ORDER.get(grade, 99),
             "conclusion": analysis.get("conclusion", "") if analysis else "",
+            "conclusion_sort": _CONC_ORDER.get(analysis.get("conclusion","") if analysis else "", 99),
             "reasoning": (analysis.get("reasoning","") or "")[:120] if analysis else "",
             "has_letter": bool(analysis and analysis.get("letter_html")),
             "pending_job": pending_job,
@@ -885,16 +896,62 @@ def set_locale():
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
+    uid = session["user_id"]
     if request.method == "POST":
-        region = request.form.get("region", "nz")
-        locale = request.form.get("locale", "en")
-        db.update_user_settings(session["user_id"], region, locale)
-        session["region"] = region
-        session["locale"] = locale
-        _i18n_cache.clear()  # reload strings on next request
-        flash(_load_strings(locale).get("settings_saved", "Settings saved."), "success")
+        action = request.form.get("action", "general")
+
+        if action == "general":
+            region = request.form.get("region", "nz")
+            locale = request.form.get("locale", "en")
+            db.update_user_settings(uid, region, locale)
+            session["region"] = region
+            session["locale"] = locale
+            _i18n_cache.clear()
+            flash("Settings saved.", "success")
+
+        elif action == "push":
+            notify_daily = 1 if request.form.get("notify_daily") else 0
+            wecom_key    = request.form.get("wecom_webhook", "").strip()
+            db.upsert_push_settings(uid,
+                notify_daily=notify_daily,
+                wecom_webhook=wecom_key or None)
+            flash("推送设置已保存。", "success")
+
+        elif action == "test_push":
+            ps  = db.get_push_settings(uid)
+            key = (ps or {}).get("wecom_webhook", "")
+            if not key:
+                flash("请先填写 Server酱 SendKey。", "danger")
+            else:
+                import ssl, json, urllib.request
+                try:
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    payload = json.dumps({
+                        "title": "股票雷达 · 推送测试",
+                        "desp":  "推送配置正常 ✅ 你会在每个交易日 15:30 收到今日日报。"
+                    }).encode()
+                    req = urllib.request.Request(
+                        f"https://sctapi.ftqq.com/{key}.send",
+                        data=payload,
+                        headers={"Content-Type": "application/json"},
+                        method="POST"
+                    )
+                    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+                        resp = json.loads(r.read().decode())
+                    errno = resp.get("data", {}).get("errno", resp.get("code", -1))
+                    if errno == 0:
+                        flash("测试消息已发送，请查收微信。", "success")
+                    else:
+                        flash(f"Server酱 返回错误：{resp}", "danger")
+                except Exception as e:
+                    flash(f"发送失败：{e}", "danger")
+
         return redirect(url_for("settings"))
-    return render_template("settings.html")
+
+    push_settings = db.get_push_settings(uid) or {}
+    return render_template("settings.html", push_settings=push_settings)
 
 
 # ── API ───────────────────────────────────────────────
@@ -1034,6 +1091,78 @@ def api_rerun_all():
     count = len(db.all_watched_codes())
     # 每只股票：数据拉取 ~20s + LLM ~10s + sleep 5s = ~35s；Groq 限流时加 65s
     return jsonify({"ok": True, "message": f"已启动，共 {count} 只股票，顺利约 {count * 35 // 60} 分钟，限流时最多 {count * 100 // 60} 分钟"})
+
+
+@app.route("/admin/users")
+@login_required
+def admin_users():
+    if session.get("role") != "admin":
+        return "Forbidden", 403
+    users = db.list_users()
+    # 附上每个用户的推送设置
+    for u in users:
+        u["push"] = db.get_push_settings(u["id"]) or {}
+    return render_template("admin_users.html", users=users)
+
+
+@app.route("/admin/users/<int:target_uid>", methods=["GET", "POST"])
+@login_required
+def admin_user_detail(target_uid):
+    if session.get("role") != "admin":
+        return "Forbidden", 403
+
+    target = db.get_user_by_id(target_uid)
+    if not target:
+        return "User not found", 404
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "push":
+            notify_daily = 1 if request.form.get("notify_daily") else 0
+            wecom_key    = request.form.get("wecom_webhook", "").strip()
+            db.upsert_push_settings(target_uid,
+                notify_daily=notify_daily,
+                wecom_webhook=wecom_key or None)
+            flash(f"已更新 {target['email']} 的推送设置。", "success")
+
+        elif action == "test_push":
+            ps  = db.get_push_settings(target_uid)
+            key = (ps or {}).get("wecom_webhook", "")
+            if not key:
+                flash("该用户未设置 Server酱 key。", "danger")
+            else:
+                import ssl, json, urllib.request
+                try:
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    payload = json.dumps({
+                        "title": "股票雷达 · 推送测试",
+                        "desp":  f"管理员测试推送 ✅\n用户：{target['email']}"
+                    }).encode()
+                    req = urllib.request.Request(
+                        f"https://sctapi.ftqq.com/{key}.send",
+                        data=payload,
+                        headers={"Content-Type": "application/json"},
+                        method="POST"
+                    )
+                    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+                        resp = json.loads(r.read().decode())
+                    errno = resp.get("data", {}).get("errno", resp.get("code", -1))
+                    if errno == 0:
+                        flash("测试消息已发送。", "success")
+                    else:
+                        flash(f"Server酱 返回：{resp}", "danger")
+                except Exception as e:
+                    flash(f"发送失败：{e}", "danger")
+
+        return redirect(url_for("admin_user_detail", target_uid=target_uid))
+
+    push    = db.get_push_settings(target_uid) or {}
+    wl      = db.get_user_watchlist(target_uid) or []
+    return render_template("admin_user_detail.html",
+                           target=target, push=push, watchlist=wl)
 
 
 @app.route("/about")

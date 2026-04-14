@@ -132,6 +132,7 @@ def init_db():
             reasoning            TEXT,
             letter_html          TEXT,
             raw_output           TEXT,
+            trade_block          TEXT,
             feat_price_momentum  REAL,
             feat_sentiment_avg   REAL,
             feat_fund_flow_net   REAL,
@@ -678,6 +679,16 @@ def get_market_news(region, category=None, days=3):
 # ══════════════════════════════════════════════════
 
 def save_analysis(code, period, analysis_date, **kwargs):
+    # migrate: 增量添加新列，忽略已存在的错误
+    _new_cols = [
+        "ALTER TABLE analysis_results ADD COLUMN trade_block TEXT",
+        "ALTER TABLE analysis_results ADD COLUMN quant_score INTEGER",
+        "ALTER TABLE analysis_results ADD COLUMN quant_components TEXT",
+    ]
+    with get_conn() as c:
+        for sql in _new_cols:
+            try: c.execute(sql)
+            except Exception: pass
     # 不使用 ON CONFLICT，每次都插入新记录（测试阶段保留所有分析历史）
     # 用户可以手动删除不好的报告
     cols = ["code","period","analysis_date"] + list(kwargs.keys())

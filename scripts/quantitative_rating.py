@@ -10,6 +10,15 @@ from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 
 
+def _pct(value, default=0.0) -> float:
+    """安全地把 '15.3%' 或 15.3 (float/int) 都转成 float。"""
+    v = value if value is not None else default
+    try:
+        return float(str(v).replace("%", "").strip())
+    except (ValueError, TypeError):
+        return float(default)
+
+
 class QuantitativeRater:
     """基于数据的巴菲特评级引擎"""
 
@@ -133,8 +142,8 @@ class QuantitativeRater:
 
         # 解析最新年度数据
         latest = annual_data[0]
-        roe_pct = float(latest.get("roe", "0%").strip("%"))
-        margin_pct = float(latest.get("net_margin", "0%").strip("%"))
+        roe_pct = _pct(latest.get("roe"))
+        margin_pct = _pct(latest.get("net_margin"))
 
         # ROE 评分
         roe_score, roe_desc = cls.score_roe(roe_pct)
@@ -147,7 +156,7 @@ class QuantitativeRater:
         total += margin_score
 
         # ROE 稳定性
-        roe_list = [float(y.get("roe", "0%").strip("%")) for y in annual_data[:5]]
+        roe_list = [_pct(y.get("roe")) for y in annual_data[:5]]
         stability_score, stability_desc = cls.score_roe_stability(roe_list)
         details.append(f"ROE 稳定性: {stability_score}/10 分 - {stability_desc}")
         total += stability_score
@@ -358,7 +367,7 @@ class QuantitativeRater:
 
         # 负债评分
         try:
-            debt_ratio = float(latest.get("debt_ratio", "0%").strip("%")) / 100
+            debt_ratio = _pct(latest.get("debt_ratio")) / 100
             debt_score, debt_desc = cls.score_debt(debt_ratio)
             details.append(f"负债风险: {debt_score}/10 分 - {debt_desc}")
             total += debt_score
@@ -556,7 +565,7 @@ class QuantitativeRater:
 
         # ROE 红旗
         try:
-            roe_pct = float(latest.get("roe", "0%").strip("%"))
+            roe_pct = _pct(latest.get("roe"))
             if roe_pct < 5 and roe_pct >= 0:
                 flags.append("🚨 ROE < 5%：赚钱能力几乎为零")
             elif roe_pct < 0:
@@ -566,7 +575,7 @@ class QuantitativeRater:
 
         # 利润率红旗
         try:
-            margin_pct = float(latest.get("net_margin", "0%").strip("%"))
+            margin_pct = _pct(latest.get("net_margin"))
             if margin_pct < 0:
                 flags.append("🚨 净利率 < 0%：公司在烧钱")
         except:
@@ -574,7 +583,7 @@ class QuantitativeRater:
 
         # 债务红旗
         try:
-            debt_ratio = float(latest.get("debt_ratio", "0%").strip("%")) / 100
+            debt_ratio = _pct(latest.get("debt_ratio")) / 100
             if debt_ratio > 2.0:
                 flags.append("🚨 债务比 > 2.0：极度高杠杆")
         except:
