@@ -2826,7 +2826,9 @@ footer small {
   .watchlist-wrap { padding: 14px 16px 80px; }
   .wl-toolbar { flex-wrap: wrap; gap: 8px; }
   .wl-search-input { width: 140px; }
-  .wl-list-view { display: none !important; } /* 移动端不显示列表模式 */
+}
+@media (max-width: 480px) {
+  .wl-list-view { display: none !important; } /* 只在真正的手机屏幕隐藏列表模式 */
 }
 
 /* ── Report hint (homepage) ── */
@@ -3461,3 +3463,46 @@ footer small {
 }
 .freshness-sep { opacity: 0.4; }
 .freshness-stale { color: #c97a1a; }
+
+/* ⋯ 更多操作下拉 */
+.more-wrap { position: relative; display: inline-block; }
+.more-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #fff;
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  min-width: 120px;
+  z-index: 200;
+  padding: 4px 0;
+}
+.more-menu.open { display: block; }
+.more-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.more-menu button:hover { background: var(--surface); }
+
+/* 档案 tab 子标题 */
+.archive-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  padding: 20px 0 8px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--rule-light);
+}
+.archive-section-title:first-child { padding-top: 4px; }

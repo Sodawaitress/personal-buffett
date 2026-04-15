@@ -672,7 +672,8 @@ def _run_layer2(code, market, log, user_id=None):
     """
     import json as _json
     from quantitative_rating import QuantitativeRater
-    from buffett_analyst import _analyze_news_signals, _analyze_earnings_quality
+    from buffett_analyst import _analyze_news_signals
+    # _analyze_earnings_quality 定义在本文件，直接调用无需 import
 
     stock        = db.get_stock(code)
     price        = db.get_latest_price(code)
@@ -979,13 +980,10 @@ def start_pipeline(user_id: int, code: str, market: str) -> int:
     return job_id
 
 
-# ── US-45：分析层（用已有数据）────────────────────────
+# ── US-61：量化层（只跑 Layer 2，无 Groq）─────────────
 
-def run_analysis_only(job_id: int, code: str, market: str, user_id: int = None):
-    """
-    只跑 LLM 分析，不重爬任何数据。
-    用 DB 里已有的财务/价格/新闻数据，<30s 完成。
-    """
+def run_quant_only(job_id: int, code: str, market: str, user_id: int = None):
+    """只跑定量评级（Layer 2），不调用 Groq，~3s 完成。"""
     logs = []
 
     def log(msg):
@@ -994,20 +992,175 @@ def run_analysis_only(job_id: int, code: str, market: str, user_id: int = None):
 
     try:
         db.update_job(job_id, status="running")
-        log(f"▶ 分析数据（用缓存）: {code}")
-        _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, T_AI)
+        log(f"▶ 定量评级: {code}")
+        _run_layer2(code, market, log, user_id)
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
     except Exception as e:
+        log(f"⚠️ {e}")
         db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
 
 
-def start_analysis_only(user_id: int, code: str, market: str) -> int:
-    """启动「只跑分析」job，返回 job_id。"""
-    job_id = db.create_job(user_id, code, "analyze_only")
-    t = threading.Thread(target=run_analysis_only, args=(job_id, code, market, user_id), daemon=True)
+def start_quant_only(user_id: int, code: str, market: str) -> int:
+    """启动「只跑量化评级」job，返回 job_id。"""
+    job_id = db.create_job(user_id, code, "quant_only")
+    t = threading.Thread(target=run_quant_only, args=(job_id, code, market, user_id), daemon=True)
     t.start()
     return job_id
+
+
+# ── US-61：股东信层（只跑 Layer 3 Groq）──────────────
+
+def run_letter_only(job_id: int, code: str, market: str, user_id: int = None):
+    """
+    只生成巴菲特股东信（Layer 3），不重跑量化评级。
+    从 DB 重建 quant_result，调用 analyze_stock_v3()，
+    只更新 letter_html / 叙事字段，不覆盖 grade/conclusion。
+    """
+    import json as _json
+    logs = []
+
+    def log(msg):
+        logs.append(msg)
+        db.update_job(job_id, status="running", log="\n".join(logs)[-500:])
+
+    try:
+        db.update_job(job_id, status="running")
+        log(f"▶ 生成股东信: {code}")
+
+        # ── 从 DB 重建 quant_result ───────────────────────
+        stored = db.get_latest_analysis(code)
+        if not stored:
+            log("⚠️ 无已有分析记录，请先运行「巴菲特怎么看」")
+            db.update_job(job_id, status="failed", error="no analysis", log="\n".join(logs))
+            return
+
+        quant_components = {}
+        try:
+            quant_components = _json.loads(stored.get("quant_components") or "{}")
+        except Exception:
+            pass
+
+        quant_result = {
+            "grade":      stored.get("grade", "C"),
+            "conclusion": stored.get("conclusion", "持有"),
+            "reasoning":  stored.get("reasoning", ""),
+            "score":      stored.get("quant_score") or 0,
+            "components": quant_components,
+            "red_flags":  [],
+        }
+
+        # ── 从 DB 拿上下文数据 ────────────────────────────
+        stock        = db.get_stock(code)
+        price        = db.get_latest_price(code)
+        fundamentals = db.get_fundamentals(code) or {}
+        news         = db.get_stock_news(code, days=7)
+        events       = db.get_stock_events(code, limit=10)
+        meta         = db.get_stock_meta(code)
+        company_type = (meta or {}).get("company_type")
+        fund_flow    = db.get_fund_flow(code) if market == "cn" else {}
+
+        _annual = []
+        try:
+            _annual = _json.loads(fundamentals.get("annual_json") or "[]")
+        except Exception:
+            pass
+
+        _signals = fundamentals.get("signals", {})
+        trading_params_raw = _signals.get("trading_params")
+        trading_params = {}
+        try:
+            trading_params = _json.loads(trading_params_raw) if trading_params_raw else {}
+        except Exception:
+            pass
+
+        from buffett_analyst import _analyze_news_signals
+        news_signals   = _analyze_news_signals(news)
+        earnings_flags = _analyze_earnings_quality(_annual)  # 定义在本文件
+
+        entry_price, buy_date = None, None
+        if user_id:
+            try:
+                with db.get_conn() as c:
+                    row = c.execute(
+                        "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
+                        (user_id, code)
+                    ).fetchone()
+                    if row and row["buy_price"]:
+                        entry_price = float(row["buy_price"])
+                        buy_date    = row["buy_date"]
+            except Exception:
+                pass
+
+        # ── 调用 Layer 3 ──────────────────────────────────
+        def _do_letter():
+            from buffett_analyst import analyze_stock_v3
+            result = analyze_stock_v3(
+                code=code,
+                name=(stock or {}).get("name", code),
+                market=market,
+                quant_result=quant_result,
+                trading_params=trading_params,
+                news=news,
+                news_signals=news_signals,
+                price=price,
+                fund_flow=fund_flow,
+                fundamentals=fundamentals,
+                events=events,
+                company_type=company_type,
+                entry_price=entry_price,
+                buy_date=buy_date,
+                data_warnings=[],
+                earnings_flags=earnings_flags,
+            )
+            if result and result.get("letter_html"):
+                today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+                # 只更新叙事字段，保留已有 grade/conclusion/quant_score
+                db.save_analysis(
+                    code=code, period="daily", analysis_date=today,
+                    grade=stored.get("grade"),
+                    conclusion=stored.get("conclusion"),
+                    reasoning=stored.get("reasoning"),
+                    letter_html=result["letter_html"],
+                    moat=result.get("moat") or stored.get("moat"),
+                    management=result.get("management") or stored.get("management"),
+                    valuation=result.get("valuation") or stored.get("valuation"),
+                    fund_flow_summary=result.get("fund_flow_summary"),
+                    behavioral=result.get("behavioral"),
+                    macro_sensitivity=result.get("macro_sensitivity"),
+                    quant_score=stored.get("quant_score"),
+                    quant_components=stored.get("quant_components"),
+                    framework_used=result.get("framework_used") or stored.get("framework_used"),
+                )
+                log(f"       股东信生成完成（{len(result['letter_html'])}字）")
+            else:
+                log("       ⚠️ Layer 3 无输出（Groq 限速或超时）")
+
+        _run_with_timeout(_do_letter, [], "股东信生成", log, T_AI)
+        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+    except Exception as e:
+        log(f"⚠️ {e}")
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+
+
+def start_letter_only(user_id: int, code: str, market: str) -> int:
+    """启动「只生成股东信」job，返回 job_id。"""
+    job_id = db.create_job(user_id, code, "letter_only")
+    t = threading.Thread(target=run_letter_only, args=(job_id, code, market, user_id), daemon=True)
+    t.start()
+    return job_id
+
+
+# ── 旧接口保留（内部重定向到 quant_only）─────────────
+
+def run_analysis_only(job_id: int, code: str, market: str, user_id: int = None):
+    """兼容旧调用，现在只跑量化评级（不调 Groq）。"""
+    run_quant_only(job_id, code, market, user_id)
+
+
+def start_analysis_only(user_id: int, code: str, market: str) -> int:
+    """兼容旧调用，现在只跑量化评级。"""
+    return start_quant_only(user_id, code, market)
 
 
 # ── US-45：新闻层（1小时缓存）────────────────────────

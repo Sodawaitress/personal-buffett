@@ -400,7 +400,7 @@ function toggleView() {
   setView(_currentView === 'card' ? 'list' : 'card');
 }
 function setView(v) {
-  if (v === 'list' && window.innerWidth < 768) v = 'card';
+  if (v === 'list' && window.innerWidth < 480) v = 'card';
   _currentView = v;
   const sections = document.getElementById('wl-sections');
   const listView = document.getElementById('wl-list-view');
@@ -513,7 +513,9 @@ function toggleSelectMode() {
 }
 function enterSelectMode() {
   _selectMode = true;
-  document.getElementById('holding-grid')?.classList.add('select-mode');
+  // 三个分区 grid 都加 select-mode（正确 ID：grid-holding / grid-watching / grid-sold）
+  ['grid-holding','grid-watching','grid-sold'].forEach(id =>
+    document.getElementById(id)?.classList.add('select-mode'));
   document.getElementById('wl-list-view')?.classList.add('select-mode');
   // 显示列表复选框列
   document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = '');
@@ -525,7 +527,8 @@ function exitSelectMode() {
   document.querySelectorAll('.stock-checkbox').forEach(cb => { cb.checked = false; });
   document.querySelectorAll('.holding-card').forEach(c => c.classList.remove('card-selected'));
   document.querySelectorAll('.wl-list-row').forEach(r => r.classList.remove('card-selected'));
-  document.getElementById('holding-grid')?.classList.remove('select-mode');
+  ['grid-holding','grid-watching','grid-sold'].forEach(id =>
+    document.getElementById(id)?.classList.remove('select-mode'));
   document.getElementById('wl-list-view')?.classList.remove('select-mode');
   document.querySelectorAll('.wl-list-cb-col').forEach(el => el.style.display = 'none');
   const btn = document.getElementById('analyze-mode-btn');
@@ -578,18 +581,21 @@ function _updateBatch() {
   document.getElementById('batch-count').textContent = n;
   document.getElementById('batch-bar').classList.toggle('visible', n > 0);
 }
+function selectNone() { exitSelectMode(); }
 async function batchAnalyze() {
+  // US-61：批量只跑 quant-only（~3s/只，无 Groq 限速），股东信在详情页按需生成
+  exitSelectMode();  // 先退出选择模式，无论是否有选中股票
   const codes = [...document.querySelectorAll('.stock-checkbox:checked')].map(cb => cb.value);
   if (!codes.length) return;
-  const data = await (await fetch('/api/analyze-batch', {
-    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({codes})
-  })).json();
-  if (data.job_ids) {
-    data.job_ids.forEach(({code, job_id}) => {
+  for (const code of codes) {
+    const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
+    const data = await resp.json().catch(() => ({}));
+    if (data.job_id) {
       const card = document.querySelector(`.holding-card[data-code="${code}"]`);
-      if (card) { card.dataset.job = job_id; card.classList.add('holding-pending'); pollJob(job_id, code); }
-    });
-    exitSelectMode();
+      const row  = document.querySelector(`.wl-list-row[data-code="${code}"]`);
+      if (card) { card.dataset.job = data.job_id; card.classList.add('holding-pending'); pollJob(data.job_id, code); }
+      if (row)  { row.dataset.job  = data.job_id; }
+    }
   }
 }
 function batchPortfolio() {
@@ -622,7 +628,8 @@ async function rerunAll() {
 
 // ── 单股操作 ─────────────────────────────────────────
 async function triggerAnalysis(code) {
-  const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
+  // US-61：用 quant-only（~3s，无 Groq），股东信在详情页单独生成
+  const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
     const card = document.querySelector(`.holding-card[data-code="${code}"]`);

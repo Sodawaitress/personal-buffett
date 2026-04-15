@@ -2231,3 +2231,232 @@ ALTER TABLE analysis_results ADD COLUMN trade_block TEXT;
 ---
 
 *最后更新：2026-04-14（新增 US-57~60）*
+
+
+---
+
+## US-61 · 分析与股东信解耦（Groq 限速缓解）
+
+**背景**：当前「巴菲特怎么看」一个按钮串联定量评级（~3s，无 LLM）和股东信生成（~30s，Groq），Groq 限速或超时会让整个流程卡住。
+
+**目标**：把两件事拆成两个独立操作，用户先看到数据驱动的评级，按需再生成叙事信件。
+
+**Acceptance Criteria**
+
+- [ ] `pipeline.py` 新增 `run_quant_only()` / `start_quant_only()`：只跑 `_run_layer2()`（量化评级），不调用 Groq，~3s 完成
+- [ ] `pipeline.py` 新增 `run_letter_only()` / `start_letter_only()`：从 DB 重建 `quant_result`，只调用 `analyze_stock_v3()`（Groq），仅更新 `letter_html` / `fund_flow_summary` / `behavioral` 等叙事字段，不覆盖 `grade`/`conclusion`
+- [ ] `app.py` `/api/analyze-only/<code>` 改为调用 `start_quant_only()`（原 start_analysis_only 不再走 Layer 3）
+- [ ] `app.py` 新增 `/api/generate-letter/<code>` POST 端点，调用 `start_letter_only()`，返回 `{job_id}`
+- [ ] `stock.html` 「巴菲特怎么看」按钮行为不变，但背后只跑量化，~3s 刷新页面
+- [ ] `stock.html` 在今日简报底部新增「读股东信」按钮：若 `letter_html` 已存在则直接弹 Modal；若无则调 `/api/generate-letter` 并显示 spinner，完成后自动弹窗
+- [ ] `stock.html` 原「读巴菲特信」按钮（在 brief-header 里）合并为同一逻辑
+
+*最后更新：2026-04-15（新增 US-61）*
+
+---
+
+## US-62 · Pipeline 层级重构：1a/1b/1c1/1c2/1c3 + 2 + 3
+
+**背景**：当前 pipeline 的 Layer 1（数据爬取）是个大杂烩，价格/财务/新闻/资金/技术面全部混在一起，导致：
+- 任何一个数据源挂掉会影响整个分析
+- 无法按需刷新（比如只想更新价格，不重爬财务）
+- 不同市场（A股/美股/港股）的可用数据不同，但代码没有分支
+- 维护时需要读完整个函数才能定位问题
+
+**目标**：把 Layer 1 拆成 5 个独立、可单独调用的子层，每层有自己的缓存策略和市场路由。
+
+---
+
+### 层级定义
+
+```
+Layer 1a  行情层     价格/涨跌/成交量/市值         ~0.5s  不缓存（每次都要最新）
+Layer 1b  财务层     ROE/利润率/FCF/资产负债/PE/PB  ~5s    缓存7天（季报才变）
+Layer 1c1 新闻情绪层 新闻标题+摘要+情绪打分         ~3s    缓存24h
+Layer 1c2 资金信号层 北向资金/主力买卖/机构持仓      ~3s    缓存24h（A股专属，其他市场跳过）
+Layer 1c3 技术面层   历史K线/MA20~250/VWAP60/120    ~2s    缓存24h
+──────────────────────────────────────────────────────────
+Layer 2   定量评级   读DB纯计算，无网络调用          ~1s
+Layer 3   LLM叙事    Groq生成股东信                 ~30s   按需
+```
+
+---
+
+### 各层市场覆盖
+
+| 层 | A股(CN) | 美股(US) | 港股(HK) | NZ股(NZ) | 韩股(KS/KQ) |
+|----|---------|---------|---------|---------|------------|
+| 1a | ✅ Sina hq | ✅ yfinance | ✅ yfinance | ✅ yfinance | ✅ yfinance |
+| 1b | ✅ AKShare | ⚠️ yfinance 基础 | ⚠️ yfinance 基础 | ⚠️ yfinance 基础 | ⚠️ yfinance 基础 |
+| 1c1 | ✅ Google News | ✅ Google News | ✅ Google News | ✅ Google News | ✅ Google News |
+| 1c2 | ✅ 新浪/AKShare | ❌ 跳过 | ❌ 跳过 | ❌ 跳过 | ❌ 跳过 |
+| 1c3 | ✅ 新浪K线 | ✅ yfinance history | ✅ yfinance history | ✅ yfinance history | ✅ yfinance history |
+
+---
+
+### 触发组合（对应前端按钮）
+
+| 触发场景 | 跑哪些层 | 预计时间 |
+|---------|---------|---------|
+| 「巴菲特怎么看」(日常) | 1a + 1c1 + 1c2 + 2 | ~5s |
+| 「完整分析」(首次/季报后) | 1a + 1b + 1c1 + 1c2 + 1c3 + 2 | ~15s |
+| 「刷新行情」 | 1a only | ~1s |
+| 「生成股东信」 | 3 only | ~30s |
+| 定时每日任务 | 1a + 1c1 + 1c2 + 2 | ~5s/只 |
+
+---
+
+### 代码结构目标
+
+```python
+# pipeline.py 目标结构
+
+def _fetch_1a_quote(code, market):     """行情层：价格/涨跌/成交量"""
+def _fetch_1b_financials(code, market): """财务层：ROE/利润率/FCF（含7天缓存判断）"""
+def _fetch_1c1_news(code, market):     """新闻情绪层：抓取+情绪打分（含24h缓存）"""
+def _fetch_1c2_capital(code, market):  """资金信号层：北向+主力（仅A股，含24h缓存）"""
+def _fetch_1c3_technicals(code, market):"""技术面层：历史K线+MA/VWAP（含24h缓存）"""
+
+def _run_layer2(code, market, log, user_id):  """定量评级：读DB纯计算（现有，保留）"""
+def run_letter_only(...)                      """LLM叙事（现有，保留）"""
+```
+
+---
+
+### 缓存策略（DB 实现）
+
+在 `fundamentals` / `signals` 表上加 `fetched_at` 时间戳字段。
+每个子层在爬取前检查：
+```python
+def _should_refresh_1b(code) -> bool:
+    last = db.get_financials_fetched_at(code)
+    return last is None or (now - last).days >= 7
+
+def _should_refresh_1c1(code) -> bool:
+    last = db.get_news_fetched_at(code)
+    return last is None or (now - last).hours >= 24
+```
+
+---
+
+**Acceptance Criteria**
+
+- [ ] `pipeline.py` 按上述结构拆分为 5 个独立 `_fetch_*` 函数，每个函数只负责自己那层
+- [ ] 每个 `_fetch_*` 函数开头有市场路由：不支持的市场直接 `return`（不报错）
+- [ ] 缓存逻辑内置在每个函数里，外部调用无需关心
+- [ ] `run_quant_only()` 改为触发 1a + 1c1 + 1c2 + Layer2
+- [ ] 新增 `run_full_analysis()` 触发所有子层 + Layer2（首次/完整分析用）
+- [ ] DB 各相关表加 `fetched_at` 字段
+- [ ] 每个函数有独立的错误捕获，一层失败不影响其他层
+
+---
+
+## US-63 · 新闻+信号 Tab 重设计（1c1/1c2/1c3 合并呈现）
+
+**背景**：当前「新闻」tab 只显示新闻列表。1c2（资金信号）和 1c3（技术面）的数据散落在「档案」tab 里，没有独立的视觉区块。用户想一眼看到「今天有什么信号」。
+
+**目标**：把「新闻」tab 升级为「信号+新闻」tab，三类信号放在前面，新闻链接往下放。
+
+---
+
+### UI 布局（新闻 tab 内部）
+
+```
+┌─ 📡 今日信号 ────────────────────────────────────┐
+│                                                   │
+│  [资金信号]  仅A股显示                             │
+│  北向资金：净流入 +12.3亿  📈                      │
+│  主力动向：小幅净买入  ➖                           │
+│  机构持仓：Q1末增持 +2.3%  📈                     │
+│                                                   │
+│  [技术信号]  所有市场                              │
+│  当前 ¥45.2 在 MA60(43.1) 上方，距年线MA250 +8%   │
+│  VWAP60: ¥44.8 / VWAP120: ¥43.2                  │
+│  位置判断：中间区域，未到极端超买/超卖              │
+│                                                   │
+│  [新闻情绪]  所有市场                              │
+│  本周 8 条新闻：📈 5 正面  ➖ 2 中性  📉 1 负面    │
+│                                                   │
+└───────────────────────────────────────────────────┘
+
+─── 新闻列表 ──────────────────────────────────────
+📈 标题一  来源  时间
+➖ 标题二  来源  时间
+...
+```
+
+---
+
+### A股 vs 非A股差异
+
+**A股**：显示资金信号 + 技术信号 + 新闻情绪（全部）
+**美股/港股/NZ/韩股**：隐藏资金信号区块，显示技术信号 + 新闻情绪
+
+---
+
+**Acceptance Criteria**
+
+- [ ] 「新闻」tab 顶部新增「今日信号」卡片区
+- [ ] 资金信号区：market=cn 时显示北向/主力/机构数据，非CN市场隐藏整个区块
+- [ ] 技术信号区：所有市场显示，显示 MA60/MA250 位置判断 + VWAP60/120
+- [ ] 新闻情绪区：显示本周新闻情绪分布统计（正/中/负计数）
+- [ ] 原新闻列表保留，移至信号卡片下方
+- [ ] 各区块数据不存在时显示「数据积累中」，不报错不崩溃
+
+---
+
+## US-64 · 市场差异化分析框架（不同市场不同数据方案）
+
+**背景**：目前 A股分析是完整的（5层数据），但美股/港股/NZ 缺少 1c2（资金信号），1b（财务）也偏弱。代码没有明确的市场分支，导致非A股分析结果质量参差不齐，用户看到一堆「数据积累中」。
+
+**目标**：为每个市场定义明确的「能提供什么数据」，LLM prompt 和 UI 根据实际可用数据动态调整，不展示根本没有的东西。
+
+---
+
+### 各市场数据能力矩阵
+
+| 能力 | A股(CN) | 美股(US) | 港股(HK) | NZ(NZ) | 韩股(KS/KQ) |
+|------|---------|---------|---------|--------|------------|
+| 实时行情 | ✅ Sina | ✅ yfinance | ✅ yfinance | ✅ yfinance | ✅ yfinance |
+| PE/PB | ✅ | ✅ | ✅ | ⚠️ | ⚠️ |
+| ROE/利润率趋势 | ✅ AKShare | ⚠️ yfinance | ⚠️ yfinance | ❌ | ❌ |
+| FCF/ROIC | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
+| 北向资金 | ✅ | ❌ | ❌ | ❌ | ❌ |
+| 主力资金 | ✅ | ❌ | ❌ | ❌ | ❌ |
+| 机构持仓 | ✅ | ✅ SEC | ⚠️ | ❌ | ❌ |
+| 技术面(MA/VWAP) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 新闻 | ✅ | ✅ | ✅ | ✅ | ⚠️ |
+
+---
+
+### LLM Prompt 市场路由
+
+```python
+MARKET_ANALYSIS_CAPS = {
+    "cn": ["quote", "financials_full", "capital_flow", "technicals", "news"],
+    "us": ["quote", "financials_basic", "technicals", "news"],
+    "hk": ["quote", "financials_basic", "technicals", "news"],
+    "nz": ["quote", "technicals", "news"],
+    "ks": ["quote", "financials_basic", "technicals", "news"],
+}
+```
+
+LLM prompt 根据市场自动调整：
+- CN：全量 prompt，包含北向/主力/机构分析指令
+- US/HK：省略资金流向章节，加强护城河/估值分析
+- NZ：只有行情+新闻，prompt 强调「数据有限，判断谨慎」
+
+---
+
+**Acceptance Criteria**
+
+- [ ] `pipeline.py` 加 `MARKET_ANALYSIS_CAPS` 字典，各市场声明可用能力
+- [ ] `_fetch_1c2_capital` 在非CN市场直接 `return {}`，不尝试调用
+- [ ] `buffett_analyst.py` 根据 `market` 和实际可用数据动态裁剪 system prompt
+- [ ] `stock.html` 信号区块根据 market 决定显示哪些数据项（非CN隐藏资金信号）
+- [ ] 当某层数据缺失时，UI 显示「该市场暂不支持此数据」而非空白或报错
+- [ ] CLAUDE.md「市场覆盖表」更新为与 `MARKET_ANALYSIS_CAPS` 一致
+
+---
+
+*最后更新：2026-04-15（新增 US-62/63/64）*

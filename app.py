@@ -219,7 +219,7 @@ def home():
 @app.route("/stock/<path:code>/fundamentals")
 @login_required
 def stock_fundamentals(code):
-    return redirect(url_for("stock_page", code=code.upper()) + "#tab-fundamentals")
+    return redirect(url_for("stock_page", code=code.upper()) + "#tab-archive")
 
 
 @app.route("/stock/<path:code>")
@@ -621,6 +621,7 @@ def brief_page():
 @login_required
 def watchlist_page():
     db.init_db()
+    db._migrate()  # 确保 user_watchlist 所有列都存在（status/buy_price 等）
     watchlist = db.get_user_watchlist(session["user_id"])
     stocks = []
     for row in watchlist:
@@ -1048,12 +1049,24 @@ def api_analyze(code):
 @app.route("/api/analyze-only/<code>", methods=["POST"])
 @login_required
 def api_analyze_only(code):
-    """US-45：只跑 LLM，用已有数据，不重爬，<30s"""
-    from scripts.pipeline import start_analysis_only
+    """US-61：只跑定量评级（Layer 2，无 Groq），~3s"""
+    from scripts.pipeline import start_quant_only
     stock = db.get_stock(code)
     if not stock:
         return jsonify({"error": "stock not found"}), 404
-    job_id = start_analysis_only(session["user_id"], code, stock["market"])
+    job_id = start_quant_only(session["user_id"], code, stock["market"])
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/generate-letter/<code>", methods=["POST"])
+@login_required
+def api_generate_letter(code):
+    """US-61：只生成巴菲特股东信（Layer 3 Groq），~30s"""
+    from scripts.pipeline import start_letter_only
+    stock = db.get_stock(code)
+    if not stock:
+        return jsonify({"error": "stock not found"}), 404
+    job_id = start_letter_only(session["user_id"], code, stock["market"])
     return jsonify({"job_id": job_id})
 
 
