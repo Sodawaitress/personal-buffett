@@ -584,8 +584,9 @@ function _updateBatch() {
 function selectNone() { exitSelectMode(); }
 async function batchAnalyze() {
   // US-61：批量只跑 quant-only（~3s/只，无 Groq 限速），股东信在详情页按需生成
-  exitSelectMode();  // 先退出选择模式，无论是否有选中股票
+  // 必须先读 codes，再退出选择模式（exitSelectMode 会取消所有勾选）
   const codes = [...document.querySelectorAll('.stock-checkbox:checked')].map(cb => cb.value);
+  exitSelectMode();
   if (!codes.length) return;
   for (const code of codes) {
     const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
@@ -628,12 +629,22 @@ async function rerunAll() {
 
 // ── 单股操作 ─────────────────────────────────────────
 async function triggerAnalysis(code) {
-  // US-61：用 quant-only（~3s，无 Groq），股东信在详情页单独生成
   const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
-  const data = await resp.json();
+  const data = await resp.json().catch(() => ({}));
   if (data.job_id) {
+    // 卡片视图：显示 spinner
     const card = document.querySelector(`.holding-card[data-code="${code}"]`);
-    if (card) { card.dataset.job = data.job_id; card.classList.add('holding-pending'); pollJob(data.job_id, code); }
+    if (card) { card.dataset.job = data.job_id; card.classList.add('holding-pending'); }
+    // 列表视图：行名字旁加 spinner（列表视图下卡片是隐藏的）
+    const row = document.querySelector(`.wl-list-row[data-code="${code}"]`);
+    if (row) {
+      row.dataset.job = data.job_id;
+      const nameCell = row.querySelector('.wl-list-name');
+      if (nameCell && !nameCell.querySelector('.spinner')) {
+        nameCell.insertAdjacentHTML('afterend', '<span class="spinner" style="width:10px;height:10px;margin-left:6px;vertical-align:middle"></span>');
+      }
+    }
+    pollJob(data.job_id, code);
   }
 }
 async function cancelJob(jobId, code) {
