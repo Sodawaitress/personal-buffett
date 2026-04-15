@@ -13,10 +13,27 @@ from datetime import datetime, timezone, timedelta
 
 CN_TZ = timezone(timedelta(hours=8))
 
-# ── 步骤函数 ──────────────────────────────────────────
+# ── Pipeline 层级结构（US-62）────────────────────────
+#
+#  Layer 1a  _fetch_1a_quote        行情      价格/涨跌/成交量         不缓存
+#  Layer 1b  _fetch_1b_financials   财务      ROE/FCF/PE/PB           缓存7天
+#  Layer 1c1 _fetch_1c1_news        新闻情绪  新闻+情绪打分            缓存24h
+#  Layer 1c2 _fetch_1c2_capital     资金信号  北向/主力/机构（仅CN）    缓存24h
+#  Layer 1c3 _fetch_1c3_technicals  技术面    MA/VWAP/52周高低         缓存24h
+#  ──────────────────────────────────────────────────────
+#  Layer 2   _run_layer2            定量评级  读DB纯计算               无缓存
+#  Layer 3   analyze_stock_v3       LLM叙事   Groq生成股东信           按需
+#
+#  触发组合：
+#    run_quant_only   = 1a + 1c1(24h缓存) + 1c2(24h缓存) + Layer2   ~5s
+#    run_pipeline     = 1a + 1b + 1c1 + 1c2 + 1c3 + Layer2 + Layer3 ~60s
+#    run_letter_only  = Layer3 only                                   ~30s
+#    run_news_update  = 1c1 only                                      ~3s
+#
+# ─────────────────────────────────────────────────────
 
-def _fetch_price(code, market, log):
-    """Step 1: 爬取当前价格"""
+def _fetch_1a_quote(code, market, log):
+    """Layer 1a · 行情层：当前价格/涨跌/成交量。不缓存，每次都拉最新。"""
     log("  [1/4] 爬取价格…")
     try:
         if market == "nz":
@@ -67,8 +84,8 @@ def _fetch_price(code, market, log):
         log(f"       ⚠️ 价格获取失败: {e}")
 
 
-def _fetch_news(code, market, log):
-    """Step 2: 爬取近30天新闻"""
+def _fetch_1c1_news(code, market, log):
+    """Layer 1c1 · 新闻情绪层：爬取近30天新闻并打情绪标签。缓存24h。"""
     log("  [2/4] 爬取新闻…")
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
     count = 0
@@ -320,8 +337,8 @@ def _fetch_advanced(code, market, log):
         log(f"       ⚠️ 高级财务失败: {e}")
 
 
-def _fetch_technicals(code, market, log):
-    """Step 3.7: 技术支撑位（A股用均线，其他用yfinance数据）"""
+def _fetch_1c3_technicals(code, market, log):
+    """Layer 1c3 · 技术面层：MA20/60/120/250 + VWAP60/120（A股）；52周高低点（其他市场）。缓存24h。"""
     log("  [3.7/4] 计算技术支撑位…")
     try:
         if market == "cn":
@@ -386,6 +403,26 @@ def _fetch_signals(code, market, log):
             log(f"       {' | '.join(parts)}")
     except Exception as e:
         log(f"       ⚠️ 投行信号获取失败: {e}")
+
+
+def _fetch_1b_financials(code, market, log):
+    """
+    Layer 1b · 财务层：基础财务数据 + 高级财务（ROIC/Owner Earnings/D/E）。
+    缓存7天（季报才变，无需频繁重爬）。ST股跳过高级财务（API质量差）。
+    """
+    _fetch_financials(code, market, log)
+    if not _is_st(code):
+        _fetch_advanced(code, market, log)
+
+
+def _fetch_1c2_capital(code, market, log):
+    """
+    Layer 1c2 · 资金信号层：主力资金净流入 + 投行信号（质押/融资/机构持仓）。
+    仅A股（CN）有效，其他市场函数内部自动跳过。缓存24h。ST股跳过投行信号。
+    """
+    _fetch_fund_flow(code, market, log)
+    if not _is_st(code):
+        _fetch_signals(code, market, log)
 
 
 def _validate_signals(code: str, fundamentals: dict) -> list:
@@ -937,16 +974,16 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
         mode = "全量" if force else "缓存优先"
         log(f"▶ pipeline 开始: {code} ({market}) [{mode}]")
 
-        is_st = _is_st(code)
-        if is_st:
-            log("  ℹ️ ST股检测到，跳过高级财务和信号步骤")
+        # ── Layer 1a：行情 ────────────────────────────────
+        _maybe_run("price",        _fetch_1a_quote,      [code, market, log], "1a·行情",     T_PRICE)
 
-        _maybe_run("price",        _fetch_price,     [code, market, log], "价格",    T_PRICE)
-        _maybe_run("news",         _fetch_news,      [code, market, log], "新闻",    T_NEWS)
-        _maybe_run("fund_flow",    _fetch_fund_flow, [code, market, log], "主力资金", T_BASIC)
-        _maybe_run("fundamentals", _fetch_financials,[code, market, log], "财务数据", T_FINANCE)
+        # ── Layer 1c1：新闻情绪 ───────────────────────────
+        _maybe_run("news",         _fetch_1c1_news,      [code, market, log], "1c1·新闻",    T_NEWS)
 
-        # 财务数据加载后重新分类，确保 speculative 等判断用上真实数字
+        # ── Layer 1b：财务（含7天缓存，ST股跳过高级财务）──
+        _maybe_run("fundamentals", _fetch_1b_financials, [code, market, log], "1b·财务",     T_FINANCE)
+
+        # 财务加载后重新分类，确保 speculative 等判断用上真实数字
         try:
             from classifier import classify_stock
             meta = classify_stock(code)
@@ -954,10 +991,11 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
         except Exception as _ce:
             log(f"  ⚠️ 重新分类失败: {_ce}")
 
-        if not is_st:
-            _maybe_run("advanced",   _fetch_advanced,   [code, market, log], "高级财务",  T_BASIC)
-            _maybe_run("technicals", _fetch_technicals, [code, market, log], "技术支撑位", T_PRICE)
-            _maybe_run("signals",    _fetch_signals,    [code, market, log], "投行信号",  T_BASIC)
+        # ── Layer 1c2：资金信号（仅A股，ST股跳过投行信号）─
+        _maybe_run("fund_flow",    _fetch_1c2_capital,   [code, market, log], "1c2·资金信号", T_BASIC)
+
+        # ── Layer 1c3：技术面 ─────────────────────────────
+        _maybe_run("technicals",   _fetch_1c3_technicals,[code, market, log], "1c3·技术面",  T_PRICE)
 
         _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, T_AI)
 
@@ -992,7 +1030,24 @@ def run_quant_only(job_id: int, code: str, market: str, user_id: int = None):
 
     try:
         db.update_job(job_id, status="running")
-        log(f"▶ 定量评级: {code}")
+        log(f"▶ 定量评级（含数据刷新）: {code} ({market})")
+
+        # ── Layer 1a：行情（每次都拉，价格必须最新）────────
+        _run_with_timeout(_fetch_1a_quote, [code, market, log], "1a·行情", log, T_PRICE)
+
+        # ── Layer 1c1：新闻情绪（24h 缓存）───────────────
+        if _is_stale(code, "news", force=False):
+            _run_with_timeout(_fetch_1c1_news, [code, market, log], "1c1·新闻", log, T_NEWS)
+        else:
+            log("  ⏭ 新闻缓存新鲜，跳过")
+
+        # ── Layer 1c2：资金信号（24h 缓存，A股有效）──────
+        if _is_stale(code, "fund_flow", force=False):
+            _run_with_timeout(_fetch_1c2_capital, [code, market, log], "1c2·资金信号", log, T_BASIC)
+        else:
+            log("  ⏭ 资金信号缓存新鲜，跳过")
+
+        # ── Layer 2：定量评级（读DB纯计算）───────────────
         _run_layer2(code, market, log, user_id)
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
@@ -1191,7 +1246,7 @@ def run_news_update(job_id: int, code: str, market: str):
             return
 
         log(f"▶ 更新新闻: {code}")
-        _run_with_timeout(_fetch_news, [code, market, log], "新闻", log, T_NEWS)
+        _run_with_timeout(_fetch_1c1_news, [code, market, log], "1c1·新闻", log, T_NEWS)
         log("✅ 新闻更新完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
     except Exception as e:
