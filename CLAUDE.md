@@ -88,6 +88,11 @@
 - **US-58 北向资金修复（2026-04-14）**：stock_fetch.py fetch_north_bound() 字段全部修正（交易日/资金净流入/板块，百万→亿换算）
 - **stock_fetch.py DB 驱动（2026-04-14）**：_load_cn_stocks_from_db() 从 DB 读所有用户 A 股自选股，替代硬编码 WATCHLIST；db.py 加 get_all_cn_watchlist_stocks()；fetch_quotes() 改为接受参数
 - **Bug fix: 分析完成打断搜索（2026-04-14）**：watchlist.html pollJob 检测搜索框状态，搜索中时改为顶部横幅提示而非强制 location.reload()
+- **US-62 Pipeline 分层重构（2026-04-15）**：Layer 1 拆为 5 子层（1a行情/1b财务/1c1新闻/1c2资金/1c3技术面）；各层独立函数+缓存+错误捕获；`run_quant_only` 改为触发 1a+1c1+1c2+Layer2；修复 `batchAnalyze` 读码顺序 bug；修复列表视图 spinner 缺失；列表视图断点从 768px 改为 480px
+- **澳股支持（2026-04-15）**：`.AX` → `au` market 全链路（app.py / db.py / pipeline.py / stock_search.py）；`MARKET_CURRENCY` 加 `"au": "A$"`
+- **US-63 新闻+信号 Tab 重设计（2026-04-15）**：stock.html 新闻 tab 顶部加「今日信号」面板（资金信号仅A股/技术信号所有市场/新闻情绪所有市场）；新闻列表下移；`.signal-panel` CSS
+- **北向资金存储（2026-04-15）**：`db.save_north_bound` / `get_north_bound`（复用 market_data 表）；`_fetch_north_bound()` 加入 1c2 层（24h缓存）；stock.html 信号面板展示沪深分项
+- **US-65 差评预警（2026-04-15）**：连续6次 D/D-（非持有区）触发通知；`user_notifications` 表；`check_poor_rating_streak` / `create_notification` / `snooze_notification` / `dismiss_notification`；watchlist.html 顶部黄色横幅（折叠/展开）；「继续观察60天」snooze + 「移除自选股」两个操作
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）

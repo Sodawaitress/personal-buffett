@@ -199,6 +199,8 @@ def _search_yf_name(query: str, limit: int = 6) -> list:
                 market = "hk"
             elif sym_up.endswith((".KS", ".KQ")):
                 market = "kr"
+            elif sym_up.endswith(".AX"):
+                market = "au"
             elif "." not in sym_up:
                 market = "us"
             else:
@@ -236,6 +238,8 @@ def _search_yf(ticker: str) -> list:
             market = "hk"
         elif code.endswith((".KS", ".KQ")) or curr == "KRW":
             market = "kr"
+        elif code.endswith(".AX") or curr == "AUD":
+            market = "au"
         else:
             market = "us"
         return [{"code": code, "name": short,
@@ -293,7 +297,7 @@ def search(q: str, limit: int = 10) -> list:
             _add_intl(_search_yf(ticker))
         else:
             # 各市场后缀：始终尝试，不因 A 股结果多少而跳过
-            for sfx in (".HK", ".NZ", ".KS"):
+            for sfx in (".HK", ".NZ", ".KS", ".AX"):
                 _add_intl(_search_yf(ticker + sfx))
             # 美股裸 ticker：全大写输入 or 拼音 A 股结果少（< 3）时加入
             cn_count = sum(1 for r in cn_results if r.get("market") == "cn")

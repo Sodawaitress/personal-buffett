@@ -238,6 +238,18 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_stock_events_code ON stock_events(code);
 
+        -- 用户通知（US-65 差评预警）
+        CREATE TABLE IF NOT EXISTS user_notifications (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id       INTEGER REFERENCES users(id),
+            code          TEXT,
+            type          TEXT,           -- 'poor_rating'
+            message       TEXT,
+            created_at    TEXT DEFAULT (datetime('now')),
+            snoozed_until TEXT,           -- 「继续观察」时设置60天后
+            dismissed_at  TEXT            -- 「移除」或手动关闭时设置
+        );
+
         -- 数据质量日志（US-48）
         CREATE TABLE IF NOT EXISTS data_quality_log (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -492,6 +504,7 @@ def _guess_market(code):
     if code.endswith(".NZ"): return "nz"
     if code.endswith(".HK"): return "hk"
     if code.endswith(".KS") or code.endswith(".KQ"): return "kr"
+    if code.endswith(".AX"): return "au"
     if re.match(r"^\d{6}$", code): return "cn"
     return "us"
 
@@ -624,6 +637,35 @@ def get_fund_flow_history(code, days=30):
             WHERE code=?
             ORDER BY date ASC LIMIT ?
         """, (code, days))]
+
+
+# ══════════════════════════════════════════════════
+# 北向资金（市场级，存 market_data 表）
+# ══════════════════════════════════════════════════
+
+def save_north_bound(data: dict):
+    """存最新北向资金数据，覆盖旧值（market_data 里只保留最新一条）。"""
+    import json
+    with get_conn() as c:
+        c.execute("DELETE FROM market_data WHERE data_type='north_bound'")
+        c.execute("INSERT INTO market_data(data_type, payload) VALUES('north_bound', ?)",
+                  (json.dumps(data, ensure_ascii=False),))
+
+def get_north_bound() -> dict:
+    """读最新北向资金数据，无数据返回 {}。"""
+    import json
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT payload, fetched_at FROM market_data WHERE data_type='north_bound' ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return {}
+        try:
+            d = json.loads(row["payload"])
+            d["fetched_at"] = row["fetched_at"]
+            return d
+        except Exception:
+            return {}
 
 
 # ══════════════════════════════════════════════════
@@ -1067,6 +1109,98 @@ def log_data_quality(code: str, field: str, value, flag: str, reason: str):
             "INSERT INTO data_quality_log(code, field, value, flag, reason) VALUES(?,?,?,?,?)",
             (code, field, str(value), flag, reason)
         )
+
+
+# ══════════════════════════════════════════════════
+# 用户通知（US-65 差评预警）
+# ══════════════════════════════════════════════════
+
+def check_poor_rating_streak(code: str, user_id: int) -> list:
+    """
+    检查该股票最近 6 次分析评级是否全为 D 或 D-（不含 D+），
+    且该用户该股票不在持有区（status != 'holding'）。
+    满足条件返回评级列表（非空即触发），否则返回空列表。
+    """
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT status FROM user_watchlist WHERE user_id=? AND stock_code=?",
+            (user_id, code)
+        ).fetchone()
+        if not row or row["status"] == "holding":
+            return []
+
+        rows = c.execute("""
+            SELECT grade FROM analysis_results
+            WHERE code=? AND period='daily' AND grade IS NOT NULL
+            ORDER BY id DESC LIMIT 6
+        """, (code,)).fetchall()
+
+        if len(rows) < 6:
+            return []
+
+        poor = {"d", "d-"}
+        grades = [r["grade"] for r in rows]
+        return grades if all(g.lower() in poor for g in grades) else []
+
+
+def create_notification(user_id: int, code: str, grades: list):
+    """插入差评通知，若已有未处理（未 dismiss、未 snooze）的同类通知则跳过。"""
+    from datetime import datetime, timezone
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        existing = c.execute("""
+            SELECT id FROM user_notifications
+            WHERE user_id=? AND code=? AND type='poor_rating'
+              AND dismissed_at IS NULL
+              AND (snoozed_until IS NULL OR snoozed_until < ?)
+        """, (user_id, code, today)).fetchone()
+        if existing:
+            return
+        import json
+        msg = f"该股票最近6次评级均为 D 级：{', '.join(grades)}"
+        c.execute("""
+            INSERT INTO user_notifications(user_id, code, type, message)
+            VALUES (?, ?, 'poor_rating', ?)
+        """, (user_id, code, msg))
+
+
+def get_active_notifications(user_id: int) -> list:
+    """读取用户所有有效通知（未 dismiss、未 snooze）。"""
+    from datetime import datetime, timezone
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT n.id, n.code, n.type, n.message, n.created_at,
+                   s.name AS stock_name
+            FROM user_notifications n
+            LEFT JOIN stocks s ON s.code = n.code
+            WHERE n.user_id=? AND n.dismissed_at IS NULL
+              AND (n.snoozed_until IS NULL OR n.snoozed_until < ?)
+            ORDER BY n.created_at DESC
+        """, (user_id, today)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def snooze_notification(notif_id: int, user_id: int):
+    """继续观察：60 天内不再提醒。"""
+    from datetime import datetime, timezone, timedelta
+    until = (datetime.now(timezone.utc) + timedelta(days=60)).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        c.execute("""
+            UPDATE user_notifications SET snoozed_until=?
+            WHERE id=? AND user_id=?
+        """, (until, notif_id, user_id))
+
+
+def dismiss_notification(notif_id: int, user_id: int):
+    """关闭通知（移除自选股后调用，或手动关闭）。"""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    with get_conn() as c:
+        c.execute("""
+            UPDATE user_notifications SET dismissed_at=?
+            WHERE id=? AND user_id=?
+        """, (now, notif_id, user_id))
 
 
 def _migrate():

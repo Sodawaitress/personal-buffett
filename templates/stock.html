@@ -255,7 +255,175 @@
 
     {# 新闻 #}
     <div id="tab-news" class="tab-content" style="display:none">
+
+      {# ── 今日信号面板 ── #}
+      <div class="signal-panel">
+        <div class="signal-panel-title">📡 今日信号</div>
+
+        {# 资金信号 · 仅A股 #}
+        {% if market == "cn" %}
+        <div class="signal-group">
+          <div class="signal-group-label">资金信号</div>
+          <div class="signal-items">
+            {% if north_bound and north_bound.get("total_net") is not none %}
+            <div class="signal-item">
+              <span class="signal-key">北向资金</span>
+              <span class="signal-val {{ 'up' if north_bound.total_net >= 0 else 'down' }}">
+                {{ "%+.2f"|format(north_bound.total_net) }}亿
+                （沪 {{ "%+.1f"|format(north_bound.get("sh_net", 0)) }} / 深 {{ "%+.1f"|format(north_bound.get("sz_net", 0)) }}）
+                {{ "📈" if north_bound.total_net >= 0 else "📉" }}
+              </span>
+            </div>
+            {% else %}
+            <div class="signal-item">
+              <span class="signal-key">北向资金</span>
+              <span class="signal-val muted">数据积累中</span>
+            </div>
+            {% endif %}
+            {% if fund_flow %}
+            <div class="signal-item">
+              <span class="signal-key">主力动向</span>
+              <span class="signal-val {{ 'up' if fund_flow.main_net >= 0 else 'down' }}">
+                {{ "%+.2f"|format(fund_flow.main_net) }}亿
+                {% if fund_flow.main_ratio is not none %}({{ "%+.1f"|format(fund_flow.main_ratio) }}%){% endif %}
+                {{ "📈" if fund_flow.main_net >= 0 else "📉" }}
+              </span>
+            </div>
+            {% else %}
+            <div class="signal-item">
+              <span class="signal-key">主力动向</span>
+              <span class="signal-val muted">数据积累中</span>
+            </div>
+            {% endif %}
+            {% if signals and signals.get("inst_increased") is not none %}
+            <div class="signal-item">
+              <span class="signal-key">机构持仓</span>
+              {% set inc = signals.inst_increased | int %}
+              {% set dec = signals.inst_decreased | int %}
+              <span class="signal-val {{ 'up' if inc > dec else ('down' if dec > inc else '') }}">
+                增持 {{ inc }} / 减持 {{ dec }}
+                {{ "📈" if inc > dec else ("📉" if dec > inc else "➖") }}
+              </span>
+            </div>
+            {% endif %}
+            {% if signals and signals.get("margin_direction") %}
+            <div class="signal-item">
+              <span class="signal-key">融资方向</span>
+              <span class="signal-val">{{ signals.margin_direction }}
+                {% if signals.get("margin_balance") %} {{ "%.1f"|format(signals.margin_balance / 1e8) }}亿{% endif %}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        {# 技术信号 · 所有市场 #}
+        <div class="signal-group">
+          <div class="signal-group-label">技术信号</div>
+          <div class="signal-items">
+            {% set tech = signals.get("technicals", {}) if signals else {} %}
+            {% set cur_sym = market_currency.get(market, "$") %}
+            {% if market == "cn" and tech %}
+              {% set pct60  = tech.get("price_vs_ma60") %}
+              {% set pct250 = tech.get("price_vs_ma250") %}
+              {% if tech.get("ma60") and pct60 is not none %}
+              <div class="signal-item">
+                <span class="signal-key">MA60 季线</span>
+                <span class="signal-val {{ 'up' if pct60 > 0 else 'down' }}">
+                  {{ cur_sym }}{{ "%.2f"|format(tech.ma60) }}
+                  ({{ "%+.1f"|format(pct60) }}%)
+                  {{ "📈" if pct60 > 0 else "📉" }}
+                </span>
+              </div>
+              {% endif %}
+              {% if tech.get("ma250") and pct250 is not none %}
+              <div class="signal-item">
+                <span class="signal-key">MA250 年线</span>
+                <span class="signal-val {{ 'up' if pct250 > 0 else 'down' }}">
+                  {{ cur_sym }}{{ "%.2f"|format(tech.ma250) }}
+                  ({{ "%+.1f"|format(pct250) }}%)
+                  {{ "📈" if pct250 > 0 else "📉" }}
+                </span>
+              </div>
+              {% endif %}
+              {% if tech.get("vwap60") %}
+              <div class="signal-item">
+                <span class="signal-key">VWAP60</span>
+                <span class="signal-val {{ 'up' if tech.get('price_vs_vwap60', 0) > 0 else 'down' }}">
+                  {{ cur_sym }}{{ "%.2f"|format(tech.vwap60) }}
+                  ({{ "%+.1f"|format(tech.get("price_vs_vwap60", 0)) }}%)
+                </span>
+              </div>
+              {% endif %}
+              {% if tech.get("vwap120") %}
+              <div class="signal-item">
+                <span class="signal-key">VWAP120</span>
+                <span class="signal-val {{ 'up' if tech.get('price_vs_vwap120', 0) > 0 else 'down' }}">
+                  {{ cur_sym }}{{ "%.2f"|format(tech.vwap120) }}
+                  ({{ "%+.1f"|format(tech.get("price_vs_vwap120", 0)) }}%)
+                </span>
+              </div>
+              {% endif %}
+            {% elif signals and signals.get("week_52_low") %}
+              {# 非A股：52周区间 #}
+              <div class="signal-item">
+                <span class="signal-key">52周区间</span>
+                <span class="signal-val">{{ cur_sym }}{{ signals.week_52_low }} – {{ cur_sym }}{{ signals.week_52_high }}</span>
+              </div>
+              {% set pos = signals.get("price_position") %}
+              {% if pos is not none %}
+              <div class="signal-item">
+                <span class="signal-key">当前位置</span>
+                <span class="signal-val {{ 'up' if pos > 60 else ('down' if pos < 30 else '') }}">
+                  {{ "%.0f"|format(pos) }}%
+                  {{ "（偏高）" if pos > 70 else ("（偏低）" if pos < 30 else "（中间区域）") }}
+                </span>
+              </div>
+              {% endif %}
+            {% else %}
+            <div class="signal-item">
+              <span class="signal-val muted">数据积累中</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# 新闻情绪 · 所有市场 #}
+        <div class="signal-group">
+          <div class="signal-group-label">新闻情绪</div>
+          <div class="signal-items">
+            {% if news %}
+              {% set pos_ct = news | selectattr("sentiment", "equalto", "positive") | list | length %}
+              {% set neg_ct = news | selectattr("sentiment", "equalto", "negative") | list | length %}
+              {% set neu_ct = news | length - pos_ct - neg_ct %}
+              <div class="signal-item">
+                <span class="signal-key">本周 {{ news|length }} 条</span>
+                <span class="signal-val">
+                  📈 {{ pos_ct }} 正面 &nbsp;·&nbsp;
+                  ➖ {{ neu_ct }} 中性 &nbsp;·&nbsp;
+                  📉 {{ neg_ct }} 负面
+                </span>
+              </div>
+              {% set dominant = "positive" if pos_ct > neg_ct and pos_ct > neu_ct else ("negative" if neg_ct > pos_ct and neg_ct > neu_ct else "neutral") %}
+              <div class="signal-item">
+                <span class="signal-key">整体倾向</span>
+                <span class="signal-val {{ 'up' if dominant == 'positive' else ('down' if dominant == 'negative' else '') }}">
+                  {{ "正面为主 📈" if dominant == "positive" else ("负面为主 📉" if dominant == "negative" else "情绪中性 ➖") }}
+                </span>
+              </div>
+            {% else %}
+            <div class="signal-item">
+              <span class="signal-val muted">暂无新闻</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>{# /.signal-panel #}
+
+      {# ── 新闻列表 ── #}
       {% if news %}
+      <div class="news-list-divider">最新报道</div>
       {% for n in news %}
       <div class="news-article">
         <div class="news-kicker">
@@ -273,7 +441,7 @@
       </div>
       {% endfor %}
       {% else %}
-      <p class="empty-state" style="padding:60px 0;text-align:center;color:var(--ink-muted)">暂无相关新闻</p>
+      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">暂无相关新闻</p>
       {% endif %}
     </div>
 

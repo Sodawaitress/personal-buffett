@@ -415,11 +415,42 @@ def _fetch_1b_financials(code, market, log):
         _fetch_advanced(code, market, log)
 
 
+def _fetch_north_bound(market, log):
+    """Layer 1c2 附属：抓北向资金（市场级），存 market_data 表，24h 缓存。"""
+    if market != "cn":
+        return
+    nb = db.get_north_bound()
+    if nb:
+        fetched = nb.get("fetched_at", "")
+        try:
+            from datetime import timezone
+            # SQLite datetime('now') 存储 UTC 无时区字符串，统一当作 UTC 处理
+            dt = datetime.fromisoformat(fetched).replace(tzinfo=timezone.utc)
+            age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+            if age_h < 24:
+                log(f"       北向资金缓存有效（{age_h:.1f}h前）")
+                return
+        except Exception:
+            pass
+    try:
+        from stock_fetch import fetch_north_bound
+        data = fetch_north_bound()
+        if data:
+            db.save_north_bound(data)
+            sign = "📈" if data.get("total_net", 0) >= 0 else "📉"
+            log(f"       {sign} 北向净流入 {data.get('total_net', 0):+.2f}亿")
+        else:
+            log("       ⚠️ 北向资金无数据")
+    except Exception as e:
+        log(f"       ⚠️ 北向资金获取失败: {e}")
+
+
 def _fetch_1c2_capital(code, market, log):
     """
-    Layer 1c2 · 资金信号层：主力资金净流入 + 投行信号（质押/融资/机构持仓）。
+    Layer 1c2 · 资金信号层：北向资金（市场级）+ 主力资金净流入 + 投行信号（质押/融资/机构持仓）。
     仅A股（CN）有效，其他市场函数内部自动跳过。缓存24h。ST股跳过投行信号。
     """
+    _fetch_north_bound(market, log)
     _fetch_fund_flow(code, market, log)
     if not _is_st(code):
         _fetch_signals(code, market, log)
@@ -548,7 +579,7 @@ def _analyze_earnings_quality(annual: list) -> list:
     return flags
 
 
-_MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩"}
+_MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩", "au": "A$"}
 
 
 def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> dict:
@@ -1001,6 +1032,16 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
 
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+
+        # ── US-65 差评预警检查 ────────────────────────────
+        if user_id:
+            try:
+                grades = db.check_poor_rating_streak(code, user_id)
+                if grades:
+                    db.create_notification(user_id, code, grades)
+                    log(f"  ⚠️ 差评预警：连续6次 {grades}")
+            except Exception as _ne:
+                log(f"  ⚠️ 差评预警检查失败: {_ne}")
 
     except Exception as e:
         db.update_job(job_id, status="failed", error=str(e),

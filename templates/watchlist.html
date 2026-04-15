@@ -4,6 +4,38 @@
 {% block content %}
 <div class="watchlist-wrap">
 
+  {# ── US-65 差评预警横幅 ── #}
+  {% if notifications %}
+  <div class="notif-banner" id="notif-banner">
+    <div class="notif-banner-header" onclick="toggleNotifPanel()">
+      <span class="notif-banner-icon">⚠️</span>
+      <span class="notif-banner-text">
+        {{ notifications | length }} 只股票已连续 6 次评为 D 级，建议审视是否继续跟踪
+      </span>
+      <span class="notif-banner-toggle" id="notif-toggle">查看 ↓</span>
+    </div>
+    <div class="notif-panel" id="notif-panel" style="display:none">
+      {% for n in notifications %}
+      <div class="notif-item" id="notif-item-{{ n.id }}">
+        <div class="notif-item-info">
+          <a href="{{ url_for('stock_page', code=n.code) }}" class="notif-stock-name">
+            {{ n.stock_name or n.code }} <span class="notif-stock-code">{{ n.code }}</span>
+          </a>
+          <div class="notif-message">{{ n.message }}</div>
+          <div class="notif-date">首次提醒：{{ n.created_at[:10] }}</div>
+        </div>
+        <div class="notif-item-actions">
+          <button class="notif-btn notif-btn-remove"
+            onclick="notifRemove({{ n.id }}, '{{ n.code }}')">移除自选股</button>
+          <button class="notif-btn notif-btn-snooze"
+            onclick="notifSnooze({{ n.id }})">继续观察 60 天</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   {# ── 顶部工具栏 ── #}
   <div class="wl-toolbar">
     <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>
@@ -781,6 +813,39 @@ function selectStock(code, name, market, codeId, nameId, marketId, selectedId, l
   document.getElementById(selectedId).style.display = 'flex';
   document.getElementById(btnId).disabled = false;
   document.getElementById('search-dropdown').classList.remove('open');
+}
+
+// ── US-65 差评预警 ──────────────────────────────────
+function toggleNotifPanel() {
+  const panel  = document.getElementById('notif-panel');
+  const toggle = document.getElementById('notif-toggle');
+  const open   = panel.style.display === 'none';
+  panel.style.display  = open ? 'block' : 'none';
+  toggle.textContent   = open ? '收起 ↑' : '查看 ↓';
+}
+
+async function notifSnooze(id) {
+  await fetch(`/api/notification/${id}/snooze`, { method: 'POST' });
+  document.getElementById(`notif-item-${id}`).remove();
+  _checkNotifBannerEmpty();
+}
+
+async function notifRemove(id, code) {
+  if (!confirm(`确认将 ${code} 从自选股移除？历史分析数据将保留。`)) return;
+  const res = await fetch(`/remove`, { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: `code=${code}` });
+  if (!res.ok) { alert('移除失败，请刷新页面重试。'); return; }
+  await fetch(`/api/notification/${id}/dismiss`, { method: 'POST' });
+  document.getElementById(`notif-item-${id}`).remove();
+  document.querySelectorAll(`[data-code="${code}"]`).forEach(el => el.remove());
+  _checkNotifBannerEmpty();
+}
+
+function _checkNotifBannerEmpty() {
+  const panel  = document.getElementById('notif-panel');
+  if (panel && !panel.querySelectorAll('.notif-item').length) {
+    const banner = document.getElementById('notif-banner');
+    if (banner) banner.remove();
+  }
 }
 </script>
 {% endblock %}

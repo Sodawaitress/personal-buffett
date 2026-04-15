@@ -36,12 +36,13 @@ def _load_strings(locale):
             _i18n_cache[locale] = json.load(f)
     return _i18n_cache[locale]
 
-MARKET_CURRENCY = {"cn": "¥", "nz": "NZ$", "hk": "HK$", "us": "$", "kr": "₩"}
+MARKET_CURRENCY = {"cn": "¥", "nz": "NZ$", "hk": "HK$", "us": "$", "kr": "₩", "au": "A$"}
 
 def _detect_market(code):
     if code.endswith(".NZ"):   return "nz"
     if code.endswith(".HK"):   return "hk"
     if code.endswith(".KS") or code.endswith(".KQ"): return "kr"
+    if code.endswith(".AX"):   return "au"
     if re.match(r"^\d{5}$", code): return "hk"
     if re.match(r"^\d{6}$", code): return "cn"
     return "us"
@@ -237,8 +238,9 @@ def stock_page(code):
     analysis = db.get_latest_analysis(code, period="daily")
     history  = db.get_analysis_history(code, period="daily", limit=20)
     prices   = db.get_price_history(code, days=30)
-    ff       = db.get_fund_flow(code) if market == "cn" else {}
-    ff_hist  = db.get_fund_flow_history(code, days=60) if market == "cn" else []
+    ff         = db.get_fund_flow(code) if market == "cn" else {}
+    ff_hist    = db.get_fund_flow_history(code, days=60) if market == "cn" else []
+    north_bound= db.get_north_bound() if market == "cn" else {}
     fund     = db.get_fundamentals(code)  # 所有市场都支持
     signals  = fund.get("signals", {}) if fund else {}
     annual   = fund.get("annual",  []) if fund else []
@@ -360,7 +362,7 @@ def stock_page(code):
     return render_template("stock.html",
         stock=stock, price=price, news=news,
         analysis=analysis, history=history, prices=prices,
-        fund_flow=ff, ff_hist=ff_hist,
+        fund_flow=ff, ff_hist=ff_hist, north_bound=north_bound,
         signals=signals, annual=annual,
         pe_current=pe_current, pe_percentile_5y=pe_percentile_5y,
         pb_current=pb_current, pb_percentile_5y=pb_percentile_5y,
@@ -670,10 +672,27 @@ def watchlist_page():
     watching = [s for s in stocks if s["status"] == "watching"]
     sold     = [s for s in stocks if s["status"] == "sold"]
 
+    notifications = db.get_active_notifications(session["user_id"])
+
     return render_template("watchlist.html",
         stocks=stocks, holding=holding, watching=watching, sold=sold,
+        notifications=notifications,
         now=datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
         now_date=datetime.now(CN_TZ).strftime("%Y-%m-%d"))
+
+
+# ── 通知操作（US-65）──────────────────────────────────
+@app.route("/api/notification/<int:notif_id>/snooze", methods=["POST"])
+@login_required
+def notification_snooze(notif_id):
+    db.snooze_notification(notif_id, session["user_id"])
+    return jsonify({"ok": True})
+
+@app.route("/api/notification/<int:notif_id>/dismiss", methods=["POST"])
+@login_required
+def notification_dismiss(notif_id):
+    db.dismiss_notification(notif_id, session["user_id"])
+    return jsonify({"ok": True})
 
 
 # ── Watchlist Actions ──────────────────────────────────
