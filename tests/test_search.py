@@ -15,7 +15,22 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app import app, db
+import db
+from radar_app import create_app
+
+app = create_app()
+
+
+def test_search_requires_login():
+    """测试搜索 API 仍然受登录保护"""
+    db.init_db()
+
+    with app.test_client() as client:
+        resp = client.get('/api/search?q=AAPL')
+        assert resp.status_code == 302, "未登录时搜索 API 应该重定向到登录页"
+        assert '/login' in resp.headers.get('Location', ''), "未登录应跳转到 /login"
+
+        print("✓ 搜索 API 仍然需要登录")
 
 
 def test_search_returns_list():
@@ -136,6 +151,9 @@ if __name__ == '__main__':
     print()
 
     try:
+        test_search_requires_login()
+        print()
+
         test_search_returns_list()
         print()
 

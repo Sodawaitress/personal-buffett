@@ -2083,11 +2083,12 @@ python3 admin.py notify <email> on|off          # 开关每日推送
 
 **Acceptance Criteria**
 
-- [ ] `app.py` `/api/analyse` 路由加新闻缓存判断：查 `stock_news` 表最新 `fetched_at`，< 1小时则跳过重爬
-- [ ] 新增 `/api/news/<code>` 端点：单独触发新闻抓取+情绪分析，返回最近7天新闻
-- [ ] `stock.html` 详情页新增「更新新闻」按钮（与现有「↻ 分析」并列），调用上面端点
-- [ ] 「↻ 分析」只跑财务+市场数据，不重爬新闻
-- [ ] 新闻分析结果单独展示区块（情绪趋势 + 标题列表），不与巴菲特信混合
+- [x] `app.py` 新闻缓存判断：`/api/refresh-news/<code>` POST 端点检查当日是否已有 ≥3 条新闻，有则跳过重爬（`run_news_update` 实现）
+- [x] `/api/news/<code>` GET 端点：返回最近7天新闻（原为3天，已修复 2026-04-16）
+- [x] `/api/refresh-news/<code>` POST 端点：单独触发新闻抓取（`start_news_update` → `run_news_update` → `_fetch_1c1_news`）
+- [x] `stock.html` 「更新新闻」按钮：在 ⋯ 菜单里，调用 `/api/refresh-news/<code>`
+- [x] 「巴菲特怎么看」只跑量化（`start_quant_only`），不重爬新闻
+- [ ] 新闻分析结果单独展示区块（情绪趋势独立区块，不与巴菲特信混合）——当前新闻情绪显示在信号面板（US-63），但不是单独的"情绪趋势"图表
 
 **已有基础（不用重建）**：
 - `stock_news` 表已存在，schema 完整（`sentiment`、`fetched_at`、`category` 字段都有）
@@ -2108,10 +2109,10 @@ python3 admin.py notify <email> on|off          # 开关每日推送
 
 **Acceptance Criteria**
 
-- [ ] 修复 `debt_to_equity` 字段展示逻辑：D/E ratio > 5 时加警告说明，避免误读为负债率百分比
+- [x] 修复 `debt_to_equity` 字段展示逻辑：D/E ratio > 5 时加 ⚠ 标注 + tooltip 说明（`debt_ratio_note`），页面标签改为"D/E 比率"（2026-04-16）
 - [ ] 港股/美股 prompt 里明确告知 LLM「财务数据为单点快照，无历史趋势，分析时应降低置信度」
-- [ ] LLM system prompt 加指令：**禁止在信件正文里使用 markdown 加粗**，保持散文格式
-- [ ] `_fetch_financials()` 对港股补充尝试抓取 yfinance `income_stmt`（多年损益表），提取 3年净利率趋势
+- [ ] LLM system prompt 加指令：禁止在信件正文里使用 markdown 加粗，保持散文格式
+- [x] `_fetch_1b_financials()` 对非A股抓取 yfinance `income_stmt`（已实现3年净利率趋势计算，存入 annual_json）
 
 ---
 
@@ -2204,24 +2205,15 @@ pipeline 计算 trading_params  ✅
 
 **Acceptance Criteria**
 
-- [ ] `buffett_analyst.py` `analyze_stock_v2` 解析段：在提取 `===DIMS===` 之后，再提取 `===TRADE===...===TRADE_END===`，把 TRADE 块从 `letter_text` 里移除，存为独立字段 `trade_block`（无则为 None）
-- [ ] `analyze_stock_v2` 返回 dict 里加 `"trade_block": trade_block`
-- [ ] `db.py` `save_analysis_result()` 把 `trade_block` 写入 `analysis_results` 表（新增列，可 nullable）
-- [ ] `db.py` `get_latest_analysis()` 返回 `trade_block` 字段
-- [ ] `app.py` `stock_page` 路由把 `analysis.trade_block` 传给模板
-- [ ] `stock.html` 在巴菲特信 brief 区块下方，当 `trade_block` 存在时渲染「操作参数」卡片：
-  ```
-  ┌─ 📌 操作参数（基于均线，系统计算）──────────────────┐
-  │ 当前位置：当前价¥xx，处于MA60与MA250之间，可分批介入  │
-  │ 买入区间1：¥xx.xx–xx.xx（季线MA60附近）             │
-  │ 买入区间2：¥xx.xx–xx.xx（年线MA250附近）            │
-  │ 止损位：¥xx.xx（年线MA250下方8%）                   │
-  │ 仓位策略：[LLM填写]                                 │
-  │ 关键监控：[LLM填写]                                 │
-  └──────────────────────────────────────────────────┘
-  ```
-- [ ] 卡片样式：灰色边框，小字，不抢主要评级视觉；标注「数据不构成投资建议」
-- [ ] 对 `company_type = distressed / speculative` 的股票不显示操作参数卡片（因 LLM 被禁止输出 TRADE 块）
+- [x] `buffett_analyst.py` `analyze_stock_v2` / `analyze_stock_v3` 解析 `===TRADE===...===TRADE_END===` 块，存为独立字段 `trade_block`
+- [x] 返回 dict 里有 `"trade_block": trade_block`
+- [x] `db.py` `save_analysis()` 动态列写入，`analysis_results` 表已有 `trade_block TEXT` 列（migrate 时自动 ALTER）
+- [x] `db.py` `get_latest_analysis()` 返回 `trade_block`（SELECT * 包含全部列）
+- [x] `app.py` `stock_page` 无需单独传参——`analysis` dict 里已含 `trade_block`，`stock.html` 直接读 `analysis.trade_block` ✅
+- [x] `stock.html` 「操作参数」卡片已实现，当 `analysis.trade_block` 存在时渲染
+- [x] 卡片样式：灰色边框，小字；标注「数据不构成投资建议」
+- [x] `distressed / speculative` 不显示操作参数卡片
+- **Bug fix（2026-04-16）**：`run_letter_only` 的 `save_analysis` 调用漏传 `trade_block`，已补上
 
 **DB Migration**：
 ```sql
@@ -2230,7 +2222,7 @@ ALTER TABLE analysis_results ADD COLUMN trade_block TEXT;
 
 ---
 
-*最后更新：2026-04-14（新增 US-57~60）*
+*最后更新：2026-04-16（US-55/56/60 状态修正；bug fix 批次）*
 
 
 ---
@@ -2459,4 +2451,106 @@ LLM prompt 根据市场自动调整：
 
 ---
 
-*最后更新：2026-04-15（新增 US-62/63/64）*
+---
+
+## US-65 · 差评预警：连续 6 次 D/D- 提醒移除
+
+**背景**：巴菲特说「发现自己在烂公司里，最好的办法是赶快离开」。与其让差公司长期占据自选股位置，不如让系统主动提醒用户审视是否值得继续跟踪。
+
+**规则**：某只股票最近 6 次分析评级**全为 D 或 D-**，且该股票**不在持有区（status != 'holding'）**，则向用户发送一次提醒。
+
+**方案 C（通知 + 手动确认）**：系统只提醒，不自动删。用户主动选择移除或继续观察。
+
+---
+
+### 触发逻辑
+
+```
+分析完成后 → 查该股票最近 6 条 analysis_results（period=daily）→
+若 6 条都存在且 grade 全为 D/D- →
+检查 user_notifications 里是否已有未处理的同类提醒 →
+没有则插入新提醒
+```
+
+**注意**：
+- 只检查当前用户自选股里的股票（`user_watchlist`）
+- 持有区（`status='holding'`）不触发（还拿着仓位，需手动决策）
+- 用户点「继续观察」后，该股票 **60 天内不再触发**同类提醒
+
+---
+
+### 数据层
+
+新表 `user_notifications`：
+
+```sql
+CREATE TABLE IF NOT EXISTS user_notifications (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER REFERENCES users(id),
+    code         TEXT,
+    type         TEXT,          -- 'poor_rating'
+    message      TEXT,
+    created_at   TEXT DEFAULT (datetime('now')),
+    snoozed_until TEXT,         -- 「继续观察」时设置 60 天后日期
+    dismissed_at TEXT           -- 「移除」或手动关闭时设置
+);
+```
+
+---
+
+### UI
+
+**我的选股页（watchlist.html）顶部横幅**（仅有未处理提醒时显示）：
+
+```
+⚠️  2 只股票已连续 6 次评为 D 级    [查看详情 ↓]
+```
+
+展开后每条提醒显示：
+- 股票名 + 代码
+- 最近 6 次评级时间线（小标签）
+- [移除自选股] [继续观察 60 天] 两个按钮
+
+---
+
+### Acceptance Criteria
+
+- [ ] 新增 `user_notifications` 表（`db.py`）
+- [ ] `db.py` 加 `check_poor_rating_streak(code, user_id)`：查最近 6 条评级，全为 D/D- 且非持有区则返回 True
+- [ ] `db.py` 加 `create_notification` / `get_active_notifications` / `snooze_notification` / `dismiss_notification`
+- [ ] `pipeline.py` 分析完成后调用检查，触发则写入通知
+- [ ] `app.py` `/watchlist` 路由传入 `notifications` 列表
+- [ ] `app.py` 加 `/api/notification/<id>/snooze` 和 `/api/notification/<id>/dismiss` 端点
+- [ ] `watchlist.html` 顶部显示提醒横幅，展开显示详情 + 操作按钮
+- [ ] 持有区股票不触发
+
+---
+
+*最后更新：2026-04-16（US-55/56/60 状态修正；bug fix 批次；新增 US-66）*
+
+---
+
+## US-66 · 财务指标通俗解读（数据 + 意义）✅ 2026-04-16
+
+**As a** 非专业投资者
+**I want to** 每个财务数字旁边有一句人话解释"这意味着什么"
+**So that** 我不需要懂金融就能判断这家公司的钱赚得怎么样
+
+**实现：** 纯规则引擎，无 LLM，`_compute_metric_hints()` in `app.py`，`metric_hints` 传模板。中/英文根据 `session.locale` 自动切换。
+
+| 指标 | 逻辑简述 |
+|---|---|
+| PE | <15 不贵，15-25 合理，25-40 市场认为它还会继续增长，>40 在赌高速增长，<0 亏了 |
+| ROE | <0 亏了，<5% 不如存银行，5-10% 一般，10-20% 不错，≥20% 很能赚 |
+| 净利润率 | <0 亏了，<5% 一出问题就垮，5-10% 辛苦钱，10-20% 不错，≥20% 挣钱轻松 |
+| 负债率(A股%) | <40% 借得少，40-70% A股常见，70-90% 借了很多，>90% 一出问题就垮 |
+| D/E(非A股) | ≤1 稳健，1-3 可控，3-10 一出问题就垮，>10 一出问题就垮 |
+| ROIC | <8% 不如买沪深300，8-15% 还行，≥15% 很划算 |
+| FCF | ≥0.8x 钱真的进了口袋，0.3-0.8x 尚可，<0.3x 账面有钱但没进口袋 |
+
+**Acceptance Criteria:**
+- [x] 6个核心指标每个有解读文字，≤25字，口语化，无专业术语
+- [x] 颜色：好=绿，一般=灰，差=红；复用 `--green` / `--red` CSS 变量
+- [x] 中英文根据用户 locale 自动切换（`session.locale`）
+- [x] 数据缺失时不显示解读，不报错
+- [x] 移动端正常，不撑高卡片

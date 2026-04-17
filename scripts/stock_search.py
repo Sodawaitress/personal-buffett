@@ -12,7 +12,12 @@ A股列表持久化缓存到 data/cn_stocks.json，有效期 24 小时。
 拼音索引缓存到 data/cn_stocks_pinyin.json，与 A股缓存同步更新。
 """
 import sys, os, re, json, time, threading
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+try:
+    from scripts._bootstrap import bootstrap_paths
+except ImportError:
+    from _bootstrap import bootstrap_paths
+
+bootstrap_paths()
 
 _CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks.json")
 _PINYIN_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks_pinyin.json")

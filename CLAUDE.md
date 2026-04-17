@@ -93,6 +93,12 @@
 - **US-63 新闻+信号 Tab 重设计（2026-04-15）**：stock.html 新闻 tab 顶部加「今日信号」面板（资金信号仅A股/技术信号所有市场/新闻情绪所有市场）；新闻列表下移；`.signal-panel` CSS
 - **北向资金存储（2026-04-15）**：`db.save_north_bound` / `get_north_bound`（复用 market_data 表）；`_fetch_north_bound()` 加入 1c2 层（24h缓存）；stock.html 信号面板展示沪深分项
 - **US-65 差评预警（2026-04-15）**：连续6次 D/D-（非持有区）触发通知；`user_notifications` 表；`check_poor_rating_streak` / `create_notification` / `snooze_notification` / `dismiss_notification`；watchlist.html 顶部黄色横幅（折叠/展开）；「继续观察60天」snooze + 「移除自选股」两个操作
+- **Bug fix 批次（2026-04-16）**：
+  - `/api/news/<code>` 返回天数从 3 天修正为 7 天
+  - `run_letter_only` 存库时漏存 `trade_block` 字段（已补入 save_analysis 调用）
+  - 港股/美股 D/E ratio 误显示为"资产负债率"：标签改为"D/E 比率"，D/E>5 时显示 `⚠` + tooltip；`virtual_annual` dict 同步携带 `debt_ratio_note`
+  - ML Phase 1 特征字段从未填充：`_run_layer2` 的 `save_analysis` 调用补填 `feat_sentiment_avg` / `feat_fund_flow_net` / `feat_pe_vs_hist`（`feat_price_momentum` / `feat_fear_greed` 仍为 NULL，待后续补）
+  - CLAUDE.md 市场覆盖表补入澳股（AU）和韩股（KR）
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）
@@ -102,17 +108,20 @@
 
 ### 🔄 下一阶段（按优先级）
 
-**⚠️ 文档声称完成但代码未实现（需补做）：**
-- **US-55 数据三层分离**：/api/news/\<code\> 路由存在但没有 1 小时缓存逻辑；stock.html 没有「更新新闻」按钮与「分析」分离
-- **US-56 港股/美股财务补强**：_fetch_financials() 未抓 yfinance income_stmt 趋势；LLM prompt 未禁 markdown 加粗；港股 debt_to_equity 展示未修
-- **US-59 推送质量门禁**：_score_report() 函数不存在；analysis_results 无 data_quality_score 字段；推送前没有质量检查
-- **US-60 买入区间+止损位 UI**：buffett_analyst.py 无 ===TRADE=== 解析；trade_block 字段未写入 DB；stock.html 无「操作参数」卡片
+**⚠️ 部分完成 / 有残留 bug（2026-04-16 已修复项见下方）：**
+- **US-55 数据三层分离**：`/api/refresh-news/<code>` POST 端点存在且有1小时缓存 ✅；`/api/news/<code>` GET 端点已修正为返回7天数据 ✅（原为3天）；stock.html 「更新新闻」按钮已存在 ✅；「分析」与「更新新闻」已分离 ✅
+- **US-56 港股/美股财务补强**：`debt_to_equity` 展示已修——非A股标签改为"D/E比率"，>5时显示 `⚠` + tooltip 说明 ✅；yfinance income_stmt 多年趋势抓取已实现（_fetch_1b_financials 有3年趋势） ✅；LLM prompt 禁 markdown 加粗——**待做**
+- **US-59 推送质量门禁**：`_score_report()` 不存在；`data_quality_score` 字段不存在；推送前无质量检查——**待做**
+- **US-60 买入区间+止损位 UI**：===TRADE=== 解析已实现 ✅；trade_block 已写入 DB（run_pipeline **结果**） ✅；`run_letter_only` 漏存 trade_block 已修复 ✅；stock.html 「操作参数」卡片已存在 ✅；app.py 路由未把 trade_block 单独传模板（analysis dict 里有，stock.html 直接读 `analysis.trade_block` 可正常工作） ✅
+- **ML feat_* 字段从未填充**：`_run_layer2` 的 `save_analysis` 调用已补填 `feat_sentiment_avg` / `feat_fund_flow_net` / `feat_pe_vs_hist` ✅；`feat_price_momentum` 和 `feat_fear_greed` 还是 NULL（需要价格历史和宏观数据，后续再补）
 
 **数据层待补强：**
 - 财务指标实时拉取：AKShare stock_financial_abstract_ths 拿 ROE/净利率/资产负债率（现在全是 NULL）
 - 机构持仓变动：ak.stock_institute_hold / 大股东增减持公告
 - 估值历史：PE/PB 历史百分位（现在只有即时值，没有历史对比）
 - 北向资金：需收盘后运行 pipeline 才能验证 signals.north_flow 非 NULL（US-58 最后一项 AC）
+- US-59 推送质量门禁（_score_report() 待实现）
+- US-56 LLM 禁 markdown 加粗（system prompt 加指令待做）
 
 ---
 
@@ -198,12 +207,14 @@ git diff feature-good-YYYY-MM-DD..HEAD -- file.py
 | 美股 | US | ⚠️ 基础 | ⚠️ 部分 | INTC（英特尔） |
 | 港股 | HK | ⚠️ 基础 | ⚠️ 部分 | 0700.HK（腾讯） |
 | NZ股 | NZ | ⚠️ 基础 | ⚠️ 部分 | CYM.NZ（Countdown） |
+| 澳股 | AU | ⚠️ 基础 | ⚠️ 部分 | BHP.AX（必和必拓） |
+| 韩股 | KR | ⚠️ 基础 | ⚠️ 部分 | 005930.KS（三星） |
 
-**⚠️ 重要**：非 A股股票缺少高级财务数据（ROIC、技术支撑位、信号分析）。
+**⚠️ 重要**：非 A股股票缺少高级财务数据（ROIC、技术支撑位、信号分析）。港股/美股的「资产负债率」字段实为 D/E ratio，已在页面加 ⚠ 标注区分。
 
 ### 添加新股票前检查
 
-1. 确认市场代码（CN/US/HK/NZ）
+1. 确认市场代码（CN/US/HK/NZ/AU/KR）
 2. 检查 `scripts/pipeline.py` 中 `_fetch_financials` 是否支持该市场
 3. 如不支持，需先补充数据源再添加股票
 

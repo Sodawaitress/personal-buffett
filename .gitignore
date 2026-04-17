@@ -7,3 +7,5 @@ __pycache__/
 *.log
 /tmp/stock_raw.json
 /tmp/stock_report.md
+
+._*

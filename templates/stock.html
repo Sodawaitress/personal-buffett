@@ -58,7 +58,7 @@
       <div class="stock-price-big" style="font-size:14px;color:var(--ink-faint)">暂无报价</div>
       {% endif %}
 
-      <div class="stock-header-actions">
+      <div class="stock-header-actions" id="stock-header-actions">
         {% if pending_job %}
         <span class="spinner" style="display:inline-block"></span>
         <span style="font-size:12px;color:var(--ink-muted)">分析中…</span>
@@ -565,9 +565,16 @@
           </div>
 
           <div class="fund-metric-card">
-            <div class="fund-metric-label">资产负债率</div>
+            <div class="fund-metric-label">
+              {% if lat and lat.debt_ratio_note %}D/E 比率{% else %}资产负债率{% endif %}
+            </div>
             <div class="fund-metric-value">
-              {% if lat and lat.debt_ratio %}{{ lat.debt_ratio }}
+              {% if lat and lat.debt_ratio %}
+                {% if lat.debt_ratio_note %}
+                  <span title="{{ lat.debt_ratio_note }}">{{ lat.debt_ratio }}</span>
+                {% else %}
+                  {{ lat.debt_ratio }}
+                {% endif %}
               {% else %}<span class="fund-accumulating">—</span>{% endif %}
             </div>
           </div>
@@ -975,33 +982,123 @@ async function triggerAnalysisOnly(code) {
   }
 }
 
+function _resetLetterButton(btn) {
+  if (!btn) return;
+  btn.disabled = false;
+  btn.textContent = '📄 生成股东信';
+}
+
+function _markLetterReady(code, btn) {
+  const pendingBlock = document.getElementById('pending-block');
+  if (pendingBlock) {
+    pendingBlock.innerHTML = '<span style="color:var(--green)">股东信已生成</span>';
+    pendingBlock.removeAttribute('data-job');
+  }
+
+  const actions = document.getElementById('stock-header-actions');
+  if (actions && actions.textContent.includes('分析中')) {
+    actions.innerHTML = `
+      <button onclick="triggerAnalysisOnly('${code}')" class="btn-ink btn-sm">巴菲特怎么看</button>
+      <div class="more-wrap" id="more-wrap-${code}">
+        <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('${code}')" title="更多操作">⋯</button>
+        <div class="more-menu" id="more-menu-${code}">
+          <button onclick="triggerNewsRefresh('${code}');closeMoreMenu('${code}')">更新新闻</button>
+          <button onclick="triggerAnalysis('${code}');closeMoreMenu('${code}')">全量刷新</button>
+        </div>
+      </div>`;
+  }
+
+  const entry = btn ? btn.closest('.letter-entry') : document.querySelector('.letter-entry');
+  if (entry) {
+    entry.innerHTML = `
+      <button onclick="showLetter()" class="btn-outline-ink btn-sm">📄 读股东信</button>
+      <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">已生成</span>`;
+  }
+}
+
+function _reloadOnLetterModalClose() {
+  const modalEl = document.getElementById('letter-modal');
+  if (!modalEl) return;
+  modalEl.addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
+}
+
+async function _fetchLatestLetter(code) {
+  const resp = await fetch(`/api/letter/${code}`);
+  if (!resp.ok) {
+    throw new Error(`letter fetch failed: ${resp.status}`);
+  }
+  return await resp.json();
+}
+
 async function triggerLetterGeneration(code) {
   const btn = document.getElementById('letter-btn-' + code);
   if (btn) {
     btn.disabled = true;
     btn.textContent = '⏳ 生成中…';
   }
-  const resp = await fetch(`/api/generate-letter/${code}`, { method: 'POST' });
-  const data = await resp.json();
-  if (!data.job_id) return;
-  const iv = setInterval(async () => {
-    try {
-      const d = await (await fetch(`/api/job/${data.job_id}`)).json();
-      if (d.status === 'done') {
-        clearInterval(iv);
-        if (d.analysis && d.analysis.letter) {
-          // 直接渲染并弹窗，不刷页面
-          _renderAndShowLetter(d.analysis.letter);
-        } else {
-          location.reload();
+
+  try {
+    const resp = await fetch(`/api/generate-letter/${code}`, { method: 'POST' });
+    if (!resp.ok) {
+      throw new Error(`generate failed: ${resp.status}`);
+    }
+    const data = await resp.json();
+    if (!data.job_id) {
+      throw new Error('missing job_id');
+    }
+
+    let pollCount = 0;
+    const maxPolls = 15;
+    const iv = setInterval(async () => {
+      pollCount += 1;
+      try {
+        const jobResp = await fetch(`/api/job/${data.job_id}`);
+        if (!jobResp.ok) {
+          throw new Error(`job fetch failed: ${jobResp.status}`);
         }
-      } else if (d.status === 'failed') {
+        const d = await jobResp.json();
+        if (d.status === 'done') {
+          clearInterval(iv);
+          try {
+            const latest = await _fetchLatestLetter(code);
+            if (latest && latest.letter) {
+              _markLetterReady(code, btn);
+              _renderAndShowLetter(latest.letter);
+              _reloadOnLetterModalClose();
+            } else if (d.analysis && d.analysis.letter) {
+              _markLetterReady(code, btn);
+              _renderAndShowLetter(d.analysis.letter);
+              _reloadOnLetterModalClose();
+            } else {
+              _resetLetterButton(btn);
+              alert('股东信任务已完成，但暂时还没读到信件内容，请刷新页面再看一次。');
+            }
+          } catch (e) {
+            console.error('fetch latest letter failed', e);
+            _resetLetterButton(btn);
+            alert('股东信已生成，但读取结果时出了点问题。请刷新页面再看一次。');
+          }
+        } else if (d.status === 'failed') {
+          clearInterval(iv);
+          _resetLetterButton(btn);
+          alert(d.error || '生成失败（Groq 限速），请稍后再试');
+        } else if (pollCount >= maxPolls) {
+          clearInterval(iv);
+          _resetLetterButton(btn);
+          alert('股东信生成时间比平时久，请稍后刷新页面查看。');
+        }
+      } catch (e) {
         clearInterval(iv);
-        if (btn) { btn.disabled = false; btn.textContent = '📄 生成股东信'; }
-        alert('生成失败（Groq 限速），请稍后再试');
+        console.error('poll letter job failed', e);
+        _resetLetterButton(btn);
+        alert('轮询生成状态时出错，请稍后刷新页面查看。');
       }
-    } catch(e) { clearInterval(iv); }
-  }, 4000);
+    }, 4000);
+  } catch (e) {
+    console.error('trigger letter generation failed', e);
+    _resetLetterButton(btn);
+    alert('启动股东信生成失败，请稍后重试。');
+  }
 }
 
 function _renderAndShowLetter(letterHtml) {

@@ -10,8 +10,12 @@
   ±3% 以内 = 中性
 """
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.dirname(__file__))
+try:
+    from scripts._bootstrap import bootstrap_paths
+except ImportError:
+    from _bootstrap import bootstrap_paths
+
+bootstrap_paths()
 
 import requests
 from datetime import datetime, timezone, timedelta

@@ -5,7 +5,12 @@ US-46 · 公司分类器
 import re
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+try:
+    from scripts._bootstrap import bootstrap_paths
+except ImportError:
+    from _bootstrap import bootstrap_paths
+
+bootstrap_paths()
 import db
 
 # ── ST 状态检测 ────────────────────────────────────────

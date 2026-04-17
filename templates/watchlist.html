@@ -721,7 +721,14 @@ function pollJob(jobId, code) {
 
 // ── 添加面板 ─────────────────────────────────────────
 function toggleAddPanel() {
-  document.getElementById('add-panel').classList.toggle('hidden');
+  const panel = document.getElementById('add-panel');
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) {
+    const input = document.getElementById('search-q');
+    if (input) {
+      input.focus();
+    }
+  }
 }
 function clearSelection() {
   ['add-code','add-name','add-market'].forEach(id => document.getElementById(id).value = '');
@@ -769,8 +776,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, labelId, btnId) {
-  const inp = document.getElementById(inputId);
-  const drop = document.getElementById(dropId);
+  const inp = document.getElementById('search-q');
+  const drop = document.getElementById('search-dropdown');
   if (!inp || !drop) return;
   let timer;
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });

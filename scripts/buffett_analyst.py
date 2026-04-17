@@ -3,107 +3,33 @@
 使用 Groq (Llama 3) 免费 API，对每只股票生成结构化巴菲特视角点评
 """
 
-import json, time, requests
+try:
+    from scripts._bootstrap import bootstrap_paths
+except ImportError:
+    from _bootstrap import bootstrap_paths
+
+bootstrap_paths()
+
+import time
 from datetime import datetime, timezone, timedelta
-from config import BUFFETT_PROFILES, GROQ_API_KEY
-
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL    = "llama-3.3-70b-versatile"
-
-# ── 日报分析 System Prompt ────────────────────────────
-SYSTEM_DAILY = """你是一位严格遵循巴菲特价值投资框架的分析师。
-
-对每只股票给出结构化判断，严格按以下格式输出，不要多余文字：
-
-护城河：[稳固/受压/收窄] | 管理层：[可信/观察/警惕] | 资金：[流入/中性/流出] | 趋势：[改善/稳定/恶化]
-结论：[买入/持有/观察/减持/卖出]
-原因：（一句话，不超过25字）
-
-判断规则：
-- 护城河「受压/收窄」：竞争对手动作、技术替代、政策打压
-- 管理层「警惕」：CEO/CFO离职/减持、盲目并购、财务造假迹象
-- 资金「流出」：主力连续净流出超过2日
-- 趋势「恶化」：ROE/净利润连续下滑，或今日负面新闻超过2条
-- 结论「减持」：任意一项出现「警惕/收窄/流出+恶化」组合
-- 噪音直接忽略：技术分析、资金流向日报、涨跌幅排名类新闻"""
-
-# ── 周期分析 System Prompt ────────────────────────────
-SYSTEM_PERIOD = """你是一位价值投资分析师，为投资者撰写周期性回顾报告。
-
-分析框架来自巴菲特历年股东信：
-1. 护城河变化：过去这段时间，公司竞争优势是变宽了还是变窄了？
-2. 管理层资本配置：资本是否被聪明地使用？（回购>分红>并购>囤现金）
-3. 业绩质量：现金流和账面利润方向一致吗？ROE趋势如何？
-4. 外部威胁评估：行业结构变化、政策风险、竞争格局
-
-输出要求：
-- 给每只股票一个「季度信号灯」：🟢继续/🟡观望/🔴警惕
-- 用简洁中文，不超过5句话每只股票
-- 最后给出整体组合的一句话评价"""
-
-
-def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
-    """统一的 Groq API 调用，429/超时均重试，出错返回空字符串。"""
-    if not GROQ_API_KEY:
-        return ""
-    # token 越多给越长的超时：短分析 45s，长信件（>500 tokens）90s
-    req_timeout = 90 if max_tokens > 500 else 45
-    for attempt in range(3):
-        try:
-            resp = requests.post(
-                GROQ_URL,
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type":  "application/json",
-                },
-                json={
-                    "model":       MODEL,
-                    "messages":    [
-                        {"role": "system", "content": system},
-                        {"role": "user",   "content": user_msg},
-                    ],
-                    "max_tokens":  max_tokens,
-                    "temperature": 0.25,
-                },
-                timeout=req_timeout,
-            )
-            if resp.status_code == 429:
-                if attempt >= 2:
-                    print("    ⚠️ Groq 限流重试耗尽，切换备用方案")
-                    return ""
-                # 读 Groq 响应头里的实际等待时间，没有则默认 65s
-                retry_after = resp.headers.get("retry-after") or resp.headers.get("x-ratelimit-reset-tokens")
-                try:
-                    wait = max(int(float(retry_after)), 10) + 5
-                except (TypeError, ValueError):
-                    wait = 65
-                # 打印限流原因（TPM vs RPM）
-                limit_type = ""
-                remaining_tokens = resp.headers.get("x-ratelimit-remaining-tokens", "?")
-                remaining_reqs   = resp.headers.get("x-ratelimit-remaining-requests", "?")
-                if remaining_tokens == "0" or remaining_tokens == 0:
-                    limit_type = " (TPM 耗尽)"
-                elif remaining_reqs == "0" or remaining_reqs == 0:
-                    limit_type = " (RPM 耗尽)"
-                print(f"    ⏳ Groq 限流{limit_type}，等待 {wait}s 后重试（第{attempt+1}次）...")
-                time.sleep(wait)
-                continue
-            resp.raise_for_status()
-            data = resp.json()
-            # 打印 token 用量，方便诊断限流原因
-            usage = data.get("usage", {})
-            if usage:
-                print(f"    📊 Groq token用量: 输入{usage.get('prompt_tokens','?')} + 输出{usage.get('completion_tokens','?')} = {usage.get('total_tokens','?')}")
-            return data["choices"][0]["message"]["content"].strip()
-        except requests.Timeout:
-            wait = (attempt + 1) * 5
-            print(f"    ⏳ Groq 超时，等待 {wait}s 后重试（第{attempt+1}次）...")
-            time.sleep(wait)
-        except Exception as e:
-            print(f"    ⚠️ Groq 错误（不重试）: {e}")
-            return ""
-    print("    ⚠️ Groq 重试3次失败，切换备用方案")
-    return ""
+from scripts.buffett_groq import _call_groq
+from scripts.buffett_prompts import FRAMEWORK_MAP, SYSTEM_DAILY, SYSTEM_LETTER, SYSTEM_PERIOD
+from scripts.buffett_signals import _analyze_news_signals, _score_news
+from scripts.buffett_context import (
+    build_behavioral_context,
+    build_events_context,
+    build_fundamentals_context,
+    build_mini_warning_context,
+    build_price_context,
+    build_profile_context,
+    build_signals_context,
+    build_trading_context,
+    build_v3_entry_context,
+    build_v3_price_context,
+    build_warning_context,
+)
+from scripts.buffett_utils import parse_dim, parse_trade_block, split_dims_output, strip_trade_block
+from scripts.config import BUFFETT_PROFILES
 
 
 def analyze_stock(name: str, code: str, news: list, fund_flow: dict, quote: dict) -> str:
@@ -156,7 +82,7 @@ def analyze_period(period_label: str, days: int, news_by_code: dict,
     news_by_code: {code: [news items from last N days]}
     """
     import db as _db
-    from config import NOISE_KEYWORDS, POSITIVE_SIGNALS, NEGATIVE_SIGNALS
+    from scripts.config import NOISE_KEYWORDS, POSITIVE_SIGNALS, NEGATIVE_SIGNALS
 
     # 从传入数据的 code 集合推导股票列表，不再依赖硬编码 WATCHLIST
     all_codes = set(news_by_code) | set(quotes_by_code) | set(fund_flows)
@@ -210,385 +136,7 @@ def analyze_period(period_label: str, days: int, news_by_code: dict,
 
     return _call_groq(SYSTEM_PERIOD, user_msg, max_tokens=600)
 
-
-SYSTEM_LETTER = """你是沃伦·巴菲特。用第一人称、自信而冷静的语气写分析信。
-
-【核心原则】
-写得像在给朋友讲投资逻辑——清晰、有深度、会质疑。不是报告，是思考过程的展现。
-
-【结构（必须包含）】
-1. 开头：一句核心判断（如"这家公司陷入困境"或"护城河在加固"）
-2. 基本面分析：用数字说话
-   - 赚钱能力（ROE、利润率、现金流）
-   - 竞争优势（护城河是宽/窄/变窄/变宽）
-   - 管理层信号（回购、派息、离职等关键行动）
-3. 估值判断：PE/PB对标，当前是高估/合理/低估，52周位置的风险
-4. 新闻权重：情绪值、关键信号、对基本面的实际影响（往往被高估）
-5. 结尾：一句明确立场（买入/持有/减持/卖出），理由是什么
-
-【数据准则】
-- 有数据就用，会变得有说服力（"净利率-0.5%"比"利润下滑"有力100倍）
-- 没有数据就直说"数据不足"，不要编造
-- 对比是核心：不是看绝对值，是看 vs 历史、vs 同行、vs 债券收益率
-- 关键数字要加粗或强调，但不要写"数据显示"这种填充词
-
-【巴菲特式质疑】
-当看到好消息时，问自己：
-- "但这改变了基本面的坏处吗？"
-- "这是真的竞争优势还是一次性利好？"
-- "管理层这个决定对我有利吗？"
-
-【🚨 红旗检查清单（必须提及）】
-如果提供的数据中包含以下任何一项，必须在分析中明确指出，不能忽视：
-- ROE < 5% 或 ROE < 0（赚钱能力弱或亏损）→ 必须说"赚钱能力几乎为零"
-- 净利率 < 0%（公司在亏损）→ 必须说"公司在烧钱"
-- 债务比 > 20（高杠杆）→ 必须说"高杠杆风险"
-- 52周价格位置 > 90%（接近年高）→ 必须说"风险位置"
-- 护城河变窄（市占率下降等）→ 必须说"竞争地位恶化"
-- 情绪值 < -0.5 或关键负面信号 → 必须量化提及
-
-这些红旗不能被好消息（如新闻利好、战略合作）所掩盖。
-好消息最多只能"部分抵消"这些风险，不能"消除"它们。
-
-【禁止】
-- 模糊词：不要说"较强""相对好"，说"是否比对手强"
-- 空承诺：不要说"值得关注"，说"值不值得现在买"
-- 编造数据：没有就说没有，宁可简洁也不要虚构
-- 超过 400 字：言简意赅是高手
-
-【输出格式】
-自然段落，最后一段务必是：
-「基于以上，我的判断是：[买入/持有/减持/卖出]。因为[最关键的1-2个因素]。」
-
-如果 prompt 中提供了「预计算操作参数」，在结论段之后另起一行输出以下结构块（原样引用预计算数字，不得修改）：
-
-===TRADE===
-当前位置：[引用 position_label]
-减仓区间：[引用 reduce_label，若无则省略此行]
-买入区间1：[引用 entry_1_label，若无则写"暂无技术数据"]
-买入区间2：[引用 entry_2_label，若无则写"暂无技术数据"]
-止损位：[引用 stop_loss_label，若无则写"暂无技术数据"]
-仓位策略：[你的建议，如"分三批建仓，首批不超过总仓位30%"或"高位持仓减至30%以下"]
-关键监控：[2-3条最重要的触发信号，有则加仓/减仓]
-===TRADE_END===
-"""
-
-# ── US-50 · 其他分析框架 system prompts ───────────────
-
-SYSTEM_EVENT_DRIVEN = """你是一位专注于困境投资和重整套利的分析师。
-
-【分析重点】
-这是一只ST或重整股，巴菲特的护城河框架完全不适用。你的任务是：
-1. 重整进度评估：方案是否可行？债权人/股东是否有动力通过？
-2. 稀释风险：股权稀释比例是多少？现有股东剩下什么？
-3. 时间窗口：关键节点是什么（表决日期/法院裁定/恢复上市截止）？
-4. 退出逻辑：重整成功后合理估值是多少？失败则退市价值是多少？
-
-【核心问题】
-"如果重整成功，现在买入的人能赚多少？如果失败，损失多少？概率各是多少？"
-
-【必须明确指出的风险】
-- 重整失败概率（基于方案可行性）
-- 退市后股票可能归零
-- 流动性极差，散户陷阱
-- 稀释比例对现有股东的实际影响
-
-【禁止】
-- 用ROE/护城河框架分析
-- 给出"买入"建议（这类股票只有"博弈"和"回避"之分）
-
-最后一段必须是：
-「我的判断是：[博弈介入 / 观望等待 / 坚决回避]。因为[最关键的1-2个因素]。」
-"""
-
-SYSTEM_GROWTH_QUALITY = """你是一位专注于成长股质量的分析师，研究框架接近 Baillie Gifford。
-
-【分析重点】
-1. 营收增速：CAGR是多少？是加速还是减速？
-2. 毛利率趋势：在规模扩张的同时，毛利率是扩张还是压缩？
-3. 研发效率：研发投入占比 vs 新产品/新市场的产出
-4. 市场空间：TAM还有多大？公司的渗透率在哪个阶段？
-5. 竞争壁垒：护城河是网络效应/技术壁垒/品牌还是纯粹低价？
-
-【核心问题】
-"五年后这家公司能有多大？现在的估值溢价合理吗？"
-
-【红旗检查】
-- 营收增速持续放缓 → "增长故事可能已经触顶"
-- 毛利率下滑 → "规模没带来效率，竞争在加剧"
-- 研发占比下降但增速也在放缓 → "在收割而非投资"
-
-最后一段必须是：
-「基于以上，我的判断是：[买入/持有/减持/卖出]。因为[最关键的1-2个因素]。」
-"""
-
-SYSTEM_BANK_INSURANCE = """你是一位专注于金融机构的分析师。
-
-【分析重点——银行/保险/券商专用指标】
-1. ROA（资产收益率）而非ROE：ROE可被杠杆虚增
-2. 净息差（NIM）：利差收窄是行业趋势还是个体问题？
-3. 不良贷款率（NPL）：上升速度和拨备覆盖率
-4. 资本充足率：是否有监管风险？
-5. 股息率：银行股的核心吸引力往往在此
-
-【禁止】
-- 用制造业的PE/PB逻辑直接套用（银行PB<1不代表便宜）
-- 忽视资产负债表的"资产质量"
-
-最后一段必须是：
-「基于以上，我的判断是：[买入/持有/减持/卖出]。因为[最关键的1-2个因素]。」
-"""
-
-SYSTEM_CYCLE_POSITION = """你是一位专注于大宗商品和周期股的分析师。
-
-【分析重点】
-1. 周期位置：现在是行业的上行周期还是下行周期？库存处于什么水平？
-2. 大宗价格趋势：煤价/钢价/铜价/油价的现货和期货曲线
-3. 自由现金流（在周期底部）：能不能活过最坏的时候？
-4. 产能格局：行业是否在主动去产能？
-5. 估值逻辑：周期股用PB更可靠——在净资产以下买往往是好时机
-
-【核心问题】
-"现在是周期的哪个位置？离底部/顶部还有多远？"
-
-【红旗检查】
-- 高位扩产（在周期顶部投资） → "管理层判断可能失误"
-- 高PE低PB → "利润暂时高估，更应看PB"
-
-最后一段必须是：
-「基于以上，我的判断是：[买入/持有/减持/卖出]。因为[最关键的1-2个因素]。」
-"""
-
-SYSTEM_DIVIDEND_SAFETY = """你是一位专注于高股息和公用事业股的分析师。
-
-【分析重点】
-1. 股息率和股息增长历史：是否可持续？派息率是否过高？
-2. 债务可持续性：长期债务是否和稳定现金流匹配？
-3. 监管风险：电价/水价/燃气价由政府定，有无调价空间？
-4. 资本开支周期：重资产行业的折旧和再投资需求
-5. 防御性：在市场下跌时的抗跌能力
-
-【核心问题】
-"股息能维持多少年？现在的股息率相对于债券无风险收益率有多少溢价？"
-
-最后一段必须是：
-「基于以上，我的判断是：[买入/持有/减持/卖出]。因为[最关键的1-2个因素]。」
-"""
-
-SYSTEM_SURVIVAL_CHECK = """你是一位专注于早期企业和未盈利公司的分析师。
-
-【分析重点】
-1. 现金 Runway：账上现金能支撑多少个月的运营？
-2. 烧钱速率（Burn Rate）：每季度净现金流出多少？
-3. 营收增速：是否在以足够快的速度趋近盈亏平衡？
-4. 催化剂：什么事件会触发下一轮融资或盈利拐点？
-5. 商业模式验证：单位经济（Unit Economics）是否成立？
-
-【核心问题】
-"钱够烧到盈利吗？如果不够，下一轮融资会发生吗，代价是多少稀释？"
-
-【红旗检查】
-- Runway < 12个月且无融资迹象 → "生存风险"
-- 营收增速放缓但亏损未收窄 → "商业模式存疑"
-
-最后一段必须是：
-「基于以上，我的判断是：[博弈介入 / 高风险持有 / 回避]。因为[最关键的1-2个因素]。」
-"""
-
-SYSTEM_SPECULATIVE = """你是一位识别股市风险的风控分析师，专门研究港股GEM市场的高风险标的。
-
-⚠️ 警告：这是一只在港股GEM创业板上市的高风险投机股，财务指标显示公司基本面极弱或持续亏损。GEM市场监管门槛远低于主板，壳股、概念股、被用于非正常商业计划（如积分兑换、直销商返利）的股票大量存在。
-
-【必须优先检查的四项核心问题】
-1. 这是否是一家有真实经营业务的公司？（审查：营收规模、营收来源是否多元、利润率是否符合行业均值）
-2. 财务数据是否显示持续亏损或资不抵债？（ROE/净利率为负，负债率>85% 是高风险信号）
-3. 股权结构是否异常集中？（大股东持股>70%时流通盘极小，容易被操控）
-4. 是否有迹象表明股票被用于非证券目的？（如积分兑换、直销商奖励、大宗交易异常等）
-
-【分析框架】
-- 不适用护城河/ROE护城河框架——这类公司根本不在竞争经济学范畴
-- 估值框架：股价相对净资产是否有意义？市值是否远超实际资产价值？
-- 流动性分析：日均成交额是否极低？散户能否在需要时卖出？
-- 稀释风险：过去2年是否有频繁配股/供股记录？
-
-【禁止】
-- 给出"买入"建议
-- 用成长股或价值股框架分析
-- 忽视亏损和高负债
-- 因为短期利好消息而淡化结构性风险
-
-【强制结论格式】
-最后一段必须是：
-「风控判断：[高风险回避 / 投机博弈（需承担归零风险）/ 数据不足暂缓判断]。主要依据：[最关键的1-2项风险]。」
-"""
-
-# company_type → (framework_name, system_prompt)
-FRAMEWORK_MAP = {
-    "distressed":   ("event_driven",    SYSTEM_EVENT_DRIVEN),
-    "speculative":  ("speculative",     SYSTEM_SPECULATIVE),
-    "financial":    ("bank_insurance",  SYSTEM_BANK_INSURANCE),
-    "cyclical":     ("cycle_position",  SYSTEM_CYCLE_POSITION),
-    "utility":      ("dividend_safety", SYSTEM_DIVIDEND_SAFETY),
-    "growth_tech":  ("growth_quality",  SYSTEM_GROWTH_QUALITY),
-    "pre_profit":   ("survival_check",  SYSTEM_SURVIVAL_CHECK),
-    "mature_value": ("buffett",         SYSTEM_LETTER),
-}
-
-
-def _analyze_news_signals(news: list) -> dict:
-    """
-    从新闻中提取量化信号：
-    返回 {
-        "sentiment_avg": float (-1 ~ +1),           # 平均情绪
-        "signal_count": {"high_pos": int, "high_neg": int, "mid_pos": int, "mid_neg": int},
-        "key_signals": ["CFO离职", "回购¥10亿", ...],  # 关键信号列表
-        "impact_score": float (0-10),                # 对股价的预测影响力（0=无 10=极高）
-        "momentum": "accelerating" | "stable" | "decelerating",  # 信号动态
-        "summary": "..."                             # 新闻总结一句话
-    }
-    """
-    # 中文关键词
-    HIGH_NEG  = ["辞职", "离职", "被查", "立案", "违规", "处罚", "诉讼", "商誉减值", "暴雷"]
-    MID_NEG   = ["减持", "亏损", "下滑", "下降", "降级", "失败", "撤回", "退出"]
-    HIGH_POS  = ["回购", "增持", "大额分红", "创历史新高", "重大中标", "获批上市"]
-    MID_POS   = ["派息", "分红", "签约", "战略合作", "净利润增长", "获批", "中标"]
-    NOISE     = ["只个股", "家公司", "突破年线", "牛熊分界", "资金流向日报",
-                 "盘中播报", "技术分析", "K线", "涨跌幅排名"]
-
-    # 英文关键词（用于摩根大通等英文新闻源）
-    EN_HIGH_NEG = ["resign", "fired", "scandal", "lawsuit", "fraud", "downgrade",
-                   "investigation", "bankruptcy", "loss", "crisis", "collapse"]
-    EN_MID_NEG = ["decline", "miss", "lower", "reduce", "weak", "challenge", "concern"]
-    EN_HIGH_POS = ["upgrade", "acquisition", "record profit", "breakthrough", "approval",
-                   "deal", "expansion", "beat estimate"]
-    EN_MID_POS = ["partnership", "growth", "earnings", "profit", "revenue"]
-
-    signal_counts = {"high_neg": 0, "mid_neg": 0, "high_pos": 0, "mid_pos": 0}
-    sentiments = []
-    key_signals = []
-    impact_scores = []
-
-    for n in news:
-        title = n.get("title", "").lower()  # 转小写便于英文匹配
-
-        # 过滤噪音
-        if any(k in title for k in NOISE):
-            continue
-
-        # 信号分类（先检查中文，再检查英文）
-        if any(k in title for k in HIGH_NEG) or any(k in title for k in EN_HIGH_NEG):
-            signal_counts["high_neg"] += 1
-            sentiments.append(-1.0)
-            impact_scores.append(8)
-            key_signals.append(next((k for k in HIGH_NEG if k in title),
-                                   next((k for k in EN_HIGH_NEG if k in title), "负面信号")))
-        elif any(k in title for k in MID_NEG) or any(k in title for k in EN_MID_NEG):
-            signal_counts["mid_neg"] += 1
-            sentiments.append(-0.5)
-            impact_scores.append(5)
-            key_signals.append(next((k for k in MID_NEG if k in title),
-                                   next((k for k in EN_MID_NEG if k in title), "中性负面")))
-        elif any(k in title for k in HIGH_POS) or any(k in title for k in EN_HIGH_POS):
-            signal_counts["high_pos"] += 1
-            sentiments.append(1.0)
-            impact_scores.append(7)
-            key_signals.append(next((k for k in HIGH_POS if k in title),
-                                   next((k for k in EN_HIGH_POS if k in title), "正面信号")))
-        elif any(k in title for k in MID_POS) or any(k in title for k in EN_MID_POS):
-            signal_counts["mid_pos"] += 1
-            sentiments.append(0.5)
-            impact_scores.append(3)
-            key_signals.append(next((k for k in MID_POS if k in title),
-                                   next((k for k in EN_MID_POS if k in title), "中性正面")))
-        else:
-            sentiments.append(0.0)
-            impact_scores.append(1)
-
-    # 计算综合指标
-    sentiment_avg = sum(sentiments) / len(sentiments) if sentiments else 0.0
-    impact_score = sum(impact_scores) / len(impact_scores) if impact_scores else 0.0
-
-    # 动态判断：正负信号的趋势
-    neg_count = signal_counts["high_neg"] + signal_counts["mid_neg"]
-    pos_count = signal_counts["high_pos"] + signal_counts["mid_pos"]
-
-    if neg_count > pos_count * 1.5:
-        momentum = "accelerating_negative"  # 负面加速
-    elif pos_count > neg_count * 1.5:
-        momentum = "accelerating_positive"  # 正面加速
-    else:
-        momentum = "stable"  # 平衡
-
-    # 生成摘要
-    if key_signals:
-        summary = f"最近关键信号：{', '.join(set(key_signals[:3]))}"
-    else:
-        summary = "暂无重大信号"
-
-    return {
-        "sentiment_avg": round(sentiment_avg, 2),
-        "signal_count": signal_counts,
-        "key_signals": list(set(key_signals[:5])),  # 去重，最多5个
-        "impact_score": round(impact_score, 1),
-        "momentum": momentum,
-        "summary": summary,
-    }
-
-
-def _score_news(news: list) -> list:
-    """
-    对新闻按信号强度排序，重要的排前面。
-    负面信号（CFO离职/减持/亏损）> 正面信号（回购/中标）> 中性
-    同级别内按时间倒序。
-    """
-    HIGH_NEG  = ["辞职", "离职", "被查", "立案", "违规", "处罚", "诉讼", "商誉减值", "暴雷"]
-    MID_NEG   = ["减持", "亏损", "下滑", "下降", "降级", "失败", "撤回", "退出"]
-    HIGH_POS  = ["回购", "增持", "大额分红", "创历史新高", "重大中标", "获批上市"]
-    MID_POS   = ["派息", "分红", "签约", "战略合作", "净利润增长", "获批", "中标"]
-    NOISE     = ["只个股", "家公司", "突破年线", "牛熊分界", "资金流向日报",
-                 "盘中播报", "技术分析", "K线", "涨跌幅排名"]
-
-    def score(n):
-        t = n.get("title", "")
-        if any(k in t for k in NOISE):   return -1
-        if any(k in t for k in HIGH_NEG): return 5
-        if any(k in t for k in MID_NEG):  return 4
-        if any(k in t for k in HIGH_POS): return 3
-        if any(k in t for k in MID_POS):  return 2
-        return 1  # 中性
-
-    def sentiment(n):
-        """返回 sentiment 分值：-1（负）/ 0（中性）/ 1（正）"""
-        score_val = score(n)
-        if score_val in (5, 4):
-            return -1.0  # 负面
-        elif score_val in (3, 2):
-            return 1.0   # 正面
-        elif score_val == 1:
-            return 0.0   # 中性
-        else:
-            return 0.0   # 噪音当中性处理
-
-    scored = [(score(n), n) for n in news]
-
-    # 同时更新新闻的 sentiment 字段（供后续存储）
-    import db
-    for s, n in scored:
-        if s > 0:  # 只对有效新闻计算情绪
-            n_sentiment = sentiment(n)
-            # 尝试更新数据库（如果新闻已存在）
-            try:
-                with db.get_conn() as c:
-                    c.execute(
-                        "UPDATE stock_news SET sentiment=? WHERE id=?",
-                        (n_sentiment, n.get("id"))
-                    )
-            except:
-                pass  # 如果更新失败，继续处理
-
-    filtered = [(s, n) for s, n in scored if s > 0]  # 去噪音
-    filtered.sort(key=lambda x: x[0], reverse=True)
-    return [n for _, n in filtered]
+# shared prompts / Groq client / signal scoring moved to dedicated modules
 
 
 def analyze_stock_v2(code: str, name: str, market: str,
@@ -642,384 +190,26 @@ def analyze_stock_v2(code: str, name: str, market: str,
 - 总结：{news_signals['summary']}
 """
 
-    price_str = ""
-    pe_str    = ""
-    if price:
-        p   = price.get("price")
-        chg = price.get("change_pct")
-        pe  = price.get("pe_ratio")
-        cur = {"nz":"NZD","cn":"CNY","hk":"HKD","us":"USD"}.get(market,"USD")
-        if p:
-            price_str = f"当前价格：{cur} {p:.2f}（{chg:+.2f}%）" if chg else f"当前价格：{cur} {p:.2f}"
-        if pe:
-            pe_str = f"市盈率（TTM）：{pe:.1f}x"
-
+    price_str = build_price_context(market, price)
     ff_str = ""
     if fund_flow and market == "cn":
         net   = fund_flow.get("main_net", 0)
         ratio = fund_flow.get("main_ratio", 0)
         ff_str = f"主力资金净{'流入' if net>=0 else '流出'} {abs(net):.2f}亿（占比{ratio:+.1f}%）"
-
-    # 从 BUFFETT_PROFILES 拿档案背景（如果有）
-    from config import BUFFETT_PROFILES
-    profile    = BUFFETT_PROFILES.get(code, {})
-    grade_bg   = profile.get("grade", "")
-    moat_bg    = profile.get("moat", "")
-    roe_bg     = profile.get("roe_5y", "")
-    risk_bg    = profile.get("key_risk", "")
-    biz_type   = profile.get("biz_type", "")
-
-    margin_bg  = profile.get("net_margin_trend", "")
-
-    profile_lines = []
-    if grade_bg:  profile_lines.append(f"历史评级参考：{grade_bg}级")
-    if biz_type:  profile_lines.append(f"生意类型：{biz_type}")
-    if moat_bg:   profile_lines.append(f"护城河：{moat_bg}")
-    if roe_bg:    profile_lines.append(f"近5年ROE：{roe_bg}")
-    if margin_bg: profile_lines.append(f"净利率趋势：{margin_bg}")
-    if risk_bg:   profile_lines.append(f"核心风险：{risk_bg}")
-    profile_str = "\n".join(profile_lines)
-
-    # 财务数据上下文
-    fund_lines = []
-    if fundamentals:
-        annual = fundamentals.get("annual", [])
-        if annual:
-            fund_lines.append("近年财务数据（年报）：")
-            for row in annual[:5]:  # 最近5年
-                yr = row.get("year", "")
-                parts = []
-                if row.get("roe") not in (None, "False", "nan", ""):
-                    parts.append(f"ROE {row['roe']}")
-                if row.get("net_margin") not in (None, "False", "nan", ""):
-                    parts.append(f"净利率 {row['net_margin']}")
-                if row.get("debt_ratio") not in (None, "False", "nan", ""):
-                    parts.append(f"负债率 {row['debt_ratio']}")
-                if row.get("profit_growth") not in (None, "False", "nan", ""):
-                    parts.append(f"净利润增长 {row['profit_growth']}")
-                if parts:
-                    fund_lines.append(f"  {yr}: {', '.join(parts)}")
-
-        # 判断是否亏损（最新年 ROE < 0 或净利润增长为大幅负值）
-        latest_annual = annual[0] if annual else {}
-        def _pct_val(s):
-            try: return float(str(s).replace('%','').strip())
-            except: return None
-        latest_roe = _pct_val(latest_annual.get('roe',''))
-        is_loss_making = (latest_roe is not None and latest_roe < 0)
-
-        pe_now = fundamentals.get("pe_current")
-        pe_pct = fundamentals.get("pe_percentile_5y")
-        pb_now = fundamentals.get("pb_current")
-        pb_pct = fundamentals.get("pb_percentile_5y")
-
-        if is_loss_making:
-            # 亏损公司：PE 无意义，明确告诉 LLM
-            fund_lines.append("⚠️ 估值注意：公司当前ROE为负（亏损状态），PE指标无意义，不可用于估值判断。")
-            fund_lines.append("  请聚焦于：何时能扭亏、资产负债表能否支撑、管理层是否有可信的转型计划。")
-            if pb_now:
-                if pb_pct is not None:
-                    cheap_pb = "偏低" if pb_pct < 30 else ("偏高" if pb_pct > 70 else "历史中位")
-                    fund_lines.append(f"  PB {pb_now}x（5年历史{pb_pct}%分位，{cheap_pb}）——亏损时PB是主要参考锚")
-                else:
-                    fund_lines.append(f"  PB {pb_now}x（历史数据不足）——亏损时PB是主要参考锚")
-        else:
-            if pe_now is not None:
-                if pe_now > 200:
-                    # PE极高通常是一次性利润暴跌导致，不可用于估值判断
-                    fund_lines.append(f"⚠️ PE数据异常：{pe_now}x（极高PE通常为利润骤降或数据错误，不纳入估值判断，请人工核实）")
-                elif pe_pct is not None:
-                    cheap = "偏低估" if pe_pct < 30 else ("偏高估" if pe_pct > 70 else "处于历史中位")
-                    fund_lines.append(f"估值：PE {pe_now}x（5年历史{pe_pct}%分位，{cheap}）")
-                else:
-                    fund_lines.append(f"估值：PE {pe_now}x（历史数据不足）")
-            if pb_now is not None:
-                if pb_pct is not None:
-                    fund_lines.append(f"       PB {pb_now}x（5年历史{pb_pct}%分位）")
-                else:
-                    fund_lines.append(f"       PB {pb_now}x（历史数据不足）")
-
-    fundamentals_str = "\n".join(fund_lines)
-
-    # 华尔街级信号
-    signals_lines = []
-
-    # 非A股的通用财务指标（来自 signals）
-    if signals and market != "cn":
-        metric_lines = []
-        red_flags = []  # 关键风险指标单独列出
-
-        # ROE（明确标注来源，防止LLM引用其他数字）
-        roe = signals.get("roe")
-        if roe is not None:
-            roe_pct = roe * 100
-            if roe_pct < 5:
-                red_flags.append(f"🚨 ROE 仅 {roe_pct:.2f}%（最新TTM，以此为准，赚钱能力几乎为零）")
-            else:
-                metric_lines.append(f"  ROE（股东权益回报率）：{roe_pct:.2f}%（最新TTM，以此为准）")
-
-        # 利润率
-        pm = signals.get("profit_margin")
-        if pm is not None:
-            pm_pct = pm * 100
-            if pm_pct < 0:
-                red_flags.append(f"🚨 净利率 {pm_pct:.2f}%（公司在亏损烧钱）")
-            else:
-                metric_lines.append(f"  净利率：{pm_pct:.2f}%")
-
-        # 毛利率
-        gm = signals.get("gross_margin")
-        if gm is not None:
-            gm_pct = gm * 100
-            metric_lines.append(f"  毛利率：{gm_pct:.2f}%")
-
-        # 债务比
-        de = signals.get("debt_to_equity")
-        if de is not None:
-            if de > 20:
-                red_flags.append(f"🚨 债务比 {de:.2f}x（极度高杠杆，融资风险高）")
-            else:
-                metric_lines.append(f"  债务比（D/E）：{de:.2f}x")
-
-        # 流动比
-        cr = signals.get("current_ratio")
-        if cr is not None:
-            metric_lines.append(f"  流动比：{cr:.2f}x")
-
-        # 52周价格位置
-        pos = signals.get("price_position")
-        if pos is not None:
-            pos_pct = pos
-            if pos_pct >= 90:
-                red_flags.append(f"📊 52周价格位置 {pos_pct:.1f}%（接近年高，买入风险大）")
-            elif pos_pct <= 10:
-                metric_lines.append(f"  📊 52周价格位置：{pos_pct:.1f}%（接近年低，买入机会）")
-            else:
-                metric_lines.append(f"  📊 52周价格位置：{pos_pct:.1f}%")
-
-        # 先显示红旗（强制 LLM 关注）
-        if red_flags:
-            signals_lines.append("【⚠️ 关键风险指标】")
-            signals_lines.extend(red_flags)
-
-        # 再显示普通指标
-        if metric_lines:
-            signals_lines.append("【财务指标概览】")
-            signals_lines.extend(metric_lines)
-
-    if signals:
-        pledge = signals.get("pledge_ratio")
-        if pledge is not None:
-            flag = " ⚠️ 超40%高风险" if pledge > 40 else (" 注意" if pledge > 20 else "")
-            signals_lines.append(f"大股东质押比例：{pledge:.1f}%{flag}")
-
-        mb = signals.get("margin_balance")
-        mc_pct = signals.get("margin_change_pct")
-        mdir = signals.get("margin_direction", "")
-        if mb is not None:
-            signals_lines.append(f"融资余额：{mb/1e8:.2f}亿（近5日{mdir}{abs(mc_pct or 0):.1f}%）")
-
-        moat_dir = signals.get("moat_direction")
-        if moat_dir:
-            signals_lines.append(f"护城河方向（量化推算）：{moat_dir}")
-
-        # ROIC 趋势（预计算方向标签，不让 LLM 自己推断数字大小）
-        roic_trend = signals.get("roic_trend", [])
-        if roic_trend:
-            roic_str = " → ".join(f"{r['year']}:{r['roic']}%" for r in roic_trend[:5])
-            # 计算近2年方向
-            if len(roic_trend) >= 2:
-                r_new = roic_trend[0]["roic"]
-                r_old = roic_trend[1]["roic"]
-                delta = r_new - r_old
-                if delta >= 2:
-                    roic_dir = f"↑ 近2年回升（+{delta:.1f}pp）"
-                elif delta <= -2:
-                    roic_dir = f"↓ 近2年下滑（{delta:.1f}pp）"
-                else:
-                    roic_dir = "→ 近2年基本持平"
-                # 5年最高点
-                roic_peak = max(r["roic"] for r in roic_trend)
-                peak_year = next(r["year"] for r in roic_trend if r["roic"] == roic_peak)
-                vs_peak = "已接近历史高位" if r_new >= roic_peak * 0.85 else f"仍低于{peak_year}年峰值{roic_peak}%"
-                signals_lines.append(
-                    f"ROIC（投入资本回报率）：{roic_str}"
-                    f"\n  → 趋势判断：{roic_dir}，{vs_peak}"
-                )
-            else:
-                signals_lines.append(f"ROIC：{roic_str}")
-
-        # Owner Earnings（同样预计算方向）
-        oe_list = signals.get("owner_earnings", [])
-        if oe_list:
-            latest_oe = oe_list[0]
-            oe_str = f"{latest_oe['oe_bn']}亿（OCF {latest_oe['ocf_bn']}亿 - CapEx {latest_oe['capex_bn']}亿）"
-            signals_lines.append(f"Owner Earnings（最新{latest_oe['year']}）：{oe_str}")
-            if len(oe_list) >= 2:
-                oe_new = oe_list[0]["oe_bn"]
-                oe_old = oe_list[1]["oe_bn"]
-                oe_delta = oe_new - oe_old
-                oe_dir = f"↑ 同比+{oe_delta:.1f}亿" if oe_delta > 0 else f"↓ 同比{oe_delta:.1f}亿"
-                signals_lines.append(f"  → Owner Earnings 趋势：{oe_dir}（{oe_list[1]['year']}:{oe_old}亿 → {oe_list[0]['year']}:{oe_new}亿）")
-
-        # 留存利润检验
-        re_eff = signals.get("retained_efficiency")
-        re_eq  = signals.get("retained_equity_change")
-        re_np  = signals.get("retained_total_profit")
-        if re_eff is not None:
-            if re_eff >= 1.0:
-                re_verdict = "✓ 优秀：每留1元利润，股东权益增加超过1元，管理层在为股东创造价值"
-            elif re_eff >= 0.6:
-                re_verdict = "○ 良好：每留1元利润，股东权益增加约{:.2f}元（部分通过分红返还股东）".format(re_eff)
-            else:
-                re_verdict = "✗ 偏低：每留1元利润，股东权益仅增加{:.2f}元，需关注资本配置效率".format(re_eff)
-            signals_lines.append(
-                f"留存利润检验（近5年）：{re_verdict}"
-                f"\n  数据：权益增加{re_eq}亿 ÷ 利润合计{re_np}亿 = {re_eff:.2f}"
-            )
-
-        inst_inc = signals.get("inst_increased")
-        inst_dec = signals.get("inst_decreased")
-        inst_total = signals.get("inst_total")
-        if inst_total:
-            net_sig = "净增持" if (inst_inc or 0) > (inst_dec or 0) else ("净减持" if (inst_dec or 0) > (inst_inc or 0) else "持平")
-            signals_lines.append(f"机构持仓：共{inst_total}家，增持{inst_inc}/减持{inst_dec}，{net_sig}")
-            top = signals.get("inst_top", [])
-            if top:
-                top_str = "；".join(
-                    f"{t['name']}({t['type']}){'+' if t['change']>=0 else ''}{t['change']:.2f}pp"
-                    for t in top[:3]
-                )
-                signals_lines.append(f"  主要机构：{top_str}")
-
-        fcf = signals.get("fcf_quality_avg")
-        if fcf is not None:
-            quality = "良好" if fcf >= 0.8 else ("偏低" if fcf >= 0.5 else "差——利润质量存疑")
-            signals_lines.append(f"FCF质量（现金流/净利润）：均值{fcf:.2f}x，{quality}")
-
-    # 技术支撑位
-    tech = signals.get("technicals", {}) if signals else {}
-    tech_lines = []
-    if tech:
-        current_price = price.get("price") if price else None
-        ma_labels = [("ma250", "年线MA250"), ("ma120", "半年线MA120"),
-                     ("ma60", "季线MA60"),   ("ma20", "月线MA20")]
-        for key, label in ma_labels:
-            val = tech.get(key)
-            pct = tech.get(f"price_vs_{key}")
-            if val is not None and pct is not None:
-                pos = "高于" if pct >= 0 else "低于"
-                tech_lines.append(f"{label}：¥{val}，现价{pos}{abs(pct):.1f}%")
-        vwap60  = tech.get("vwap60")
-        pv60    = tech.get("price_vs_vwap60")
-        vwap120 = tech.get("vwap120")
-        pv120   = tech.get("price_vs_vwap120")
-        if vwap60 and pv60 is not None:
-            pos = "高于" if pv60 >= 0 else "低于"
-            tech_lines.append(f"60日VWAP（近期机构成本参考）：¥{vwap60}，现价{pos}{abs(pv60):.1f}%")
-        if vwap120 and pv120 is not None:
-            pos = "高于" if pv120 >= 0 else "低于"
-            tech_lines.append(f"120日VWAP（中期机构成本参考）：¥{vwap120}，现价{pos}{abs(pv120):.1f}%")
-
-    tech_str = ""
-    if tech_lines:
-        tech_str = "\n【技术支撑位与机构成本参考】\n" + "\n".join(tech_lines)
-
-    signals_str = "\n".join(signals_lines) + tech_str
-
-    # ST 股检测
-    is_st = "ST" in name.upper() or code.upper().startswith(("ST", "*ST"))
-    st_warning = "\n⚠️ 风险警示：该股票为ST/风险警示股，存在退市风险，流动性差，散户占比极高，属于典型彩票型资产。" if is_st else ""
-
-    # 预计算行为金融提示（互斥，优先级：ST > 大幅流出 > 近期急涨 > 默认）
-    ff_ratio   = fund_flow.get("main_ratio", 0)  if fund_flow else 0
-    change_pct = price.get("change_pct",    0)   if price     else 0
-    if is_st:
-        behavioral_hint = "ST彩票型资产：持有者多为损失厌恶（亏损不甘止损），而非价值判断。诊断这一心理陷阱。"
-    elif ff_ratio is not None and ff_ratio < -5:
-        behavioral_hint = "主力资金大幅净流出（机构在离场）。从行为经济学角度，散户此时接盘是典型的'博傻'心理，诊断这一现象。"
-    elif change_pct is not None and change_pct > 15:
-        behavioral_hint = "近期急涨超15%。分析FOMO（错失恐惧）追涨情绪——Kahneman的'系统1思维'在发挥作用。"
-    else:
-        behavioral_hint = "常规持有状态。分析投资者最常见的锚定效应（以买入价而非内在价值为参考锚）。"
-
-    # 用户持仓成本段落
-    entry_str = ""
-    if entry_price and entry_price > 0:
-        cur_price = price.get("price") if price else None
-        if cur_price:
-            pnl_pct = (cur_price - entry_price) / entry_price * 100
-            pnl_sign = "浮盈" if pnl_pct >= 0 else "浮亏"
-            pnl_color = "赚" if pnl_pct >= 0 else "亏"
-            days_str = f"，持有自 {buy_date}" if buy_date else ""
-            entry_str = (
-                f"\n【用户持仓成本】\n"
-                f"买入价：¥{entry_price:.2f}{days_str}\n"
-                f"现价：¥{cur_price:.2f}，{pnl_sign} {abs(pnl_pct):.1f}%（即每股{pnl_color}¥{abs(cur_price - entry_price):.2f}）\n"
-                f"→ 分析结论必须基于用户实际持仓成本。给出明确建议：买入/持有/观察/减持/卖出，结论格式必须是这五个之一。"
-            )
-            # 同时更新 behavioral_hint（有成本时才有意义做亏损/锚定分析）
-            if not is_st:
-                if pnl_pct < -15:
-                    behavioral_hint = f"用户已亏损{abs(pnl_pct):.1f}%（买入价¥{entry_price:.2f}）。诊断损失厌恶（亏损不甘止损）vs 理性止损的边界——何时该认输？"
-                elif pnl_pct > 30:
-                    behavioral_hint = f"用户浮盈{pnl_pct:.1f}%（买入价¥{entry_price:.2f}）。诊断处置效应（过早锁定利润）——利润是继续跑还是落袋为安？"
-                else:
-                    behavioral_hint = f"用户持仓成本¥{entry_price:.2f}，{pnl_sign}{abs(pnl_pct):.1f}%。分析以买入价为锚点的锚定效应——正确参考锚是内在价值，不是买入价。"
-
-    # 数据质量警告块（US-48）
-    warnings_str = ""
-    if data_warnings:
-        lines = "\n".join(f"  • {w}" for w in data_warnings)
-        warnings_str = f"\n【⚠️ 数据质量警告 — 分析时必须遵守以下限制】\n{lines}\n"
-
-    # 利润质量预计算标签块（预计算事实，LLM 不得自行判断增速含义）
-    earnings_str = ""
-    if earnings_flags:
-        lines = "\n".join(f"  • {f}" for f in earnings_flags)
-        earnings_str = (
-            f"\n【📊 利润质量预判断 — 以下为系统预计算结论，必须在分析中引用，不得忽视】\n{lines}\n"
-        )
-
-    # 操作参数预计算块（仅限 mature_value / growth_tech，不适用于困境/投机股）
-    trading_str = ""
-    _trade_applicable = company_type in (None, "mature_value", "growth_tech", "cyclical", "utility", "financial")
-    if trading_params and _trade_applicable and trading_params.get("entry_1_label"):
-        parts = ["【📌 预计算操作参数 — 数字已由系统计算，LLM 直接引用至 ===TRADE=== 块】"]
-        parts.append(f"  当前价格位置：{trading_params.get('position_label', '未知')}")
-        if trading_params.get("reduce_label"):
-            parts.append(f"  建议减仓区间：{trading_params['reduce_label']}")
-        if trading_params.get("entry_1_label"):
-            parts.append(f"  建议买入区间1：{trading_params['entry_1_label']}")
-        if trading_params.get("entry_2_label"):
-            parts.append(f"  建议买入区间2：{trading_params['entry_2_label']}")
-        if trading_params.get("stop_loss_label"):
-            parts.append(f"  建议止损位：{trading_params['stop_loss_label']}")
-        trading_str = "\n" + "\n".join(parts) + "\n"
-
-    # 事件时间线块（US-49）
-    events_str = ""
-    if events:
-        EVENT_LABELS = {
-            "st_trigger":                "ST触发",
-            "st_lifted":                 "ST解除",
-            "restructuring_announced":   "重整公告",
-            "restructuring_vote":        "重整表决",
-            "restructuring_approved":    "重整批准",
-            "rights_issue":              "供股/配股",
-            "bonus_share":               "转增股本",
-            "name_change":               "公司改名",
-            "delist_warning":            "退市警示",
-            "delist_final":              "退市",
-            "major_shareholder_change":  "大股东变动",
-        }
-        lines = []
-        for ev in events[:6]:  # 最多注入6条，避免撑爆 token
-            label = EVENT_LABELS.get(ev.get("event_type", ""), ev.get("event_type", ""))
-            date  = ev.get("event_date", "未知日期")
-            summary = ev.get("summary", "")
-            lines.append(f"  [{date}] {label}：{summary}")
-        events_str = "\n【关键事件时间线】\n" + "\n".join(lines) + "\n"
+    profile_str = build_profile_context(code)
+    fundamentals_str = build_fundamentals_context(fundamentals)
+    signals_str = build_signals_context(market, signals or {}, price or {})
+    st_warning, behavioral_hint, entry_str = build_behavioral_context(
+        name=name,
+        code=code,
+        price=price or {},
+        fund_flow=fund_flow or {},
+        entry_price=entry_price,
+        buy_date=buy_date,
+    )
+    warnings_str = build_warning_context(data_warnings=data_warnings, earnings_flags=earnings_flags)
+    trading_str = build_trading_context(company_type, trading_params, compact=False)
+    events_str = build_events_context(events)
 
     user_msg = f"""公司：{name}（{code}）
 市场：{market.upper()}{st_warning}
@@ -1056,29 +246,12 @@ def analyze_stock_v2(code: str, name: str, market: str,
 
     raw = _call_groq(system_prompt, user_msg, max_tokens=900)
 
-    # 解析 ===TRADE=== 块（如果 LLM 输出了的话）
-    trade_block = None
-    if raw and "===TRADE===" in raw and "===TRADE_END===" in raw:
-        try:
-            trade_raw = raw.split("===TRADE===")[1].split("===TRADE_END===")[0].strip()
-            trade_lines = {}
-            for line in trade_raw.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                for key in ("当前位置", "减仓区间", "买入区间1", "买入区间2", "止损位", "仓位策略", "关键监控"):
-                    if line.startswith(key + "：") or line.startswith(key + ":"):
-                        trade_lines[key] = line.split("：", 1)[-1].split(":", 1)[-1].strip()
-                        break
-            if trade_lines:
-                trade_block = json.dumps(trade_lines, ensure_ascii=False)
-        except Exception:
-            pass
+    trade_block = parse_trade_block(raw)
 
     if not raw:
         # LLM 失败时，使用纯数据驱动的定量评级系统
         print(f"    ⚠️ LLM 无响应，切换到定量评级系统...")
-        from quantitative_rating import QuantitativeRater
+        from scripts.quantitative_rating import QuantitativeRater
 
         rater = QuantitativeRater()
 
@@ -1194,26 +367,12 @@ def analyze_stock_v2(code: str, name: str, market: str,
                 "framework_used": framework_name,
             }
 
-    import re
-
-    # 分离信件正文和维度块（===END=== 可选，兼容 LLM 省略结尾标记）
-    dims_match = re.search(r'===DIMS===(.*?)(?:===END===|$)', raw, re.DOTALL)
-    if dims_match:
-        dims_text   = dims_match.group(1).strip()
-        letter_text = raw[:dims_match.start()].strip()
-    else:
-        dims_text   = ""
-        letter_text = raw.strip()
-
-    # 从信件正文里也去掉评级行（兼容旧格式）
-    letter_lines = [l for l in letter_text.splitlines()
-                    if not re.match(r'\s*评级[：:]\s*[A-Z]', l)]
-    letter_text = "\n".join(letter_lines).strip()
+    letter_text, dims_text = split_dims_output(raw)
 
     # 定量评级决定 grade + conclusion，不依赖解析 LLM 格式
     grade, conclusion = "C", "持有"
     try:
-        from quantitative_rating import QuantitativeRater
+        from scripts.quantitative_rating import QuantitativeRater
         annual_data = fundamentals.get("annual", []) if fundamentals else []
         _ns = {
             "high_pos_buyback":    1 if "回购" in news_signals.get("summary", "") else 0,
@@ -1235,18 +394,13 @@ def analyze_stock_v2(code: str, name: str, market: str,
     except Exception as e:
         print(f"    ⚠️ 定量评级出错，保留默认 C: {e}")
 
-    # 解析各维度
-    def _parse_dim(key: str, text: str) -> str:
-        m = re.search(rf'{key}[：:]\s*(.+)', text)
-        return m.group(1).strip()[:60] if m else ""
-
     dims = {
-        "moat":             _parse_dim("护城河", dims_text),
-        "management":       _parse_dim("管理层", dims_text),
-        "valuation":        _parse_dim("估值",   dims_text),
-        "fund_flow_summary":_parse_dim("资金流向", dims_text),
-        "behavioral":       _parse_dim("行为金融", dims_text),
-        "macro_sensitivity":_parse_dim("宏观敏感度", dims_text),
+        "moat": parse_dim("护城河", dims_text),
+        "management": parse_dim("管理层", dims_text),
+        "valuation": parse_dim("估值", dims_text),
+        "fund_flow_summary": parse_dim("资金流向", dims_text),
+        "behavioral": parse_dim("行为金融", dims_text),
+        "macro_sensitivity": parse_dim("宏观敏感度", dims_text),
     }
 
     # 卖出/减持结论时，确保行为金融字段包含沉没成本提示
@@ -1320,24 +474,10 @@ def analyze_stock_v3(code: str, name: str, market: str,
     quant_str = "\n".join(quant_lines)
 
     # ── 价格 + 市场位置 ───────────────────────────────────
-    cur = _MARKET_CURRENCY.get(market, "$")
-    p_val = (price or {}).get("price")
-    chg   = (price or {}).get("change_pct")
-    price_str = f"当前价：{cur}{p_val:.2f}（{chg:+.2f}%）" if p_val and chg else (f"当前价：{cur}{p_val:.2f}" if p_val else "")
+    price_str = build_v3_price_context(market, price or {})
 
     # ── 操作参数摘要 ──────────────────────────────────────
-    trading_str = ""
-    _trade_ok = company_type in (None, "mature_value", "growth_tech", "cyclical", "utility", "financial")
-    if trading_params and _trade_ok and trading_params.get("entry_1_label"):
-        tp = trading_params
-        lines = ["【预计算操作参数 — 价格数字已锁定，LLM 只补仓位策略和关键监控】"]
-        lines.append(f"  当前位置：{tp.get('position_label', '')}")
-        if tp.get("reduce_label"):
-            lines.append(f"  减仓区间：{tp['reduce_label']}")
-        lines.append(f"  买入区间1：{tp.get('entry_1_label', '暂无')}")
-        lines.append(f"  买入区间2：{tp.get('entry_2_label', '暂无')}")
-        lines.append(f"  止损位：{tp.get('stop_loss_label', '暂无')}")
-        trading_str = "\n" + "\n".join(lines)
+    trading_str = build_trading_context(company_type, trading_params, compact=True)
 
     # ── 新闻：只取最重要的3条 ─────────────────────────────
     sorted_news = _score_news(news)[:3]
@@ -1352,23 +492,10 @@ def analyze_stock_v3(code: str, name: str, market: str,
     )
 
     # ── 持仓成本 ──────────────────────────────────────────
-    entry_str = ""
-    if entry_price and entry_price > 0 and p_val:
-        pnl_pct = (p_val - entry_price) / entry_price * 100
-        pnl_sign = "浮盈" if pnl_pct >= 0 else "浮亏"
-        days_str = f"，持有自 {buy_date}" if buy_date else ""
-        entry_str = (
-            f"\n【用户持仓】买入价：{cur}{entry_price:.2f}{days_str}"
-            f" | 现价 {pnl_sign} {abs(pnl_pct):.1f}%"
-            f"\n→ 结论必须考虑持仓成本，给出买入/持有/观察/减持/卖出建议。"
-        )
+    entry_str = build_v3_entry_context(market, price or {}, entry_price=entry_price, buy_date=buy_date)
 
     # ── 数据警告（仅传关键项，节省 token） ───────────────
-    warn_str = ""
-    if data_warnings:
-        warn_str = "\n⚠️ 数据警告：" + "；".join(data_warnings[:2])
-    if earnings_flags:
-        warn_str += "\n⚠️ 利润质量：" + earnings_flags[0][:80] if earnings_flags else ""
+    warn_str = build_mini_warning_context(data_warnings=data_warnings, earnings_flags=earnings_flags)
 
     # ── 组装 mini user_msg ────────────────────────────────
     user_msg = f"""公司：{name}（{code}）市场：{market.upper()}
@@ -1409,28 +536,8 @@ def analyze_stock_v3(code: str, name: str, market: str,
             "macro_sensitivity": "—",
         }
 
-    # ── 解析 ===TRADE=== 块 ───────────────────────────────
-    trade_block = None
-    if "===TRADE===" in raw and "===TRADE_END===" in raw:
-        try:
-            trade_raw = raw.split("===TRADE===")[1].split("===TRADE_END===")[0].strip()
-            trade_lines = {}
-            for line in trade_raw.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                for key in ("当前位置", "减仓区间", "买入区间1", "买入区间2", "止损位", "仓位策略", "关键监控"):
-                    if line.startswith(key + "：") or line.startswith(key + ":"):
-                        trade_lines[key] = line.split("：", 1)[-1].split(":", 1)[-1].strip()
-                        break
-            if trade_lines:
-                trade_block = json.dumps(trade_lines, ensure_ascii=False)
-        except Exception:
-            pass
-
-    # 去掉 ===TRADE=== 块，只保留信件正文
-    import re
-    letter_text = re.sub(r'===TRADE===.*?===TRADE_END===', '', raw, flags=re.DOTALL).strip()
+    trade_block = parse_trade_block(raw)
+    letter_text = strip_trade_block(raw)
 
     return {
         "conclusion":        conclusion,

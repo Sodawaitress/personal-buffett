@@ -6,12 +6,16 @@
 """
 
 import sys, os, json, time, ssl, subprocess, urllib.request
-sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+try:
+    from scripts._bootstrap import bootstrap_paths
+except ImportError:
+    from _bootstrap import bootstrap_paths
+
+bootstrap_paths()
 
 from datetime import datetime, timedelta
 import db as _db
-from config import CN_TZ, DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID
+from scripts.config import CN_TZ, DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID
 
 PERIODS = {
     "weekly":    (7,  "本周",   "weekly"),
@@ -32,7 +36,7 @@ def _classify(title: str) -> str:
 
 
 def _call_groq(system: str, user_msg: str, max_tokens: int = 600) -> str:
-    from config import GROQ_API_KEY
+    from scripts.config import GROQ_API_KEY
     import requests
     if not GROQ_API_KEY:
         return ""
