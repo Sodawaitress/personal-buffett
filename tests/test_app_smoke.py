@@ -24,11 +24,14 @@ def test_factory_renders_login_template():
     app = create_app()
 
     with app.test_client() as client:
+        health = client.get("/healthz")
         resp = client.get("/login")
+        assert health.status_code == 200, "/healthz 应该返回 200"
+        assert health.get_json() == {"ok": True}, "/healthz 应该返回稳定 JSON"
         assert resp.status_code == 200, "/login 应该返回 200"
         assert b"<html" in resp.data.lower(), "登录页模板应该被正常渲染"
 
-    print("✓ create_app() 可正常渲染 login.html")
+    print("✓ create_app() 可正常渲染 login.html，健康检查正常")
 
 
 def test_core_auth_guards():
