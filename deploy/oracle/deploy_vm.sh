@@ -24,6 +24,8 @@ BOOT_VOLUME_GB="${OCI_BOOT_VOLUME_GB:-50}"
 SSH_PUBLIC_KEY_FILE="${SSH_PUBLIC_KEY_FILE:-$HOME/.ssh/personal_buffett_oracle.pub}"
 IMAGE_TAG="${IMAGE_TAG:-codex-pbc-refactor}"
 IMAGE="ghcr.io/sodawaitress/personal-buffett:${IMAGE_TAG}"
+OCI_AUTH_MODE="${OCI_AUTH_MODE:-}"
+IMAGE_OS_VERSION="${OCI_IMAGE_OS_VERSION:-24.04}"
 
 log() {
   printf '[oracle-deploy] %s\n' "$*"
@@ -64,7 +66,11 @@ config_value() {
 }
 
 oci_raw() {
-  "$OCI_BIN" --profile "$PROFILE" --region "$REGION" "$@"
+  if [ -n "$OCI_AUTH_MODE" ]; then
+    "$OCI_BIN" --profile "$PROFILE" --region "$REGION" --auth "$OCI_AUTH_MODE" "$@"
+  else
+    "$OCI_BIN" --profile "$PROFILE" --region "$REGION" "$@"
+  fi
 }
 
 render_cloud_init() {
@@ -93,6 +99,10 @@ require_cmd openssl
 [ -f "$CONFIG_FILE" ] || die "OCI config not found: $CONFIG_FILE"
 [ -f "$SSH_PUBLIC_KEY_FILE" ] || die "SSH public key not found: $SSH_PUBLIC_KEY_FILE"
 [ -f "$TEMPLATE_FILE" ] || die "cloud-init template not found: $TEMPLATE_FILE"
+
+if [ -z "$OCI_AUTH_MODE" ] && grep -q '^security_token_file=' "$CONFIG_FILE"; then
+  OCI_AUTH_MODE="security_token"
+fi
 
 TENANCY_OCID="${OCI_TENANCY_OCID:-$(config_value tenancy)}"
 [ -n "$TENANCY_OCID" ] || die "could not read tenancy from $CONFIG_FILE profile $PROFILE"
@@ -235,7 +245,7 @@ IMAGE_ID="$(
   oci_raw compute image list --all \
     --compartment-id "$TENANCY_OCID" \
     --operating-system "Canonical Ubuntu" \
-    --operating-system-version "24.04" \
+    --operating-system-version "$IMAGE_OS_VERSION" \
     --shape "$SHAPE" \
     --sort-by TIMECREATED \
     --sort-order DESC \
@@ -275,21 +285,27 @@ fi
 render_cloud_init
 
 log "launching instance"
-INSTANCE_ID="$(
-  oci_raw compute instance launch \
-    --availability-domain "$AVAILABILITY_DOMAIN" \
-    --compartment-id "$COMPARTMENT_ID" \
-    --display-name "$INSTANCE_NAME" \
-    --shape "$SHAPE" \
-    --shape-config "{\"ocpus\":${OCPUS},\"memoryInGBs\":${MEMORY_GB}}" \
-    --subnet-id "$SUBNET_ID" \
-    --assign-public-ip true \
-    --image-id "$IMAGE_ID" \
-    --boot-volume-size-in-gbs "$BOOT_VOLUME_GB" \
-    --ssh-authorized-keys-file "$SSH_PUBLIC_KEY_FILE" \
-    --user-data-file "$RENDERED_CLOUD_INIT" \
-    --query 'data.id' --raw-output
-)"
+LAUNCH_ARGS=(
+  compute instance launch
+  --availability-domain "$AVAILABILITY_DOMAIN"
+  --compartment-id "$COMPARTMENT_ID"
+  --display-name "$INSTANCE_NAME"
+  --shape "$SHAPE"
+  --subnet-id "$SUBNET_ID"
+  --assign-public-ip true
+  --image-id "$IMAGE_ID"
+  --boot-volume-size-in-gbs "$BOOT_VOLUME_GB"
+  --ssh-authorized-keys-file "$SSH_PUBLIC_KEY_FILE"
+  --user-data-file "$RENDERED_CLOUD_INIT"
+  --query 'data.id'
+  --raw-output
+)
+
+if [[ "$SHAPE" == *".Flex" ]]; then
+  LAUNCH_ARGS+=(--shape-config "{\"ocpus\":${OCPUS},\"memoryInGBs\":${MEMORY_GB}}")
+fi
+
+INSTANCE_ID="$(oci_raw "${LAUNCH_ARGS[@]}")"
 
 [ -n "$INSTANCE_ID" ] || die "instance launch failed"
 

@@ -13,6 +13,7 @@
 - 云平台：Oracle Cloud Always Free
 - 地区：默认 `ap-singapore-1`，可改
 - 主机：`VM.Standard.A1.Flex`
+- 备用机型：`VM.Standard.E2.1.Micro`
 - 容器：`ghcr.io/sodawaitress/personal-buffett:codex-pbc-refactor`
 - 端口：外网 `80` -> 容器 `8080`
 - 数据目录：`/opt/personal-buffett/data`
@@ -86,11 +87,22 @@ bash deploy/oracle/deploy_vm.sh
 - `OCI_COMPARTMENT_ID`
 - `OCI_CLI_PROFILE`
 - `OCI_CLI_CONFIG_FILE`
+- `OCI_AUTH_MODE`
+- `OCI_SHAPE`
 - `OCI_OCPUS`
 - `OCI_MEMORY_GB`
 - `OCI_BOOT_VOLUME_GB`
+- `OCI_IMAGE_OS_VERSION`
 - `SSH_PUBLIC_KEY_FILE`
 - `IMAGE_TAG`
+
+如果 `A1 Flex` 报容量不足，可以切到 `E2 Micro` 再试：
+
+```bash
+OCI_SHAPE=VM.Standard.E2.1.Micro \
+OCI_IMAGE_OS_VERSION=24.04 \
+bash deploy/oracle/deploy_vm.sh
+```
 
 ## 部署后检查
 
@@ -133,3 +145,4 @@ ssh -i ~/.ssh/personal_buffett_oracle ubuntu@<公网IP> \
 - 这是单机 SQLite，保持 1 台实例就行
 - 现在先走 HTTP，后面再补域名和 HTTPS
 - Oracle ARM 免费机型有时会抢不到容量，换区再试
+- Oracle 官方也明确写了：`Out of host capacity` 代表当前 home region 的 Always Free 主机暂时没空位，后面重试即可
