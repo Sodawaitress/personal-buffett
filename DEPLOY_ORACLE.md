@@ -81,6 +81,12 @@ bash deploy/oracle/start_capacity_retry.sh
 bash deploy/oracle/status_capacity_retry.sh
 ```
 
+看部署结果总览：
+
+```bash
+bash deploy/oracle/check_deploy_status.sh
+```
+
 停止：
 
 ```bash
