@@ -9,3 +9,4 @@ __pycache__/
 /tmp/stock_report.md
 
 ._*
+deploy/oracle/run/

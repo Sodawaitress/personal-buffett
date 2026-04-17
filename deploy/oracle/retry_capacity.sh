@@ -20,7 +20,7 @@ try_deploy() {
   local shape="$1"
   local image_os_version="$2"
   local log_file
-  log_file="$(mktemp "${TMPDIR:-/tmp}/oracle-capacity.XXXXXX.log")"
+  log_file="$(mktemp -t oracle-capacity)"
 
   if OCI_SHAPE="$shape" OCI_IMAGE_OS_VERSION="$image_os_version" bash "$DEPLOY_SCRIPT" >"$log_file" 2>&1; then
     cat "$log_file"
