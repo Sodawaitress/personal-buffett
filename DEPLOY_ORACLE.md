@@ -69,6 +69,30 @@ bash deploy/oracle/deploy_vm.sh
 6. 自动拉取并运行 `personal-buffett` 容器
 7. 输出公网 IP
 
+如果你不想一直手动重试，可以直接后台跑：
+
+```bash
+bash deploy/oracle/start_capacity_retry.sh
+```
+
+查看状态：
+
+```bash
+bash deploy/oracle/status_capacity_retry.sh
+```
+
+停止：
+
+```bash
+bash deploy/oracle/stop_capacity_retry.sh
+```
+
+默认每 5 分钟重试一次。想改间隔：
+
+```bash
+SLEEP_SECONDS=600 bash deploy/oracle/start_capacity_retry.sh
+```
+
 ## 常用环境变量
 
 如果你想改默认值，可以在执行前临时带上：

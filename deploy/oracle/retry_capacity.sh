@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEPLOY_SCRIPT="$ROOT_DIR/deploy/oracle/deploy_vm.sh"
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-6}"
 SLEEP_SECONDS="${SLEEP_SECONDS:-30}"
+FOREVER="${FOREVER:-0}"
+RETRY_ON_ANY_ERROR="${RETRY_ON_ANY_ERROR:-0}"
 
 if [ ! -x "$DEPLOY_SCRIPT" ]; then
   chmod +x "$DEPLOY_SCRIPT"
@@ -38,7 +40,11 @@ try_deploy() {
 }
 
 attempt=1
-while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
+while :; do
+  if [ "$FOREVER" != "1" ] && [ "$attempt" -gt "$MAX_ATTEMPTS" ]; then
+    break
+  fi
+
   if (( attempt % 2 == 1 )); then
     shape="VM.Standard.A1.Flex"
     image_os_version="24.04"
@@ -54,13 +60,13 @@ while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
     exit 0
   else
     rc=$?
-    if [ "$rc" -ne 10 ]; then
+    if [ "$rc" -ne 10 ] && [ "$RETRY_ON_ANY_ERROR" != "1" ]; then
       log "deployment failed with a non-capacity error"
       exit "$rc"
     fi
   fi
 
-  if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+  if [ "$FOREVER" = "1" ] || [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
     log "no free capacity yet, sleeping ${SLEEP_SECONDS}s"
     sleep "$SLEEP_SECONDS"
   fi
