@@ -91,6 +91,16 @@ SQLite 会写到：
 
 如果 Sealos 直接识别 Dockerfile，就不用手写启动命令。
 
+也可以直接填镜像：
+
+- `ghcr.io/sodawaitress/personal-buffett:codex-pbc-refactor`
+
+仓库里已经加了 GitHub Actions：
+
+- `.github/workflows/publish-image.yml`
+
+推到分支后会自动构建并推送镜像到 GHCR。
+
 ## 部署后检查
 
 上线后先验证：
@@ -110,4 +120,3 @@ SQLite 会写到：
 所以部署时保持：
 
 - 1 replica
-
