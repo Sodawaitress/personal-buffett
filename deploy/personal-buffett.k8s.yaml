@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: personal-buffett
+  labels:
+    app: personal-buffett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: personal-buffett
+  template:
+    metadata:
+      labels:
+        app: personal-buffett
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/sodawaitress/personal-buffett:codex-pbc-refactor
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: PORT
+              value: "8080"
+            - name: FLASK_DEBUG
+              value: "0"
+            - name: RADAR_DB_PATH
+              value: /data/radar.db
+            - name: FLASK_SECRET_KEY
+              value: change-me-to-a-random-secret
+            - name: GROQ_API_KEY
+              value: change-me-to-your-groq-key
+          volumeMounts:
+            - name: app-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: personal-buffett-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: personal-buffett-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: personal-buffett
+spec:
+  selector:
+    app: personal-buffett
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

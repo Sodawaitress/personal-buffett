@@ -101,6 +101,12 @@ SQLite 会写到：
 
 推到分支后会自动构建并推送镜像到 GHCR。
 
+镜像已验证可匿名拉取。
+
+如果你走 YAML / K8s 导入，也可以直接用：
+
+- `deploy/personal-buffett.k8s.yaml`
+
 ## 部署后检查
 
 上线后先验证：
