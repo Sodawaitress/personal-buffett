@@ -93,6 +93,24 @@ bash deploy/oracle/stop_capacity_retry.sh
 SLEEP_SECONDS=600 bash deploy/oracle/start_capacity_retry.sh
 ```
 
+如果你想让它脱离 Codex、由你自己的 Mac 自己定时跑，直接装 `launchd`：
+
+```bash
+bash deploy/oracle/install_capacity_retry_launchd.sh
+```
+
+卸载：
+
+```bash
+bash deploy/oracle/uninstall_capacity_retry_launchd.sh
+```
+
+这个方式更适合你现在的需求：
+
+- 不占我的 token
+- 不依赖当前对话
+- 你的 Mac 登录后会自己跑
+
 ## 常用环境变量
 
 如果你想改默认值，可以在执行前临时带上：
