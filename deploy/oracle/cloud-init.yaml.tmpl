@@ -1,0 +1,29 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+packages:
+  - docker.io
+  - ca-certificates
+  - curl
+
+write_files:
+  - path: /opt/personal-buffett/.env
+    permissions: '0600'
+    owner: root:root
+    content: |
+__ENV_BLOCK__
+
+runcmd:
+  - mkdir -p /opt/personal-buffett/data
+  - systemctl enable docker
+  - systemctl start docker
+  - docker pull __IMAGE__
+  - docker rm -f personal-buffett || true
+  - >
+    docker run -d
+    --name personal-buffett
+    --restart unless-stopped
+    -p 80:8080
+    -v /opt/personal-buffett/data:/data
+    --env-file /opt/personal-buffett/.env
+    __IMAGE__
