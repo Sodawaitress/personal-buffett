@@ -53,6 +53,11 @@ oauth  = OAuth(app)
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "personal-buffett-2024-xK9m")
 
+# 确保 DB 表在应用启动时就创建好（gunicorn import 时执行）
+with app.app_context():
+    db.init_db()
+    db._migrate()
+
 @app.context_processor
 def inject_i18n():
     locale = session.get("locale", "en")
