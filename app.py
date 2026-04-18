@@ -1407,6 +1407,65 @@ def about():
     return render_template("about.html")
 
 
+# ── US-67 提问箱 ──────────────────────────────────────
+@app.route("/api/ask", methods=["POST"])
+@login_required
+def api_ask():
+    data     = request.get_json() or {}
+    question = (data.get("question") or "").strip()[:300]
+    if not question:
+        return jsonify({"error": "empty question"}), 400
+
+    locale = session.get("locale", "zh")
+    if locale == "zh":
+        sys_prompt = (
+            "你是「私人巴菲特」的投资助手，帮助普通投资者理解股票数据和投资概念。"
+            "用简洁口语化的中文回答，不超过150字，不使用 Markdown 格式符号。"
+        )
+    else:
+        sys_prompt = (
+            "You are the investment assistant for Personal Buffett, helping everyday investors "
+            "understand stock data and investing concepts. Reply in plain conversational English, "
+            "under 120 words, no Markdown formatting."
+        )
+
+    try:
+        import requests as _req
+        groq_key = os.environ.get("GROQ_API_KEY", "")
+        resp = _req.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user",   "content": question},
+                ],
+                "max_tokens": 200,
+                "temperature": 0.4,
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        answer = resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        answer = "暂时无法回答，稍后再试。" if locale == "zh" else "Couldn't answer right now — please try again shortly."
+
+    db.save_question(session["user_id"], question, answer)
+    return jsonify({"answer": answer})
+
+
+@app.route("/admin/questions")
+@login_required
+def admin_questions():
+    if session.get("role") != "admin":
+        return "Forbidden", 403
+    questions = db.list_questions(limit=200)
+    recent_n  = db.count_recent_questions(hours=24)
+    return render_template("admin_questions.html",
+                           questions=questions, recent_n=recent_n)
+
+
 @app.route("/api/generate-brief", methods=["POST"])
 @login_required
 def api_generate_brief():
