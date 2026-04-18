@@ -829,15 +829,22 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, label
   });
 }
 async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp) {
+  // Show spinner immediately — before the network round-trip
+  drop.innerHTML = `<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`;
+  drop.classList.add('open');
+
   try {
     const items = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
 
+    // Stale-response guard: user kept typing while this request was in-flight
+    if (inp.value.trim() !== q) return;
+
     if (items && items.loading) {
-      drop.innerHTML=`<div class="search-empty">${T.searchLoading}</div>`; drop.classList.add('open'); return;
+      drop.innerHTML=`<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`; return;
     }
 
     if (!Array.isArray(items) || !items.length) {
-      drop.innerHTML=`<div class="search-empty">${T.searchNoResults}</div>`; drop.classList.add('open'); return;
+      drop.innerHTML=`<div class="search-empty">${T.searchNoResults}</div>`; return;
     }
     drop.innerHTML = items.map(r => `
       <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
@@ -845,8 +852,10 @@ async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, 
         <span class="search-item-name">${r.name}</span>
         <span class="market-tag">${r.market.toUpperCase()}</span>
       </div>`).join('');
-    drop.classList.add('open');
-  } catch(e) { drop.innerHTML=`<div class="search-empty">${T.searchError}</div>`; drop.classList.add('open'); }
+  } catch(e) {
+    if (inp.value.trim() !== q) return;
+    drop.innerHTML=`<div class="search-empty">${T.searchError}</div>`;
+  }
 }
 function selectStock(code, name, market, codeId, nameId, marketId, selectedId, labelId, btnId, inputId) {
   document.getElementById(codeId).value   = code;
