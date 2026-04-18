@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Personal Buffett · Flask app with Google OAuth + email/password"""
 
-import sys, os, re, subprocess
+import sys, os, re, subprocess, traceback
 sys.path.insert(0, os.path.dirname(__file__))
 
 import json
@@ -1381,6 +1381,13 @@ def admin_user_detail(target_uid):
 @app.route("/healthz")
 def healthz():
     return jsonify({"ok": True}), 200
+
+
+# ── TEMPORARY DEBUG — remove after diagnosis ──────────
+@app.errorhandler(500)
+def debug_500(e):
+    tb = traceback.format_exc()
+    return f"<pre style='white-space:pre-wrap;word-break:break-all'>{tb}</pre>", 500
 
 
 @app.route("/about")
