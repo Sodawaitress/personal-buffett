@@ -6,7 +6,7 @@
 
   {# ── 面包屑 ── #}
   <div class="stock-breadcrumb">
-    <a href="{{ url_for('watchlist_page') }}">← 全部选股</a>
+    <a href="{{ url_for('watchlist_page') }}">{{ t.nav_back_watchlist }}</a>
     <span class="bc-sep">/</span>
     <span>{{ stock.name }}</span>
   </div>
@@ -16,10 +16,9 @@
   <div class="risk-banner">
     <span class="risk-banner-icon">⚠️</span>
     <div class="risk-banner-text">
-      <strong>高风险警告：港股 GEM 创业板</strong>
-      此股票在香港 GEM 创业板上市，监管门槛低于主板，存在壳股、流动性不足、以及被第三方用于非正常商业计划（积分兑换/直销返利等）的风险。
-      {% if meta.company_type == 'speculative' %}财务数据显示当前存在亏损或高负债，请谨慎对待分析结论。{% endif %}
-      如发现相关风险证据，请在下方「事件」Tab 录入「传销/商业盘风险」事件。
+      <strong>{{ t.gem_risk_title }}</strong>
+      {{ t.gem_risk_body }}
+      {% if meta.company_type == 'speculative' %}{{ t.gem_risk_speculative }}{% endif %}
     </div>
   </div>
   {% endif %}
@@ -55,24 +54,23 @@
       </div>
       {% endif %}
       {% else %}
-      <div class="stock-price-big" style="font-size:14px;color:var(--ink-faint)">暂无报价</div>
+      <div class="stock-price-big" style="font-size:14px;color:var(--ink-faint)">{{ t.lbl_no_quote }}</div>
       {% endif %}
 
       <div class="stock-header-actions" id="stock-header-actions">
         {% if pending_job %}
         <div class="analysis-progress" id="progress-{{ pending_job.id }}" style="max-width:160px">
           <div class="progress-track"><div class="progress-fill" id="pfill-{{ pending_job.id }}"></div></div>
-          <span class="progress-label" id="plabel-{{ pending_job.id }}">分析中…</span>
+          <span class="progress-label" id="plabel-{{ pending_job.id }}">{{ t.lbl_analysing }}</span>
         </div>
         {% else %}
         {# 主操作 #}
-        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-ink btn-sm">巴菲特怎么看</button>
-        {# 次要操作收入 ⋯ 菜单 #}
+        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-ink btn-sm">{{ t.btn_buffett_check }}</button>
         <div class="more-wrap" id="more-wrap-{{ stock.code }}">
-          <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('{{ stock.code }}')" title="更多操作">⋯</button>
+          <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('{{ stock.code }}')" title="More">⋯</button>
           <div class="more-menu" id="more-menu-{{ stock.code }}">
-            <button onclick="triggerNewsRefresh('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">更新新闻</button>
-            <button onclick="triggerAnalysis('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">全量刷新</button>
+            <button onclick="triggerNewsRefresh('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">{{ t.btn_refresh_news }}</button>
+            <button onclick="triggerAnalysis('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">{{ t.btn_full_refresh }}</button>
           </div>
         </div>
         {% endif %}
@@ -81,7 +79,7 @@
           <input type="hidden" name="code" value="{{ stock.code }}">
           <input type="hidden" name="name" value="{{ stock.name }}">
           <input type="hidden" name="market" value="{{ stock.market }}">
-          <button type="submit" class="btn-outline-ink btn-sm">+ 加自选</button>
+          <button type="submit" class="btn-outline-ink btn-sm">{{ t.btn_add_watchlist }}</button>
         </form>
         {% endif %}
       </div>
@@ -123,12 +121,12 @@
 
   {# ── Tab 导航 ── #}
   <div class="tab-nav" id="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('brief', this)">今日简报</button>
-    <button class="tab-btn" onclick="switchTab('news', this)">新闻
+    <button class="tab-btn active" onclick="switchTab('brief', this)">{{ t.tab_brief }}</button>
+    <button class="tab-btn" onclick="switchTab('news', this)">{{ t.tab_news }}
       {% if news %}<span class="tab-count">{{ news | length }}</span>{% endif %}
     </button>
-    <button class="tab-btn" onclick="switchTab('archive', this)">档案</button>
-    <button class="tab-btn" onclick="switchTab('events', this)">事件
+    <button class="tab-btn" onclick="switchTab('archive', this)">{{ t.tab_archive }}</button>
+    <button class="tab-btn" onclick="switchTab('events', this)">{{ t.tab_events }}
       {% if events %}<span class="tab-count">{{ events | length }}</span>{% endif %}
     </button>
   </div>

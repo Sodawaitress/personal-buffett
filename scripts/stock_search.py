@@ -21,12 +21,17 @@ bootstrap_paths()
 
 _CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks.json")
 _PINYIN_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks_pinyin.json")
+_ETF_CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_etfs.json")
 _CACHE_TTL   = 604800  # 7 天（A股列表变化极慢）
+_ETF_CACHE_TTL = 86400  # 1 天（ETF 列表偶尔新增）
 
 _CN_CACHE    = None   # [(code, name), ...]
 _PY_INDEX    = None   # [(code, name, initials, full_pinyin), ...]
 _CN_LOADING  = False
 _CN_READY    = threading.Event()
+_ETF_CACHE   = None   # [(code, name), ...]
+_ETF_LOADING = False
+_ETF_READY   = threading.Event()
 
 # ── 常见港股中文名 → HK Ticker 映射 ─────────────────────
 HK_NAMES = {
@@ -135,32 +140,86 @@ def _save_pinyin(index):
         pass
 
 
+def _load_cn_etf():
+    """加载国内ETF/基金列表，缓存到 data/cn_etfs.json。"""
+    global _ETF_CACHE, _ETF_LOADING
+    if _ETF_CACHE is not None:
+        return _ETF_CACHE
+    if _ETF_LOADING:
+        _ETF_READY.wait(timeout=30)
+        return _ETF_CACHE or []
+    _ETF_LOADING = True
+    try:
+        if os.path.exists(_ETF_CACHE_FILE):
+            age = time.time() - os.path.getmtime(_ETF_CACHE_FILE)
+            if age < _ETF_CACHE_TTL:
+                with open(_ETF_CACHE_FILE, encoding="utf-8") as f:
+                    data = json.load(f)
+                if data:
+                    _ETF_CACHE = [tuple(x) for x in data]
+                    return _ETF_CACHE
+
+        import akshare as ak
+        df = ak.fund_etf_spot_em()
+        # 列名：代码, 名称, ...
+        code_col = next((c for c in df.columns if "代码" in c or c.lower() == "code"), df.columns[0])
+        name_col = next((c for c in df.columns if "名称" in c or c.lower() == "name"), df.columns[1])
+        rows = [(str(r[code_col]).zfill(6), str(r[name_col])) for _, r in df.iterrows()]
+        _ETF_CACHE = rows
+        os.makedirs(os.path.dirname(_ETF_CACHE_FILE), exist_ok=True)
+        with open(_ETF_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False)
+    except Exception:
+        _ETF_CACHE = _ETF_CACHE or []
+    finally:
+        _ETF_LOADING = False
+        _ETF_READY.set()
+    return _ETF_CACHE
+
+
 def _prewarm():
     threading.Thread(target=_load_cn, daemon=True).start()
+    threading.Thread(target=_load_cn_etf, daemon=True).start()
 
 _prewarm()
 
 
 def _make_result(code, name):
+    # SH: 5xx (ETF/LOF), 6xx (stock), 9xx (B/preferred)
+    # SZ: 0xx (stock), 1xx (ETF/LOF), 2xx, 3xx (growth), 4xx
+    exchange = "SH" if code.startswith(("5", "6", "9")) else "SZ"
     return {
         "code":     code,
         "name":     name,
         "market":   "cn",
-        "exchange": "SH" if code.startswith(("6", "9")) else "SZ",
+        "exchange": exchange,
         "currency": "CNY",
     }
 
 
 def _search_cn(q: str, limit: int = 8) -> list:
-    """中文名/代码子串匹配"""
+    """中文名/代码子串匹配（A股 + ETF/基金）"""
     _load_cn()
+    _load_cn_etf()
     q_l = q.lower()
     out = []
+    seen = set()
+    # Search stocks first
     for code, name in (_CN_CACHE or []):
         if q_l in code or q_l in name.lower():
-            out.append(_make_result(code, name))
-            if len(out) >= limit:
-                break
+            if code not in seen:
+                seen.add(code)
+                out.append(_make_result(code, name))
+                if len(out) >= limit:
+                    return out
+    # Then ETFs (de-duplicated)
+    for code, name in (_ETF_CACHE or []):
+        if q_l in code or q_l in name.lower():
+            if code not in seen:
+                seen.add(code)
+                out.append(_make_result(code, name))
+                if len(out) >= limit:
+                    return out
     return out
 
 

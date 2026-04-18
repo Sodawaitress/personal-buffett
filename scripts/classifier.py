@@ -53,6 +53,24 @@ def _detect_market_tier(code: str, market: str) -> str:
     return "main"
 
 
+# ── ETF/基金代码前缀（A股）────────────────────────────
+
+_CN_ETF_PREFIXES = ("159", "510", "511", "512", "513", "515", "516", "517",
+                    "518", "519", "588", "560", "561", "562", "563", "164",
+                    "165", "166", "167", "168")
+
+def _is_etf(code: str, name: str) -> bool:
+    """检测是否为 ETF 或基金产品。"""
+    name_up = name.upper()
+    if "ETF" in name_up or "基金" in name_up or "LOF" in name_up or "FOF" in name_up:
+        return True
+    pure = code.split(".")[0]
+    if pure.startswith(_CN_ETF_PREFIXES):
+        return True
+    # yfinance quoteType 存在 name/sector 里的情况
+    return False
+
+
 # ── 行业关键词匹配 ─────────────────────────────────────
 
 _FINANCIAL_KW  = {"银行", "保险", "券商", "信托", "金融", "证券", "资管",
@@ -134,7 +152,9 @@ def classify_stock(code: str) -> dict:
          and (latest_roe is None or latest_roe < 5))
     )
 
-    if st_status in ("ST", "*ST", "SST"):
+    if _is_etf(code, name):
+        company_type = "etf"
+    elif st_status in ("ST", "*ST", "SST"):
         company_type = "distressed"
     elif is_speculative:
         company_type = "speculative"

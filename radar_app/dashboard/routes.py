@@ -12,7 +12,9 @@ def register_dashboard_routes(app):
     @login_required
     def index():
         ensure_db_ready()
-        return render_template("index.html", **build_dashboard_context(session["user_id"], session.get("region", "nz")))
+        # Derive region from locale if not explicitly set (zh → cn, else nz)
+        region = session.get("region") or ("cn" if session.get("locale") == "zh" else "nz")
+        return render_template("index.html", **build_dashboard_context(session["user_id"], region))
 
     @app.route("/brief")
     @login_required

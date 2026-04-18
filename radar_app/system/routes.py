@@ -63,7 +63,12 @@ def register_system_routes(app):
         if locale not in ("en", "zh"):
             locale = "en"
         session["locale"] = locale
-        update_locale_preference(session.get("user_id"), session.get("region", "nz"), locale)
+        # Auto-set home market to CN when switching to Chinese (if still on NZ default)
+        current_region = session.get("region", "nz")
+        if locale == "zh" and current_region == "nz":
+            session["region"] = "cn"
+            current_region = "cn"
+        update_locale_preference(session.get("user_id"), current_region, locale)
         clear_i18n_cache()
         return redirect(request.referrer or url_for("index"))
 

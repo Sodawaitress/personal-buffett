@@ -2554,3 +2554,45 @@ CREATE TABLE IF NOT EXISTS user_notifications (
 - [x] 中英文根据用户 locale 自动切换（`session.locale`）
 - [x] 数据缺失时不显示解读，不报错
 - [x] 移动端正常，不撑高卡片
+
+---
+
+## US-70 · 国际化修复：语言切换 + 本地市场自动匹配
+
+**As a** 中国用户
+**I want** 打开 App 切换到中文后，本地行情自动变成 A股，语言切换纽显示当前状态
+**So that** 不用手动去设置里改地区，直接开始用
+
+**实现：**
+- `base.html`：语言切换纽显示**当前语言**（EN / 中文），而非目标语言
+- `set_locale()` 路由：切换到 zh 时若 region 仍为 nz（默认），自动 set region=cn
+- `dashboard/routes.py`：无 region session 时按 locale 推断（zh→cn, else→nz）
+- `base.html`：`我的选股`/`管理`/`设置`/`退出` 全替换为 `{{ t.xxx }}`
+- `settings.html`：推送设置区中文硬编码全替换为 i18n key
+- `stock.html`：面包屑、按钮、Tab 名、GEM 警告全替换为 i18n key
+- `en.json` / `zh.json`：新增 20 个 key（nav_watchlist, tab_brief, gem_risk_title 等）
+
+**Acceptance Criteria:**
+- [x] 切换到中文后刷新首页，「本地」显示 A股，不是 NZ 股
+- [x] 语言切换纽显示「EN」（英文时）或「中文」（中文时）
+- [x] stock.html 主要 UI 文字跟随 locale（面包屑/Tab/按钮）
+- [x] settings.html 推送区全英文可读
+
+---
+
+## US-71 · ETF/基金分析框架 + 国内基金搜索
+
+**As a** 用户
+**I want** 搜索沪深300ETF（510300）或科创50ETF（588000）并获得合适的分析
+**So that** 不被硬套股票估值框架给出 D 评级
+
+**实现：**
+- `scripts/classifier.py`：`_is_etf()` 检测（名称含 ETF/基金/LOF/FOF + CN ETF 代码前缀）；`classify_stock` 最高优先级判断 ETF
+- `scripts/buffett_prompts.py`：新增 `SYSTEM_ETF_FUND` 提示词（Bogle 框架：费率/跟踪误差/规模/指数估值）；`FRAMEWORK_MAP` 加 `"etf": ("etf_fund", SYSTEM_ETF_FUND)`
+- `scripts/stock_search.py`：新增 `_load_cn_etf()` 用 `ak.fund_etf_spot_em()` 加载国内全量 ETF 列表，24h 缓存；`_search_cn` 同时搜股票 + ETF；`_make_result` 修正 5xx 代码 → SH 交易所；`_prewarm()` 同时预热 ETF 列表
+
+**Acceptance Criteria:**
+- [x] 搜索「沪深300」能找到 510300
+- [x] 搜索「510」能列出相关 ETF
+- [x] ETF 分析框架不套 PE/ROE/护城河，给出费率/跟踪误差视角结论
+- [x] 现有股票分析不受影响

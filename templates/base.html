@@ -18,22 +18,22 @@
       <div class="masthead-nav">
         {% if session.get('user_id') %}
           <a href="{{ url_for('watchlist_page') }}" {% if request.endpoint == 'watchlist_page' %}class="active"{% endif %}>
-            我的选股
+            {{ t.nav_watchlist }}
           </a>
 
           {% if session.get('role') == 'admin' %}
           <a href="{{ url_for('admin_users') }}" {% if request.endpoint in ('admin_users','admin_user_detail') %}class="active"{% endif %} style="color:#b8860b;font-weight:600">
-            <i class="bi bi-shield-lock me-1"></i>管理
+            <i class="bi bi-shield-lock me-1"></i>{{ t.nav_admin }}
           </a>
           {% endif %}
 
-          {# Language toggle #}
+          {# Language toggle — label shows current language #}
           <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
             <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
-            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'zh' else '中文' }}</button>
+            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'en' else '中文' }}</button>
           </form>
 
-          {# 头像下拉 #}
+          {# Avatar dropdown #}
           <div class="nav-avatar-wrap">
             <button class="nav-avatar-btn" onclick="this.parentElement.classList.toggle('open')" type="button">
               {% if session.get('avatar_url') %}
@@ -44,18 +44,18 @@
             </button>
             <div class="nav-dropdown">
               <div class="nav-dropdown-name">{{ session.get('display_name') }}</div>
-              <a href="{{ url_for('settings') }}">设置</a>
+              <a href="{{ url_for('settings') }}">{{ t.nav_settings }}</a>
               {% if session.get('role') == 'admin' %}
-              <a href="{{ url_for('admin_users') }}" style="color:#b8860b">用户管理</a>
+              <a href="{{ url_for('admin_users') }}" style="color:#b8860b">{{ t.nav_user_mgmt }}</a>
               {% endif %}
-              <a href="{{ url_for('logout') }}">退出</a>
+              <a href="{{ url_for('logout') }}">{{ t.nav_logout }}</a>
             </div>
           </div>
 
         {% else %}
           <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
             <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
-            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'zh' else '中文' }}</button>
+            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'en' else '中文' }}</button>
           </form>
           <a href="{{ url_for('about') }}">About</a>
           <a href="{{ url_for('login') }}">{{ t.nav_login }}</a>
