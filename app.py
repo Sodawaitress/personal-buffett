@@ -486,6 +486,12 @@ def stock_page(code):
         "analysis": _analysis_age > 3 * 1440,
     }
 
+    lat_for_hints = annual[0] if annual else signals
+    metric_hints  = _compute_metric_hints(
+        lat_for_hints, signals, pe_current, price,
+        locale=session.get("locale", "zh"),
+    )
+
     return render_template("stock.html",
         stock=stock, price=price, news=news,
         analysis=analysis, history=history, prices=prices,
@@ -500,6 +506,7 @@ def stock_page(code):
         trading_params=trading_params,
         data_freshness=data_freshness,
         data_freshness_stale=data_freshness_stale,
+        metric_hints=metric_hints,
     )
 
 

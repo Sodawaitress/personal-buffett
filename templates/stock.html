@@ -514,6 +514,8 @@
               </span>
             </div>
             {% endif %}
+            {% set _h = metric_hints.get('pe') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
           </div>
 
           <div class="fund-metric-card">
@@ -546,6 +548,8 @@
               <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
             </div>
             {% endif %}
+            {% set _h = metric_hints.get('roe') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
           </div>
 
           <div class="fund-metric-card">
@@ -562,14 +566,25 @@
               <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
             </div>
             {% endif %}
+            {% set _h = metric_hints.get('net_margin') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
           </div>
 
           <div class="fund-metric-card">
-            <div class="fund-metric-label">资产负债率</div>
+            <div class="fund-metric-label">
+              {% if lat and lat.debt_ratio_note %}D/E 比率{% else %}资产负债率{% endif %}
+            </div>
             <div class="fund-metric-value">
-              {% if lat and lat.debt_ratio %}{{ lat.debt_ratio }}
+              {% if lat and lat.debt_ratio %}
+                {% if lat.debt_ratio_note %}
+                  <span title="{{ lat.debt_ratio_note }}">{{ lat.debt_ratio }}</span>
+                {% else %}
+                  {{ lat.debt_ratio }}
+                {% endif %}
               {% else %}<span class="fund-accumulating">—</span>{% endif %}
             </div>
+            {% set _h = metric_hints.get('debt_ratio') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
           </div>
 
           <div class="fund-metric-card">
@@ -585,6 +600,8 @@
               <span style="color:{% if rt[0].roic >= rt[1].roic %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if rt[0].roic >= rt[1].roic else '↓' }}</span>
             </div>
             {% endif %}
+            {% set _h = metric_hints.get('roic') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
           </div>
 
         </div>
