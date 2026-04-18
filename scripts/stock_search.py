@@ -37,6 +37,28 @@ _FUND_CACHE  = None   # [(code, name), ...]  — 场外基金（全量，~26000�
 _FUND_LOADING = False
 _FUND_READY  = threading.Event()
 
+# ── 搜索结果缓存（1h TTL，避免重复 yfinance 请求）────────
+_RESULT_CACHE = {}          # query_key → (results_list, expires_ts)
+_RESULT_CACHE_TTL = 3600    # 1 小时
+_RESULT_CACHE_LOCK = threading.Lock()
+
+def _cache_get(key):
+    with _RESULT_CACHE_LOCK:
+        entry = _RESULT_CACHE.get(key)
+        if entry and time.time() < entry[1]:
+            return entry[0]
+    return None
+
+def _cache_set(key, value):
+    with _RESULT_CACHE_LOCK:
+        _RESULT_CACHE[key] = (value, time.time() + _RESULT_CACHE_TTL)
+        # 顺手清过期条目（最多保留 500 条）
+        if len(_RESULT_CACHE) > 500:
+            now = time.time()
+            expired = [k for k, v in _RESULT_CACHE.items() if v[1] < now]
+            for k in expired:
+                del _RESULT_CACHE[k]
+
 # ── 常见港股中文名 → HK Ticker 映射 ─────────────────────
 HK_NAMES = {
     "腾讯": "0700.HK", "腾讯控股": "0700.HK",
@@ -290,6 +312,9 @@ def _search_hk_names(q: str) -> list:
 
 def _search_yf_name(query: str, limit: int = 6) -> list:
     """用 yfinance.Search 按公司名搜索，适合含空格或模糊的输入。只返回股票类型。"""
+    cached = _cache_get(f"name:{query.lower()}")
+    if cached is not None:
+        return cached
     try:
         import yfinance as yf
         results = []
@@ -317,12 +342,17 @@ def _search_yf_name(query: str, limit: int = 6) -> list:
             results.append({"code": sym_up, "name": name, "market": market, "exchange": exch})
             if len(results) >= limit:
                 break
+        _cache_set(f"name:{query.lower()}", results)
         return results
     except Exception:
         return []
 
 
 def _search_yf(ticker: str) -> list:
+    cache_key = f"yf:{ticker.upper()}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
     try:
         import yfinance as yf
         # 港股GEM代码如 08611.HK → yfinance需要 8611.HK（去前导零）
@@ -349,9 +379,12 @@ def _search_yf(ticker: str) -> list:
             market = "au"
         else:
             market = "us"
-        return [{"code": code, "name": short,
-                 "market": market, "exchange": exch, "currency": curr}]
+        result = [{"code": code, "name": short,
+                   "market": market, "exchange": exch, "currency": curr}]
+        _cache_set(cache_key, result)
+        return result
     except Exception:
+        _cache_set(cache_key, [])   # cache misses too, avoid hammering yfinance
         return []
 
 
@@ -397,27 +430,21 @@ def search(q: str, limit: int = 10) -> list:
             _add_cn(_search_cn(PINYIN_ALIAS[q_l], limit=1))
         _add_cn(_search_pinyin(q_l, limit=limit))
 
-    # 4. yfinance Ticker（英文 / 带点 / 6位数韩股代码）
+    # 4. 国际股票搜索
     if alpha or has_dot:
         ticker = q.upper()
         if has_dot:
+            # 精确代码（含后缀）：直接单个 Ticker 查询
             _add_intl(_search_yf(ticker))
         else:
-            # 各市场后缀：始终尝试，不因 A 股结果多少而跳过
-            for sfx in (".HK", ".NZ", ".KS", ".AX"):
-                _add_intl(_search_yf(ticker + sfx))
-            # 美股裸 ticker：全大写输入 or 拼音 A 股结果少（< 3）时加入
-            cn_count = sum(1 for r in cn_results if r.get("market") == "cn")
-            if q == q.upper() or cn_count < 3:
-                _add_intl(_search_yf(ticker))
+            # 无后缀英文：用 yf.Search() 一次搜所有市场（比5个串行 Ticker 快4-5倍）
+            _add_intl(_search_yf_name(ticker, limit=limit))
 
     # 4b. 纯数字：可能是韩股代码（005930 等），也尝试 .KS
     if is_num and len(q) == 6 and not cn_results:
         _add_intl(_search_yf(q + ".KS"))
 
-    # 4c. 含空格 or 英文名称查询：用 yfinance.Search 按公司名搜索
-    if has_space or (alpha and not has_dot and not cn_results and not intl_results):
-        _add_intl(_search_yf_name(q, limit=limit))
+    # 4c. 含空格：名称搜索已在上面统一处理，无需重复
 
     # 5. 兜底：什么都没找到再宽泛搜 A股
     if not cn_results and not intl_results:
