@@ -21,17 +21,21 @@ bootstrap_paths()
 
 _CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks.json")
 _PINYIN_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks_pinyin.json")
-_ETF_CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_etfs.json")
-_CACHE_TTL   = 604800  # 7 天（A股列表变化极慢）
-_ETF_CACHE_TTL = 86400  # 1 天（ETF 列表偶尔新增）
+_ETF_CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_etfs.json")
+_FUND_CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_funds.json")
+_CACHE_TTL       = 604800  # 7 天（A股列表变化极慢）
+_FUND_CACHE_TTL  = 86400   # 1 天
 
 _CN_CACHE    = None   # [(code, name), ...]
 _PY_INDEX    = None   # [(code, name, initials, full_pinyin), ...]
 _CN_LOADING  = False
 _CN_READY    = threading.Event()
-_ETF_CACHE   = None   # [(code, name), ...]
+_ETF_CACHE   = None   # [(code, name), ...]  — ETF traded on exchange
 _ETF_LOADING = False
 _ETF_READY   = threading.Event()
+_FUND_CACHE  = None   # [(code, name), ...]  — 场外基金（全量，~26000）
+_FUND_LOADING = False
+_FUND_READY  = threading.Event()
 
 # ── 常见港股中文名 → HK Ticker 映射 ─────────────────────
 HK_NAMES = {
@@ -177,9 +181,45 @@ def _load_cn_etf():
     return _ETF_CACHE
 
 
+def _load_cn_funds():
+    """加载国内全量场外基金列表（混合/股票/债券/货币等），缓存到 cn_funds.json。"""
+    global _FUND_CACHE, _FUND_LOADING
+    if _FUND_CACHE is not None:
+        return _FUND_CACHE
+    if _FUND_LOADING:
+        _FUND_READY.wait(timeout=30)
+        return _FUND_CACHE or []
+    _FUND_LOADING = True
+    try:
+        if os.path.exists(_FUND_CACHE_FILE):
+            age = time.time() - os.path.getmtime(_FUND_CACHE_FILE)
+            if age < _FUND_CACHE_TTL:
+                with open(_FUND_CACHE_FILE, encoding="utf-8") as f:
+                    data = json.load(f)
+                if data:
+                    _FUND_CACHE = [tuple(x) for x in data]
+                    return _FUND_CACHE
+
+        import akshare as ak
+        df = ak.fund_name_em()
+        # 列名：基金代码, 拼音缩写, 基金简称, 基金类型, 拼音全称
+        rows = [(str(r["基金代码"]).zfill(6), str(r["基金简称"])) for _, r in df.iterrows()]
+        _FUND_CACHE = rows
+        os.makedirs(os.path.dirname(_FUND_CACHE_FILE), exist_ok=True)
+        with open(_FUND_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False)
+    except Exception:
+        _FUND_CACHE = _FUND_CACHE or []
+    finally:
+        _FUND_LOADING = False
+        _FUND_READY.set()
+    return _FUND_CACHE
+
+
 def _prewarm():
     threading.Thread(target=_load_cn, daemon=True).start()
     threading.Thread(target=_load_cn_etf, daemon=True).start()
+    threading.Thread(target=_load_cn_funds, daemon=True).start()
 
 _prewarm()
 
@@ -198,28 +238,28 @@ def _make_result(code, name):
 
 
 def _search_cn(q: str, limit: int = 8) -> list:
-    """中文名/代码子串匹配（A股 + ETF/基金）"""
+    """中文名/代码子串匹配（A股 + ETF + 场外基金）"""
     _load_cn()
     _load_cn_etf()
+    _load_cn_funds()
     q_l = q.lower()
     out = []
     seen = set()
-    # Search stocks first
-    for code, name in (_CN_CACHE or []):
-        if q_l in code or q_l in name.lower():
-            if code not in seen:
-                seen.add(code)
-                out.append(_make_result(code, name))
-                if len(out) >= limit:
-                    return out
-    # Then ETFs (de-duplicated)
-    for code, name in (_ETF_CACHE or []):
-        if q_l in code or q_l in name.lower():
-            if code not in seen:
-                seen.add(code)
-                out.append(_make_result(code, name))
-                if len(out) >= limit:
-                    return out
+
+    def _scan(source):
+        for code, name in (source or []):
+            if q_l in code or q_l in name.lower():
+                if code not in seen:
+                    seen.add(code)
+                    out.append(_make_result(code, name))
+                    if len(out) >= limit:
+                        return True
+        return False
+
+    # Priority: stocks → exchange ETFs → 场外基金
+    if _scan(_CN_CACHE):    return out
+    if _scan(_ETF_CACHE):   return out
+    _scan(_FUND_CACHE)
     return out
 
 

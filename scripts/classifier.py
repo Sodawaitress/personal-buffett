@@ -59,15 +59,17 @@ _CN_ETF_PREFIXES = ("159", "510", "511", "512", "513", "515", "516", "517",
                     "518", "519", "588", "560", "561", "562", "563", "164",
                     "165", "166", "167", "168")
 
+_FUND_NAME_KW = ("ETF", "LOF", "FOF", "基金", "混合", "货币市场", "债券型",
+                 "股票型", "指数型", "增强型", "QDII", "量化")
+
 def _is_etf(code: str, name: str) -> bool:
-    """检测是否为 ETF 或基金产品。"""
+    """检测是否为 ETF 或基金产品（含场外基金）。"""
     name_up = name.upper()
-    if "ETF" in name_up or "基金" in name_up or "LOF" in name_up or "FOF" in name_up:
+    if any(k.upper() in name_up for k in _FUND_NAME_KW):
         return True
     pure = code.split(".")[0]
     if pure.startswith(_CN_ETF_PREFIXES):
         return True
-    # yfinance quoteType 存在 name/sector 里的情况
     return False
 
 

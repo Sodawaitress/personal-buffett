@@ -25,25 +25,47 @@ def _fetch_1a_quote(code, market, log):
             import requests as req
 
             pure = code.split(".")[0]
-            prefix = "sh" if pure.startswith(("6", "9")) else "sz"
-            r = req.get(
-                f"https://hq.sinajs.cn/list={prefix}{pure}",
-                headers={"Referer": "https://finance.sina.com.cn"},
-                timeout=10,
-            )
-            for line in r.text.strip().splitlines():
-                if '="' not in line:
-                    continue
-                fields = line.split('"')[1].split(",")
-                if len(fields) < 10:
-                    continue
-                price = float(fields[3])
-                prev = float(fields[2])
-                chg = round((price - prev) / prev * 100, 2) if prev else None
-                amt = float(fields[9]) / 1e8 if fields[9] else None
-                if price:
-                    db.upsert_price(code, price, change_pct=chg, volume=amt)
-                    log(f"       ¥{price} ({chg:+.2f}%)" if chg else f"       ¥{price}")
+            # SH: 5xx (ETF/LOF), 6xx (stock), 9xx (preferred/B); SZ: everything else
+            prefix = "sh" if pure.startswith(("5", "6", "9")) else "sz"
+            price_saved = False
+            try:
+                r = req.get(
+                    f"https://hq.sinajs.cn/list={prefix}{pure}",
+                    headers={"Referer": "https://finance.sina.com.cn"},
+                    timeout=10,
+                )
+                for line in r.text.strip().splitlines():
+                    if '="' not in line:
+                        continue
+                    fields = line.split('"')[1].split(",")
+                    if len(fields) < 10:
+                        continue
+                    price = float(fields[3]) if fields[3] else 0.0
+                    prev = float(fields[2]) if fields[2] else 0.0
+                    chg = round((price - prev) / prev * 100, 2) if prev else None
+                    amt = float(fields[9]) / 1e8 if fields[9] else None
+                    if price:
+                        db.upsert_price(code, price, change_pct=chg, volume=amt)
+                        log(f"       ¥{price} ({chg:+.2f}%)" if chg else f"       ¥{price}")
+                        price_saved = True
+            except Exception:
+                pass
+
+            # 场外基金：Sina API 无数据时改用 AKShare 净值
+            if not price_saved:
+                try:
+                    import akshare as ak
+                    df_nav = ak.fund_open_fund_info_em(
+                        symbol=pure, indicator="单位净值走势", period="近1个月"
+                    )
+                    if not df_nav.empty:
+                        row = df_nav.iloc[-1]
+                        nav = float(row["单位净值"])
+                        chg_nav = float(row["日增长率"]) if row["日增长率"] else None
+                        db.upsert_price(code, nav, change_pct=chg_nav)
+                        log(f"       NAV ¥{nav} ({chg_nav:+.2f}%)" if chg_nav else f"       NAV ¥{nav}")
+                except Exception as e2:
+                    log(f"       ⚠️ 净值获取失败: {e2}")
         else:
             import yfinance as yf
 
