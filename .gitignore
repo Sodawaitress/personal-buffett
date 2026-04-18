@@ -1,5 +1,6 @@
 .env
 data/
+!radar_app/data/
 __pycache__/
 *.pyc
 *.pyo
