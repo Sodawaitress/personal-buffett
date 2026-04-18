@@ -238,10 +238,13 @@ def _make_result(code, name):
 
 
 def _search_cn(q: str, limit: int = 8) -> list:
-    """中文名/代码子串匹配（A股 + ETF + 场外基金）"""
-    _load_cn()
-    _load_cn_etf()
-    _load_cn_funds()
+    """中文名/代码子串匹配（A股 + ETF + 场外基金）
+
+    _load_cn() 必须等待（A股数据是搜索主力，通常从文件缓存秒读）。
+    ETF / 场外基金由 _prewarm() 后台加载；搜索时直接用已有缓存，
+    尚未就绪则跳过，不阻塞 request thread。
+    """
+    _load_cn()   # 等 A股列表（通常 <100ms，文件缓存）
     q_l = q.lower()
     out = []
     seen = set()
@@ -256,9 +259,9 @@ def _search_cn(q: str, limit: int = 8) -> list:
                         return True
         return False
 
-    # Priority: stocks → exchange ETFs → 场外基金
-    if _scan(_CN_CACHE):    return out
-    if _scan(_ETF_CACHE):   return out
+    # Priority: A股 → 交易所 ETF → 场外基金（后两者不等待，用现有缓存）
+    if _scan(_CN_CACHE):  return out
+    if _scan(_ETF_CACHE): return out
     _scan(_FUND_CACHE)
     return out
 

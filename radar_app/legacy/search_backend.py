@@ -7,6 +7,7 @@ def warm_search_backend():
 
 def is_cn_search_loading():
     import stock_search
+    # Only block on A-share stock list; ETF/fund load non-blocking in background
     return stock_search._CN_LOADING and stock_search._CN_CACHE is None
 
 
