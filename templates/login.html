@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Sign in — Personal Buffett{% endblock %}
+{% block title %}{{ t.login_heading }} — {{ t.brand }}{% endblock %}
 
 {% block content %}
 <div class="auth-wrap">
@@ -8,8 +8,8 @@
     <div class="auth-logo">
       <i class="bi bi-graph-up-arrow"></i>
     </div>
-    <h1 class="auth-heading">Sign in</h1>
-    <p class="auth-sub">to Personal Buffett</p>
+    <h1 class="auth-heading">{{ t.login_heading }}</h1>
+    <p class="auth-sub">{{ t.login_sub }}</p>
 
     {% if google_enabled %}
     <a href="{{ url_for('google_login') }}" class="btn-oauth">
@@ -19,15 +19,15 @@
         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
-      Continue with Google
+      {{ t.btn_google_continue }}
     </a>
 
-    <div class="auth-divider"><span>or</span></div>
+    <div class="auth-divider"><span>{{ t.auth_or }}</span></div>
     {% endif %}
 
     <form method="POST" novalidate>
       <div class="field mb-3">
-        <label>Email</label>
+        <label>{{ t.lbl_email }}</label>
         <input type="email" name="email"
                class="{% if errors.email %}error{% endif %}"
                value="{{ form.get('email','') }}"
@@ -36,19 +36,19 @@
       </div>
 
       <div class="field mb-4">
-        <label>Password</label>
+        <label>{{ t.lbl_password }}</label>
         <input type="password" name="password"
                class="{% if errors.password %}error{% endif %}"
                placeholder="••••••••" autocomplete="current-password">
         {% if errors.password %}<span class="field-err">{{ errors.password }}</span>{% endif %}
       </div>
 
-      <button type="submit" class="btn-primary-auth">Sign in</button>
+      <button type="submit" class="btn-primary-auth">{{ t.btn_signin }}</button>
     </form>
 
-    <p class="auth-footer">
-      New here? <a href="{{ url_for('register') }}">Create an account</a>
-    </p>
+    <a href="{{ url_for('register') }}" class="auth-register-cta">
+      {{ t.auth_new_here }} <strong>{{ t.auth_create_link }}</strong>
+    </a>
 
   </div>
 </div>

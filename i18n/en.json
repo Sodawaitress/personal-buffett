@@ -156,5 +156,22 @@
   "lbl_no_quote": "No quote available",
   "btn_add_watchlist": "+ Add to watchlist",
   "lbl_full_refresh_hint": "Full refresh (~3 min)",
-  "market_au": "ASX — Australia"
+  "market_au": "ASX — Australia",
+  "login_heading": "Sign in",
+  "login_sub": "to Personal Buffett",
+  "register_heading": "Create account",
+  "register_sub": "Start investing the Buffett way",
+  "lbl_email": "Email",
+  "lbl_password": "Password",
+  "lbl_confirm_password": "Confirm password",
+  "btn_signin": "Sign in",
+  "btn_create_account": "Create account",
+  "auth_or": "or",
+  "btn_google_continue": "Continue with Google",
+  "auth_new_here": "New here?",
+  "auth_create_link": "Create a free account",
+  "auth_have_account": "Already have an account?",
+  "auth_signin_link": "Sign in",
+  "pw_hint_needs": "Needs: ",
+  "pw_hint_good": "✓ Looks good"
 }

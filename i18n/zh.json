@@ -156,5 +156,22 @@
   "lbl_no_quote": "暂无报价",
   "btn_add_watchlist": "+ 加自选",
   "lbl_full_refresh_hint": "全量刷新（约3分钟）",
-  "market_au": "澳股（ASX）"
+  "market_au": "澳股（ASX）",
+  "login_heading": "登录",
+  "login_sub": "欢迎回来",
+  "register_heading": "创建账户",
+  "register_sub": "开始用巴菲特方式投资",
+  "lbl_email": "邮箱",
+  "lbl_password": "密码",
+  "lbl_confirm_password": "确认密码",
+  "btn_signin": "登录",
+  "btn_create_account": "创建账户",
+  "auth_or": "或",
+  "btn_google_continue": "用 Google 继续",
+  "auth_new_here": "第一次来？",
+  "auth_create_link": "免费创建账户 →",
+  "auth_have_account": "已有账户？",
+  "auth_signin_link": "直接登录",
+  "pw_hint_needs": "还需要：",
+  "pw_hint_good": "✓ 密码强度合格"
 }
