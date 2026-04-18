@@ -161,8 +161,10 @@
 
       {% if s.pending_job %}
       <div class="holding-analysis-pending">
-        <span class="spinner"></span>
-        <span class="pending-text">{{ t.lbl_analysing }}</span>
+        <div class="analysis-progress" id="progress-{{ s.pending_job.id }}">
+          <div class="progress-track"><div class="progress-fill" id="pfill-{{ s.pending_job.id }}"></div></div>
+          <span class="progress-label pending-text" id="plabel-{{ s.pending_job.id }}">{{ t.lbl_analysing }}</span>
+        </div>
         <button class="btn-cancel-job" onclick="event.stopPropagation(); cancelJob({{ s.pending_job.id }}, '{{ s.code }}')" title="{{ t.btn_cancel }}">✕</button>
       </div>
       {% elif s.conclusion %}
@@ -702,20 +704,55 @@ function _showReloadBanner() {
   bar.onclick = () => location.reload();
   document.body.prepend(bar);
 }
+const _STAGES = [
+  { label: '行情数据…', pct: 15, after: 0  },
+  { label: '财务数据…', pct: 35, after: 6  },
+  { label: '新闻资讯…', pct: 55, after: 14 },
+  { label: '定量评级…', pct: 72, after: 26 },
+  { label: 'AI 分析…',  pct: 88, after: 36 },
+];
+
+function _startProgress(jobId) {
+  const fill  = document.getElementById('pfill-'  + jobId);
+  const label = document.getElementById('plabel-' + jobId);
+  if (!fill) return null;
+  const start = Date.now();
+  return setInterval(() => {
+    const elapsed = (Date.now() - start) / 1000;
+    let stage = _STAGES[0];
+    for (const s of _STAGES) { if (elapsed >= s.after) stage = s; else break; }
+    fill.style.width = stage.pct + '%';
+    if (label) label.textContent = stage.label;
+  }, 1500);
+}
+
+function _finishProgress(jobId, grade) {
+  const fill  = document.getElementById('pfill-'  + jobId);
+  const label = document.getElementById('plabel-' + jobId);
+  if (fill)  { fill.style.transition = 'width .4s ease'; fill.style.width = '100%'; }
+  if (label) label.textContent = grade ? `评级：${grade}` : '完成';
+}
+
 function pollJob(jobId, code) {
+  const progressIv = _startProgress(jobId);
   const interval = setInterval(async () => {
     try {
       const data = await (await fetch(`/api/job/${jobId}`)).json();
       if (data.status === 'done') {
         clearInterval(interval);
-        if (_isSearching()) { _showReloadBanner(); }
-        else { location.reload(); }
+        if (progressIv) clearInterval(progressIv);
+        _finishProgress(jobId, data.analysis && data.analysis.grade);
+        setTimeout(() => {
+          if (_isSearching()) { _showReloadBanner(); }
+          else { location.reload(); }
+        }, 1200);
       } else if (data.status === 'failed') {
         clearInterval(interval);
+        if (progressIv) clearInterval(progressIv);
         const el = document.querySelector(`[data-job="${jobId}"] .pending-text`);
         if (el) el.textContent = T.analysisFailed;
       }
-    } catch(e) { clearInterval(interval); }
+    } catch(e) { clearInterval(interval); if (progressIv) clearInterval(progressIv); }
   }, 5000);
 }
 

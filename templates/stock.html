@@ -60,8 +60,10 @@
 
       <div class="stock-header-actions" id="stock-header-actions">
         {% if pending_job %}
-        <span class="spinner" style="display:inline-block"></span>
-        <span style="font-size:12px;color:var(--ink-muted)">分析中…</span>
+        <div class="analysis-progress" id="progress-{{ pending_job.id }}" style="max-width:160px">
+          <div class="progress-track"><div class="progress-fill" id="pfill-{{ pending_job.id }}"></div></div>
+          <span class="progress-label" id="plabel-{{ pending_job.id }}">分析中…</span>
+        </div>
         {% else %}
         {# 主操作 #}
         <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-ink btn-sm">巴菲特怎么看</button>
@@ -138,13 +140,15 @@
     <div id="tab-brief" class="tab-content active">
       {% if pending_job %}
       <div class="analysis-pending-block" id="pending-block" data-job="{{ pending_job.id }}">
-        <span class="spinner"></span>
-        <span>巴菲特正在研究 {{ stock.name }}…</span>
+        <div class="analysis-progress" id="progress-tab-{{ pending_job.id }}">
+          <div class="progress-track"><div class="progress-fill" id="pfill-tab-{{ pending_job.id }}"></div></div>
+          <span class="progress-label" id="plabel-tab-{{ pending_job.id }}">巴菲特正在研究 {{ stock.name }}…</span>
+        </div>
       </div>
       {% elif analysis %}
       <div class="brief-block">
         <div class="brief-header">
-          <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
+          <span class="grade-tag grade-reveal grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
             {{ analysis.grade or '—' }}
           </span>
           <span class="brief-conclusion">{{ analysis.conclusion }}</span>
@@ -1120,25 +1124,84 @@ async function triggerNewsRefresh(code) {
   }
 }
 
+const _STAGES = [
+  { label: '行情数据…', pct: 15, after: 0  },
+  { label: '财务数据…', pct: 35, after: 6  },
+  { label: '新闻资讯…', pct: 55, after: 14 },
+  { label: '定量评级…', pct: 72, after: 26 },
+  { label: 'AI 分析…',  pct: 88, after: 36 },
+];
+
+function _startProgress(suffix) {
+  const fill  = document.getElementById('pfill-'  + suffix);
+  const label = document.getElementById('plabel-' + suffix);
+  if (!fill) return null;
+  const start = Date.now();
+  return setInterval(() => {
+    const elapsed = (Date.now() - start) / 1000;
+    let stage = _STAGES[0];
+    for (const s of _STAGES) { if (elapsed >= s.after) stage = s; else break; }
+    fill.style.width = stage.pct + '%';
+    if (label) label.textContent = stage.label;
+  }, 1500);
+}
+
+function _finishProgress(suffix, grade) {
+  const fill  = document.getElementById('pfill-'  + suffix);
+  const label = document.getElementById('plabel-' + suffix);
+  if (fill)  { fill.style.transition = 'width .4s ease'; fill.style.width = '100%'; }
+  if (label) label.textContent = grade ? `评级：${grade}` : '完成';
+}
+
 function _showPending(msg, jobId) {
   const tab = document.getElementById('tab-brief');
   if (tab) {
     tab.innerHTML = `<div class="analysis-pending-block" id="pending-block" data-job="${jobId}">
-      <span class="spinner"></span><span>${msg}</span></div>`;
+      <div class="analysis-progress" id="progress-tab-${jobId}" style="max-width:220px">
+        <div class="progress-track"><div class="progress-fill" id="pfill-tab-${jobId}"></div></div>
+        <span class="progress-label" id="plabel-tab-${jobId}">${msg}</span>
+      </div></div>`;
+  }
+  // also update header progress bar if present
+  const hdrFill  = document.getElementById('pfill-'  + jobId);
+  const hdrLabel = document.getElementById('plabel-' + jobId);
+  if (!hdrFill) {
+    const actions = document.getElementById('stock-header-actions');
+    if (actions) {
+      const existing = actions.querySelector('.analysis-progress');
+      if (!existing) {
+        actions.insertAdjacentHTML('afterbegin',
+          `<div class="analysis-progress" id="progress-${jobId}" style="max-width:160px">
+            <div class="progress-track"><div class="progress-fill" id="pfill-${jobId}"></div></div>
+            <span class="progress-label" id="plabel-${jobId}">${msg}</span>
+          </div>`);
+      }
+    }
   }
 }
 
 function pollJob(jobId) {
+  const pHdr = _startProgress(jobId);
+  const pTab = _startProgress('tab-' + jobId);
   const iv = setInterval(async () => {
     try {
       const d = await (await fetch(`/api/job/${jobId}`)).json();
-      if (d.status === 'done') { clearInterval(iv); location.reload(); }
-      else if (d.status === 'failed') {
+      if (d.status === 'done') {
         clearInterval(iv);
+        if (pHdr) clearInterval(pHdr);
+        if (pTab) clearInterval(pTab);
+        const grade = d.analysis && d.analysis.grade;
+        _finishProgress(jobId, grade);
+        _finishProgress('tab-' + jobId, grade);
+        setTimeout(() => location.reload(), 1200);
+      } else if (d.status === 'failed') {
+        clearInterval(iv);
+        if (pHdr) clearInterval(pHdr);
+        if (pTab) clearInterval(pTab);
         const pb = document.getElementById('pending-block');
         if (pb) pb.innerHTML = '<span style="color:var(--red)">分析失败，请重试</span>';
       }
-    } catch(e) { clearInterval(iv); }
+    } catch(e) { clearInterval(iv); if (pHdr) clearInterval(pHdr); if (pTab) clearInterval(pTab); }
   }, 5000);
 }
 

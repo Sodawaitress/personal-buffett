@@ -3656,3 +3656,39 @@ footer small {
   border-bottom: 1px solid var(--rule-light);
 }
 .archive-section-title:first-child { padding-top: 4px; }
+
+/* ── US-69 分析进度条 + 评级揭晓动画 ─────────────────── */
+.analysis-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  max-width: 220px;
+}
+.progress-track {
+  height: 3px;
+  background: var(--rule-light);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--ink);
+  width: 8%;
+  transition: width 3.5s ease;
+}
+.progress-label {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+@keyframes gradeReveal {
+  0%   { transform: scale(0) rotate(-8deg); opacity: 0; }
+  65%  { transform: scale(1.18) rotate(2deg); opacity: 1; }
+  85%  { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.grade-reveal {
+  animation: gradeReveal 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  display: inline-block;
+}
