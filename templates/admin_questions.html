@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}提问箱记录 · {{ t.brand }}{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:32px auto;padding:0 24px;font-family:-apple-system,sans-serif">
+
+  <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:24px">
+    <h2 style="font-size:20px;font-weight:700;color:var(--ink);margin:0">📝 提问箱记录</h2>
+    {% if recent_n %}
+    <span style="font-size:12px;background:#e53935;color:#fff;padding:2px 8px;border-radius:10px">
+      24h 内 {{ recent_n }} 条
+    </span>
+    {% endif %}
+    <span style="font-size:12px;color:var(--ink-muted)">共 {{ questions|length }} 条</span>
+  </div>
+
+  {% if not questions %}
+  <p style="color:var(--ink-muted);font-size:14px">还没有人提问过。</p>
+  {% else %}
+  <div style="display:flex;flex-direction:column;gap:16px">
+    {% for q in questions %}
+    <div style="border:1px solid var(--rule-light);border-radius:8px;overflow:hidden;
+                {% if loop.index <= recent_n %}border-left:3px solid #e53935{% endif %}">
+
+      <div style="padding:12px 16px;background:var(--paper);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;color:var(--ink-muted)">
+          {{ q.created_at[:16] | replace('T',' ') }}
+          &nbsp;·&nbsp;
+          <strong style="color:var(--ink)">{{ q.display_name or q.email or '匿名' }}</strong>
+        </div>
+      </div>
+
+      <div style="padding:12px 16px;background:var(--paper-2)">
+        <div style="margin-bottom:10px">
+          <span style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px">问题</span>
+          <p style="margin:4px 0 0;font-size:14px;color:var(--ink);line-height:1.5">{{ q.question }}</p>
+        </div>
+        {% if q.answer %}
+        <div style="padding-top:10px;border-top:1px solid var(--rule-light)">
+          <span style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px">AI 回答</span>
+          <p style="margin:4px 0 0;font-size:13px;color:var(--ink-muted);line-height:1.6">{{ q.answer }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
