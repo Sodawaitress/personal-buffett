@@ -1,6 +1,6 @@
 # Oracle Cloud Always Free Deployment
 
-目标：把 `main` 的最新稳定版本部署到 Oracle Cloud Always Free 的 ARM VM 上。
+目标：把 `codex/pbc-refactor` 部署到 Oracle Cloud Always Free 的 ARM VM 上。
 
 这条线是真部署：
 
@@ -14,7 +14,7 @@
 - 地区：默认 `ap-singapore-1`，可改
 - 主机：`VM.Standard.A1.Flex`
 - 备用机型：`VM.Standard.E2.1.Micro`
-- 容器：`ghcr.io/sodawaitress/personal-buffett:main`
+- 容器：`ghcr.io/sodawaitress/personal-buffett:codex-pbc-refactor`
 - 端口：外网 `80` -> 容器 `8080`
 - 数据目录：`/opt/personal-buffett/data`
 

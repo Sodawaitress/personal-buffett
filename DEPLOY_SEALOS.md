@@ -1,6 +1,6 @@
 # Sealos Deployment
 
-目标：把 `main` 分支的最新稳定版本部署成一个长期可访问的公网服务。
+目标：把 `codex/pbc-refactor` 这个分支直接部署成一个长期可访问的公网服务。
 
 ## 推荐方式
 
@@ -31,7 +31,7 @@
 
 分支：
 
-- `main`
+- `codex/pbc-refactor`
 
 仓库：
 
@@ -87,19 +87,19 @@ SQLite 会写到：
 
 优先用 GitHub 分支部署：
 
-- Branch: `main`
+- Branch: `codex/pbc-refactor`
 
 如果 Sealos 直接识别 Dockerfile，就不用手写启动命令。
 
 也可以直接填镜像：
 
-- `ghcr.io/sodawaitress/personal-buffett:main`
+- `ghcr.io/sodawaitress/personal-buffett:codex-pbc-refactor`
 
 仓库里已经加了 GitHub Actions：
 
 - `.github/workflows/publish-image.yml`
 
-推到 `main` 后会自动构建并推送镜像到 GHCR。
+推到分支后会自动构建并推送镜像到 GHCR。
 
 镜像已验证可匿名拉取。
 

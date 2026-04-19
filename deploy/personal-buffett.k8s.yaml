@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: ghcr.io/sodawaitress/personal-buffett:main
+          image: ghcr.io/sodawaitress/personal-buffett:codex-pbc-refactor
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
