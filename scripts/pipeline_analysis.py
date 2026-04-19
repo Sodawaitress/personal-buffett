@@ -235,8 +235,8 @@ def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> d
 
 _FUND_KEYWORDS_CN = ("ETF联接", "ETF", "指数", "基金", "LOF", "联接A", "联接C", "联接E")
 _FUND_KEYWORDS_EN = ("ETF", "Index Fund", " Fund", "Hedged", "Trust Fund")
-# 交易所后缀：NZ/AU/L/HK 等非美股市场 ticker 通常是 ETF 或基金
-_FUND_EXCHANGE_SUFFIXES = (".NZ", ".AU", ".L", ".AX", ".TO")
+# 不用交易所后缀判断基金（.NZ/.AX 下有真实公司），依赖 asset_type 字段 + 名称关键词
+_FUND_EXCHANGE_SUFFIXES = ()
 
 
 def _is_fund(stock: dict) -> bool:

@@ -1092,7 +1092,7 @@ async function triggerLetterGeneration(code) {
     }
 
     let pollCount = 0;
-    const maxPolls = 15;
+    const maxPolls = 50;  // 50 × 4s = 200s > T_AI 180s
     const iv = setInterval(async () => {
       pollCount += 1;
       try {
