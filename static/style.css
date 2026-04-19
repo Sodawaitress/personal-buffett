@@ -662,6 +662,42 @@ hr.magic-rule, .magic-rule {
   color: var(--ink-faint);
 }
 
+/* ── 基金专属 UI ───────────────────────────────────── */
+.fund-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(80,140,100,.12);
+  color: #3a7a52;
+  border: 1px solid rgba(80,140,100,.3);
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.fund-dims {
+  background: rgba(80,140,100,.05);
+  border: 1px solid rgba(80,140,100,.18);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.fund-dim .dim-label {
+  color: #3a7a52;
+}
+
+.fund-total-score {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.fund-total-score strong {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* ── 搜索结果资产类型标签 ─────────────────────────── */
 .asset-type-tag {
   font-size: 10px;
   padding: 1px 5px;

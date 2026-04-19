@@ -320,8 +320,20 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
   const drop = document.getElementById(dropId);
   if (!inp || !drop) return;
 
-  let timer;
+  let timer, composing = false;
+
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+
+  inp.addEventListener('compositionstart', () => { composing = true; });
+  inp.addEventListener('compositionend',   () => {
+    composing = false;
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId), 100);
+  });
   inp.addEventListener('input', () => {
+    if (composing) return;
     clearTimeout(timer);
     const q = inp.value.trim();
     if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
@@ -335,13 +347,16 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
 }
 
 async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId) {
+  const inp = document.getElementById('search-q');
   drop.innerHTML = '<div class="search-loading"><span class="spinner-sm"></span> 搜索中…</div>';
   drop.classList.add('open');
   try {
     const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
     const data = await resp.json();
+    if (inp && inp.value.trim() !== q) return;
     if (data.loading) {
       drop.innerHTML = '<div class="search-empty"><i class="bi bi-hourglass-split"></i> A股数据加载中，请稍候再试…</div>';
+      setTimeout(() => { if (inp && inp.value.trim() === q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId); }, 1500);
       return;
     }
     const items = Array.isArray(data) ? data : [];

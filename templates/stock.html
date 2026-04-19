@@ -65,7 +65,7 @@
         </div>
         {% else %}
         {# 主操作 #}
-        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-ink btn-sm">{{ t.btn_buffett_check }}</button>
+        <button onclick="triggerAnalysisOnly('{{ stock.code }}')" class="btn-ink btn-sm">{% if stock.asset_type in ('场外基金', 'ETF') %}{{ t.btn_fund_check }}{% else %}{{ t.btn_buffett_check }}{% endif %}</button>
         <div class="more-wrap" id="more-wrap-{{ stock.code }}">
           <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('{{ stock.code }}')" title="More">⋯</button>
           <div class="more-menu" id="more-menu-{{ stock.code }}">
@@ -150,9 +150,38 @@
             {{ analysis.grade or '—' }}
           </span>
           <span class="brief-conclusion">{{ analysis.conclusion }}</span>
+          {% if analysis.framework_used == 'fund_v1' %}
+          <span class="fund-badge">{{ analysis.fund_flow_summary or '基金' }}</span>
+          {% endif %}
           <span class="brief-date">{{ analysis.analysis_date }}</span>
         </div>
         <p class="brief-reasoning">{{ analysis.reasoning }}</p>
+
+        {# ── 基金 4 维评分（framework_used == 'fund_v1'）── #}
+        {% if analysis.framework_used == 'fund_v1' %}
+        {% set fund_dims = [
+          ('产品质量', analysis.moat),
+          ('标的质量', analysis.management),
+          ('组合适配', analysis.valuation),
+          ('交易执行', analysis.behavioral),
+        ] %}
+        <div class="brief-dims fund-dims">
+          {% for label, val in fund_dims %}
+          {% if val and val != '—' %}
+          <div class="brief-dim fund-dim">
+            <span class="dim-label">{{ label }}</span>
+            <span class="dim-val">{{ val }}</span>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% if analysis.quant_score %}
+        <div class="fund-total-score">综合评分 <strong>{{ analysis.quant_score }}/100</strong></div>
+        {% endif %}
+
+        {# ── 基金定投提示 ── #}
+        {% else %}
+        {# 股票维度 #}
         {% set dims = [
           ('护城河', analysis.moat),
           ('管理层', analysis.management),
@@ -172,10 +201,11 @@
           {% endfor %}
         </div>
         {% endif %}
+        {% endif %}
 
-        {# ── 操作参数卡片 ── #}
-        {# 价格线来自预计算（纯数学，不依赖LLM）；仓位策略/关键监控来自LLM #}
-        {% set has_tech  = trading_params and trading_params.entry_1_label %}
+        {# ── 操作参数卡片（仅股票显示，基金跳过）── #}
+        {% if analysis.framework_used == 'fund_v1' %}{% set has_tech = false %}{% set has_trade = false %}{% endif %}
+        {% set has_tech  = trading_params and trading_params.entry_1_label and analysis.framework_used != 'fund_v1' %}
         {% set has_trade = analysis and analysis.trade_block %}
         {% if has_tech or has_trade %}
         <div class="trade-block">
@@ -235,7 +265,8 @@
         </div>
         {% endif %}
 
-        {# 股东信入口 #}
+        {# 股东信入口：仅限股票，基金不适用 #}
+        {% if stock.asset_type not in ('场外基金', 'ETF') %}
         <div class="letter-entry" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule-light)">
           {% if analysis.letter_html %}
           <button onclick="showLetter()" class="btn-outline-ink btn-sm">📄 读股东信</button>
@@ -245,12 +276,13 @@
           <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">巴菲特叙事信件（约30秒，需 Groq）</span>
           {% endif %}
         </div>
+        {% endif %}
 
       </div>
       {% else %}
       <div class="empty-state" style="padding:60px 0;text-align:center">
         <p style="color:var(--ink-muted);margin-bottom:16px">尚无分析结果</p>
-        <button onclick="triggerAnalysisOnly('{{ stock.code }}');" class="btn-ink">巴菲特怎么看</button>
+        <button onclick="triggerAnalysisOnly('{{ stock.code }}');" class="btn-ink">{% if stock.asset_type in ('场外基金', 'ETF') %}{{ t.btn_fund_check }}{% else %}巴菲特怎么看{% endif %}</button>
       </div>
       {% endif %}
     </div>

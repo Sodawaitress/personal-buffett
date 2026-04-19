@@ -105,6 +105,7 @@
   "wl_empty_stocks": "Nothing added yet",
   "wl_empty_sub": "Search for any company and let Buffett analyse it for you.",
   "btn_buffett_check": "What would Buffett think?",
+  "btn_fund_check": "Update Rating",
   "batch_selected": "selected",
   "batch_select_all": "Select all",
   "batch_deselect_all": "Deselect all",

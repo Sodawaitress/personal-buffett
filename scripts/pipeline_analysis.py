@@ -233,7 +233,10 @@ def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> d
     return params
 
 
-_FUND_KEYWORDS = ("ETF联接", "ETF", "指数", "基金", "LOF", "联接A", "联接C", "联接E")
+_FUND_KEYWORDS_CN = ("ETF联接", "ETF", "指数", "基金", "LOF", "联接A", "联接C", "联接E")
+_FUND_KEYWORDS_EN = ("ETF", "Index Fund", " Fund", "Hedged", "Trust Fund")
+# 交易所后缀：NZ/AU/L/HK 等非美股市场 ticker 通常是 ETF 或基金
+_FUND_EXCHANGE_SUFFIXES = (".NZ", ".AU", ".L", ".AX", ".TO")
 
 
 def _is_fund(stock: dict) -> bool:
@@ -244,7 +247,16 @@ def _is_fund(stock: dict) -> bool:
     if asset_type in ("场外基金", "ETF"):
         return True
     name = stock.get("name") or ""
-    return any(kw in name for kw in _FUND_KEYWORDS)
+    code = stock.get("code") or ""
+    if any(kw in name for kw in _FUND_KEYWORDS_CN):
+        return True
+    # 英文基金名称识别（ETF联接/Hedged/Index Fund 等）
+    if any(kw in name for kw in _FUND_KEYWORDS_EN):
+        return True
+    # 交易所后缀识别（TWH.NZ / VAS.AU 等）
+    if any(code.upper().endswith(sfx) for sfx in _FUND_EXCHANGE_SUFFIXES):
+        return True
+    return False
 
 
 def _run_fund_analysis(code, stock, price, log, user_id=None):
@@ -316,10 +328,10 @@ def _run_layer2(code, market, log, user_id=None):
     meta = db.get_stock_meta(code)
     company_type = (meta or {}).get("company_type")
 
-    # 基金/ETF 不适用股票评分体系，直接走简化分析
+    # 基金/ETF 不适用股票评分体系，走专用基金分析
     if _is_fund(stock):
-        log("       检测到场外基金/ETF，切换至基金分析模式")
-        _run_fund_analysis(code, stock, price, news, log)
+        log("       检测到场外基金/ETF，切换至 FundRater v1")
+        _run_fund_analysis(code, stock, price, log, user_id=user_id)
         quant_result = {"grade": "C", "score": 0, "conclusion": "基金模式", "reasoning": "", "components": {
             "moat": (0, []), "growth_management": (0, []), "safety": (0, []), "valuation": (0, [])
         }}

@@ -52,6 +52,11 @@ _BROAD_KEYWORDS = [
     "科创50", "全A", "上证180", "深证100", "中证800",
     "中证全指", "A500", "上证指数", "深证成指",
 ]
+_BROAD_KEYWORDS_EN = [
+    "Total World", "Total Market", "All World", "Global", "World Index",
+    "S&P 500", "SP500", "MSCI World", "MSCI ACWI", "Developed Markets",
+    "Emerging Markets",
+]
 _BOND_KEYWORDS  = ["债", "债券", "利率", "信用", "纯债", "可转债", "转债"]
 _MONEY_KEYWORDS = ["货币", "现金", "理财"]
 
@@ -69,12 +74,15 @@ def classify_fund(name: str, fund_type_str: str = "") -> FundSubtype:
 
     is_etf_name = "ETF" in n or "LOF" in n
     is_linked   = "联接" in name or "指数" in name
-    is_broad    = any(k in name for k in _BROAD_KEYWORDS)
+    is_broad    = any(k in name for k in _BROAD_KEYWORDS) or any(k in name for k in _BROAD_KEYWORDS_EN)
 
     if is_etf_name:
         return FundSubtype.BROAD_ETF if is_broad else FundSubtype.SECTOR_ETF
     if is_linked or "指数" in ft:
         return FundSubtype.BROAD_OEF if is_broad else FundSubtype.SECTOR_ETF
+    # 英文宽基基金（如 Smart Total World Hedged）
+    if is_broad:
+        return FundSubtype.BROAD_OEF
     return FundSubtype.ACTIVE_OEF
 
 

@@ -817,9 +817,20 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId, sele
   const inp = document.getElementById('search-q');
   const drop = document.getElementById('search-dropdown');
   if (!inp || !drop) return;
-  let timer;
+  let timer, composing = false;
+
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+
+  inp.addEventListener('compositionstart', () => { composing = true; });
+  inp.addEventListener('compositionend',   () => {
+    composing = false;
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 100);
+  });
   inp.addEventListener('input', () => {
+    if (composing) return;
     clearTimeout(timer);
     const q = inp.value.trim();
     if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
@@ -839,7 +850,9 @@ async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selected
     if (inp.value.trim() !== q) return;
 
     if (items && items.loading) {
-      drop.innerHTML=`<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`; return;
+      drop.innerHTML=`<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`;
+      setTimeout(() => { if (inp.value.trim() === q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp); }, 1500);
+      return;
     }
 
     if (!Array.isArray(items) || !items.length) {
