@@ -1,57 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{{ t.nav_dashboard }} — {{ t.brand }}{% endblock %}
 
-{# ── Pulse Bar：有持仓时隐藏 ── #}
-{% block pulse_bar %}
-{% if not stocks %}
-<div class="pulse-bar">
-  <div class="pulse-bar-inner">
-    {% if market.nzx50 and market.nzx50.price %}
-    {% set nzx = market.nzx50 %}
-    <div class="pulse-item">
-      <span class="pulse-label">NZX 50</span>
-      <span class="pulse-val">{{ "%.0f"|format(nzx.price) }}</span>
-      <span class="pulse-val {{ 'pulse-down' if nzx.change < 0 else 'pulse-up' }}">{{ "%+.2f"|format(nzx.change) }}%</span>
-    </div><div class="pulse-divider"></div>
-    {% endif %}
-    {% set fg = market.fear_greed %}
-    {% if fg %}
-    <div class="pulse-item">
-      <span class="pulse-label">Fear & Greed</span>
-      {% if fg.score <= 40 %}<span class="fg-pill fg-fear">{{ fg.score }} {{ fg.label }}</span>
-      {% elif fg.score >= 60 %}<span class="fg-pill fg-greed">{{ fg.score }} {{ fg.label }}</span>
-      {% else %}<span class="fg-pill fg-neutral">{{ fg.score }} {{ fg.label }}</span>{% endif %}
-    </div><div class="pulse-divider"></div>
-    {% endif %}
-    {% set cny = market.cny_usd %}
-    {% if cny %}
-    <div class="pulse-item">
-      <span class="pulse-label">USD/CNY</span>
-      <span class="pulse-val pulse-neutral">{{ cny.rate }}</span>
-    </div><div class="pulse-divider"></div>
-    {% endif %}
-    {% set idx = market.cn_indices %}
-    {% if idx %}
-      {% for key, name in [('sh','上证'), ('sz','深证'), ('cyb','创业板')] %}
-        {% set i = idx.get(key) %}{% if i %}
-        <div class="pulse-item">
-          <span class="pulse-label">{{ name }}</span>
-          <span class="pulse-val {{ 'pulse-down' if i.change < 0 else 'pulse-up' }}">{{ "%.2f"|format(i.price) }} {{ "%+.2f"|format(i.change) }}%</span>
-        </div><div class="pulse-divider"></div>
-        {% endif %}{% endfor %}
-    {% endif %}
-    {% set comm = market.commodities %}
-    {% if comm %}{% for key, v in comm.items() %}
-      <div class="pulse-item">
-        <span class="pulse-label">{{ v.name }}</span>
-        <span class="pulse-val {{ 'pulse-down' if v.change < 0 else 'pulse-up' }}">{{ "%.0f"|format(v.price) }}</span>
-      </div><div class="pulse-divider"></div>
-    {% endfor %}{% endif %}
-    <span class="pulse-label" style="margin-left:auto">{{ now }} CST</span>
-  </div>
-</div>
-{% endif %}
-{% endblock %}
+{% block pulse_bar %}{% endblock %}
 
 {% block content %}
 <div class="page-container">
@@ -97,7 +47,7 @@
         {% if stocks %}
         <div class="hc-grades">
           {% for s in stocks[:6] %}
-          <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade and s.grade != '—' else 'c' }}" style="font-size:10px;padding:1px 5px">{{ s.grade }}</span>
+          <span class="wax-seal wax-seal-sm grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade and s.grade != '—' else 'c' }}">{{ s.grade }}</span>
           {% endfor %}
         </div>
         {% endif %}
@@ -114,6 +64,7 @@
         <input type="hidden" name="code" id="add-code">
         <input type="hidden" name="name" id="add-name">
         <input type="hidden" name="market" id="add-market">
+        <input type="hidden" name="asset_type" id="add-asset-type">
         <div class="hc-search-wrap">
           <input type="text" id="search-q" class="hc-search-input"
                  placeholder="{{ t.search_placeholder }}"
@@ -123,6 +74,16 @@
         </div>
       </form>
     </div>
+
+    {# 卡片 4：今日预言 #}
+    <a href="#" class="home-card home-card-quest">
+      <div class="hc-main">
+        <div class="hc-quest-kicker">今日预言</div>
+        <div class="hc-title">市场向何处而去？</div>
+        <div class="hc-quest-sub">读三则线索，落笔押注，七日后见分晓</div>
+      </div>
+      <div class="hc-right hc-quest-icon">✒</div>
+    </a>
 
   </div>{# /home-cards-row #}
 
@@ -172,6 +133,46 @@
         <span class="col-subhead">A-Share · Macro · Global</span>
       </div>
       <hr class="section-rule">
+
+      {# ── 市场信号（DS-05）── #}
+      {% set fg = market.fear_greed %}
+      {% set cny = market.cny_usd %}
+      {% set idx = market.cn_indices %}
+      {% set nzx = market.nzx50 %}
+      {% if fg or cny or idx or nzx %}
+      <div class="market-signals-block">
+        <div class="ms-label">市场信号</div>
+        {% if fg %}
+        <div class="ms-row">
+          <span class="ms-name">恐贪指数</span>
+          <span class="ms-val {% if fg.score <= 40 %}ms-down{% elif fg.score >= 60 %}ms-up{% endif %}">
+            {{ fg.score }} <span class="ms-note">{{ fg.label }}</span>
+          </span>
+        </div>
+        {% endif %}
+        {% if cny %}
+        <div class="ms-row">
+          <span class="ms-name">USD/CNY</span>
+          <span class="ms-val">{{ cny.rate }}</span>
+        </div>
+        {% endif %}
+        {% if idx %}
+          {% set sh = idx.get('sh') %}{% if sh %}
+          <div class="ms-row">
+            <span class="ms-name">上证综指</span>
+            <span class="ms-val {{ 'ms-down' if sh.change < 0 else 'ms-up' }}">{{ "%.2f"|format(sh.price) }} <span class="ms-note">{{ "%+.2f"|format(sh.change) }}%</span></span>
+          </div>
+          {% endif %}
+        {% endif %}
+        {% if nzx and nzx.price %}
+        <div class="ms-row">
+          <span class="ms-name">NZX 50</span>
+          <span class="ms-val {{ 'ms-down' if nzx.change < 0 else 'ms-up' }}">{{ "%.0f"|format(nzx.price) }} <span class="ms-note">{{ "%+.2f"|format(nzx.change) }}%</span></span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {# ── / 市场信号 ── #}
       {% if intl_news %}
         {% for n in intl_news %}
         <div class="news-article {{ 'news-article-macro' if n.section == 'Macro' else ('news-article-fomc' if n.section == 'FOMC' else '') }}">
@@ -198,6 +199,68 @@
   {% endif %}
 
   </div>{# /news-section-wrap #}
+
+  {# ══════════════════════════════════
+     知识专栏 — Clipping 卡片 (DS-06)
+     ══════════════════════════════════ #}
+  <div class="clipping-section">
+    <div class="clipping-header">
+      <span class="section-label">知识专栏</span>
+      <hr class="section-rule">
+    </div>
+    <div class="clipping-grid">
+
+      {# 复利 — 解锁 #}
+      <div class="clipping-card" onclick="toggleCompound()">
+        <div class="clipping-cat">基础概念</div>
+        <div class="clipping-title">🌱 复利</div>
+        <div class="clipping-desc">钱生钱的魔法。学会这个你就赢了一半。</div>
+        <div class="clipping-bar-wrap"><div class="clipping-bar" style="width:72%"></div></div>
+        <div class="clipping-mastery">72% 掌握</div>
+      </div>
+
+      {# 护城河 — 解锁 #}
+      <div class="clipping-card">
+        <div class="clipping-cat">巴菲特框架</div>
+        <div class="clipping-title">🏰 护城河</div>
+        <div class="clipping-desc">为什么可口可乐 100 年后还在？</div>
+        <div class="clipping-bar-wrap"><div class="clipping-bar" style="width:45%"></div></div>
+        <div class="clipping-mastery">45% 掌握</div>
+      </div>
+
+      {# 宏观感知 — 未解锁 #}
+      <div class="clipping-card clipping-locked">
+        <div class="clipping-cat">进阶概念</div>
+        <div class="clipping-title">🌍 宏观感知</div>
+        <div class="clipping-desc">利率怎么影响你口袋里的钱</div>
+        <div class="clipping-bar-wrap"><div class="clipping-bar" style="width:0%"></div></div>
+        <div class="clipping-mastery">未解锁</div>
+      </div>
+
+    </div>
+
+    {# 复利计算器 — 展开 #}
+    <div class="compound-calc" id="compound-calc" style="display:none">
+      <hr class="magic-rule">
+      <div class="cc-title">世界第八大奇迹：复利</div>
+      <div class="cc-result" id="cc-result">¥32,313</div>
+      <div class="cc-desc" id="cc-desc">¥10,000 × 12% × 10年 = <strong id="cc-mult">3.2</strong>倍</div>
+      <div class="cc-controls">
+        <div class="cc-slider-row">
+          <span class="cc-slider-label">年化收益率</span>
+          <span class="cc-slider-val" id="rate-val">12%</span>
+        </div>
+        <input type="range" min="1" max="30" value="12" id="cc-rate" class="cc-slider" oninput="updateCompound()">
+        <div class="cc-hints"><span>1% 银行存款</span><span>15% 价值投资</span><span>30% 很难</span></div>
+        <div class="cc-slider-row" style="margin-top:12px">
+          <span class="cc-slider-label">投资年限</span>
+          <span class="cc-slider-val" id="years-val">10年</span>
+        </div>
+        <input type="range" min="1" max="40" value="10" id="cc-years" class="cc-slider" oninput="updateCompound()">
+      </div>
+    </div>
+
+  </div>{# /clipping-section #}
 
 </div>
 
@@ -229,13 +292,30 @@ function focusSearch(e) {
   document.getElementById('search-q').focus();
 }
 
+// ── 复利计算器 (DS-06) ──────────────────────────────────
+function toggleCompound() {
+  const el = document.getElementById('compound-calc');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function updateCompound() {
+  const rate  = +document.getElementById('cc-rate').value;
+  const years = +document.getElementById('cc-years').value;
+  const start = 10000;
+  const end   = Math.round(start * Math.pow(1 + rate/100, years));
+  document.getElementById('cc-result').textContent = '¥' + end.toLocaleString('zh');
+  document.getElementById('cc-desc').innerHTML =
+    `¥10,000 × ${rate}% × ${years}年 = <strong id="cc-mult">${(end/start).toFixed(1)}</strong>倍`;
+  document.getElementById('rate-val').textContent  = rate  + '%';
+  document.getElementById('years-val').textContent = years + '年';
+}
+
 // ── 页面加载时绑定搜索框 ───────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initSearch('search-q', 'search-dropdown', 'add-code', 'add-name', 'add-market');
+  initSearch('search-q', 'search-dropdown', 'add-code', 'add-name', 'add-market', 'add-asset-type');
 });
 
 // ── 股票搜索 ───────────────────────────────────────────
-function initSearch(inputId, dropId, codeId, nameId, marketId) {
+function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
   const inp  = document.getElementById(inputId);
   const drop = document.getElementById(dropId);
   if (!inp || !drop) return;
@@ -245,7 +325,7 @@ function initSearch(inputId, dropId, codeId, nameId, marketId) {
     clearTimeout(timer);
     const q = inp.value.trim();
     if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId), 350);
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId), 350);
   });
 
   document.addEventListener('click', e => {
@@ -254,7 +334,7 @@ function initSearch(inputId, dropId, codeId, nameId, marketId) {
   });
 }
 
-async function doSearch(q, drop, codeId, nameId, marketId) {
+async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId) {
   drop.innerHTML = '<div class="search-loading"><span class="spinner-sm"></span> 搜索中…</div>';
   drop.classList.add('open');
   try {
@@ -266,22 +346,28 @@ async function doSearch(q, drop, codeId, nameId, marketId) {
     }
     const items = Array.isArray(data) ? data : [];
     if (!items.length) { drop.innerHTML='<div class="search-empty">没有找到结果</div>'; return; }
-    drop.innerHTML = items.map(r => `
-      <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}')">
+    drop.innerHTML = items.map(r => {
+      const at = r.asset_type || '';
+      const atBadge = at && at !== '股票' ? `<span class="asset-type-tag">${at}</span>` : '';
+      const safeName = r.name.replace(/'/g,"\\'");
+      const safeAt = at.replace(/'/g,"\\'");
+      return `<div class="search-item" onclick="selectStock('${r.code}','${safeName}','${r.market}','${safeAt}','${codeId}','${nameId}','${marketId}','${assetTypeId}')">
         <span class="search-item-code">${r.code}</span>
         <span class="search-item-name">${r.name}</span>
+        ${atBadge}
         <span class="market-tag">${r.market.toUpperCase()}</span>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   } catch(e) {
     drop.innerHTML = '<div class="search-empty">搜索失败，请重试</div>';
   }
 }
 
-function selectStock(code, name, market, codeId, nameId, marketId) {
+function selectStock(code, name, market, assetType, codeId, nameId, marketId, assetTypeId) {
   document.getElementById(codeId).value   = code;
   document.getElementById(nameId).value   = name;
   document.getElementById(marketId).value = market;
+  if (assetTypeId) document.getElementById(assetTypeId).value = assetType || '';
   document.getElementById('search-dropdown').classList.remove('open');
   document.getElementById('add-form').submit();
 }

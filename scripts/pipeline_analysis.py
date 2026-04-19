@@ -233,6 +233,77 @@ def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> d
     return params
 
 
+_FUND_KEYWORDS = ("ETF联接", "ETF", "指数", "基金", "LOF", "联接A", "联接C", "联接E")
+
+
+def _is_fund(stock: dict) -> bool:
+    """检测是否为场外基金/ETF，避免用巴菲特框架错误评级。"""
+    if not stock:
+        return False
+    asset_type = stock.get("asset_type") or ""
+    if asset_type in ("场外基金", "ETF"):
+        return True
+    name = stock.get("name") or ""
+    return any(kw in name for kw in _FUND_KEYWORDS)
+
+
+def _run_fund_analysis(code, stock, price, log, user_id=None):
+    """基金/ETF 专用评分：使用 FundRater v1，输出 4 维评分 + 基金专属结论。"""
+    from scripts.fund_rater import FundRater
+    from scripts.fund_fetch import fetch_fund_data
+
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    name  = (stock or {}).get("name", code)
+
+    # 获取该用户已有的 A 股持仓（用于组合适配评分）
+    existing_codes: list = []
+    if user_id:
+        try:
+            with db.get_conn() as c:
+                rows = c.execute(
+                    "SELECT stock_code FROM user_watchlist WHERE user_id=? AND status!='sold'",
+                    (user_id,)
+                ).fetchall()
+                existing_codes = [r["stock_code"] for r in rows if r["stock_code"] != code]
+        except Exception:
+            pass
+
+    log("       [基金] 获取基金数据…")
+    fund_data = fetch_fund_data(code, name, existing_cn_codes=existing_codes)
+
+    # 如果行情层已有价格，补填（比 AKShare 更快更准）
+    if price and price.get("price") and not fund_data.nav:
+        fund_data.nav = price["price"]
+    if price and price.get("change_pct") is not None and fund_data.change_pct is None:
+        fund_data.change_pct = price["change_pct"]
+
+    log("       [基金] 运行 FundRater…")
+    result = FundRater.rate(fund_data)
+    log(f"       [基金] {result['subtype_label']} · {result['score']}/100 · {result['conclusion']}")
+
+    # 把 4 维评分存进 DB（复用 moat/management/valuation 字段 + fund_detail_json）
+    import json as _json
+    db.save_analysis(
+        code=code,
+        period="daily",
+        analysis_date=today,
+        grade=result["grade"],
+        conclusion=result["conclusion"],
+        reasoning=result["reasoning"],
+        moat=f"{result['product_score']}/35",
+        management=f"{result['target_score']}/35",
+        valuation=f"{result['port_score']}/20",
+        behavioral=f"{result['exec_score']}/10",
+        fund_flow_summary=result["subtype_label"],
+        framework_used="fund_v1",
+        quant_score=result["score"],
+        quant_components=_json.dumps(
+            {"subtype": result["subtype"], "dimensions": result["dimensions"]},
+            ensure_ascii=False
+        ),
+    )
+
+
 def _run_layer2(code, market, log, user_id=None):
     from scripts.buffett_analyst import _analyze_news_signals
     from scripts.quantitative_rating import QuantitativeRater
@@ -244,6 +315,20 @@ def _run_layer2(code, market, log, user_id=None):
     events = db.get_stock_events(code, limit=10)
     meta = db.get_stock_meta(code)
     company_type = (meta or {}).get("company_type")
+
+    # 基金/ETF 不适用股票评分体系，直接走简化分析
+    if _is_fund(stock):
+        log("       检测到场外基金/ETF，切换至基金分析模式")
+        _run_fund_analysis(code, stock, price, news, log)
+        quant_result = {"grade": "C", "score": 0, "conclusion": "基金模式", "reasoning": "", "components": {
+            "moat": (0, []), "growth_management": (0, []), "safety": (0, []), "valuation": (0, [])
+        }}
+        return quant_result, {}, {
+            "stock": stock, "price": price, "news": news, "fundamentals": fundamentals,
+            "signals": {}, "news_signals": {}, "earnings_flags": [], "data_warnings": [],
+            "events": events, "company_type": "fund", "entry_price": None, "buy_date": None,
+            "annual": [], "fund_flow": {},
+        }
 
     _annual = []
     try:

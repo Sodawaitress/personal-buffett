@@ -13,7 +13,10 @@
   <!-- ── Masthead ── -->
   <nav class="navbar">
     <div class="masthead-inner w-100">
-      <a class="masthead-brand" href="{{ url_for('index') }}">{{ t.brand }}</a>
+      <a class="masthead-brand" href="{{ url_for('index') }}">
+        <span class="masthead-brand-text">{{ t.brand }}</span>
+        <span class="masthead-tagline">时间魔法，点石成金</span>
+      </a>
 
       <div class="masthead-nav">
         {% if session.get('user_id') %}

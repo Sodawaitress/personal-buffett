@@ -26,9 +26,9 @@
         </div>
         <div class="notif-item-actions">
           <button class="notif-btn notif-btn-remove"
-            onclick="notifRemove({{ n.id }}, '{{ n.code }}')">移除自选股</button>
+            onclick="notifRemove({{ n.id }}, '{{ n.code }}')">{{ t.notif_remove }}</button>
           <button class="notif-btn notif-btn-snooze"
-            onclick="notifSnooze({{ n.id }})">继续观察 60 天</button>
+            onclick="notifSnooze({{ n.id }})">{{ t.notif_snooze }}</button>
         </div>
       </div>
       {% endfor %}
@@ -71,12 +71,12 @@
 
   {# ── 排序栏 ── #}
   <div class="wl-sort-bar">
-    <span class="wl-sort-label">排序：</span>
-    <button class="wl-sort-pill active" data-sort="default"  onclick="setSortPill(this,'default')">默认</button>
-    <button class="wl-sort-pill"        data-sort="grade"    onclick="setSortPill(this,'grade')">评分</button>
-    <button class="wl-sort-pill"        data-sort="conclusion" onclick="setSortPill(this,'conclusion')">推荐操作</button>
-    <button class="wl-sort-pill"        data-sort="change"   onclick="setSortPill(this,'change')">今日涨跌</button>
-    <button class="wl-sort-pill"        data-sort="date"     onclick="setSortPill(this,'date')">最新分析</button>
+    <span class="wl-sort-label">{{ t.wl_sort_label }}</span>
+    <button class="wl-sort-pill active" data-sort="default"    onclick="setSortPill(this,'default')">{{ t.wl_sort_default }}</button>
+    <button class="wl-sort-pill"        data-sort="grade"      onclick="setSortPill(this,'grade')">{{ t.wl_sort_grade }}</button>
+    <button class="wl-sort-pill"        data-sort="conclusion" onclick="setSortPill(this,'conclusion')">{{ t.wl_sort_conclusion }}</button>
+    <button class="wl-sort-pill"        data-sort="change"     onclick="setSortPill(this,'change')">{{ t.wl_sort_change }}</button>
+    <button class="wl-sort-pill"        data-sort="date"       onclick="setSortPill(this,'date')">{{ t.wl_sort_date }}</button>
   </div>
 
   {# 添加股票面板 #}
@@ -91,6 +91,7 @@
       <input type="hidden" name="code" id="add-code">
       <input type="hidden" name="name" id="add-name">
       <input type="hidden" name="market" id="add-market">
+      <input type="hidden" name="asset_type" id="add-asset-type">
       <div id="add-selected" class="add-selected" style="display:none">
         <span id="add-selected-label"></span>
         <button type="button" class="btn-text" onclick="clearSelection()">×</button>
@@ -169,7 +170,7 @@
       </div>
       {% elif s.conclusion %}
       <div class="holding-analysis">
-        <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','') else 'c' }}">
+        <span class="wax-seal grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','') else 'c' }}">
           {{ s.grade }}
         </span>
         <span class="holding-conclusion">{{ s.conclusion }}</span>
@@ -287,7 +288,7 @@
             <input type="checkbox" class="stock-checkbox" value="{{ s.code }}" onchange="onCheckChange()">
           </td>
           <td>
-            <span class="grade-tag grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','',None) else 'c' }}">
+            <span class="wax-seal wax-seal-sm grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','',None) else 'c' }}">
               {{ s.grade or '—' }}
             </span>
           </td>
@@ -787,7 +788,7 @@ async function showLetter(code, name) {
         <div class="letter-body-text">${data.letter.replace(/\n/g,'<br>')}</div>
         <div class="letter-sig">${T.letterSig}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
         <div class="letter-grade">
-          <span class="grade-tag grade-${(data.grade||'c').toLowerCase().replace('+','-plus').replace('-','-minus')}">${data.grade||'—'}</span>
+          <span class="wax-seal wax-seal-sm grade-${(data.grade||'c').toLowerCase().replace('+','-plus').replace('-','-minus')}">${data.grade||'—'}</span>
           <span style="margin-left:8px;font-size:13px">${data.conclusion||''}</span>
         </div>
         <div class="letter-footer">${T.letterDataAsOf} ${data.date||''} · ${T.letterDisclaimer}</div>
@@ -809,10 +810,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.holding-card[data-job], .wl-list-row[data-job]').forEach(el => {
     if (el.dataset.job) pollJob(el.dataset.job, el.dataset.code);
   });
-  initSearch('search-q','search-dropdown','add-code','add-name','add-market','add-selected','add-selected-label','btn-add-submit');
+  initSearch('search-q','search-dropdown','add-code','add-name','add-market','add-asset-type','add-selected','add-selected-label','btn-add-submit');
 });
 
-function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, labelId, btnId) {
+function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId) {
   const inp = document.getElementById('search-q');
   const drop = document.getElementById('search-dropdown');
   if (!inp || !drop) return;
@@ -822,21 +823,19 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, selectedId, label
     clearTimeout(timer);
     const q = inp.value.trim();
     if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp), 350);
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 350);
   });
   document.addEventListener('click', e => {
     if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('open');
   });
 }
-async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, btnId, inp) {
-  // Show spinner immediately — before the network round-trip
+async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp) {
   drop.innerHTML = `<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`;
   drop.classList.add('open');
 
   try {
     const items = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
 
-    // Stale-response guard: user kept typing while this request was in-flight
     if (inp.value.trim() !== q) return;
 
     if (items && items.loading) {
@@ -846,23 +845,31 @@ async function doSearch(q, drop, codeId, nameId, marketId, selectedId, labelId, 
     if (!Array.isArray(items) || !items.length) {
       drop.innerHTML=`<div class="search-empty">${T.searchNoResults}</div>`; return;
     }
-    drop.innerHTML = items.map(r => `
-      <div class="search-item" onclick="selectStock('${r.code}','${r.name.replace(/'/g,"\\'")}','${r.market}','${codeId}','${nameId}','${marketId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
+    drop.innerHTML = items.map(r => {
+      const at = r.asset_type || '';
+      const atBadge = at && at !== '股票' ? `<span class="asset-type-tag">${at}</span>` : '';
+      const safeName = r.name.replace(/'/g,"\\'");
+      const safeAt = at.replace(/'/g,"\\'");
+      return `<div class="search-item" onclick="selectStock('${r.code}','${safeName}','${r.market}','${safeAt}','${codeId}','${nameId}','${marketId}','${assetTypeId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
         <span class="search-item-code">${r.code}</span>
         <span class="search-item-name">${r.name}</span>
+        ${atBadge}
         <span class="market-tag">${r.market.toUpperCase()}</span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) {
     if (inp.value.trim() !== q) return;
     drop.innerHTML=`<div class="search-empty">${T.searchError}</div>`;
   }
 }
-function selectStock(code, name, market, codeId, nameId, marketId, selectedId, labelId, btnId, inputId) {
-  document.getElementById(codeId).value   = code;
-  document.getElementById(nameId).value   = name;
-  document.getElementById(marketId).value = market;
-  document.getElementById(inputId).value  = '';
-  document.getElementById(labelId).textContent = `${name} (${code}) · ${market.toUpperCase()}`;
+function selectStock(code, name, market, assetType, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inputId) {
+  document.getElementById(codeId).value       = code;
+  document.getElementById(nameId).value       = name;
+  document.getElementById(marketId).value     = market;
+  if (assetTypeId) document.getElementById(assetTypeId).value = assetType || '';
+  document.getElementById(inputId).value      = '';
+  const atLabel = assetType && assetType !== '股票' ? ` · ${assetType}` : '';
+  document.getElementById(labelId).textContent = `${name} (${code}) · ${market.toUpperCase()}${atLabel}`;
   document.getElementById(selectedId).style.display = 'flex';
   document.getElementById(btnId).disabled = false;
   document.getElementById('search-dropdown').classList.remove('open');

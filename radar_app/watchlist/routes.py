@@ -39,12 +39,14 @@ def register_watchlist_routes(app):
         name = request.form.get('name', '').strip()
         notes = request.form.get('desc', '').strip()
         market = request.form.get('market', '').strip()
+        asset_type = request.form.get('asset_type', '').strip() or None
         if not code or not name:
             flash('Stock code and name are required.', 'warning')
             return redirect(url_for('index'))
 
-        code, market = add_stock_and_start_analysis(session['user_id'], code, name, market, notes)
-        flash(f'{name} ({code}) 已添加，巴菲特正在分析中…', 'success')
+        code, market = add_stock_and_start_analysis(session['user_id'], code, name, market, notes, asset_type=asset_type)
+        type_label = f'（{asset_type}）' if asset_type and asset_type != '股票' else ''
+        flash(f'{name}{type_label} ({code}) 已添加，正在分析中…', 'success')
         return redirect(url_for('watchlist_page'))
 
     @app.route('/remove/<code>', methods=['POST'])

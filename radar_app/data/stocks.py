@@ -6,20 +6,22 @@ from datetime import datetime, timezone
 from radar_app.data.core import CN_TZ, get_conn
 
 
-def upsert_stock(code, name, market, name_cn=None, exchange=None, sector=None, currency=None):
+def upsert_stock(code, name, market, name_cn=None, exchange=None, sector=None, currency=None, asset_type=None):
     currency = currency or {"nz": "NZD", "cn": "CNY", "hk": "HKD", "us": "USD", "kr": "KRW"}.get(market, "USD")
     with get_conn() as c:
         c.execute(
             """
-            INSERT INTO stocks(code,name,name_cn,market,exchange,sector,currency,last_fetched)
-            VALUES(?,?,?,?,?,?,?,datetime('now'))
+            INSERT INTO stocks(code,name,name_cn,market,exchange,sector,currency,asset_type,last_fetched)
+            VALUES(?,?,?,?,?,?,?,?,datetime('now'))
             ON CONFLICT(code) DO UPDATE SET
               name=excluded.name, name_cn=COALESCE(excluded.name_cn,name_cn),
               market=excluded.market, exchange=COALESCE(excluded.exchange,exchange),
               sector=COALESCE(excluded.sector,sector),
-              currency=excluded.currency, last_fetched=excluded.last_fetched
+              currency=excluded.currency,
+              asset_type=COALESCE(excluded.asset_type,asset_type),
+              last_fetched=excluded.last_fetched
         """,
-            (code, name, name_cn, market, exchange, sector, currency),
+            (code, name, name_cn, market, exchange, sector, currency, asset_type),
         )
 
 
@@ -35,7 +37,7 @@ def get_user_watchlist(user_id):
             dict(r)
             for r in c.execute(
                 """
-            SELECT w.*, s.name, s.name_cn, s.market, s.currency, s.sector
+            SELECT w.*, s.name, s.name_cn, s.market, s.currency, s.sector, s.asset_type
             FROM user_watchlist w
             JOIN stocks s ON s.code = w.stock_code
             WHERE w.user_id=?
@@ -46,8 +48,8 @@ def get_user_watchlist(user_id):
         ]
 
 
-def add_user_stock(user_id, code, name, market, notes="", name_cn=None, exchange=None, sector=None, currency=None):
-    upsert_stock(code, name, market, name_cn=name_cn, exchange=exchange, sector=sector, currency=currency)
+def add_user_stock(user_id, code, name, market, notes="", name_cn=None, exchange=None, sector=None, currency=None, asset_type=None):
+    upsert_stock(code, name, market, name_cn=name_cn, exchange=exchange, sector=sector, currency=currency, asset_type=asset_type)
     with get_conn() as c:
         c.execute(
             """

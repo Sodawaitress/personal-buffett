@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>私人巴菲特 · 预言家日报</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #2a1f14;
+  font-family: Georgia, "Times New Roman", serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* Parchment texture via layered gradients */
+.parchment {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,240,200,.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(160,120,60,.06) 0%, transparent 50%),
+    #f5efe0;
+}
+.parchment-dark {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,220,150,.05) 0%, transparent 60%),
+    #ede3cc;
+}
+
+@keyframes flicker { 0%,100%{opacity:1} 92%{opacity:1} 94%{opacity:.85} 96%{opacity:1} 98%{opacity:.9} }
+@keyframes inkDraw { from{stroke-dashoffset:200} to{stroke-dashoffset:0} }
+@keyframes float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-5px) rotate(.5deg)} }
+@keyframes countUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pop { 0%{transform:scale(.6) rotate(-5deg);opacity:0} 70%{transform:scale(1.08) rotate(1deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes shake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-3deg)} 40%{transform:rotate(3deg)} 60%{transform:rotate(-2deg)} 80%{transform:rotate(2deg)} }
+@keyframes stampIn { 0%{transform:scale(3) rotate(15deg);opacity:0} 60%{transform:scale(.95) rotate(-2deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes quillWrite { from{width:0;opacity:0} to{width:100%;opacity:1} }
+@keyframes paperFold { from{transform:scaleY(0);opacity:0;transform-origin:top} to{transform:scaleY(1);opacity:1} }
+@keyframes glow { 0%,100%{box-shadow:0 0 8px rgba(184,149,42,.3)} 50%{box-shadow:0 0 20px rgba(184,149,42,.6)} }
+@keyframes priceFlicker { 0%,100%{color:#1a1a1a} 50%{color:#b8952a} }
+
+.magic-line {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #b8952a60, #1a1a1a, #b8952a60, transparent);
+  margin: 12px 0;
+  animation: flicker 4s ease-in-out infinite;
+}
+.double-rule {
+  border: none;
+  border-top: 3px double #1a1a1a;
+  margin: 8px 0;
+}
+.ornament { color: #b8952a; font-size: 18px; text-align: center; letter-spacing: 8px; }
+
+/* Gothic display font simulation via letter-spacing + weight */
+.gothic { font-family: Georgia, serif; font-weight: 700; letter-spacing: -.5px; }
+.small-caps { font-variant: small-caps; letter-spacing: .5px; }
+</style>
+</head>
+<body>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="root" style="width:100%;max-width:430px"></div>
+
+<script type="text/babel">
+
+// ── Shared UI atoms ─────────────────────────────────────────────
+const Rule = () => <hr style={{border:'none',borderTop:'1px solid #c4b89a',margin:'10px 0'}}/>;
+const DoubleRule = () => <hr style={{border:'none',borderTop:'3px double #1a1a1a',margin:'8px 0'}}/>;
+const MagicRule = () => (
+  <div style={{height:1,background:'linear-gradient(90deg,transparent,rgba(184,149,42,.5),#1a1a1a55,rgba(184,149,42,.5),transparent)',margin:'10px 0',animation:'flicker 4s ease-in-out infinite'}}/>
+);
+const Ornament = ({ch='❧'}) => (
+  <div style={{textAlign:'center',color:'#b8952a',fontSize:14,letterSpacing:10,margin:'6px 0',animation:'flicker 6s ease-in-out infinite'}}>{ch}</div>
+);
+const SectionLabel = ({children}) => (
+  <div style={{fontFamily:'-apple-system,sans-serif',fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'2px',color:'#8a7560',marginBottom:4}}>{children}</div>
+);
+const GoldTag = ({children, color}) => (
+  <span style={{fontFamily:'-apple-system,sans-serif',fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',padding:'2px 7px',border:`1.5px solid ${color||'#b8952a'}`,color:color||'#b8952a',display:'inline-block'}}>{children}</span>
+);
+
+// Animated price that flickers like a magical newspaper
+const LivePrice = ({ value, change, up }) => {
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => {
+    const t = setInterval(() => setTick(x => x+1), 3000+Math.random()*2000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div>
+      <div key={tick} style={{fontSize:22,fontWeight:700,fontVariantNumeric:'tabular-nums',color:'#1a1a1a',animation:'priceFlicker .4s ease'}}>{value}</div>
+      <div style={{fontSize:13,fontWeight:600,color: up ? '#8b0000':'#2d5a27',fontVariantNumeric:'tabular-nums'}}>{change}</div>
+    </div>
+  );
+};
+
+// Wax seal component
+const WaxSeal = ({ color='#b8952a', text='B+', size=52 }) => (
+  <div style={{width:size,height:size,borderRadius:'50%',background:`radial-gradient(circle at 35% 30%, ${color}dd, ${color}88)`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 2px 8px ${color}66, inset 0 1px 2px rgba(255,255,255,.3)`,flexShrink:0,animation:'glow 3s ease-in-out infinite'}}>
+    <span style={{color:'#fff',fontFamily:'Georgia,serif',fontSize:size*.28,fontWeight:700,letterSpacing:-.5,textShadow:'0 1px 2px rgba(0,0,0,.4)'}}>{text}</span>
+  </div>
+);
+
+// Concept "clipping" card
+const Clipping = ({ concept, mastery }) => (
+  <div style={{background:'#faf6ed',border:'1px solid #c4b89a',padding:'10px 12px',position:'relative',marginBottom:0}}>
+    <div style={{position:'absolute',top:-1,left:8,right:8,height:1,background:'linear-gradient(90deg,transparent,#b8952a44,transparent)'}}/>
+    <SectionLabel>{concept.category}</SectionLabel>
+    <div style={{fontSize:15,fontWeight:700,color:'#1a1a1a',marginBottom:3}}>{concept.icon} {concept.name}</div>
+    <div style={{fontSize:12,fontFamily:'-apple-system,sans-serif',color:'#6b5e4a',marginBottom:8,lineHeight:1.5}}>{concept.desc}</div>
+    <div style={{height:4,background:'#e8dcc8',borderRadius:0,overflow:'hidden'}}>
+      <div style={{height:'100%',width:`${mastery}%`,background:'linear-gradient(90deg,#b8952a,#d4a830)',transition:'width 1s ease'}}/>
+    </div>
+    <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,color:'#8a7560',marginTop:3}}>{mastery}% 掌握</div>
+  </div>
+);
+
+// ── SCREEN 1: FRONT PAGE ───────────────────────────────────────
+const FrontPage = ({ onNavigate }) => {
+  return (
+    <div className="parchment" style={{minHeight:'100vh',paddingBottom:80}}>
+
+      {/* Masthead */}
+      <div style={{padding:'16px 18px 0',textAlign:'center',borderBottom:'3px double #1a1a1a'}}>
+        <div style={{fontFamily:'-apple-system,sans-serif',fontSize:9,letterSpacing:'3px',textTransform:'uppercase',color:'#8a7560',marginBottom:4}}>私人出版 · 每日发行 · 非卖品</div>
+        <div style={{fontSize:36,fontWeight:700,color:'#1a1a1a',letterSpacing:'-1px',lineHeight:1,animation:'flicker 8s ease-in-out infinite',fontFamily:'Georgia,serif'}}>
+          私人巴菲特
+        </div>
+        <div style={{fontSize:12,fontStyle:'italic',color:'#6b5e4a',marginTop:3,marginBottom:10,fontFamily:'Georgia,serif'}}>价值投资，化繁为简。— The Personal Buffett</div>
+        <DoubleRule/>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0 8px'}}>
+          <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,color:'#8a7560'}}>2026年4月19日 · 星期六</div>
+          <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,color:'#8a7560'}}>第 312 期</div>
+        </div>
+      </div>
+
+      {/* Today's headline quest */}
+      <div style={{padding:'14px 18px',borderBottom:'2px solid #1a1a1a'}}>
+        <SectionLabel>今日要闻</SectionLabel>
+        <div onClick={() => onNavigate('quest')} style={{cursor:'pointer'}}>
+          <div style={{fontSize:22,fontWeight:700,color:'#1a1a1a',lineHeight:1.25,marginBottom:6,fontFamily:'Georgia,serif'}}>
+            三一重工本周将向何处而去？
+          </div>
+          <div style={{fontSize:13,fontStyle:'italic',color:'#6b5e4a',marginBottom:10,fontFamily:'Georgia,serif',lineHeight:1.6}}>
+            市场风云变幻，先知需您判断。读罢三则线索，方可落笔押注——七日后见分晓。
+          </div>
+          <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'#1a1a1a',color:'#f5efe0',padding:'6px 14px',fontFamily:'-apple-system,sans-serif',fontSize:11,fontWeight:700,letterSpacing:'.5px',textTransform:'uppercase'}}>
+            ✒ 写下你的预言 →
+          </div>
+        </div>
+      </div>
+
+      {/* Two column layout */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 0',padding:'0 18px',borderBottom:'1px solid #c4b89a',marginTop:12}}>
+        {/* Left col: Holdings */}
+        <div style={{paddingRight:12,borderRight:'1px solid #c4b89a'}}>
+          <SectionLabel>持仓简报</SectionLabel>
+          <Rule/>
+          {[
+            {name:'三一重工',price:'¥21.52',change:'−0.31%',up:false,seal:'B+',sealColor:'#b8952a'},
+            {name:'NVIDIA',price:'$875',change:'+2.14%',up:true,seal:'A',sealColor:'#2d5a27'},
+            {name:'Fisher&P',price:'NZ$26.8',change:'+0.75%',up:true,seal:'B',sealColor:'#5a7a2d'},
+          ].map((s,i) => (
+            <div key={i} style={{padding:'8px 0',borderBottom:'1px solid #e8dcc8'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'#1a1a1a',fontFamily:'Georgia,serif'}}>{s.name}</div>
+                  <div style={{fontSize:16,fontWeight:700,fontVariantNumeric:'tabular-nums',color:'#1a1a1a',animation:'priceFlicker .4s ease',animationDelay:`${i*1.2}s`}}>{s.price}</div>
+                  <div style={{fontSize:11,fontWeight:600,color: s.up ? '#8b0000':'#2d5a27'}}>{s.change}</div>
+                </div>
+                <WaxSeal color={s.sealColor} text={s.seal} size={40}/>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right col: Market pulse */}
+        <div style={{paddingLeft:12}}>
+          <SectionLabel>市场信号</SectionLabel>
+          <Rule/>
+          {[
+            {label:'恐贪指数',val:'28',note:'极度恐慌',icon:'😰'},
+            {label:'USD/CNY',val:'7.23',note:'今日',icon:'💱'},
+            {label:'上证综指',val:'3,241',note:'−0.82%',icon:'🏯'},
+            {label:'NZX 50',val:'11,842',note:'+0.34%',icon:'🥝'},
+          ].map((m,i) => (
+            <div key={i} style={{padding:'6px 0',borderBottom:'1px solid #e8dcc8'}}>
+              <div style={{fontFamily:'-apple-system,sans-serif',fontSize:9,color:'#8a7560',textTransform:'uppercase',letterSpacing:'1px'}}>{m.icon} {m.label}</div>
+              <div style={{display:'flex',gap:6,alignItems:'baseline'}}>
+                <span style={{fontSize:15,fontWeight:700,fontVariantNumeric:'tabular-nums',color:'#1a1a1a'}}>{m.val}</span>
+                <span style={{fontSize:10,color:'#8a7560',fontFamily:'-apple-system,sans-serif'}}>{m.note}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Ornament/>
+
+      {/* Knowledge section */}
+      <div style={{padding:'0 18px'}}>
+        <SectionLabel>知识专栏</SectionLabel>
+        <DoubleRule/>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {[
+            {name:'复利',icon:'🌱',category:'基础概念',desc:'钱生钱的魔法。学会这个你就赢了一半。',mastery:72,unlocked:true},
+            {name:'护城河',icon:'🏰',category:'巴菲特框架',desc:'为什么可口可乐100年后还在？',mastery:45,unlocked:true},
+            {name:'宏观感知',icon:'🌍',category:'进阶概念',desc:'利率怎么影响你口袋里的钱',mastery:0,unlocked:false},
+          ].map((c,i) => (
+            <div key={i} onClick={() => c.id==='compound' && onNavigate('compound')}
+              style={{filter: c.unlocked ? 'none':'brightness(.6) saturate(.4)',cursor: c.unlocked ? 'pointer':'default'}}>
+              <Clipping concept={c} mastery={c.mastery}/>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Ornament ch="· · ·"/>
+      <div style={{textAlign:'center',fontFamily:'-apple-system,sans-serif',fontSize:9,color:'#8a7560',padding:'0 18px',letterSpacing:'1px'}}>
+        数据来源：新浪财经 · AKShare · Google News
+      </div>
+    </div>
+  );
+};
+
+// ── SCREEN 2: DAILY PREDICTION (QUEST) ────────────────────────
+const QuestScreen = ({ onBack, onResult }) => {
+  const [step, setStep] = React.useState(0);
+  const [choice, setChoice] = React.useState(null);
+  const [reason, setReason] = React.useState('');
+
+  const CLUES = [
+    {kicker:'公司档案', headline:'三一重工：全球最大工程机械制造商', body:'每一台在中国、东南亚、非洲施工的挖掘机，都可能挂着三一的标。过去十年，净利润从9亿增长到142亿——复利的力量。'},
+    {kicker:'市场动向', headline:'房地产萎缩，但出海正在加速', body:'国内新开工面积下滑21%，但三一在东南亚的订单同比增长47%。市场看到的是前者，巴菲特看的是后者。'},
+    {kicker:'巴菲特框架', headline:'护城河评级：中等偏上', body:'品牌与售后网络构成壁垒，规模效应显著。但竞争加剧使护城河从"宽"收窄至"中"。估值处于历史合理区间。'},
+  ];
+
+  return (
+    <div className="parchment" style={{minHeight:'100vh',paddingBottom:80}}>
+      {/* Header */}
+      <div style={{padding:'12px 18px',borderBottom:'3px double #1a1a1a',display:'flex',alignItems:'center',gap:10}}>
+        <button onClick={onBack} style={{fontFamily:'-apple-system,sans-serif',fontSize:11,background:'none',border:'1px solid #c4b89a',color:'#6b5e4a',padding:'4px 10px',cursor:'pointer'}}>← 头版</button>
+        <div style={{flex:1,textAlign:'center'}}>
+          <div style={{fontFamily:'Georgia,serif',fontSize:13,fontWeight:700,color:'#1a1a1a'}}>预言栏 · 押注见证</div>
+        </div>
+        <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,color:'#8a7560'}}>第{step+1}/4步</div>
+      </div>
+
+      {/* Progress */}
+      <div style={{height:3,background:'#e8dcc8'}}>
+        <div style={{height:'100%',width:`${(step+1)/4*100}%`,background:'#b8952a',transition:'width .5s ease'}}/>
+      </div>
+
+      {step === 0 && (
+        <div style={{padding:'20px 18px',animation:'slideUp .4s ease'}}>
+          <SectionLabel>今日预言</SectionLabel>
+          <DoubleRule/>
+          <div style={{fontSize:24,fontWeight:700,color:'#1a1a1a',lineHeight:1.3,fontFamily:'Georgia,serif',marginBottom:8}}>
+            三一重工本周将向何处？
+          </div>
+          <MagicRule/>
+          <div style={{fontSize:14,fontFamily:'Georgia,serif',fontStyle:'italic',color:'#4a3d2d',lineHeight:1.8,marginBottom:16}}>
+            尊贵的读者，市场之风云变幻，无人能尽知。然而，读罢三则线索，凭借逻辑与直觉，方可落下你的预言。
+            <br/><br/>
+            七日后，本报将公布真实结果，并为您解析预测之得失。
+          </div>
+          <div style={{background:'#faf0d8',border:'1px solid #c4b89a',padding:'12px 14px',marginBottom:20,display:'flex',gap:10}}>
+            <span style={{fontSize:18}}>🪄</span>
+            <div style={{fontSize:13,fontFamily:'-apple-system,sans-serif',color:'#4a3d2d',lineHeight:1.6}}>
+              <strong>猜错了也没关系。</strong> 错误是最好的老师，本报照样记录你的进步。
+            </div>
+          </div>
+          <button onClick={() => setStep(1)} style={{width:'100%',background:'#1a1a1a',color:'#f5efe0',border:'none',padding:'14px',fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,cursor:'pointer',letterSpacing:'.3px'}}>
+            ✒ 读取今日线索 →
+          </button>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div style={{padding:'20px 18px',animation:'slideUp .4s ease'}}>
+          <SectionLabel>三则线索</SectionLabel>
+          <DoubleRule/>
+          {CLUES.map((c,i) => (
+            <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom: i<2 ? '1px solid #c4b89a':'none'}}>
+              <div style={{fontFamily:'-apple-system,sans-serif',fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'#b8952a',marginBottom:4}}>{c.kicker}</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#1a1a1a',marginBottom:6,fontFamily:'Georgia,serif',lineHeight:1.3}}>{c.headline}</div>
+              <div style={{fontSize:13,fontFamily:'Georgia,serif',color:'#4a3d2d',lineHeight:1.7}}>{c.body}</div>
+            </div>
+          ))}
+          <button onClick={() => setStep(2)} style={{width:'100%',background:'#1a1a1a',color:'#f5efe0',border:'none',padding:'14px',fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,cursor:'pointer'}}>
+            读毕，落笔 →
+          </button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div style={{padding:'20px 18px',animation:'slideUp .4s ease'}}>
+          <SectionLabel>预言书</SectionLabel>
+          <DoubleRule/>
+          <div style={{fontSize:16,fontWeight:700,color:'#1a1a1a',marginBottom:4,fontFamily:'Georgia,serif'}}>你的判断是？</div>
+          <div style={{fontSize:13,fontStyle:'italic',color:'#6b5e4a',marginBottom:16,fontFamily:'Georgia,serif'}}>本周三一重工将：</div>
+
+          <div style={{display:'flex',gap:8,marginBottom:20}}>
+            {[
+              {val:'up',label:'上涨',symbol:'↑',color:'#8b0000',bg:'#fff0f0'},
+              {val:'down',label:'下跌',symbol:'↓',color:'#2d5a27',bg:'#f0fff4'},
+              {val:'flat',label:'横盘',symbol:'→',color:'#7a6520',bg:'#fffdf0'},
+            ].map(opt => (
+              <div key={opt.val} onClick={() => setChoice(opt.val)}
+                style={{flex:1,border:`2px solid ${choice===opt.val ? opt.color:'#c4b89a'}`,background: choice===opt.val ? opt.bg:'#faf6ed',padding:'16px 8px',textAlign:'center',cursor:'pointer',transition:'all .2s'}}>
+                <div style={{fontSize:28,color:opt.color,fontWeight:700,marginBottom:4}}>{opt.symbol}</div>
+                <div style={{fontSize:13,fontWeight:700,color:opt.color,fontFamily:'Georgia,serif'}}>{opt.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {choice && (
+            <div style={{animation:'slideUp .3s ease'}}>
+              <div style={{fontSize:12,fontFamily:'-apple-system,sans-serif',color:'#6b5e4a',marginBottom:6}}>以一句话记录你的理由（可选）</div>
+              <textarea value={reason} onChange={e=>setReason(e.target.value)}
+                placeholder="例：海外增长将抵消国内下滑……"
+                style={{width:'100%',background:'#faf0d8',border:'1px solid #c4b89a',padding:'12px',fontFamily:'Georgia,serif',fontSize:14,lineHeight:1.7,resize:'none',height:80,color:'#1a1a1a',outline:'none',marginBottom:12}}/>
+              <button onClick={() => setStep(3)} style={{width:'100%',background:'#1a1a1a',color:'#f5efe0',border:'none',padding:'14px',fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,cursor:'pointer'}}>
+                盖章存档 →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === 3 && (
+        <div style={{padding:'24px 18px',textAlign:'center',animation:'slideUp .4s ease'}}>
+          {/* Wax seal stamp */}
+          <div style={{display:'inline-block',animation:'stampIn .5s cubic-bezier(.17,.67,.32,1.5)',marginBottom:20}}>
+            <WaxSeal color="#b8952a" text="✓" size={80}/>
+          </div>
+          <DoubleRule/>
+          <div style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'#1a1a1a',marginBottom:6}}>预言已封存</div>
+          <div style={{fontFamily:'Georgia,serif',fontStyle:'italic',fontSize:14,color:'#6b5e4a',lineHeight:1.8,marginBottom:20}}>
+            你预测三一重工本周将<br/>
+            <strong style={{fontSize:18,color:'#1a1a1a',fontStyle:'normal'}}>
+              {choice==='up'?'↑ 上涨':choice==='down'?'↓ 下跌':'→ 横盘'}
+            </strong><br/>
+            七日后，本报将亲送揭晓。
+          </div>
+          <MagicRule/>
+          <div style={{background:'#faf0d8',border:'1px solid #c4b89a',padding:'14px',marginBottom:16,textAlign:'left'}}>
+            <SectionLabel>明日预告</SectionLabel>
+            <div style={{fontFamily:'Georgia,serif',fontSize:14,color:'#4a3d2d',lineHeight:1.7,marginTop:4}}>
+              <strong>护城河特辑：</strong>为什么茅台的酒越存越值钱，而你家楼下的餐厅十年换了二十家？
+            </div>
+          </div>
+          <button onClick={() => onResult({choice,reason})} style={{width:'100%',background:'#1a1a1a',color:'#f5efe0',border:'none',padding:'14px',fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,cursor:'pointer'}}>
+            返回头版
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── SCREEN 3: CORRECTION (FAILURE) ────────────────────────────
+const CorrectionScreen = ({ onBack }) => {
+  const [revealed, setRevealed] = React.useState(false);
+  React.useEffect(() => { setTimeout(() => setRevealed(true), 1200); }, []);
+
+  return (
+    <div className="parchment" style={{minHeight:'100vh',paddingBottom:80}}>
+      <div style={{padding:'12px 18px',borderBottom:'3px double #1a1a1a',display:'flex',alignItems:'center',gap:10}}>
+        <button onClick={onBack} style={{fontFamily:'-apple-system,sans-serif',fontSize:11,background:'none',border:'1px solid #c4b89a',color:'#6b5e4a',padding:'4px 10px',cursor:'pointer'}}>← 头版</button>
+        <div style={{flex:1,textAlign:'center',fontFamily:'Georgia,serif',fontSize:13,fontWeight:700,color:'#1a1a1a'}}>结果揭晓</div>
+      </div>
+
+      <div style={{padding:'20px 18px'}}>
+        {/* Correction stamp */}
+        <div style={{border:'3px solid #8b0000',padding:'16px',marginBottom:16,position:'relative',animation:'pop .6s cubic-bezier(.17,.67,.32,1.5)'}}>
+          <div style={{position:'absolute',top:-13,left:12,background:'#f5efe0',padding:'0 8px'}}>
+            <span style={{fontFamily:'-apple-system,sans-serif',fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'#8b0000'}}>更正声明</span>
+          </div>
+          <div style={{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'#8b0000',marginBottom:6}}>预言失准</div>
+          <div style={{fontFamily:'Georgia,serif',fontSize:14,color:'#4a3d2d',lineHeight:1.7}}>
+            本报上期预测三一重工将<strong>「上涨」</strong>，然实际结果为<strong>下跌 3.2%</strong>。本报特此更正，并向读者致歉。
+          </div>
+        </div>
+
+        {revealed && (
+          <div style={{animation:'slideUp .5s ease'}}>
+            <SectionLabel>实情分析</SectionLabel>
+            <DoubleRule/>
+
+            <div style={{fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,color:'#1a1a1a',marginBottom:6,lineHeight:1.3}}>
+              国家统计局的一个数字，让所有分析失效
+            </div>
+            <div style={{fontFamily:'Georgia,serif',fontSize:13,color:'#4a3d2d',lineHeight:1.8,marginBottom:14}}>
+              1月新开工面积同比下滑21%——市场先于逻辑做出反应，抛售一切建筑相关股票。即便三一的海外增长数据再好，也敌不过一个负面宏观数字的当日冲击。
+            </div>
+            <MagicRule/>
+
+            {/* What was missed */}
+            <div style={{background:'#faf0d8',border:'1px solid #c4b89a',borderLeft:'3px solid #b8952a',padding:'12px 14px',marginBottom:12}}>
+              <SectionLabel>你忽略了什么</SectionLabel>
+              <div style={{fontFamily:'Georgia,serif',fontSize:13,color:'#4a3d2d',lineHeight:1.7,marginTop:4}}>
+                <strong>宏观数据 &gt; 公司基本面（短期）。</strong> 好公司也会在坏消息日被错杀。这正是巴菲特说「别人恐惧时贪婪」的机会。
+              </div>
+            </div>
+
+            {/* Unlocked concept */}
+            <div style={{border:'2px dashed #b8952a',padding:'14px',marginBottom:16,textAlign:'center',animation:'glow 3s ease-in-out infinite'}}>
+              <div style={{fontSize:28,marginBottom:6}}>🔓</div>
+              <div style={{fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,color:'#1a1a1a',marginBottom:3}}>解锁新专栏：宏观感知</div>
+              <div style={{fontFamily:'-apple-system,sans-serif',fontSize:12,color:'#6b5e4a'}}>失误为你打开了一扇新的门</div>
+            </div>
+
+            {/* The gain */}
+            <div style={{background:'#f0f4f0',border:'1px solid #a0b89a',padding:'12px 14px',marginBottom:20}}>
+              <SectionLabel>本次收获</SectionLabel>
+              <div style={{display:'flex',justifyContent:'space-around',marginTop:8}}>
+                {[
+                  {icon:'📖',label:'宏观感知解锁'},
+                  {icon:'✒',label:'预言积分 +20'},
+                  {icon:'🧠',label:'经验值 +1'},
+                ].map((r,i)=>(
+                  <div key={i} style={{textAlign:'center'}}>
+                    <div style={{fontSize:22,marginBottom:4}}>{r.icon}</div>
+                    <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,color:'#4a3d2d',fontWeight:600}}>{r.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{fontFamily:'Georgia,serif',fontStyle:'italic',fontSize:13,color:'#6b5e4a',textAlign:'center',marginBottom:16,lineHeight:1.7}}>
+              「在别人恐惧时贪婪，在别人贪婪时恐惧。」<br/>— 沃伦·巴菲特
+            </div>
+
+            <button onClick={onBack} style={{width:'100%',background:'#1a1a1a',color:'#f5efe0',border:'none',padding:'14px',fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,cursor:'pointer'}}>
+              继续探索 →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── SCREEN 4: COMPOUND COLUMN ──────────────────────────────────
+const CompoundScreen = ({ onBack }) => {
+  const [years, setYears] = React.useState(10);
+  const [rate, setRate] = React.useState(12);
+  const start = 10000;
+  const end = Math.round(start * Math.pow(1+rate/100, years));
+  const bars = [...Array(years)].map((_,i) => ({
+    yr: i+1,
+    val: Math.round(start * Math.pow(1+rate/100, i+1)),
+  }));
+  const maxVal = bars[bars.length-1].val;
+
+  return (
+    <div className="parchment" style={{minHeight:'100vh',paddingBottom:80}}>
+      <div style={{padding:'12px 18px',borderBottom:'3px double #1a1a1a',display:'flex',alignItems:'center',gap:10}}>
+        <button onClick={onBack} style={{fontFamily:'-apple-system,sans-serif',fontSize:11,background:'none',border:'1px solid #c4b89a',color:'#6b5e4a',padding:'4px 10px',cursor:'pointer'}}>← 头版</button>
+        <div style={{flex:1,textAlign:'center',fontFamily:'Georgia,serif',fontSize:13,fontWeight:700,color:'#1a1a1a'}}>知识专栏 · 复利</div>
+      </div>
+
+      <div style={{padding:'16px 18px'}}>
+        <SectionLabel>基础概念 · 第一课</SectionLabel>
+        <DoubleRule/>
+        <div style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'#1a1a1a',lineHeight:1.3,marginBottom:8}}>
+          世界第八大奇迹：复利
+        </div>
+        <div style={{fontFamily:'Georgia,serif',fontStyle:'italic',fontSize:13,color:'#6b5e4a',lineHeight:1.8,marginBottom:16}}>
+          爱因斯坦据称如此说道。无论真假，复利确是所有投资智慧的起点——钱生钱，时间越长，威力越大。
+        </div>
+        <MagicRule/>
+
+        {/* Big result */}
+        <div style={{textAlign:'center',padding:'16px 0',marginBottom:12}}>
+          <div style={{fontFamily:'-apple-system,sans-serif',fontSize:11,color:'#8a7560',letterSpacing:'1px',textTransform:'uppercase',marginBottom:6}}>¥10,000 × {rate}% × {years}年</div>
+          <div style={{fontFamily:'Georgia,serif',fontSize:42,fontWeight:700,color:'#2d5a27',lineHeight:1,animation:'countUp .5s ease',key:`${rate}-${years}`}}>
+            ¥{end.toLocaleString('zh')}
+          </div>
+          <div style={{fontFamily:'-apple-system,sans-serif',fontSize:14,color:'#6b5e4a',marginTop:6}}>增长了 <strong style={{color:'#1a1a1a'}}>{(end/start).toFixed(1)}倍</strong></div>
+        </div>
+
+        {/* Bar chart — newspaper style */}
+        <div style={{background:'#faf0d8',border:'1px solid #c4b89a',padding:'12px',marginBottom:14}}>
+          <div style={{display:'flex',alignItems:'flex-end',gap:3,height:90}}>
+            {bars.map((b,i) => (
+              <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                <div style={{width:'100%',background: i===bars.length-1 ? '#b8952a':'#c4b89a',borderRadius:'2px 2px 0 0',height:`${b.val/maxVal*100}%`,transition:'height .6s ease',minHeight:3}}/>
+              </div>
+            ))}
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
+            <span style={{fontFamily:'-apple-system,sans-serif',fontSize:9,color:'#8a7560'}}>1年</span>
+            <span style={{fontFamily:'-apple-system,sans-serif',fontSize:9,color:'#8a7560'}}>{Math.ceil(years/2)}年</span>
+            <span style={{fontFamily:'-apple-system,sans-serif',fontSize:9,color:'#b8952a',fontWeight:700}}>{years}年</span>
+          </div>
+        </div>
+
+        {/* Sliders */}
+        <div style={{marginBottom:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+            <span style={{fontFamily:'-apple-system,sans-serif',fontSize:12,color:'#4a3d2d'}}>年化收益率</span>
+            <GoldTag>{rate}%</GoldTag>
+          </div>
+          <input type="range" min="1" max="30" value={rate} onChange={e=>setRate(+e.target.value)}
+            style={{width:'100%',accentColor:'#b8952a',marginBottom:4}}/>
+          <div style={{display:'flex',justifyContent:'space-between',fontFamily:'-apple-system,sans-serif',fontSize:9,color:'#8a7560'}}>
+            <span>1% 银行存款</span><span>15% 价值投资</span><span>30% 很难</span>
+          </div>
+        </div>
+        <div style={{marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+            <span style={{fontFamily:'-apple-system,sans-serif',fontSize:12,color:'#4a3d2d'}}>投资年限</span>
+            <GoldTag color="#1a1a1a">{years}年</GoldTag>
+          </div>
+          <input type="range" min="1" max="40" value={years} onChange={e=>setYears(+e.target.value)}
+            style={{width:'100%',accentColor:'#1a1a1a'}}/>
+        </div>
+
+        {/* Benchmarks */}
+        <SectionLabel>真实参照</SectionLabel>
+        <Rule/>
+        {[
+          {label:'中国银行定存',rate:'1.5%',note:'100年后约4.5倍',color:'#8a7560'},
+          {label:'沪深300指数',rate:'约10%',note:'长期持有的基准',color:'#5a7a2d'},
+          {label:'巴菲特伯克希尔',rate:'约20%',note:'半世纪如一日',color:'#b8952a'},
+        ].map((r,i)=>(
+          <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #e8dcc8'}}>
+            <div style={{fontFamily:'Georgia,serif',fontSize:13,color:'#1a1a1a'}}>{r.label}</div>
+            <div style={{textAlign:'right'}}>
+              <div style={{fontWeight:700,color:r.color,fontSize:13}}>{r.rate}</div>
+              <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,color:'#8a7560'}}>{r.note}</div>
+            </div>
+          </div>
+        ))}
+
+        <Ornament/>
+        <button onClick={onBack} style={{width:'100%',background:'#1a1a1a',color:'#f5efe0',border:'none',padding:'14px',fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,cursor:'pointer',marginTop:8}}>
+          返回头版
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ── ROOT ───────────────────────────────────────────────────────
+const App = () => {
+  const [screen, setScreen] = React.useState(() => localStorage.getItem('pb_v2_screen')||'front');
+  const [tweakPanel, setTweakPanel] = React.useState(false);
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"startScreen": "front"}/*EDITMODE-END*/;
+
+  const go = s => { setScreen(s); localStorage.setItem('pb_v2_screen', s); };
+
+  React.useEffect(() => {
+    window.addEventListener('message', e => {
+      if(e.data?.type==='__activate_edit_mode') setTweakPanel(true);
+      if(e.data?.type==='__deactivate_edit_mode') setTweakPanel(false);
+    });
+    window.parent.postMessage({type:'__edit_mode_available'},'*');
+  }, []);
+
+  return (
+    <div style={{width:'100%',minHeight:'100vh',position:'relative'}}>
+      {screen==='front'    && <FrontPage onNavigate={go}/>}
+      {screen==='quest'    && <QuestScreen onBack={() => go('front')} onResult={() => go('front')}/>}
+      {screen==='correction' && <CorrectionScreen onBack={() => go('front')}/>}
+      {screen==='compound' && <CompoundScreen onBack={() => go('front')}/>}
+
+      {/* Bottom navigation — newspaper section tabs */}
+      <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#f5efe0',borderTop:'3px double #1a1a1a',display:'flex'}}>
+        {[
+          {s:'front','label':'头版',icon:'📰'},
+          {s:'quest',label:'预言',icon:'✒'},
+          {s:'correction',label:'更正',icon:'💥'},
+          {s:'compound',label:'复利',icon:'🌱'},
+        ].map(({s,label,icon})=>(
+          <button key={s} onClick={() => go(s)}
+            style={{flex:1,background: screen===s ? '#1a1a1a':'transparent',color: screen===s ? '#f5efe0':'#6b5e4a',border:'none',padding:'8px 4px',cursor:'pointer',fontFamily:'Georgia,serif',fontSize:12,fontWeight:700,borderRight:'1px solid #c4b89a',transition:'all .15s'}}>
+            <div style={{fontSize:16,marginBottom:2}}>{icon}</div>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tweakPanel && (
+        <div style={{position:'fixed',bottom:70,right:12,background:'#f5efe0',border:'2px solid #1a1a1a',padding:'14px',zIndex:1000,width:170}}>
+          <div style={{fontFamily:'-apple-system,sans-serif',fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#8a7560',marginBottom:10}}>Tweaks</div>
+          {[['front','📰 头版'],['quest','✒ 预言流程'],['correction','💥 更正声明'],['compound','🌱 复利专栏']].map(([s,l])=>(
+            <button key={s} onClick={() => go(s)} style={{width:'100%',marginBottom:6,background: screen===s ? '#1a1a1a':'transparent',color: screen===s ? '#f5efe0':'#4a3d2d',border:'1px solid #c4b89a',padding:'6px 8px',fontSize:11,fontFamily:'Georgia,serif',cursor:'pointer',textAlign:'left',fontWeight: screen===s ? 700:400}}>
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

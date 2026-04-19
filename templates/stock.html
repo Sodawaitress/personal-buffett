@@ -36,7 +36,7 @@
         {% endif %}
         {# 评级 + 结论：最核心信息 #}
         {% if analysis and analysis.grade %}
-        <span class="grade-tag grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade }}</span>
+        <span class="wax-seal wax-seal-sm grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade }}</span>
         <span class="stock-conclusion-tag">{{ analysis.conclusion }}</span>
         {% endif %}
         {# 代码：保留供快速确认 #}
@@ -146,7 +146,7 @@
       {% elif analysis %}
       <div class="brief-block">
         <div class="brief-header">
-          <span class="grade-tag grade-reveal grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
+          <span class="wax-seal grade-reveal grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
             {{ analysis.grade or '—' }}
           </span>
           <span class="brief-conclusion">{{ analysis.conclusion }}</span>
@@ -456,7 +456,7 @@
       {% for h in history %}
       <div class="history-item {{ 'history-current' if loop.first else '' }}">
         <div class="history-header">
-          <span class="grade-tag grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
+          <span class="wax-seal wax-seal-sm grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
             {{ h.grade or '—' }}
           </span>
           <span class="history-conclusion">{{ h.conclusion }}</span>

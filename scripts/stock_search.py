@@ -246,16 +246,17 @@ def _prewarm():
 _prewarm()
 
 
-def _make_result(code, name):
+def _make_result(code, name, asset_type="股票"):
     # SH: 5xx (ETF/LOF), 6xx (stock), 9xx (B/preferred)
     # SZ: 0xx (stock), 1xx (ETF/LOF), 2xx, 3xx (growth), 4xx
     exchange = "SH" if code.startswith(("5", "6", "9")) else "SZ"
     return {
-        "code":     code,
-        "name":     name,
-        "market":   "cn",
-        "exchange": exchange,
-        "currency": "CNY",
+        "code":       code,
+        "name":       name,
+        "market":     "cn",
+        "exchange":   exchange,
+        "currency":   "CNY",
+        "asset_type": asset_type,
     }
 
 
@@ -265,26 +266,47 @@ def _search_cn(q: str, limit: int = 8) -> list:
     _load_cn() 必须等待（A股数据是搜索主力，通常从文件缓存秒读）。
     ETF / 场外基金由 _prewarm() 后台加载；搜索时直接用已有缓存，
     尚未就绪则跳过，不阻塞 request thread。
+
+    精确6位数字查询时扫描全部三个缓存，避免A股代码遮蔽同号基金。
     """
     _load_cn()   # 等 A股列表（通常 <100ms，文件缓存）
     q_l = q.lower()
     out = []
     seen = set()
 
-    def _scan(source):
+    # 精确6位数字：可能是股票也可能是场外基金（代码空间重叠）
+    is_exact_code = q.isdigit() and len(q) == 6
+
+    # 含空格：分词做 AND 匹配（如 "000962 天弘" → 代码含000962 且 名称含天弘）
+    tokens = q_l.split() if ' ' in q_l else None
+
+    def _matches(code, name):
+        n = name.lower()
+        if tokens:
+            combined = code + ' ' + n
+            return all(t in combined for t in tokens)
+        return q_l in code or q_l in n
+
+    def _scan(source, asset_type="股票"):
         for code, name in (source or []):
-            if q_l in code or q_l in name.lower():
+            if _matches(code, name):
                 if code not in seen:
                     seen.add(code)
-                    out.append(_make_result(code, name))
-                    if len(out) >= limit:
+                    out.append(_make_result(code, name, asset_type))
+                    if not is_exact_code and len(out) >= limit:
                         return True
         return False
 
-    # Priority: A股 → 交易所 ETF → 场外基金（后两者不等待，用现有缓存）
-    if _scan(_CN_CACHE):  return out
-    if _scan(_ETF_CACHE): return out
-    _scan(_FUND_CACHE)
+    if is_exact_code or tokens:
+        # 精确代码：基金优先（只知道代码的用户更可能在找基金）
+        _scan(_FUND_CACHE, "场外基金")
+        _scan(_ETF_CACHE,  "ETF")
+        _scan(_CN_CACHE,   "股票")
+    else:
+        # 普通查询：A股优先，命中 limit 则提前返回
+        if _scan(_CN_CACHE,   "股票"):  return out
+        if _scan(_ETF_CACHE,  "ETF"):   return out
+        _scan(_FUND_CACHE, "场外基金")
     return out
 
 
@@ -420,8 +442,8 @@ def search(q: str, limit: int = 10) -> list:
     if has_cn:
         _add_intl(_search_hk_names(q))
 
-    # 2. A股中文名 / 代码
-    if has_cn or is_num or (not alpha and len(q) <= 7):
+    # 2. A股中文名 / 代码（含"000962 天弘"这类混合查询）
+    if has_cn or is_num or has_space or (not alpha and len(q) <= 7):
         _add_cn(_search_cn(q, limit=limit))
 
     # 3. 拼音首字母 / 拼音全拼（英文输入）

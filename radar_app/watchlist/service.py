@@ -34,13 +34,13 @@ def build_watchlist_context(user_id):
     }
 
 
-def add_stock_and_start_analysis(user_id, code, name, market, notes):
+def add_stock_and_start_analysis(user_id, code, name, market, notes, asset_type=None):
     if not market:
         market = detect_market(code)
     if market == 'nz' and not code.endswith('.NZ'):
         code += '.NZ'
 
-    db.add_user_stock(user_id, code, name, market, notes=notes)
+    db.add_user_stock(user_id, code, name, market, notes=notes, asset_type=asset_type)
 
     try:
         classify_stock_code(code)

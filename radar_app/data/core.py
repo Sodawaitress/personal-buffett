@@ -286,6 +286,7 @@ def _migrate():
         ("user_watchlist", "sell_price", "REAL"),
         ("user_watchlist", "entry_grade", "TEXT"),
         ("analysis_results", "framework_used", "TEXT"),
+        ("stocks", "asset_type", "TEXT DEFAULT '股票'"),
     ]
     with get_conn() as c:
         for table, col, typedef in new_cols:
@@ -293,3 +294,18 @@ def _migrate():
                 c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
             except Exception:
                 pass
+
+        # 补填已入库基金的 asset_type（根据名称关键词识别）
+        fund_keywords = ["ETF联接", "ETF", "指数", "LOF", "联接A", "联接C", "联接E"]
+        try:
+            rows = c.execute(
+                "SELECT code, name FROM stocks WHERE asset_type IS NULL OR asset_type='股票'"
+            ).fetchall()
+            for row in rows:
+                name = row["name"] or ""
+                if any(kw in name for kw in fund_keywords):
+                    c.execute(
+                        "UPDATE stocks SET asset_type='场外基金' WHERE code=?", (row["code"],)
+                    )
+        except Exception:
+            pass
