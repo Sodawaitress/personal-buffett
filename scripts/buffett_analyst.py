@@ -344,7 +344,8 @@ def analyze_stock_v2(code: str, name: str, market: str,
                 roe = signals.get("roe", 0)
                 pm = signals.get("profit_margin", 0)
                 de = signals.get("debt_to_equity", 0)
-                red_flags = sum([roe < 0.05 or roe < 0, pm < 0, de > 20])
+                de = de / 100 if de > 2.0 else de
+                red_flags = sum([roe < 0.05 or roe < 0, pm < 0, de > 2.0])
                 if red_flags >= 2:
                     grade, conclusion = "C", "卖出"
                 elif red_flags == 1:

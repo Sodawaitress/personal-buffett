@@ -146,10 +146,12 @@ def build_signals_context(market: str, signals: dict, price: dict) -> str:
 
         de = signals.get("debt_to_equity")
         if de is not None:
-            if de > 20:
-                red_flags.append(f"🚨 债务比 {de:.2f}x（极度高杠杆，融资风险高）")
+            # yfinance 有时返回百分比形式（如 102.63 表示 1.026x），归一化处理
+            de_ratio = de / 100 if de > 2.0 else de
+            if de_ratio > 2.0:
+                red_flags.append(f"🚨 债务比 {de_ratio:.2f}x（极度高杠杆，融资风险高）")
             else:
-                metric_lines.append(f"  债务比（D/E）：{de:.2f}x")
+                metric_lines.append(f"  债务比（D/E）：{de_ratio:.2f}x")
 
         cr = signals.get("current_ratio")
         if cr is not None:
