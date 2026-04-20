@@ -102,7 +102,7 @@
     <div class="news-col">
       <div class="col-header">
         <span class="section-label">{{ t.tab_local }}</span>
-        <span class="col-subhead">{% if user_region == 'cn' %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
+        <span class="col-subhead">{% if locale == 'zh' %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
       </div>
       <hr class="section-rule">
       {% if local_news %}
@@ -117,7 +117,7 @@
       {% else %}
         <p class="empty-state">{{ t.local_col_empty }}</p>
       {% endif %}
-      {% if market.nz_sectors and user_region != 'cn' %}
+      {% if market.nz_sectors and locale != 'zh' %}
       <div style="margin-top:24px">
         <span class="section-label" style="font-size:10px">NZX SECTORS</span>
         <hr class="section-rule">
@@ -146,10 +146,10 @@
       {% set nzx = market.nzx50 %}
       {% if fg or cny or idx or nzx %}
       <div class="market-signals-block">
-        <div class="ms-label">市场信号</div>
+        <div class="ms-label">{{ t.ms_label }}</div>
         {% if fg %}
         <div class="ms-row">
-          <span class="ms-name">恐贪指数</span>
+          <span class="ms-name">{{ t.ms_fear_greed }}</span>
           <span class="ms-val {% if fg.score <= 40 %}ms-down{% elif fg.score >= 60 %}ms-up{% endif %}">
             {{ fg.score }} <span class="ms-note">{{ fg.label }}</span>
           </span>
@@ -164,7 +164,7 @@
         {% if idx %}
           {% set sh = idx.get('sh') %}{% if sh %}
           <div class="ms-row">
-            <span class="ms-name">上证综指</span>
+            <span class="ms-name">{{ t.ms_shanghai }}</span>
             <span class="ms-val {{ 'ms-down' if sh.change < 0 else 'ms-up' }}">{{ "%.2f"|format(sh.price) }} <span class="ms-note">{{ "%+.2f"|format(sh.change) }}%</span></span>
           </div>
           {% endif %}

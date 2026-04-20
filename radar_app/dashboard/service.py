@@ -40,7 +40,7 @@ def _build_brief_stocks(user_id):
     return stocks
 
 
-def build_dashboard_context(user_id, region):
+def build_dashboard_context(user_id, region, locale="en"):
     stocks = _build_index_stocks(user_id)
     market = get_market_snapshot()
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
@@ -50,7 +50,7 @@ def build_dashboard_context(user_id, region):
         "stocks": stocks,
         "local_stocks": [stock for stock in stocks if stock["market"] == region],
         "intl_stocks": [stock for stock in stocks if stock["market"] != region],
-        "local_news": get_local_news(region),
+        "local_news": get_local_news("cn" if locale == "zh" else "nz"),
         "intl_news": present_intl_news(intl_news, market),
         "market": market,
         "portfolio_brief": present_portfolio_brief(get_portfolio_brief(user_id, date=today)),
