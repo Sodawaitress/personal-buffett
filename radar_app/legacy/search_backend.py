@@ -11,6 +11,11 @@ def is_cn_search_loading():
     return stock_search._CN_LOADING and stock_search._CN_CACHE is None
 
 
-def search_stocks(query, limit=10):
+def search_stocks(query, limit=10, search_type="auto"):
     import stock_search
-    return stock_search.search(query, limit=limit)
+    return stock_search.search_typed(query, search_type=search_type, limit=limit)
+
+
+def is_fund_search_loading():
+    import stock_search
+    return stock_search._FUND_LOADING and stock_search._FUND_CACHE is None

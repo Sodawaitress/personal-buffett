@@ -65,6 +65,11 @@
         <input type="hidden" name="name" id="add-name">
         <input type="hidden" name="market" id="add-market">
         <input type="hidden" name="asset_type" id="add-asset-type">
+        <div class="hc-search-type-seg" id="search-type-seg">
+          <button class="hc-seg-btn{% if user_region == 'cn' %} active{% endif %}" data-type="cn" onclick="setSearchType('cn',this)">A股</button>
+          <button class="hc-seg-btn" data-type="fund" onclick="setSearchType('fund',this)">基金</button>
+          <button class="hc-seg-btn{% if user_region != 'cn' %} active{% endif %}" data-type="intl" onclick="setSearchType('intl',this)">港/美/NZ</button>
+        </div>
         <div class="hc-search-wrap">
           <input type="text" id="search-q" class="hc-search-input"
                  placeholder="{{ t.search_placeholder }}"
@@ -346,12 +351,20 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
   });
 }
 
+let _searchType = '{{ "cn" if user_region == "cn" else "intl" }}';
+function setSearchType(type, btn) {
+  _searchType = type;
+  document.querySelectorAll('#search-type-seg .hc-seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('search-q').focus();
+}
+
 async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId) {
   const inp = document.getElementById('search-q');
   drop.innerHTML = '<div class="search-loading"><span class="spinner-sm"></span> 搜索中…</div>';
   drop.classList.add('open');
   try {
-    const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
+    const resp = await fetch('/api/search?q=' + encodeURIComponent(q) + '&type=' + _searchType);
     const data = await resp.json();
     if (inp && inp.value.trim() !== q) return;
     if (data.loading) {

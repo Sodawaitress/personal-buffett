@@ -12,4 +12,7 @@ def register_search_routes(app):
     def api_search():
         """股票模糊搜索：AKShare(A股) + yfinance(其他)"""
         q = request.args.get('q', '').strip()
-        return search_payload(q)
+        search_type = request.args.get('type', 'auto').strip()
+        if search_type not in ('cn', 'fund', 'intl', 'auto'):
+            search_type = 'auto'
+        return search_payload(q, search_type=search_type)

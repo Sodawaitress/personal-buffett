@@ -485,6 +485,84 @@ def search(q: str, limit: int = 10) -> list:
     return merged[:limit]
 
 
+def search_typed(q: str, search_type: str = "auto", limit: int = 10) -> list:
+    """Typed search with explicit namespace selection.
+
+    search_type:
+      'cn'   – A-shares only (stock_info_a_code_name, no funds/ETFs)
+      'fund' – OTC funds + exchange ETFs only
+      'intl' – yfinance only (HK/US/NZ/AU/KR)
+      'auto' – legacy unified search (default, preserves old behaviour)
+    """
+    q = q.strip()
+    if not q:
+        return []
+
+    if search_type == "cn":
+        return _search_cn_stocks_only(q, limit)
+    if search_type == "fund":
+        return _search_funds_only(q, limit)
+    if search_type == "intl":
+        return _search_intl_only(q, limit)
+    return search(q, limit)  # auto / fallback
+
+
+def _search_cn_stocks_only(q: str, limit: int) -> list:
+    """A-shares only — no funds, no ETF overlap."""
+    _load_cn()
+    q_l = q.lower()
+    out, seen = [], set()
+    for code, name in (_CN_CACHE or []):
+        if q_l in code or q_l in name.lower():
+            if code not in seen:
+                seen.add(code)
+                out.append(_make_result(code, name, "股票"))
+                if len(out) >= limit:
+                    break
+    return out
+
+
+def _search_funds_only(q: str, limit: int) -> list:
+    """OTC funds + exchange ETFs only."""
+    q_l = q.lower()
+    out, seen = [], set()
+
+    def _scan(source, asset_type):
+        for code, name in (source or []):
+            if q_l in code or q_l in name.lower():
+                if code not in seen:
+                    seen.add(code)
+                    out.append(_make_result(code, name, asset_type))
+                    if len(out) >= limit:
+                        return True
+        return False
+
+    # ETF listed on exchange first (code doesn't overlap with OTC funds)
+    _scan(_ETF_CACHE, "ETF")
+    if len(out) < limit:
+        _scan(_FUND_CACHE, "场外基金")
+    return out
+
+
+def _search_intl_only(q: str, limit: int) -> list:
+    """International: yfinance only (HK/US/NZ/AU/KR)."""
+    q_l = q.lower()
+    has_dot = "." in q
+    # First try HK Chinese name shortcut
+    out = _search_hk_names(q) if any("\u4e00" <= c <= "\u9fff" for c in q) else []
+    if has_dot:
+        out += _search_yf(q.upper())
+    else:
+        out += _search_yf_name(q.upper(), limit=limit)
+    seen = set()
+    deduped = []
+    for r in out:
+        if r["code"] not in seen:
+            seen.add(r["code"])
+            deduped.append(r)
+    return deduped[:limit]
+
+
 if __name__ == "__main__":
     query = sys.argv[1] if len(sys.argv) > 1 else "茅台"
     for item in search(query):

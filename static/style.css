@@ -3771,6 +3771,43 @@ footer small {
 .cc-hints  { display: flex; justify-content: space-between; font-family: -apple-system, sans-serif; font-size: 9px; color: var(--ink-faint); }
 
 /* Add card search */
+/* Search type segmented control */
+.search-type-seg {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 5px;
+}
+.seg-btn {
+  background: none;
+  border: none;
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--ink-faint);
+  letter-spacing: .02em;
+  transition: background .15s, color .15s;
+}
+.seg-btn:hover { color: var(--ink-muted); background: var(--rule-light); }
+.seg-btn.active { color: var(--ink-2); background: var(--rule-light); font-weight: 600; }
+/* Dark variant — inside home card */
+.hc-search-type-seg { display: flex; gap: 2px; margin-bottom: 5px; }
+.hc-seg-btn {
+  background: none;
+  border: none;
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .02em;
+  transition: background .15s, color .15s;
+}
+.hc-seg-btn:hover { color: rgba(255,255,255,.7); background: rgba(255,255,255,.1); }
+.hc-seg-btn.active { color: #fff; background: rgba(255,255,255,.18); font-weight: 600; }
+
 .hc-search-wrap { position: relative; flex: 1; }
 .hc-search-input {
   width: 100%;
