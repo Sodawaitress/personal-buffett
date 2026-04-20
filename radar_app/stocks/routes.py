@@ -3,6 +3,7 @@
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 
 import db
+from radar_app.shared.auth import admin_required
 from radar_app.legacy.pipeline import (
     start_letter_job,
     start_news_update_job,
@@ -106,16 +107,12 @@ def register_stock_routes(app):
         return jsonify(payload)
 
     @app.route('/api/rerun-all', methods=['POST'])
-    @login_required
+    @admin_required
     def api_rerun_all():
-        if session.get('role') != 'admin':
-            return jsonify({'error': 'forbidden'}), 403
         return jsonify(start_rerun_all())
 
     @app.route('/api/stock/<path:code>/events', methods=['POST'])
-    @login_required
+    @admin_required
     def add_stock_event(code):
-        if session.get('role') != 'admin':
-            return jsonify({'error': 'forbidden'}), 403
         payload, status = add_stock_event_record(code, request.get_json() or {})
         return jsonify(payload), status

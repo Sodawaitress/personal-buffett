@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}无权限{% endblock %}
+{% block content %}
+<div class="container py-5 text-center" style="max-width:480px">
+  <div style="font-size:3rem">🚫</div>
+  <h2 class="fw-bold mt-3">无权限访问</h2>
+  <p class="text-muted">你没有权限查看此页面。</p>
+  <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mt-2">返回首页</a>
+</div>
+{% endblock %}
