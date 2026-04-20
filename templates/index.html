@@ -66,9 +66,9 @@
         <input type="hidden" name="market" id="add-market">
         <input type="hidden" name="asset_type" id="add-asset-type">
         <div class="hc-search-type-seg" id="search-type-seg">
-          <button type="button" class="hc-seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setSearchType('cn',this)">A股</button>
-          <button type="button" class="hc-seg-btn" data-type="fund" onclick="setSearchType('fund',this)">基金</button>
-          <button type="button" class="hc-seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setSearchType('intl',this)">港/美/NZ</button>
+          <button type="button" class="hc-seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setSearchType('cn',this)">{{ t.search_type_cn }}</button>
+          <button type="button" class="hc-seg-btn" data-type="fund" onclick="setSearchType('fund',this)">{{ t.search_type_fund }}</button>
+          <button type="button" class="hc-seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setSearchType('intl',this)">{{ t.search_type_intl }}</button>
         </div>
         <div class="hc-search-wrap">
           <input type="text" id="search-q" class="hc-search-input"
@@ -396,7 +396,7 @@ async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId) {
       </div>`;
     }).join('');
   } catch(e) {
-    drop.innerHTML = '<div class="search-empty">搜索失败，请重试</div>';
+    drop.innerHTML = `<div class="search-empty">{{ t.search_failed }}</div>`;
   }
 }
 

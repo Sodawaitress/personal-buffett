@@ -12,7 +12,7 @@
       <span class="notif-banner-text">
         {{ notifications | length }} 只股票已连续 6 次评为 D 级，建议审视是否继续跟踪
       </span>
-      <span class="notif-banner-toggle" id="notif-toggle">查看 ↓</span>
+      <span class="notif-banner-toggle" id="notif-toggle">{{ t.notif_toggle_expand }}</span>
     </div>
     <div class="notif-panel" id="notif-panel" style="display:none">
       {% for n in notifications %}
@@ -82,9 +82,9 @@
   {# 添加股票面板 #}
   <div id="add-panel" class="add-panel hidden">
     <div class="search-type-seg" id="wl-search-type-seg">
-      <button type="button" class="seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setWlSearchType('cn',this)">A股</button>
-      <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">基金</button>
-      <button type="button" class="seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setWlSearchType('intl',this)">港/美/NZ</button>
+      <button type="button" class="seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setWlSearchType('cn',this)">{{ t.search_type_cn }}</button>
+      <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">{{ t.search_type_fund }}</button>
+      <button type="button" class="seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setWlSearchType('intl',this)">{{ t.search_type_intl }}</button>
     </div>
     <div class="stock-search-wrap">
       <input type="text" id="search-q" class="search-input"
@@ -416,6 +416,18 @@ const T = {
   letterSig:        "{{ t.letter_sig }}",
   letterDataAsOf:   "{{ t.letter_data_as_of }}",
   letterDisclaimer: "{{ t.letter_disclaimer }}",
+  analysisDoneRefresh: "{{ t.analysis_done_refresh }}",
+  progressPrice:    "{{ t.progress_price }}",
+  progressFinance:  "{{ t.progress_finance }}",
+  progressNews:     "{{ t.progress_news }}",
+  progressQuant:    "{{ t.progress_quant }}",
+  progressAi:       "{{ t.progress_ai }}",
+  progressGradeLabel: "{{ t.progress_grade_label }}",
+  progressDone:     "{{ t.progress_done }}",
+  removeConfirm:    "{{ t.remove_confirm }}",
+  removeFailed:     "{{ t.remove_failed }}",
+  notifExpand:      "{{ t.notif_toggle_expand }}",
+  notifCollapse:    "{{ t.notif_toggle_collapse }}",
 };
 // ── 全局状态 ──────────────────────────────────────────
 let _selectMode = false;
@@ -707,16 +719,16 @@ function _showReloadBanner() {
   const bar = document.createElement('div');
   bar.id = 'reload-banner';
   bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#2e7d32;color:#fff;text-align:center;padding:8px;font-size:14px;cursor:pointer';
-  bar.textContent = '✓ 分析完成 · 点击刷新';
+  bar.textContent = T.analysisDoneRefresh;
   bar.onclick = () => location.reload();
   document.body.prepend(bar);
 }
 const _STAGES = [
-  { label: '行情数据…', pct: 15, after: 0  },
-  { label: '财务数据…', pct: 35, after: 6  },
-  { label: '新闻资讯…', pct: 55, after: 14 },
-  { label: '定量评级…', pct: 72, after: 26 },
-  { label: 'AI 分析…',  pct: 88, after: 36 },
+  { label: T.progressPrice,   pct: 15, after: 0  },
+  { label: T.progressFinance, pct: 35, after: 6  },
+  { label: T.progressNews,    pct: 55, after: 14 },
+  { label: T.progressQuant,   pct: 72, after: 26 },
+  { label: T.progressAi,      pct: 88, after: 36 },
 ];
 
 function _startProgress(jobId) {
@@ -737,7 +749,7 @@ function _finishProgress(jobId, grade) {
   const fill  = document.getElementById('pfill-'  + jobId);
   const label = document.getElementById('plabel-' + jobId);
   if (fill)  { fill.style.transition = 'width .4s ease'; fill.style.width = '100%'; }
-  if (label) label.textContent = grade ? `评级：${grade}` : '完成';
+  if (label) label.textContent = grade ? `${T.progressGradeLabel}${grade}` : T.progressDone;
 }
 
 function pollJob(jobId, code) {
@@ -918,7 +930,7 @@ function toggleNotifPanel() {
   const toggle = document.getElementById('notif-toggle');
   const open   = panel.style.display === 'none';
   panel.style.display  = open ? 'block' : 'none';
-  toggle.textContent   = open ? '收起 ↑' : '查看 ↓';
+  toggle.textContent   = open ? T.notifCollapse : T.notifExpand;
 }
 
 async function notifSnooze(id) {
@@ -928,9 +940,9 @@ async function notifSnooze(id) {
 }
 
 async function notifRemove(id, code) {
-  if (!confirm(`确认将 ${code} 从自选股移除？历史分析数据将保留。`)) return;
+  if (!confirm(T.removeConfirm.replace('{code}', code))) return;
   const res = await fetch(`/remove`, { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: `code=${code}` });
-  if (!res.ok) { alert('移除失败，请刷新页面重试。'); return; }
+  if (!res.ok) { alert(T.removeFailed); return; }
   await fetch(`/api/notification/${id}/dismiss`, { method: 'POST' });
   document.getElementById(`notif-item-${id}`).remove();
   document.querySelectorAll(`[data-code="${code}"]`).forEach(el => el.remove());
