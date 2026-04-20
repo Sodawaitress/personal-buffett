@@ -93,11 +93,11 @@
     {% if price %}
       {% if price.pe_ratio %}<span class="stat-item"><span class="stat-label">PE</span> {{ "%.1f"|format(price.pe_ratio) }}x</span>{% endif %}
       {% if price.pb_ratio %}<span class="stat-item"><span class="stat-label">PB</span> {{ "%.2f"|format(price.pb_ratio) }}x</span>{% endif %}
-      {% if price.market_cap %}<span class="stat-item"><span class="stat-label">市值</span> {{ "%.0f"|format(price.market_cap / 1e8) }}亿</span>{% endif %}
+      {% if price.market_cap %}<span class="stat-item"><span class="stat-label">{{ t.lbl_market_cap }}</span> {{ "%.0f"|format(price.market_cap / 1e8) }}亿</span>{% endif %}
     {% endif %}
     {% if fund_flow and fund_flow.main_net is not none %}
     <span class="stat-item">
-      <span class="stat-label">主力</span>
+      <span class="stat-label">{{ t.lbl_main_flow_short }}</span>
       <span class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">{{ "%+.2f"|format(fund_flow.main_net) }}亿</span>
     </span>
     {% endif %}
@@ -107,12 +107,12 @@
   {# ── 数据新鲜度：仅在有过期项时显示 ── #}
   {% if data_freshness_stale.price or data_freshness_stale.finance or data_freshness_stale.analysis %}
   <div class="data-freshness-bar">
-    ⏰ 数据可能过期：
-    {% if data_freshness_stale.price %}<span class="freshness-stale">报价 {{ data_freshness.price }}</span>{% endif %}
-    {% if data_freshness_stale.finance %}<span class="freshness-stale">财务 {{ data_freshness.finance }}</span>{% endif %}
-    {% if data_freshness_stale.analysis %}<span class="freshness-stale">分析 {{ data_freshness.analysis }}</span>{% endif %}
+    {{ t.lbl_data_stale_prefix }}
+    {% if data_freshness_stale.price %}<span class="freshness-stale">{{ t.lbl_stale_quote }} {{ data_freshness.price }}</span>{% endif %}
+    {% if data_freshness_stale.finance %}<span class="freshness-stale">{{ t.lbl_stale_finance }} {{ data_freshness.finance }}</span>{% endif %}
+    {% if data_freshness_stale.analysis %}<span class="freshness-stale">{{ t.lbl_stale_analysis }} {{ data_freshness.analysis }}</span>{% endif %}
     <span class="freshness-sep" style="margin-left:auto">
-      <a href="#" onclick="triggerAnalysis('{{ stock.code }}');return false" style="font-size:11px;color:var(--ink-muted)">全量刷新</a>
+      <a href="#" onclick="triggerAnalysis('{{ stock.code }}');return false" style="font-size:11px;color:var(--ink-muted)">{{ t.btn_full_refresh }}</a>
     </span>
   </div>
   {% endif %}
@@ -140,7 +140,7 @@
       <div class="analysis-pending-block" id="pending-block" data-job="{{ pending_job.id }}">
         <div class="analysis-progress" id="progress-tab-{{ pending_job.id }}">
           <div class="progress-track"><div class="progress-fill" id="pfill-tab-{{ pending_job.id }}"></div></div>
-          <span class="progress-label" id="plabel-tab-{{ pending_job.id }}">巴菲特正在研究 {{ stock.name }}…</span>
+          <span class="progress-label" id="plabel-tab-{{ pending_job.id }}">{{ t.lbl_analysing }}</span>
         </div>
       </div>
       {% elif analysis %}
@@ -151,7 +151,7 @@
           </span>
           <span class="brief-conclusion">{{ analysis.conclusion }}</span>
           {% if analysis.framework_used == 'fund_v1' %}
-          <span class="fund-badge">{{ analysis.fund_flow_summary or '基金' }}</span>
+          <span class="fund-badge">{{ analysis.fund_flow_summary or 'Fund' }}</span>
           {% endif %}
           <span class="brief-date">{{ analysis.analysis_date }}</span>
         </div>
@@ -160,10 +160,10 @@
         {# ── 基金 4 维评分（framework_used == 'fund_v1'）── #}
         {% if analysis.framework_used == 'fund_v1' %}
         {% set fund_dims = [
-          ('产品质量', analysis.moat),
-          ('标的质量', analysis.management),
-          ('组合适配', analysis.valuation),
-          ('交易执行', analysis.behavioral),
+          (t.dim_product_quality, analysis.moat),
+          (t.dim_target_quality, analysis.management),
+          (t.dim_portfolio_fit, analysis.valuation),
+          (t.dim_execution, analysis.behavioral),
         ] %}
         <div class="brief-dims fund-dims">
           {% for label, val in fund_dims %}
@@ -176,19 +176,19 @@
           {% endfor %}
         </div>
         {% if analysis.quant_score %}
-        <div class="fund-total-score">综合评分 <strong>{{ analysis.quant_score }}/100</strong></div>
+        <div class="fund-total-score">{{ t.lbl_total_score }} <strong>{{ analysis.quant_score }}/100</strong></div>
         {% endif %}
 
         {# ── 基金定投提示 ── #}
         {% else %}
         {# 股票维度 #}
         {% set dims = [
-          ('护城河', analysis.moat),
-          ('管理层', analysis.management),
-          ('估值', analysis.valuation),
-          ('资金流向', analysis.fund_flow_summary),
-          ('行为金融', analysis.behavioral),
-          ('宏观敏感度', analysis.macro_sensitivity),
+          (t.dim_moat, analysis.moat),
+          (t.dim_mgmt, analysis.management),
+          (t.dim_valuation, analysis.valuation),
+          (t.dim_fund_flow, analysis.fund_flow_summary),
+          (t.dim_behavioral, analysis.behavioral),
+          (t.dim_macro, analysis.macro_sensitivity),
         ] %}
         {% set has_dims = dims | selectattr(1) | list %}
         {% if has_dims %}
@@ -209,33 +209,33 @@
         {% set has_trade = analysis and analysis.trade_block %}
         {% if has_tech or has_trade %}
         <div class="trade-block">
-          <div class="trade-block-title">操作参数
+          <div class="trade-block-title">{{ t.lbl_trade_params }}
             {% if has_tech %}
-            <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">价格线基于{% if 'MA60' in trading_params.entry_1_label %}均线{% else %}52周区间{% endif %}计算</span>
+            <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">{{ t.lbl_trade_ma_basis }}</span>
             {% else %}
-            <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">仅含巴菲特建议，无技术价格数据</span>
+            <span style="font-size:10px;font-weight:400;color:var(--ink-faint);margin-left:6px">{{ t.lbl_trade_no_tech }}</span>
             {% endif %}
           </div>
           <div class="trade-rows">
             {% if has_tech %}
             {% if trading_params.position_label %}
-            <div class="trade-row"><span class="trade-label">📍 当前位置</span><span class="trade-val">{{ trading_params.position_label }}</span></div>
+            <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_position }}</span><span class="trade-val">{{ trading_params.position_label }}</span></div>
             {% endif %}
             {% if trading_params.reduce_label %}
-            <div class="trade-row"><span class="trade-label">🟠 减仓区间</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
+            <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_reduce }}</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
             {% endif %}
             <div class="trade-row">
-              <span class="trade-label">{{ "⚪ 反弹阻力1" if trading_params.entry_1_is_resistance else "🟢 买入区间1" }}</span>
+              <span class="trade-label">{{ t.lbl_trade_resistance1 if trading_params.entry_1_is_resistance else t.lbl_trade_entry1 }}</span>
               <span class="trade-val">{{ trading_params.entry_1_label }}</span>
             </div>
             {% if trading_params.entry_2_label %}
             <div class="trade-row">
-              <span class="trade-label">{{ "⚪ 反弹阻力2" if trading_params.entry_2_is_resistance else "🟢 买入区间2" }}</span>
+              <span class="trade-label">{{ t.lbl_trade_resistance2 if trading_params.entry_2_is_resistance else t.lbl_trade_entry2 }}</span>
               <span class="trade-val">{{ trading_params.entry_2_label }}</span>
             </div>
             {% endif %}
             {% if trading_params.stop_loss_label %}
-            <div class="trade-row"><span class="trade-label">🔴 止损位</span><span class="trade-val">{{ trading_params.stop_loss_label }}</span></div>
+            <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_stop_loss }}</span><span class="trade-val">{{ trading_params.stop_loss_label }}</span></div>
             {% endif %}
             {% endif %}
             {# LLM 补充字段：仓位策略/关键监控，有 trade_block 就显示 #}
@@ -247,16 +247,16 @@
               var rows = document.querySelector('.trade-block .trade-rows');
               var llmRows = '';
               if (data['减仓区间'] && !rows.querySelector('[data-key="reduce"]')) {
-                llmRows += '<div class="trade-row"><span class="trade-label" data-key="reduce">🟠 减仓区间</span><span class="trade-val">' + data['减仓区间'] + '</span></div>';
+                llmRows += '<div class="trade-row"><span class="trade-label" data-key="reduce">' + _t.reduce_zone + '</span><span class="trade-val">' + data['减仓区间'] + '</span></div>';
               }
               if (data['买入区间1'] && !rows.querySelector('[data-key="entry1"]')) {
-                llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry1">🟢 买入区间1</span><span class="trade-val">' + data['买入区间1'] + '</span></div>';
+                llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry1">' + _t.buy_zone_1 + '</span><span class="trade-val">' + data['买入区间1'] + '</span></div>';
               }
               if (data['买入区间2'] && !rows.querySelector('[data-key="entry2"]')) {
-                llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry2">🟢 买入区间2</span><span class="trade-val">' + data['买入区间2'] + '</span></div>';
+                llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry2">' + _t.buy_zone_2 + '</span><span class="trade-val">' + data['买入区间2'] + '</span></div>';
               }
-              if (data['仓位策略']) llmRows += '<div class="trade-row"><span class="trade-label">⚖️ 仓位策略</span><span class="trade-val">' + data['仓位策略'] + '</span></div>';
-              if (data['关键监控']) llmRows += '<div class="trade-row"><span class="trade-label">👁 关键监控</span><span class="trade-val">' + data['关键监控'] + '</span></div>';
+              if (data['仓位策略']) llmRows += '<div class="trade-row"><span class="trade-label">' + _t.position_size + '</span><span class="trade-val">' + data['仓位策略'] + '</span></div>';
+              if (data['关键监控']) llmRows += '<div class="trade-row"><span class="trade-label">' + _t.key_watch + '</span><span class="trade-val">' + data['关键监控'] + '</span></div>';
               if (llmRows) document.currentScript.insertAdjacentHTML('beforebegin', llmRows);
             })();
             </script>
@@ -269,11 +269,11 @@
         {% if stock.asset_type not in ('场外基金', 'ETF') %}
         <div class="letter-entry" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule-light)">
           {% if analysis.letter_html %}
-          <button onclick="showLetter()" class="btn-outline-ink btn-sm">📄 读股东信</button>
-          <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">已生成</span>
+          <button onclick="showLetter()" class="btn-outline-ink btn-sm">{{ t.js_read_letter }}</button>
+          <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">{{ t.lbl_letter_ready }}</span>
           {% else %}
-          <button id="letter-btn-{{ stock.code }}" onclick="triggerLetterGeneration('{{ stock.code }}')" class="btn-outline-ink btn-sm">📄 生成股东信</button>
-          <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">巴菲特叙事信件（约30秒，需 Groq）</span>
+          <button id="letter-btn-{{ stock.code }}" onclick="triggerLetterGeneration('{{ stock.code }}')" class="btn-outline-ink btn-sm">{{ t.btn_gen_letter }}</button>
+          <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">{{ t.lbl_letter_hint }}</span>
           {% endif %}
         </div>
         {% endif %}
@@ -281,8 +281,8 @@
       </div>
       {% else %}
       <div class="empty-state" style="padding:60px 0;text-align:center">
-        <p style="color:var(--ink-muted);margin-bottom:16px">尚无分析结果</p>
-        <button onclick="triggerAnalysisOnly('{{ stock.code }}');" class="btn-ink">{% if stock.asset_type in ('场外基金', 'ETF') %}{{ t.btn_fund_check }}{% else %}巴菲特怎么看{% endif %}</button>
+        <p style="color:var(--ink-muted);margin-bottom:16px">{{ t.lbl_no_analysis_yet }}</p>
+        <button onclick="triggerAnalysisOnly('{{ stock.code }}');" class="btn-ink">{% if stock.asset_type in ('场外基金', 'ETF') %}{{ t.btn_fund_check }}{% else %}{{ t.btn_buffett_check }}{% endif %}</button>
       </div>
       {% endif %}
     </div>
@@ -292,31 +292,31 @@
 
       {# ── 今日信号面板 ── #}
       <div class="signal-panel">
-        <div class="signal-panel-title">📡 今日信号</div>
+        <div class="signal-panel-title">{{ t.lbl_signals_title }}</div>
 
         {# 资金信号 · 仅A股 #}
         {% if market == "cn" %}
         <div class="signal-group">
-          <div class="signal-group-label">资金信号</div>
+          <div class="signal-group-label">{{ t.lbl_fund_signals }}</div>
           <div class="signal-items">
             {% if north_bound and north_bound.get("total_net") is not none %}
             <div class="signal-item">
-              <span class="signal-key">北向资金</span>
+              <span class="signal-key">{{ t.lbl_north_bound }}</span>
               <span class="signal-val {{ 'up' if north_bound.total_net >= 0 else 'down' }}">
-                {{ "%+.2f"|format(north_bound.total_net) }}亿
-                （沪 {{ "%+.1f"|format(north_bound.get("sh_net", 0)) }} / 深 {{ "%+.1f"|format(north_bound.get("sz_net", 0)) }}）
+                {{ "%+.2f"|format(north_bound.total_net) }}B
+                (SH {{ "%+.1f"|format(north_bound.get("sh_net", 0)) }} / SZ {{ "%+.1f"|format(north_bound.get("sz_net", 0)) }})
                 {{ "📈" if north_bound.total_net >= 0 else "📉" }}
               </span>
             </div>
             {% else %}
             <div class="signal-item">
-              <span class="signal-key">北向资金</span>
-              <span class="signal-val muted">数据积累中</span>
+              <span class="signal-key">{{ t.lbl_north_bound }}</span>
+              <span class="signal-val muted">{{ t.lbl_data_accumulating }}</span>
             </div>
             {% endif %}
             {% if fund_flow %}
             <div class="signal-item">
-              <span class="signal-key">主力动向</span>
+              <span class="signal-key">{{ t.lbl_main_flow_signal }}</span>
               <span class="signal-val {{ 'up' if fund_flow.main_net >= 0 else 'down' }}">
                 {{ "%+.2f"|format(fund_flow.main_net) }}亿
                 {% if fund_flow.main_ratio is not none %}({{ "%+.1f"|format(fund_flow.main_ratio) }}%){% endif %}
@@ -325,24 +325,24 @@
             </div>
             {% else %}
             <div class="signal-item">
-              <span class="signal-key">主力动向</span>
-              <span class="signal-val muted">数据积累中</span>
+              <span class="signal-key">{{ t.lbl_main_flow_signal }}</span>
+              <span class="signal-val muted">{{ t.lbl_data_accumulating }}</span>
             </div>
             {% endif %}
             {% if signals and signals.get("inst_increased") is not none %}
             <div class="signal-item">
-              <span class="signal-key">机构持仓</span>
+              <span class="signal-key">{{ t.lbl_inst_holdings }}</span>
               {% set inc = signals.inst_increased | int %}
               {% set dec = signals.inst_decreased | int %}
               <span class="signal-val {{ 'up' if inc > dec else ('down' if dec > inc else '') }}">
-                增持 {{ inc }} / 减持 {{ dec }}
+                ↑{{ inc }} / ↓{{ dec }}
                 {{ "📈" if inc > dec else ("📉" if dec > inc else "➖") }}
               </span>
             </div>
             {% endif %}
             {% if signals and signals.get("margin_direction") %}
             <div class="signal-item">
-              <span class="signal-key">融资方向</span>
+              <span class="signal-key">{{ t.lbl_margin_dir }}</span>
               <span class="signal-val">{{ signals.margin_direction }}
                 {% if signals.get("margin_balance") %} {{ "%.1f"|format(signals.margin_balance / 1e8) }}亿{% endif %}
               </span>
@@ -354,7 +354,7 @@
 
         {# 技术信号 · 所有市场 #}
         <div class="signal-group">
-          <div class="signal-group-label">技术信号</div>
+          <div class="signal-group-label">{{ t.lbl_tech_signals }}</div>
           <div class="signal-items">
             {% set tech = signals.get("technicals", {}) if signals else {} %}
             {% set cur_sym = market_currency.get(market, "$") %}
@@ -363,7 +363,7 @@
               {% set pct250 = tech.get("price_vs_ma250") %}
               {% if tech.get("ma60") and pct60 is not none %}
               <div class="signal-item">
-                <span class="signal-key">MA60 季线</span>
+                <span class="signal-key">MA60</span>
                 <span class="signal-val {{ 'up' if pct60 > 0 else 'down' }}">
                   {{ cur_sym }}{{ "%.2f"|format(tech.ma60) }}
                   ({{ "%+.1f"|format(pct60) }}%)
@@ -373,7 +373,7 @@
               {% endif %}
               {% if tech.get("ma250") and pct250 is not none %}
               <div class="signal-item">
-                <span class="signal-key">MA250 年线</span>
+                <span class="signal-key">MA250</span>
                 <span class="signal-val {{ 'up' if pct250 > 0 else 'down' }}">
                   {{ cur_sym }}{{ "%.2f"|format(tech.ma250) }}
                   ({{ "%+.1f"|format(pct250) }}%)
@@ -402,22 +402,22 @@
             {% elif signals and signals.get("week_52_low") %}
               {# 非A股：52周区间 #}
               <div class="signal-item">
-                <span class="signal-key">52周区间</span>
+                <span class="signal-key">{{ t.lbl_52w_range }}</span>
                 <span class="signal-val">{{ cur_sym }}{{ signals.week_52_low }} – {{ cur_sym }}{{ signals.week_52_high }}</span>
               </div>
               {% set pos = signals.get("price_position") %}
               {% if pos is not none %}
               <div class="signal-item">
-                <span class="signal-key">当前位置</span>
+                <span class="signal-key">{{ t.lbl_cur_position }}</span>
                 <span class="signal-val {{ 'up' if pos > 60 else ('down' if pos < 30 else '') }}">
                   {{ "%.0f"|format(pos) }}%
-                  {{ "（偏高）" if pos > 70 else ("（偏低）" if pos < 30 else "（中间区域）") }}
+                  {{ t.lbl_pos_high if pos > 70 else (t.lbl_pos_low if pos < 30 else t.lbl_pos_mid) }}
                 </span>
               </div>
               {% endif %}
             {% else %}
             <div class="signal-item">
-              <span class="signal-val muted">数据积累中</span>
+              <span class="signal-val muted">{{ t.lbl_data_accumulating }}</span>
             </div>
             {% endif %}
           </div>
@@ -425,30 +425,30 @@
 
         {# 新闻情绪 · 所有市场 #}
         <div class="signal-group">
-          <div class="signal-group-label">新闻情绪</div>
+          <div class="signal-group-label">{{ t.lbl_news_sentiment }}</div>
           <div class="signal-items">
             {% if news %}
               {% set pos_ct = news | selectattr("sentiment", "equalto", "positive") | list | length %}
               {% set neg_ct = news | selectattr("sentiment", "equalto", "negative") | list | length %}
               {% set neu_ct = news | length - pos_ct - neg_ct %}
               <div class="signal-item">
-                <span class="signal-key">本周 {{ news|length }} 条</span>
+                <span class="signal-key">{{ t.lbl_this_week_n }} {{ news|length }} {{ t.lbl_articles }}</span>
                 <span class="signal-val">
-                  📈 {{ pos_ct }} 正面 &nbsp;·&nbsp;
-                  ➖ {{ neu_ct }} 中性 &nbsp;·&nbsp;
-                  📉 {{ neg_ct }} 负面
+                  📈 {{ pos_ct }} {{ t.lbl_positive }} &nbsp;·&nbsp;
+                  ➖ {{ neu_ct }} {{ t.lbl_neutral }} &nbsp;·&nbsp;
+                  📉 {{ neg_ct }} {{ t.lbl_negative }}
                 </span>
               </div>
               {% set dominant = "positive" if pos_ct > neg_ct and pos_ct > neu_ct else ("negative" if neg_ct > pos_ct and neg_ct > neu_ct else "neutral") %}
               <div class="signal-item">
-                <span class="signal-key">整体倾向</span>
+                <span class="signal-key">{{ t.lbl_dominant_sentiment }}</span>
                 <span class="signal-val {{ 'up' if dominant == 'positive' else ('down' if dominant == 'negative' else '') }}">
-                  {{ "正面为主 📈" if dominant == "positive" else ("负面为主 📉" if dominant == "negative" else "情绪中性 ➖") }}
+                  {{ t.lbl_sentiment_pos if dominant == "positive" else (t.lbl_sentiment_neg if dominant == "negative" else t.lbl_sentiment_neu) }}
                 </span>
               </div>
             {% else %}
             <div class="signal-item">
-              <span class="signal-val muted">暂无新闻</span>
+              <span class="signal-val muted">{{ t.lbl_no_news_signal }}</span>
             </div>
             {% endif %}
           </div>
@@ -457,14 +457,14 @@
 
       {# ── 新闻列表 ── #}
       {% if news %}
-      <div class="news-list-divider">最新报道</div>
+      <div class="news-list-divider">{{ t.lbl_latest_news }}</div>
       {% for n in news %}
       <div class="news-article">
         <div class="news-kicker">
           {{ n.source }}
-          {% if n.sentiment == 'positive' %}<span title="正面">📈</span>
-          {% elif n.sentiment == 'negative' %}<span title="负面">📉</span>
-          {% elif n.sentiment %}<span title="中性">➖</span>{% endif %}
+          {% if n.sentiment == 'positive' %}<span title="{{ t.lbl_positive }}">📈</span>
+          {% elif n.sentiment == 'negative' %}<span title="{{ t.lbl_negative }}">📉</span>
+          {% elif n.sentiment %}<span title="{{ t.lbl_neutral }}">➖</span>{% endif %}
         </div>
         {% if n.link %}
         <a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
@@ -475,7 +475,7 @@
       </div>
       {% endfor %}
       {% else %}
-      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">暂无相关新闻</p>
+      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_news_found }}</p>
       {% endif %}
     </div>
 
@@ -483,7 +483,7 @@
     <div id="tab-archive" class="tab-content" style="display:none">
 
       {# ── 子标题：历史分析 ── #}
-      <div class="archive-section-title">历史分析</div>
+      <div class="archive-section-title">{{ t.lbl_history }}</div>
       {% if history %}
       {% for h in history %}
       <div class="history-item {{ 'history-current' if loop.first else '' }}">
@@ -498,34 +498,34 @@
       </div>
       {% endfor %}
       {% else %}
-      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">暂无历史分析</p>
+      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_history }}</p>
       {% endif %}
 
       {# ── 子标题：公司概览 ── #}
-      <div class="archive-section-title">公司概览</div>
+      <div class="archive-section-title">{{ t.lbl_company_overview }}</div>
 
       {# 公司信息行（从头部移入）#}
       {% set sector = signals.get('sector') if signals else none %}
       {% set framework_lbl = {
-        'mature_value': '成熟价值',
-        'growth_tech': '成长科技',
-        'financial': '金融保险',
-        'cyclical': '周期资源',
-        'utility': '公用事业/分红',
-        'speculative': '高风险投机'
+        'mature_value': t.fw_mature_value,
+        'growth_tech': t.fw_growth_tech,
+        'financial': t.fw_financial,
+        'cyclical': t.fw_cyclical,
+        'utility': t.fw_utility,
+        'speculative': t.fw_speculative
       }.get((meta.company_type if meta else ''), '') %}
       <div class="stock-info-row" style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 0;font-size:12px;color:var(--ink-muted)">
-        <span><strong>市场</strong> {{ market | upper }}</span>
-        <span><strong>代码</strong> {{ stock.code }}</span>
-        {% if sector %}<span><strong>行业</strong> {{ sector }}</span>{% endif %}
-        {% if meta and meta.market_tier %}<span><strong>板块</strong> {{ meta.market_tier }}</span>{% endif %}
-        {% if framework_lbl %}<span><strong>类型</strong> {{ framework_lbl }}</span>{% endif %}
+        <span><strong>{{ t.lbl_market_label }}</strong> {{ market | upper }}</span>
+        <span><strong>{{ t.lbl_code_label }}</strong> {{ stock.code }}</span>
+        {% if sector %}<span><strong>{{ t.lbl_sector_label }}</strong> {{ sector }}</span>{% endif %}
+        {% if meta and meta.market_tier %}<span><strong>{{ t.lbl_board_label }}</strong> {{ meta.market_tier }}</span>{% endif %}
+        {% if framework_lbl %}<span><strong>{{ t.lbl_type_label }}</strong> {{ framework_lbl }}</span>{% endif %}
         {% if meta and meta.company_type %}<span style="color:var(--ink-faint)">{{ meta.company_type }}</span>{% endif %}
       </div>
 
       {# 基本面指标 #}
       <section class="fund-section">
-        <div class="fund-section-label">基本面指标</div>
+        <div class="fund-section-label">{{ t.lbl_fundamentals }}</div>
         <hr class="section-rule">
         {% set lat = annual[0] if annual else none %}
         {# 对非A股，从signals里提取财务指标 #}
@@ -535,16 +535,16 @@
         <div class="fund-metrics-grid">
 
           <div class="fund-metric-card">
-            <div class="fund-metric-label">市盈率 PE</div>
+            <div class="fund-metric-label">{{ t.lbl_pe }}</div>
             <div class="fund-metric-value">
               {% if pe_current %}{{ "%.1f"|format(pe_current) }}x
               {% elif price and price.pe_ratio %}{{ "%.1f"|format(price.pe_ratio) }}x
               {% else %}<span class="fund-accumulating">—</span>{% endif %}
             </div>
             {% if pe_percentile_5y is not none %}
-            <div class="fund-metric-note">5年 {{ pe_percentile_5y }}% 分位
+            <div class="fund-metric-note">5Y {{ pe_percentile_5y }}%ile
               <span style="color:{% if pe_percentile_5y > 70 %}#c62828{% elif pe_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
-                {% if pe_percentile_5y > 70 %}偏贵{% elif pe_percentile_5y < 30 %}偏便宜{% else %}中性{% endif %}
+                {% if pe_percentile_5y > 70 %}{{ t.lbl_expensive }}{% elif pe_percentile_5y < 30 %}{{ t.lbl_cheap }}{% else %}—{% endif %}
               </span>
             </div>
             {% endif %}
@@ -553,16 +553,16 @@
           </div>
 
           <div class="fund-metric-card">
-            <div class="fund-metric-label">市净率 PB</div>
+            <div class="fund-metric-label">{{ t.lbl_pb }}</div>
             <div class="fund-metric-value">
               {% if pb_current %}{{ "%.2f"|format(pb_current) }}x
               {% elif price and price.pb_ratio %}{{ "%.2f"|format(price.pb_ratio) }}x
               {% else %}<span class="fund-accumulating">—</span>{% endif %}
             </div>
             {% if pb_percentile_5y is not none %}
-            <div class="fund-metric-note">5年 {{ pb_percentile_5y }}% 分位
+            <div class="fund-metric-note">5Y {{ pb_percentile_5y }}%ile
               <span style="color:{% if pb_percentile_5y > 70 %}#c62828{% elif pb_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
-                {% if pb_percentile_5y > 70 %}偏贵{% elif pb_percentile_5y < 30 %}偏便宜{% else %}中性{% endif %}
+                {% if pb_percentile_5y > 70 %}{{ t.lbl_expensive }}{% elif pb_percentile_5y < 30 %}{{ t.lbl_cheap }}{% else %}—{% endif %}
               </span>
             </div>
             {% endif %}
@@ -587,7 +587,7 @@
           </div>
 
           <div class="fund-metric-card">
-            <div class="fund-metric-label">净利润率</div>
+            <div class="fund-metric-label">{{ t.lbl_net_margin }}</div>
             <div class="fund-metric-value">
               {% if lat and lat.net_margin %}{{ lat.net_margin }}
               {% else %}<span class="fund-accumulating">—</span>{% endif %}
@@ -606,7 +606,7 @@
 
           <div class="fund-metric-card">
             <div class="fund-metric-label">
-              {% if lat and lat.debt_ratio_note %}D/E 比率{% else %}资产负债率{% endif %}
+              {% if lat and lat.debt_ratio_note %}D/E{% else %}{{ t.lbl_debt_ratio_cn }}{% endif %}
             </div>
             <div class="fund-metric-value">
               {% if lat and lat.debt_ratio %}
@@ -644,10 +644,10 @@
         <div style="margin-top:20px;overflow-x:auto">
           <table style="font-size:12px;font-family:-apple-system,sans-serif;border-collapse:collapse;min-width:480px">
             <tr style="color:var(--ink-muted);border-bottom:1px solid var(--rule-light)">
-              <th style="text-align:left;padding:4px 8px;font-weight:600">年份</th>
+              <th style="text-align:left;padding:4px 8px;font-weight:600">{{ t.lbl_year }}</th>
               {% for row in annual %}<th style="text-align:right;padding:4px 8px;font-weight:400">{{ row.year }}</th>{% endfor %}
             </tr>
-            {% for field, label in [("roe","ROE"),("net_margin","净利率"),("debt_ratio","负债率"),("profit_growth","利润增长")] %}
+            {% for field, label in [("roe","ROE"),("net_margin",t.lbl_net_margin_short),("debt_ratio",t.lbl_debt_ratio_short),("profit_growth",t.lbl_profit_growth)] %}
             <tr style="border-bottom:1px solid var(--rule-light)">
               <td style="padding:4px 8px;color:var(--ink-muted)">{{ label }}</td>
               {% for row in annual %}
@@ -665,7 +665,7 @@
       {# 三、主力资金历史（仅 A 股）#}
       {% if market == "cn" %}
       <section class="fund-section">
-        <div class="fund-section-label">主力资金历史</div>
+        <div class="fund-section-label">{{ t.lbl_main_flow_hist }}</div>
         <hr class="section-rule">
         {% if ff_hist %}
         <div class="fund-chart-wrap">
@@ -674,20 +674,20 @@
         <div class="ff-summary">
           {% set total = namespace(v=0) %}
           {% for f in ff_hist %}{% set total.v = total.v + f.main_net %}{% endfor %}
-          近 {{ ff_hist|length }} 个交易日累计主力净
+          Last {{ ff_hist|length }} sessions net:
           <strong class="{{ 'fund-in' if total.v >= 0 else 'fund-out' }}">
-            {{ '流入' if total.v >= 0 else '流出' }} {{ "%.2f"|format(total.v | abs) }} 亿
+            {{ 'In' if total.v >= 0 else 'Out' }} {{ "%.2f"|format(total.v | abs) }}B
           </strong>
         </div>
         {% else %}
-        <div class="fund-empty">暂无资金流数据 — 收盘后自动更新</div>
+        <div class="fund-empty">{{ t.lbl_fund_flow_empty }}</div>
         {% endif %}
       </section>
       {% endif %}{# end market == cn #}
 
       {# 四、护城河评估 #}
       <section class="fund-section">
-        <div class="fund-section-label">护城河评估</div>
+        <div class="fund-section-label">{{ t.lbl_moat_eval }}</div>
         <hr class="section-rule">
         {% set latest_a = history[0] if history else none %}
         {% set moat_dir = signals.get("moat_direction") if signals else none %}
@@ -696,7 +696,7 @@
         {% elif moat_dir or (latest_a and latest_a.reasoning) %}
         {% if moat_dir %}
         <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:12px">
-          <span style="font-size:13px;font-weight:600;color:var(--ink)">方向判断：</span>
+          <span style="font-size:13px;font-weight:600;color:var(--ink)">{{ t.lbl_moat_direction }}</span>
           <span style="font-size:13px;padding:3px 10px;border-radius:12px;font-weight:600;
             background:{% if '拓宽' in moat_dir %}#e8f5e9{% elif '收窄' in moat_dir %}#fdecea{% else %}#f5f0e8{% endif %};
             color:{% if '拓宽' in moat_dir %}#2e7d32{% elif '收窄' in moat_dir %}#c62828{% else %}var(--ink-2){% endif %}">
@@ -708,7 +708,7 @@
         <p class="fund-text" style="margin-top:8px">{{ latest_a.reasoning }}</p>
         {% endif %}
         {% else %}
-        <p class="fund-note" style="padding:12px 0">护城河分析将在下次运行「巴菲特怎么看」后自动生成</p>
+        <p class="fund-note" style="padding:12px 0">{{ t.lbl_moat_pending }}</p>
         {% endif %}
       </section>
 
@@ -716,7 +716,7 @@
       {% if market == "cn" %}
       {% set tech = signals.get("technicals", {}) if signals else {} %}
       <section class="fund-section" style="margin-top:32px">
-        <div class="fund-section-label">技术支撑位 &amp; 机构成本参考</div>
+        <div class="fund-section-label">{{ t.lbl_tech_levels }}</div>
         <hr class="section-rule">
         {% if tech %}
         {% set cur = price.price if price else none %}
@@ -732,8 +732,8 @@
         <div class="tech-ladder">
           {% set above_levels = [] %}
           {% for key, name, desc in [
-              ("ma60","MA60","季线（60日均线）"),("ma120","MA120","半年线（120日均线）"),
-              ("ma250","MA250","年线（250日均线）"),("ma20","MA20","月线（20日均线）")] %}
+              ("ma60","MA60","60-day"),("ma120","MA120","120-day"),
+              ("ma250","MA250","250-day"),("ma20","MA20","20-day")] %}
             {% set val = tech.get(key) %}
             {% set pct = tech.get("price_vs_" ~ key) %}
             {% if val and pct is not none and pct < 0 %}
@@ -755,20 +755,20 @@
           <div class="tech-current-row">
             <div class="tech-current-dot"></div>
             <span class="tech-current-price">¥{{ "%.2f"|format(cur) }}</span>
-            <span class="tech-current-label">现价</span>
+            <span class="tech-current-label">{{ t.lbl_current_price_label }}</span>
             {% if ns.above == ns.total and ns.total > 0 %}
-              <span style="font-size:11px;color:#c62828;margin-left:auto;font-weight:600">⚠ 全部均线跌穿</span>
+              <span style="font-size:11px;color:#c62828;margin-left:auto;font-weight:600">⚠ All MAs below</span>
             {% elif ns.above == 0 %}
-              <span style="font-size:11px;color:#2e7d32;margin-left:auto;font-weight:600">✓ 全部均线上方</span>
+              <span style="font-size:11px;color:#2e7d32;margin-left:auto;font-weight:600">✓ All MAs above</span>
             {% else %}
-              <span style="font-size:11px;color:var(--ink-muted);margin-left:auto">{{ ns.above }} 压 / {{ ns.total - ns.above }} 撑</span>
+              <span style="font-size:11px;color:var(--ink-muted);margin-left:auto">{{ ns.above }} below / {{ ns.total - ns.above }} above</span>
             {% endif %}
           </div>
           {% endif %}
 
           {% for key, name, desc in [
-              ("ma60","MA60","季线（60日均线）"),("ma120","MA120","半年线（120日均线）"),
-              ("ma250","MA250","年线（250日均线）"),("ma20","MA20","月线（20日均线）")] %}
+              ("ma60","MA60","60-day"),("ma120","MA120","120-day"),
+              ("ma250","MA250","250-day"),("ma20","MA20","20-day")] %}
             {% set val = tech.get(key) %}
             {% set pct = tech.get("price_vs_" ~ key) %}
             {% if val and pct is not none and pct >= 0 %}
@@ -785,9 +785,9 @@
         </div>
 
         {% if ns.above == ns.total and ns.total > 0 %}
-        <div class="tech-danger-banner">⚠ 现价已跌穿全部 {{ ns.total }} 条均线支撑，各均线从"地板"变成"天花板"——反弹后可能遇阻，需要新增成交量才能收复。</div>
+        <div class="tech-danger-banner">⚠ Price has broken below all {{ ns.total }} moving average supports — MAs may now act as resistance on rebounds. New volume needed to recover.</div>
         {% elif ns.above == 0 and ns.total > 0 %}
-        <div class="tech-safe-banner">✓ 现价在全部均线之上，形成多层支撑，趋势健康。</div>
+        <div class="tech-safe-banner">✓ Price is above all moving averages — multi-layer support in place, trend is healthy.</div>
         {% endif %}
 
         {% set v60 = tech.get("vwap60") %}{% set p60 = tech.get("price_vs_vwap60") %}
@@ -796,34 +796,34 @@
         <div class="tech-vwap-block">
           {% if v60 %}
           <div class="tech-vwap-item">
-            <span class="tech-vwap-label">近期机构成本 (60日 VWAP)</span>
+            <span class="tech-vwap-label">{{ t.lbl_vwap_recent_cost }}</span>
             <span class="tech-vwap-val">¥{{ v60 }}</span>
             {% if p60 is not none %}
             <span class="tech-vwap-note" style="color:{% if p60 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
-              现价{% if p60 >= 0 %}高于 +{{ p60|round(1) }}%，近期买入机构普遍盈利{% else %}低于 {{ p60|abs|round(1) }}%，{% if p60 < -5 %}近期买入者大多套牢{% else %}近期买入成本略高{% endif %}{% endif %}
+              {% if p60 >= 0 %}+{{ p60|round(1) }}% above — recent buyers profitable{% else %}-{{ p60|abs|round(1) }}% below — {% if p60 < -5 %}most recent buyers trapped{% else %}slightly underwater{% endif %}{% endif %}
             </span>
             {% endif %}
           </div>
           {% endif %}
           {% if v120 %}
           <div class="tech-vwap-item">
-            <span class="tech-vwap-label">中期机构成本 (120日 VWAP)</span>
+            <span class="tech-vwap-label">{{ t.lbl_vwap_mid_cost }}</span>
             <span class="tech-vwap-val">¥{{ v120 }}</span>
             {% if p120 is not none %}
             <span class="tech-vwap-note" style="color:{% if p120 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
-              现价{% if p120 >= 0 %}高于 +{{ p120|round(1) }}%，中期持仓整体盈利{% else %}低于 {{ p120|abs|round(1) }}%，{% if p120 < -5 %}中期持仓普遍套牢{% else %}中期成本略高{% endif %}{% endif %}
+              {% if p120 >= 0 %}+{{ p120|round(1) }}% above — mid-term holders profitable{% else %}-{{ p120|abs|round(1) }}% below — {% if p120 < -5 %}mid-term holders mostly trapped{% else %}mid-term cost slightly high{% endif %}{% endif %}
             </span>
             {% endif %}
           </div>
           {% endif %}
           <p class="tech-vwap-footnote">
-            <strong>VWAP（成交量加权均价）</strong>= 把每天价格按成交量加权平均，反映该时间段市场实际成交的平均成本。60/120 日 VWAP 可视为"大户近期平均建仓成本"的参考——若现价低于 VWAP，说明大多数近期买入者处于亏损状态，有一定解套抛压。
+            <strong>VWAP (Volume-Weighted Average Price)</strong> = price averaged by daily volume, reflecting the average cost of actual trades over the period. 60/120-day VWAP approximates the average entry cost of large players — if price is below VWAP, most recent buyers are underwater and may create selling pressure.
           </p>
         </div>
         {% endif %}
 
         {% else %}
-        <p class="fund-note">技术数据尚未生成，重新分析后自动填充</p>
+        <p class="fund-note">{{ t.lbl_tech_data_pending }}</p>
         {% endif %}
       </section>
       {% endif %}{# end market == cn #}
@@ -831,11 +831,11 @@
       {# 价格历史 #}
       {% if prices %}
       <section class="fund-section" style="margin-top:24px">
-        <div class="fund-section-label">价格历史</div>
+        <div class="fund-section-label">{{ t.lbl_price_history }}</div>
         <hr class="section-rule">
         <div style="overflow-x:auto">
         <table class="data-table">
-          <thead><tr><th>时间</th><th>价格</th><th>涨跌</th><th>成交量</th></tr></thead>
+          <thead><tr><th>Time</th><th>Price</th><th>Change</th><th>Volume</th></tr></thead>
           <tbody>
           {% for p in prices %}
           <tr>
@@ -861,23 +861,23 @@
       {% if events %}
       <div class="event-timeline">
         {% set type_labels = {
-          'st_trigger':               'ST触发',
-          'st_lifted':                'ST解除',
-          'restructuring_announced':  '重整公告',
-          'restructuring_vote':       '重整表决',
-          'restructuring_approved':   '重整批准',
-          'rights_issue':             '供股/配股',
-          'bonus_share':              '转增股本',
-          'name_change':              '公司改名',
-          'delist_warning':           '退市警示',
-          'delist_final':             '退市',
-          'major_shareholder_change': '大股东变动',
-          'scheme_risk':              '⚠️ 传销/商业盘风险'
+          'st_trigger':               t.ev_st_trigger,
+          'st_lifted':                t.ev_st_lifted,
+          'restructuring_announced':  t.ev_restructuring_announced,
+          'restructuring_vote':       t.ev_restructuring_vote,
+          'restructuring_approved':   t.ev_restructuring_approved,
+          'rights_issue':             t.ev_rights_issue,
+          'bonus_share':              t.ev_bonus_share,
+          'name_change':              t.ev_name_change,
+          'delist_warning':           t.ev_delist_warning,
+          'delist_final':             t.ev_delist_final,
+          'major_shareholder_change': t.ev_major_shareholder,
+          'scheme_risk':              t.ev_scheme_risk
         } %}
         {% for ev in events %}
         <div class="event-item event-type-{{ ev.event_type }}">
           <div class="event-meta">
-            <span class="event-date">{{ ev.event_date or '日期未知' }}</span>
+            <span class="event-date">{{ ev.event_date or t.ev_date_unknown }}</span>
             <span class="event-type-label">{{ type_labels.get(ev.event_type, ev.event_type) }}</span>
             <span class="event-source">{{ ev.source }}</span>
           </div>
@@ -886,30 +886,30 @@
         {% endfor %}
       </div>
       {% else %}
-      <p class="empty-hint">暂无记录事件。如有重整进展、供股、改名等重要事件，可在下方手动录入。</p>
+      <p class="empty-hint">{{ t.lbl_no_events }}</p>
       {% endif %}
 
       {% if session.role == 'admin' %}
       <div class="event-add-form">
-        <h4>录入事件</h4>
+        <h4>{{ t.lbl_add_event }}</h4>
         <div class="event-form-row">
           <select id="evType">
-            <option value="restructuring_announced">重整公告</option>
-            <option value="restructuring_vote">重整表决</option>
-            <option value="restructuring_approved">重整批准</option>
-            <option value="st_trigger">ST触发</option>
-            <option value="st_lifted">ST解除</option>
-            <option value="rights_issue">供股/配股</option>
-            <option value="bonus_share">转增股本</option>
-            <option value="name_change">公司改名</option>
-            <option value="delist_warning">退市警示</option>
-            <option value="major_shareholder_change">大股东变动</option>
-            <option value="scheme_risk">⚠️ 传销/商业盘风险</option>
+            <option value="restructuring_announced">{{ t.ev_restructuring_announced }}</option>
+            <option value="restructuring_vote">{{ t.ev_restructuring_vote }}</option>
+            <option value="restructuring_approved">{{ t.ev_restructuring_approved }}</option>
+            <option value="st_trigger">{{ t.ev_st_trigger }}</option>
+            <option value="st_lifted">{{ t.ev_st_lifted }}</option>
+            <option value="rights_issue">{{ t.ev_rights_issue }}</option>
+            <option value="bonus_share">{{ t.ev_bonus_share }}</option>
+            <option value="name_change">{{ t.ev_name_change }}</option>
+            <option value="delist_warning">{{ t.ev_delist_warning }}</option>
+            <option value="major_shareholder_change">{{ t.ev_major_shareholder }}</option>
+            <option value="scheme_risk">{{ t.ev_scheme_risk }}</option>
           </select>
-          <input type="date" id="evDate" placeholder="事件日期">
+          <input type="date" id="evDate" placeholder="{{ t.lbl_event_date_placeholder }}">
         </div>
-        <textarea id="evSummary" rows="2" placeholder="一句话摘要（例：重整计划草案获法院受理，债权申报截止 2025-06-30）"></textarea>
-        <button onclick="submitEvent('{{ stock.code }}')">录入</button>
+        <textarea id="evSummary" rows="2" placeholder="{{ t.lbl_event_summary_placeholder }}"></textarea>
+        <button onclick="submitEvent('{{ stock.code }}')">{{ t.btn_record_event }}</button>
         <span id="evMsg" style="font-size:12px;margin-left:8px"></span>
       </div>
       {% endif %}
@@ -923,7 +923,7 @@
   <div class="stock-remove-zone">
     <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
       <button type="submit" class="btn-remove-stock"
-              onclick="return confirm('从自选股移除 {{ stock.name }}？')">从自选股移除</button>
+              onclick="return confirm('{{ t.btn_remove_stock }} {{ stock.name }}?')">{{ t.btn_remove_stock }}</button>
     </form>
   </div>
   {% endif %}
@@ -935,7 +935,7 @@
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content letter-modal-content">
       <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
-        <h6 class="modal-title" style="font-family:Georgia,serif">致你 — 关于 {{ stock.name }}</h6>
+        <h6 class="modal-title" style="font-family:Georgia,serif">{{ t.letter_modal_for }} {{ stock.name }}</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body letter-body" id="letter-modal-body"></div>
@@ -947,6 +947,24 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+const _t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  gen_letter:       {{ t.js_gen_letter | tojson }},
+  letter_ready:     {{ t.js_letter_ready | tojson }},
+  generating:       {{ t.js_generating | tojson }},
+  read_letter:      {{ t.js_read_letter | tojson }},
+  letter_ready_lbl: {{ t.js_letter_ready_label | tojson }},
+  reduce_zone:      {{ t.js_reduce_zone | tojson }},
+  buy_zone_1:       {{ t.js_buy_zone_1 | tojson }},
+  buy_zone_2:       {{ t.js_buy_zone_2 | tojson }},
+  position_size:    {{ t.js_position_size | tojson }},
+  key_watch:        {{ t.js_key_watch | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+};
+
 let _ffChartInited = false;
 function _initFfChart() {
   if (_ffChartInited) return;
@@ -959,13 +977,13 @@ function _initFfChart() {
   const colors = nets.map(v => v >= 0 ? 'rgba(45,122,45,0.75)' : 'rgba(192,57,43,0.75)');
   new Chart(canvas, {
     type: 'bar',
-    data: { labels, datasets: [{ label: '主力净流入（亿）', data: nets, backgroundColor: colors, borderWidth: 1 }] },
+    data: { labels, datasets: [{ label: 'Main Flow (B)', data: nets, backgroundColor: colors, borderWidth: 1 }] },
     options: {
       responsive: true,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '流入 +' : '流出 ') + Math.abs(ctx.raw).toFixed(2) + ' 亿' } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? 'In +' : 'Out ') + Math.abs(ctx.raw).toFixed(2) + 'B' } } },
       scales: {
         x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
-        y: { ticks: { font: { size: 11 }, color: '#666', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '亿' }, grid: { color: '#e8e4de' } }
+        y: { ticks: { font: { size: 11 }, color: '#666', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'B' }, grid: { color: '#e8e4de' } }
       }
     }
   });
@@ -1012,7 +1030,7 @@ async function triggerAnalysis(code) {
   const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
-    _showPending('全量刷新中（约3分钟）…', data.job_id);
+    _showPending(_t.full_refresh_msg, data.job_id);
     pollJob(data.job_id);
   }
 }
@@ -1021,7 +1039,7 @@ async function triggerAnalysisOnly(code) {
   const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
-    _showPending('定量评级中（约3秒）…', data.job_id);
+    _showPending(_t.quant_only_msg, data.job_id);
     pollJob(data.job_id);
   }
 }
@@ -1029,25 +1047,25 @@ async function triggerAnalysisOnly(code) {
 function _resetLetterButton(btn) {
   if (!btn) return;
   btn.disabled = false;
-  btn.textContent = '📄 生成股东信';
+  btn.textContent = _t.gen_letter;
 }
 
 function _markLetterReady(code, btn) {
   const pendingBlock = document.getElementById('pending-block');
   if (pendingBlock) {
-    pendingBlock.innerHTML = '<span style="color:var(--green)">股东信已生成</span>';
+    pendingBlock.innerHTML = `<span style="color:var(--green)">${_t.letter_ready}</span>`;
     pendingBlock.removeAttribute('data-job');
   }
 
   const actions = document.getElementById('stock-header-actions');
-  if (actions && actions.textContent.includes('分析中')) {
+  if (actions && actions.textContent.includes('…')) {
     actions.innerHTML = `
-      <button onclick="triggerAnalysisOnly('${code}')" class="btn-ink btn-sm">巴菲特怎么看</button>
+      <button onclick="triggerAnalysisOnly('${code}')" class="btn-ink btn-sm">${_t.buffett_check}</button>
       <div class="more-wrap" id="more-wrap-${code}">
-        <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('${code}')" title="更多操作">⋯</button>
+        <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('${code}')" title="More">⋯</button>
         <div class="more-menu" id="more-menu-${code}">
-          <button onclick="triggerNewsRefresh('${code}');closeMoreMenu('${code}')">更新新闻</button>
-          <button onclick="triggerAnalysis('${code}');closeMoreMenu('${code}')">全量刷新</button>
+          <button onclick="triggerNewsRefresh('${code}');closeMoreMenu('${code}')">${_t.refresh_news}</button>
+          <button onclick="triggerAnalysis('${code}');closeMoreMenu('${code}')">${_t.full_refresh}</button>
         </div>
       </div>`;
   }
@@ -1055,8 +1073,8 @@ function _markLetterReady(code, btn) {
   const entry = btn ? btn.closest('.letter-entry') : document.querySelector('.letter-entry');
   if (entry) {
     entry.innerHTML = `
-      <button onclick="showLetter()" class="btn-outline-ink btn-sm">📄 读股东信</button>
-      <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">已生成</span>`;
+      <button onclick="showLetter()" class="btn-outline-ink btn-sm">${_t.read_letter}</button>
+      <span style="font-size:11px;color:var(--ink-faint);margin-left:8px">${_t.letter_ready_lbl}</span>`;
   }
 }
 
@@ -1078,7 +1096,7 @@ async function triggerLetterGeneration(code) {
   const btn = document.getElementById('letter-btn-' + code);
   if (btn) {
     btn.disabled = true;
-    btn.textContent = '⏳ 生成中…';
+    btn.textContent = _t.generating;
   }
 
   try {
@@ -1115,33 +1133,33 @@ async function triggerLetterGeneration(code) {
               _reloadOnLetterModalClose();
             } else {
               _resetLetterButton(btn);
-              alert('股东信任务已完成，但暂时还没读到信件内容，请刷新页面再看一次。');
+              alert('Letter job done but no content yet — please refresh.');
             }
           } catch (e) {
             console.error('fetch latest letter failed', e);
             _resetLetterButton(btn);
-            alert('股东信已生成，但读取结果时出了点问题。请刷新页面再看一次。');
+            alert('Letter generated, but could not read it. Please refresh.');
           }
         } else if (d.status === 'failed') {
           clearInterval(iv);
           _resetLetterButton(btn);
-          alert(d.error || '生成失败（Groq 限速），请稍后再试');
+          alert(d.error || 'Generation failed (Groq rate limit) — try again later.');
         } else if (pollCount >= maxPolls) {
           clearInterval(iv);
           _resetLetterButton(btn);
-          alert('股东信生成时间比平时久，请稍后刷新页面查看。');
+          alert('Letter is taking longer than usual — refresh later to check.');
         }
       } catch (e) {
         clearInterval(iv);
         console.error('poll letter job failed', e);
         _resetLetterButton(btn);
-        alert('轮询生成状态时出错，请稍后刷新页面查看。');
+        alert('Error polling letter status — please refresh.');
       }
     }, 4000);
   } catch (e) {
     console.error('trigger letter generation failed', e);
     _resetLetterButton(btn);
-    alert('启动股东信生成失败，请稍后重试。');
+    alert('Failed to start letter generation — please retry.');
   }
 }
 
@@ -1159,17 +1177,17 @@ async function triggerNewsRefresh(code) {
   const resp = await fetch(`/api/refresh-news/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
-    _showPending('更新新闻中…', data.job_id);
+    _showPending(_t.refresh_news + '…', data.job_id);
     pollJob(data.job_id);
   }
 }
 
 const _STAGES = [
-  { label: '行情数据…', pct: 15, after: 0  },
-  { label: '财务数据…', pct: 35, after: 6  },
-  { label: '新闻资讯…', pct: 55, after: 14 },
-  { label: '定量评级…', pct: 72, after: 26 },
-  { label: 'AI 分析…',  pct: 88, after: 36 },
+  { label: 'Price data…',    pct: 15, after: 0  },
+  { label: 'Financials…',    pct: 35, after: 6  },
+  { label: 'News…',          pct: 55, after: 14 },
+  { label: 'Quant rating…',  pct: 72, after: 26 },
+  { label: 'AI analysis…',   pct: 88, after: 36 },
 ];
 
 function _startProgress(suffix) {
@@ -1190,7 +1208,7 @@ function _finishProgress(suffix, grade) {
   const fill  = document.getElementById('pfill-'  + suffix);
   const label = document.getElementById('plabel-' + suffix);
   if (fill)  { fill.style.transition = 'width .4s ease'; fill.style.width = '100%'; }
-  if (label) label.textContent = grade ? `评级：${grade}` : '完成';
+  if (label) label.textContent = grade ? `Grade: ${grade}` : 'Done';
 }
 
 function _showPending(msg, jobId) {
@@ -1223,7 +1241,10 @@ function _showPending(msg, jobId) {
 function pollJob(jobId) {
   const pHdr = _startProgress(jobId);
   const pTab = _startProgress('tab-' + jobId);
+  let pollCount = 0;
+  const maxPolls = 60; // 60 × 5s = 5min, covers full pipeline
   const iv = setInterval(async () => {
+    pollCount += 1;
     try {
       const d = await (await fetch(`/api/job/${jobId}`)).json();
       if (d.status === 'done') {
@@ -1239,7 +1260,13 @@ function pollJob(jobId) {
         if (pHdr) clearInterval(pHdr);
         if (pTab) clearInterval(pTab);
         const pb = document.getElementById('pending-block');
-        if (pb) pb.innerHTML = '<span style="color:var(--red)">分析失败，请重试</span>';
+        if (pb) pb.innerHTML = '<span style="color:var(--red)">Analysis failed — please retry</span>';
+      } else if (pollCount >= maxPolls) {
+        clearInterval(iv);
+        if (pHdr) clearInterval(pHdr);
+        if (pTab) clearInterval(pTab);
+        const pb = document.getElementById('pending-block');
+        if (pb) pb.innerHTML = '<span style="color:var(--ink-muted)">Analysis is taking a while — refresh to check results</span>';
       }
     } catch(e) { clearInterval(iv); if (pHdr) clearInterval(pHdr); if (pTab) clearInterval(pTab); }
   }, 5000);
@@ -1250,18 +1277,18 @@ function showLetter() {
   {% if analysis and analysis.letter_html %}
   body.innerHTML = `
     <div class="letter-paper">
-      <div class="letter-location">奥马哈，内布拉斯加州 · {{ analysis.analysis_date }}</div>
-      <div class="letter-salutation">致你，</div>
+      <div class="letter-location">{{ t.letter_location }} · {{ analysis.analysis_date }}</div>
+      <div class="letter-salutation">{{ t.letter_salutation }}</div>
       <div class="letter-body-text">{{ analysis.letter_html | replace('\n','<br>') | safe }}</div>
-      <div class="letter-sig">沃伦·巴菲特（私人版）<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
+      <div class="letter-sig">{{ t.letter_sig }}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
       <div class="letter-grade">
         <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade or '—' }}</span>
         <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion }}</span>
       </div>
-      <div class="letter-footer">数据截至 {{ analysis.analysis_date }} · 本分析不构成投资建议</div>
+      <div class="letter-footer">{{ t.letter_data_as_of }} {{ analysis.analysis_date }} · {{ t.letter_disclaimer }}</div>
     </div>`;
   {% else %}
-  body.textContent = '暂无分析信件';
+  body.textContent = '{{ t.letter_none }}';
   {% endif %}
   new bootstrap.Modal(document.getElementById('letter-modal')).show();
 }
@@ -1276,14 +1303,14 @@ function submitEvent(code) {
   const date    = document.getElementById('evDate').value;
   const summary = document.getElementById('evSummary').value.trim();
   const msg     = document.getElementById('evMsg');
-  if (!summary) { msg.textContent = '请填写摘要'; return; }
+  if (!summary) { msg.textContent = 'Please fill in a summary.'; return; }
   fetch(`/api/stock/${code}/events`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({event_type: type, event_date: date, summary})
   }).then(r => r.json()).then(d => {
-    if (d.ok) { msg.textContent = '✓ 已录入'; location.reload(); }
-    else       msg.textContent = '错误: ' + (d.error || '未知');
+    if (d.ok) { msg.textContent = '✓ Recorded'; location.reload(); }
+    else       msg.textContent = 'Error: ' + (d.error || 'unknown');
   });
 }
 </script>
