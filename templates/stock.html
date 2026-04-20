@@ -146,9 +146,6 @@
       {% elif analysis %}
       <div class="brief-block">
         <div class="brief-header">
-          <span class="wax-seal grade-reveal grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') if analysis.grade else 'c' }}">
-            {{ analysis.grade or '—' }}
-          </span>
           <span class="brief-conclusion">{{ analysis.conclusion }}</span>
           {% if analysis.framework_used == 'fund_v1' %}
           <span class="fund-badge">{{ analysis.fund_flow_summary or 'Fund' }}</span>
