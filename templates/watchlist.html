@@ -82,9 +82,9 @@
   {# 添加股票面板 #}
   <div id="add-panel" class="add-panel hidden">
     <div class="search-type-seg" id="wl-search-type-seg">
-      <button class="seg-btn{% if user_region == 'cn' %} active{% endif %}" data-type="cn" onclick="setWlSearchType('cn',this)">A股</button>
-      <button class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">基金</button>
-      <button class="seg-btn{% if user_region != 'cn' %} active{% endif %}" data-type="intl" onclick="setWlSearchType('intl',this)">港/美/NZ</button>
+      <button type="button" class="seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setWlSearchType('cn',this)">A股</button>
+      <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">基金</button>
+      <button type="button" class="seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setWlSearchType('intl',this)">港/美/NZ</button>
     </div>
     <div class="stock-search-wrap">
       <input type="text" id="search-q" class="search-input"
@@ -407,6 +407,7 @@ const T = {
   letterLoading:    "{{ t.letter_loading }}",
   letterNone:       "{{ t.letter_none }}",
   searchLoading:    "{{ t.search_loading }}",
+  searchLoadingCache: "{{ t.search_loading_cache }}",
   searchNoResults:  "{{ t.search_no_results }}",
   searchError:      "{{ t.search_error }}",
   letterTitlePrefix:"{{ t.letter_title_prefix }}",
@@ -824,28 +825,38 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId, sele
   if (!inp || !drop) return;
   let timer, composing = false;
 
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-
   inp.addEventListener('compositionstart', () => { composing = true; });
-  inp.addEventListener('compositionend',   () => {
+  inp.addEventListener('compositionend', () => {
     composing = false;
     clearTimeout(timer);
     const q = inp.value.trim();
-    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 100);
+    if (q.length < 2) { drop.innerHTML = ''; drop.classList.remove('open'); return; }
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 150);
   });
+
   inp.addEventListener('input', () => {
     if (composing) return;
     clearTimeout(timer);
     const q = inp.value.trim();
-    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 350);
+    if (!q) { drop.innerHTML = ''; drop.classList.remove('open'); return; }
+    if (q.length < 2) return;
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 500);
   });
+
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !composing) {
+      e.preventDefault();
+      clearTimeout(timer);
+      const q = inp.value.trim();
+      if (q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp);
+    }
+  });
+
   document.addEventListener('click', e => {
     if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('open');
   });
 }
-let _wlSearchType = '{{ "cn" if user_region == "cn" else "intl" }}';
+let _wlSearchType = '{{ "cn" if locale == "zh" else "intl" }}';
 function setWlSearchType(type, btn) {
   _wlSearchType = type;
   document.querySelectorAll('#wl-search-type-seg .seg-btn').forEach(b => b.classList.remove('active'));
@@ -860,11 +871,11 @@ async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selected
   try {
     const items = await (await fetch('/api/search?q=' + encodeURIComponent(q) + '&type=' + _wlSearchType)).json();
 
-    if (inp.value.trim() !== q) return;
+    if (!inp.value.trim()) return; // user cleared the box
 
     if (items && items.loading) {
-      drop.innerHTML=`<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`;
-      setTimeout(() => { if (inp.value.trim() === q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp); }, 1500);
+      drop.innerHTML=`<div class="search-empty"><i class="bi bi-hourglass-split"></i> ${T.searchLoadingCache}</div>`;
+      setTimeout(() => { if (inp.value.trim()) doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp); }, 1500);
       return;
     }
 
@@ -884,7 +895,7 @@ async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selected
       </div>`;
     }).join('');
   } catch(e) {
-    if (inp.value.trim() !== q) return;
+    if (!inp.value.trim()) return;
     drop.innerHTML=`<div class="search-empty">${T.searchError}</div>`;
   }
 }

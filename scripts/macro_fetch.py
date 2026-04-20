@@ -202,6 +202,55 @@ def fetch_fomc_news(limit: int = 3) -> list:
     return items
 
 
+# ── A股/中国经济新闻（Google News RSS）────────────────
+def fetch_cn_market_news(limit: int = 8) -> list:
+    """
+    中国财经市场新闻（Google News RSS，zh-CN）
+    适合 CN 区域用户首页「本地新闻」栏。
+    """
+    QUERIES = [
+        ("A股 股市 市场", "A股"),
+        ("中国经济 宏观政策", "宏观"),
+    ]
+    CN_KEYWORDS = {
+        "股市", "a股", "港股", "上证", "深证", "创业板", "沪深",
+        "经济", "政策", "央行", "利率", "汇率", "通胀", "gdp",
+        "上市", "基金", "债券", "人民币", "贸易", "出口", "进口",
+    }
+    items = []
+    seen = set()
+    for query, section in QUERIES:
+        try:
+            encoded = requests.utils.quote(query)
+            url = f"https://news.google.com/rss/search?q={encoded}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
+            feed = feedparser.parse(url)
+            for e in feed.entries[:15]:
+                title = e.get("title", "")[:120]
+                link = e.get("link", "")
+                key = title[:40]
+                if not title or key in seen:
+                    continue
+                tl = title.lower()
+                if not any(k in tl for k in CN_KEYWORDS):
+                    continue
+                seen.add(key)
+                source = e.get("source", {}).get("title", "Google News") if hasattr(e.get("source", ""), "get") else "Google News"
+                items.append({
+                    "title": title,
+                    "link": link,
+                    "source": source,
+                    "time": e.get("published", "")[:16],
+                    "section": section,
+                })
+                if len(items) >= limit:
+                    break
+        except Exception:
+            pass
+        if len(items) >= limit:
+            break
+    return items
+
+
 # ── 挖掘机月销量（Google News RSS）────────────────────
 def fetch_excavator_sales() -> dict:
     """

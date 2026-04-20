@@ -66,9 +66,9 @@
         <input type="hidden" name="market" id="add-market">
         <input type="hidden" name="asset_type" id="add-asset-type">
         <div class="hc-search-type-seg" id="search-type-seg">
-          <button class="hc-seg-btn{% if user_region == 'cn' %} active{% endif %}" data-type="cn" onclick="setSearchType('cn',this)">A股</button>
-          <button class="hc-seg-btn" data-type="fund" onclick="setSearchType('fund',this)">基金</button>
-          <button class="hc-seg-btn{% if user_region != 'cn' %} active{% endif %}" data-type="intl" onclick="setSearchType('intl',this)">港/美/NZ</button>
+          <button type="button" class="hc-seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setSearchType('cn',this)">A股</button>
+          <button type="button" class="hc-seg-btn" data-type="fund" onclick="setSearchType('fund',this)">基金</button>
+          <button type="button" class="hc-seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setSearchType('intl',this)">港/美/NZ</button>
         </div>
         <div class="hc-search-wrap">
           <input type="text" id="search-q" class="hc-search-input"
@@ -83,9 +83,9 @@
     {# 卡片 4：今日预言 #}
     <a href="#" class="home-card home-card-quest">
       <div class="hc-main">
-        <div class="hc-quest-kicker">今日预言</div>
-        <div class="hc-title">市场向何处而去？</div>
-        <div class="hc-quest-sub">读三则线索，落笔押注，七日后见分晓</div>
+        <div class="hc-quest-kicker">{{ t.home_card_quest_kicker }}</div>
+        <div class="hc-title">{{ t.home_card_quest_title }}</div>
+        <div class="hc-quest-sub">{{ t.home_card_quest_sub }}</div>
       </div>
       <div class="hc-right hc-quest-icon">✒</div>
     </a>
@@ -102,7 +102,7 @@
     <div class="news-col">
       <div class="col-header">
         <span class="section-label">{{ t.tab_local }}</span>
-        <span class="col-subhead">New Zealand · Markets &amp; Economy</span>
+        <span class="col-subhead">{% if user_region == 'cn' %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
       </div>
       <hr class="section-rule">
       {% if local_news %}
@@ -115,9 +115,9 @@
         </div>
         {% endfor %}
       {% else %}
-        <p class="empty-state">点「刷新」加载 NZ 新闻</p>
+        <p class="empty-state">{{ t.local_col_empty }}</p>
       {% endif %}
-      {% if market.nz_sectors %}
+      {% if market.nz_sectors and user_region != 'cn' %}
       <div style="margin-top:24px">
         <span class="section-label" style="font-size:10px">NZX SECTORS</span>
         <hr class="section-rule">
@@ -327,22 +327,31 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
 
   let timer, composing = false;
 
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-
   inp.addEventListener('compositionstart', () => { composing = true; });
-  inp.addEventListener('compositionend',   () => {
+  inp.addEventListener('compositionend', () => {
     composing = false;
     clearTimeout(timer);
     const q = inp.value.trim();
-    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId), 100);
+    if (q.length < 2) { drop.innerHTML = ''; drop.classList.remove('open'); return; }
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId), 150);
   });
+
   inp.addEventListener('input', () => {
     if (composing) return;
     clearTimeout(timer);
     const q = inp.value.trim();
-    if (!q) { drop.innerHTML=''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId), 350);
+    if (!q) { drop.innerHTML = ''; drop.classList.remove('open'); return; }
+    if (q.length < 2) return;
+    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId), 500);
+  });
+
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !composing) {
+      e.preventDefault();
+      clearTimeout(timer);
+      const q = inp.value.trim();
+      if (q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId);
+    }
   });
 
   document.addEventListener('click', e => {
@@ -351,7 +360,7 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
   });
 }
 
-let _searchType = '{{ "cn" if user_region == "cn" else "intl" }}';
+let _searchType = '{{ "cn" if locale == "zh" else "intl" }}';
 function setSearchType(type, btn) {
   _searchType = type;
   document.querySelectorAll('#search-type-seg .hc-seg-btn').forEach(b => b.classList.remove('active'));
@@ -361,19 +370,19 @@ function setSearchType(type, btn) {
 
 async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId) {
   const inp = document.getElementById('search-q');
-  drop.innerHTML = '<div class="search-loading"><span class="spinner-sm"></span> 搜索中…</div>';
+  drop.innerHTML = `<div class="search-loading"><span class="spinner-sm"></span> {{ t.search_loading }}</div>`;
   drop.classList.add('open');
   try {
     const resp = await fetch('/api/search?q=' + encodeURIComponent(q) + '&type=' + _searchType);
     const data = await resp.json();
-    if (inp && inp.value.trim() !== q) return;
+    if (inp && !inp.value.trim()) return; // user cleared the box
     if (data.loading) {
-      drop.innerHTML = '<div class="search-empty"><i class="bi bi-hourglass-split"></i> A股数据加载中，请稍候再试…</div>';
-      setTimeout(() => { if (inp && inp.value.trim() === q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId); }, 1500);
+      drop.innerHTML = `<div class="search-empty"><i class="bi bi-hourglass-split"></i> {{ t.search_loading_cache }}</div>`;
+      setTimeout(() => { if (inp && inp.value.trim()) doSearch(q, drop, codeId, nameId, marketId, assetTypeId); }, 1500);
       return;
     }
     const items = Array.isArray(data) ? data : [];
-    if (!items.length) { drop.innerHTML='<div class="search-empty">没有找到结果</div>'; return; }
+    if (!items.length) { drop.innerHTML=`<div class="search-empty">{{ t.search_no_results }}</div>`; return; }
     drop.innerHTML = items.map(r => {
       const at = r.asset_type || '';
       const atBadge = at && at !== '股票' ? `<span class="asset-type-tag">${at}</span>` : '';

@@ -3,6 +3,7 @@
 import db
 from radar_app.legacy.market_data import (
     NZ_SECTORS,
+    fetch_cn_market_news,
     fetch_fomc_news,
     fetch_nz_market_news,
     fetch_nzx50,
@@ -50,18 +51,24 @@ def get_market_snapshot():
     return market
 
 
-def get_local_news():
+def get_local_news(region="nz"):
     local_news = []
-    try:
-        for item in fetch_nz_market_news()[:8]:
-            local_news.append({**item, "section": "Market"})
-    except Exception:
-        pass
-    try:
-        for item in fetch_rbnz_news(limit=3):
-            local_news.append({**item, "section": "RBNZ"})
-    except Exception:
-        pass
+    if region == "cn":
+        try:
+            local_news = fetch_cn_market_news(limit=10)
+        except Exception:
+            pass
+    else:
+        try:
+            for item in fetch_nz_market_news()[:8]:
+                local_news.append({**item, "section": "Market"})
+        except Exception:
+            pass
+        try:
+            for item in fetch_rbnz_news(limit=3):
+                local_news.append({**item, "section": "RBNZ"})
+        except Exception:
+            pass
     return local_news
 
 
