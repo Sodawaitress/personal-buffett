@@ -31,21 +31,26 @@ def get_stock(code):
         return dict(row) if row else None
 
 
-def get_user_watchlist(user_id):
+def get_user_watchlist(user_id, status=None, market=None, asset_type=None):
+    query = """
+        SELECT w.*, s.name, s.name_cn, s.market, s.currency, s.sector, s.asset_type
+        FROM user_watchlist w
+        JOIN stocks s ON s.code = w.stock_code
+        WHERE w.user_id = ?
+    """
+    params = [user_id]
+    if status:
+        query += " AND w.status = ?"
+        params.append(status)
+    if market:
+        query += " AND s.market = ?"
+        params.append(market)
+    if asset_type:
+        query += " AND s.asset_type = ?"
+        params.append(asset_type)
+    query += " ORDER BY w.added_at"
     with get_conn() as c:
-        return [
-            dict(r)
-            for r in c.execute(
-                """
-            SELECT w.*, s.name, s.name_cn, s.market, s.currency, s.sector, s.asset_type
-            FROM user_watchlist w
-            JOIN stocks s ON s.code = w.stock_code
-            WHERE w.user_id=?
-            ORDER BY w.added_at
-        """,
-                (user_id,),
-            )
-        ]
+        return [dict(r) for r in c.execute(query, params)]
 
 
 def add_user_stock(user_id, code, name, market, notes="", name_cn=None, exchange=None, sector=None, currency=None, asset_type=None):
