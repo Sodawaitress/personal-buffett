@@ -693,6 +693,8 @@ def index():
 def brief_page():
     db.init_db(); db._migrate()
     user_id  = session["user_id"]
+    locale   = session.get("locale", "en")
+    t        = _load_strings(locale)
     watchlist = [w for w in db.get_user_watchlist(user_id)
                  if w.get("status", "watching") != "sold"]
 
@@ -716,15 +718,15 @@ def brief_page():
     def _compute_alert(s):
         grade = (s.get("grade") or "—").replace("+","").replace("-","")
         if grade in ("C","D"):
-            return "warn", f"Grade {s['grade']} — review fundamentals"
+            return "warn", t["alert_warn_grade"].format(grade=s.get("grade","—"))
         net = s.get("main_net")
         if net is not None and net < -0.5:
-            return "warn", f"Institutional outflow {net:.2f}B"
+            return "warn", t["alert_warn_outflow"].format(net=net)
         conc = s.get("conclusion","")
         if conc in ("卖出","减持","Sell","Reduce"):
             return "warn", conc
         r = (s.get("reasoning") or "")[:60]
-        return "ok", (r+"…") if r else "No issues"
+        return "ok", (r+"…") if r else t["alert_ok_fallback"]
 
     for s in stocks:
         s["alert_level"], s["alert_reason"] = _compute_alert(s)
