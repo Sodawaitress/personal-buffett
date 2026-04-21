@@ -21,4 +21,5 @@ def register_dashboard_routes(app):
     @login_required
     def brief_page():
         ensure_db_ready()
-        return render_template("brief.html", **build_brief_context(session["user_id"]))
+        locale = session.get("locale", "en")
+        return render_template("brief.html", **build_brief_context(session["user_id"], locale))

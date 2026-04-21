@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 
+from radar_app.shared.i18n import load_strings
 from radar_app.shared.market import MARKET_CURRENCY, detect_market
 from radar_app.shared.runtime import CN_TZ
 
@@ -33,18 +34,18 @@ def index_alert(stock):
     return "ok", (reasoning + "…") if reasoning else "持续关注"
 
 
-def brief_alert(stock):
+def brief_alert(stock, t):
     grade = (stock.get("grade") or "—").replace("+", "").replace("-", "")
     if grade in ("C", "D"):
-        return "warn", f"Grade {stock['grade']} — review fundamentals"
+        return "warn", t["alert_warn_grade"].format(grade=stock.get("grade", "—"))
     net = stock.get("main_net")
     if net is not None and net < -0.5:
-        return "warn", f"Institutional outflow {net:.2f}B"
+        return "warn", t["alert_warn_outflow"].format(net=net)
     conclusion = stock.get("conclusion", "")
     if conclusion in ("卖出", "减持", "Sell", "Reduce"):
         return "warn", conclusion
     reasoning = (stock.get("reasoning") or "")[:60]
-    return "ok", (reasoning + "…") if reasoning else "No issues"
+    return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
 
 def present_index_stock(row, snapshot, pending_job):
@@ -70,7 +71,7 @@ def present_index_stock(row, snapshot, pending_job):
     return stock
 
 
-def present_brief_stock(row, snapshot):
+def present_brief_stock(row, snapshot, locale="en"):
     analysis = snapshot["analysis"]
     fund_flow = snapshot["fund_flow"]
     market = row.get("market") or detect_market(row.get("stock_code") or row.get("code"))
@@ -84,7 +85,7 @@ def present_brief_stock(row, snapshot):
         "reasoning": (analysis.get("reasoning", "") or "")[:80] if analysis else "",
         "main_net": fund_flow.get("main_net") if fund_flow else None,
     }
-    stock["alert_level"], stock["alert_reason"] = brief_alert(stock)
+    stock["alert_level"], stock["alert_reason"] = brief_alert(stock, load_strings(locale))
     return stock
 
 
