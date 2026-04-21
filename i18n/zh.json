@@ -75,6 +75,7 @@
   "brief_ok_icon": "✓",
   "alert_warn_grade": "评级{grade}，基本面需关注",
   "alert_warn_outflow": "主力净流出 {net:.2f}亿，资金出逃",
+  "alert_warn_conclusion": "结论「{conclusion}」，关注执行时机",
   "alert_ok_fallback": "持续关注",
   "search_placeholder": "输入代码或名称",
   "search_loading": "搜索中…",

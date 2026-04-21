@@ -20,18 +20,18 @@ def present_portfolio_brief(portfolio_brief):
     return portfolio_brief
 
 
-def index_alert(stock):
+def index_alert(stock, t):
     grade = (stock.get("grade") or "—").replace("+", "").replace("-", "")
     if grade in ("C", "D"):
-        return "warn", f"评级{stock.get('grade', '—')}，基本面需关注"
+        return "warn", t["alert_warn_grade"].format(grade=stock.get("grade", "—"))
     net = stock.get("main_net")
     if net is not None and net < -0.5:
-        return "warn", f"主力净流出 {net:.2f}亿，资金出逃"
+        return "warn", t["alert_warn_outflow"].format(net=net)
     conclusion = stock.get("conclusion") or ""
-    if conclusion in ("卖出", "减持"):
-        return "warn", f"结论「{conclusion}」，关注执行时机"
+    if conclusion in ("卖出", "减持", "Sell", "Reduce"):
+        return "warn", t["alert_warn_conclusion"].format(conclusion=conclusion)
     reasoning = (stock.get("reasoning") or "")[:45]
-    return "ok", (reasoning + "…") if reasoning else "持续关注"
+    return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
 
 def brief_alert(stock, t):
@@ -48,7 +48,7 @@ def brief_alert(stock, t):
     return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
 
-def present_index_stock(row, snapshot, pending_job):
+def present_index_stock(row, snapshot, pending_job, locale="en"):
     analysis = snapshot["analysis"]
     fund_flow = snapshot["fund_flow"]
     market = row.get("market") or detect_market(row.get("stock_code") or row.get("code"))
@@ -67,7 +67,7 @@ def present_index_stock(row, snapshot, pending_job):
         "pending_job": pending_job,
         "analysis_date": analysis.get("analysis_date", "") if analysis else "",
     }
-    stock["alert_level"], stock["alert_reason"] = index_alert(stock)
+    stock["alert_level"], stock["alert_reason"] = index_alert(stock, load_strings(locale))
     return stock
 
 

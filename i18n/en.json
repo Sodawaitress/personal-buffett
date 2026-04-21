@@ -76,6 +76,7 @@
   "brief_ok_icon": "✓",
   "alert_warn_grade": "Grade {grade} — review fundamentals",
   "alert_warn_outflow": "Institutional outflow {net:.2f}B",
+  "alert_warn_conclusion": "Conclusion \"{conclusion}\" — watch for execution timing",
   "alert_ok_fallback": "No issues",
   "search_placeholder": "Enter ticker or name",
   "search_loading": "Searching…",

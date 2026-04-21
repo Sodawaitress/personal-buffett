@@ -23,12 +23,12 @@ from radar_app.dashboard.query import (
 from radar_app.shared.runtime import CN_TZ
 
 
-def _build_index_stocks(user_id):
+def _build_index_stocks(user_id, locale="en"):
     stocks = []
     for row in list_active_watchlist(user_id):
         code = row.get("stock_code") or row.get("code")
         market = row.get("market")
-        stocks.append(present_index_stock(row, get_stock_snapshot(code, market), get_pending_job(code)))
+        stocks.append(present_index_stock(row, get_stock_snapshot(code, market), get_pending_job(code), locale))
     return stocks
 
 
@@ -41,7 +41,7 @@ def _build_brief_stocks(user_id, locale="en"):
 
 
 def build_dashboard_context(user_id, region, locale="en"):
-    stocks = _build_index_stocks(user_id)
+    stocks = _build_index_stocks(user_id, locale)
     market = get_market_snapshot()
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
     intl_news = get_intl_stock_news(stocks)
