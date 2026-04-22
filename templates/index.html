@@ -366,7 +366,14 @@ function setSearchType(type, btn) {
   localStorage.setItem('pbc_search_type', type);
   document.querySelectorAll('#search-type-seg .hc-seg-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('search-q').focus();
+  const inp = document.getElementById('search-q');
+  const q = inp ? inp.value.trim() : '';
+  if (q) {
+    const drop = document.getElementById('search-dropdown');
+    doSearch(q, drop, 'add-code', 'add-name', 'add-market', 'add-asset-type');
+  } else {
+    inp && inp.focus();
+  }
 }
 // Restore saved search tab on page load
 (function() {
