@@ -873,7 +873,14 @@ function setWlSearchType(type, btn) {
   _wlSearchType = type;
   document.querySelectorAll('#wl-search-type-seg .seg-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('search-q').focus();
+  const inp = document.getElementById('search-q');
+  const q = inp ? inp.value.trim() : '';
+  if (q) {
+    const drop = document.getElementById('search-dropdown');
+    doSearch(q, drop, 'add-code', 'add-name', 'add-market', 'add-asset-type', 'add-selected', 'add-selected-label', 'btn-add-submit', inp);
+  } else {
+    inp && inp.focus();
+  }
 }
 
 async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp) {

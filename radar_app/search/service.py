@@ -18,12 +18,16 @@ def search_payload(query, search_type="auto"):
     if len(query) < 1:
         return jsonify([])
 
-    # Show loading spinner only for types whose cache is still warming up
+    has_cn = any("一" <= c <= "鿿" for c in query) or query.isdigit()
+
+    # Chinese query always searches A-shares regardless of what the frontend sends.
+    # This decouples search from locale/UI language settings completely.
+    if has_cn and search_type == "intl":
+        search_type = "auto"
+
     loader = _LOADING_TYPES.get(search_type)
-    if loader is None and search_type == "auto":
-        has_cn = any("\u4e00" <= c <= "\u9fff" for c in query) or query.isdigit()
-        if has_cn:
-            loader = is_cn_search_loading
+    if loader is None and search_type == "auto" and has_cn:
+        loader = is_cn_search_loading
     if loader and loader():
         return jsonify({"loading": True})
 
