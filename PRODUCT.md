@@ -2596,3 +2596,24 @@ CREATE TABLE IF NOT EXISTS user_notifications (
 - [x] 搜索「510」能列出相关 ETF
 - [x] ETF 分析框架不套 PE/ROE/护城河，给出费率/跟踪误差视角结论
 - [x] 现有股票分析不受影响
+
+---
+
+## US-73 · 搜索：locale=en 时 A 股搜不到的 bug fix
+
+**As a** NZ 用户（locale=en）
+**I want** 在我的选股页直接输入「茅台」或「600519」就能搜到 A 股
+**So that** 不需要手动切 tab 到「A 股」才能找到中国股票
+
+**根因：**
+IP 地理位置检测（US-72）将 NZ IP 判断为 locale=en；watchlist.html 的搜索默认 type 绑定到 locale（`"cn" if locale == "zh" else "intl"`），导致 locale=en 时只走 yfinance，搜不到 A 股。
+
+**修复方案：**
+1. `radar_app/search/service.py`：query 含中文字符或纯数字时，将 `search_type` 从 `"intl"` 强制改为 `"auto"`，避免 A 股代码/名称被送进 yfinance
+2. `templates/watchlist.html` `setWlSearchType()`：切 tab 时若搜索框有内容，立即重搜（对齐 index.html 在 cc4bc1e 里的修复）
+
+**Acceptance Criteria:**
+- [ ] locale=en 时，输入「茅台」→ 搜索结果显示 600519 贵州茅台
+- [ ] locale=en 时，输入「600519」→ 搜索结果显示 贵州茅台
+- [ ] locale=en 时，输入「AAPL」→ 正常走 intl 搜索，显示 Apple Inc.
+- [ ] 切搜索 tab 时，若搜索框有内容则立即用新 type 重搜
