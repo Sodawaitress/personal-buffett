@@ -153,7 +153,7 @@ def _build_pinyin_index(stocks):
 
 def _load_cn():
     global _CN_CACHE, _PY_INDEX, _CN_LOADING
-    if _CN_CACHE is not None:
+    if _CN_CACHE:  # non-empty list = loaded successfully; None or [] = not ready
         return _CN_CACHE
     if _CN_LOADING:
         _CN_READY.wait(timeout=60)
@@ -213,7 +213,7 @@ def _save_pinyin(index):
 def _load_cn_etf():
     """加载国内ETF/基金列表，缓存到 data/cn_etfs.json。"""
     global _ETF_CACHE, _ETF_LOADING
-    if _ETF_CACHE is not None:
+    if _ETF_CACHE:
         return _ETF_CACHE
     if _ETF_LOADING:
         _ETF_READY.wait(timeout=30)
@@ -250,7 +250,7 @@ def _load_cn_etf():
 def _load_cn_funds():
     """加载国内全量场外基金列表（混合/股票/债券/货币等），缓存到 cn_funds.json。"""
     global _FUND_CACHE, _FUND_LOADING
-    if _FUND_CACHE is not None:
+    if _FUND_CACHE:
         return _FUND_CACHE
     if _FUND_LOADING:
         _FUND_READY.wait(timeout=30)
