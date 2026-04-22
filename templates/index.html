@@ -66,9 +66,9 @@
         <input type="hidden" name="market" id="add-market">
         <input type="hidden" name="asset_type" id="add-asset-type">
         <div class="hc-search-type-seg" id="search-type-seg">
-          <button type="button" class="hc-seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setSearchType('cn',this)">{{ t.search_type_cn }}</button>
+          <button type="button" class="hc-seg-btn active" data-type="cn" onclick="setSearchType('cn',this)">{{ t.search_type_cn }}</button>
           <button type="button" class="hc-seg-btn" data-type="fund" onclick="setSearchType('fund',this)">{{ t.search_type_fund }}</button>
-          <button type="button" class="hc-seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setSearchType('intl',this)">{{ t.search_type_intl }}</button>
+          <button type="button" class="hc-seg-btn" data-type="intl" onclick="setSearchType('intl',this)">{{ t.search_type_intl }}</button>
         </div>
         <div class="hc-search-wrap">
           <input type="text" id="search-q" class="hc-search-input"
@@ -360,13 +360,25 @@ function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {
   });
 }
 
-let _searchType = '{{ "cn" if locale == "zh" else "intl" }}';
+let _searchType = localStorage.getItem('pbc_search_type') || 'cn';
 function setSearchType(type, btn) {
   _searchType = type;
+  localStorage.setItem('pbc_search_type', type);
   document.querySelectorAll('#search-type-seg .hc-seg-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('search-q').focus();
 }
+// Restore saved search tab on page load
+(function() {
+  const saved = localStorage.getItem('pbc_search_type');
+  if (saved) {
+    const btn = document.querySelector('#search-type-seg .hc-seg-btn[data-type="' + saved + '"]');
+    if (btn) {
+      document.querySelectorAll('#search-type-seg .hc-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  }
+})();
 
 async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId) {
   const inp = document.getElementById('search-q');
