@@ -242,6 +242,48 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_stock_events_code ON stock_events(code);
 
+        -- 机构雷达：北向资金历史（计算5/10日趋势）
+        CREATE TABLE IF NOT EXISTS northbound_history (
+            date       TEXT PRIMARY KEY,
+            total_net  REAL,
+            fetched_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- 机构雷达：大宗交易近期记录
+        CREATE TABLE IF NOT EXISTS block_trades (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            code        TEXT,
+            trade_date  TEXT,
+            premium_pct REAL,
+            amount_mn   REAL,
+            fetched_at  TEXT DEFAULT (datetime('now')),
+            UNIQUE(code, trade_date, amount_mn)
+        );
+
+        -- 机构雷达：高管增减持
+        CREATE TABLE IF NOT EXISTS insider_changes (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            code        TEXT,
+            holder_name TEXT,
+            role        TEXT,
+            change_type TEXT,
+            shares      REAL,
+            avg_price   REAL,
+            change_date TEXT,
+            fetched_at  TEXT DEFAULT (datetime('now')),
+            UNIQUE(code, holder_name, change_date, change_type)
+        );
+
+        -- 机构雷达：季度信号（股东人数）
+        CREATE TABLE IF NOT EXISTS inst_quarterly (
+            code            TEXT,
+            quarter         TEXT,
+            shareholder_cnt INTEGER,
+            sh_pct_change   REAL,
+            updated_at      TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (code, quarter)
+        );
+
         -- 用户通知（US-65 差评预警）
         CREATE TABLE IF NOT EXISTS user_notifications (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,

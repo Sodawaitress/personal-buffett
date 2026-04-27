@@ -148,3 +148,83 @@ def upsert_quote(code, date, price, change_pct, amount):
 def get_quotes(date=None):
     codes = all_watched_codes()
     return [get_latest_price(code) for code in codes if get_latest_price(code)]
+
+
+# ── 机构雷达 DB 层 ────────────────────────────────────
+
+def upsert_northbound_hist(date: str, total_net: float):
+    with get_conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO northbound_history(date, total_net) VALUES(?,?)",
+            (date, total_net),
+        )
+
+
+def get_northbound_hist(days: int = 10) -> list:
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT date, total_net FROM northbound_history ORDER BY date DESC LIMIT ?",
+            (days,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def upsert_block_trade(code: str, trade_date: str, premium_pct: float, amount_mn: float):
+    with get_conn() as c:
+        c.execute(
+            """INSERT OR IGNORE INTO block_trades(code, trade_date, premium_pct, amount_mn)
+               VALUES(?,?,?,?)""",
+            (code, trade_date, premium_pct, amount_mn),
+        )
+
+
+def get_block_trades(code: str, days: int = 7) -> list:
+    cutoff = (datetime.now(CN_TZ) - timedelta(days=days)).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT * FROM block_trades WHERE code=? AND trade_date >= ? ORDER BY trade_date DESC",
+            (code, cutoff),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def upsert_insider_change(code: str, holder_name: str, role: str,
+                           change_type: str, shares: float, avg_price: float,
+                           change_date: str):
+    with get_conn() as c:
+        c.execute(
+            """INSERT OR IGNORE INTO insider_changes
+               (code, holder_name, role, change_type, shares, avg_price, change_date)
+               VALUES(?,?,?,?,?,?,?)""",
+            (code, holder_name, role, change_type, shares, avg_price, change_date),
+        )
+
+
+def get_insider_changes(code: str, days: int = 30) -> list:
+    cutoff = (datetime.now(CN_TZ) - timedelta(days=days)).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT * FROM insider_changes WHERE code=? AND change_date >= ? ORDER BY change_date DESC",
+            (code, cutoff),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def upsert_inst_quarterly(code: str, quarter: str,
+                           shareholder_cnt: int, sh_pct_change: float):
+    with get_conn() as c:
+        c.execute(
+            """INSERT OR REPLACE INTO inst_quarterly
+               (code, quarter, shareholder_cnt, sh_pct_change)
+               VALUES(?,?,?,?)""",
+            (code, quarter, shareholder_cnt, sh_pct_change),
+        )
+
+
+def get_inst_quarterly(code: str) -> dict:
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT * FROM inst_quarterly WHERE code=? ORDER BY quarter DESC LIMIT 1",
+            (code,),
+        ).fetchone()
+        return dict(row) if row else {}
