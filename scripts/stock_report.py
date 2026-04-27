@@ -3,13 +3,13 @@
 from datetime import datetime, timedelta
 
 import db as _db
-from scripts.config import BUFFETT_PROFILES, CN_TZ, NEGATIVE_SIGNALS, NOISE_KEYWORDS, POSITIVE_SIGNALS, WATCHLIST
+from scripts.config import BUFFETT_PROFILES, CN_TZ, NEGATIVE_SIGNALS, NOISE_KEYWORDS, POSITIVE_SIGNALS
 
 def generate_report(data: dict, ai_analysis: dict = None,
                     allowed_codes: set = None) -> str:
     """
     生成 Markdown 报告。
-    allowed_codes: 若指定，只显示该集合内的股票；None = 全部（WATCHLIST）。
+    allowed_codes: 若指定，只显示该集合内的股票；None = 今日有行情或新闻的全部股票。
     """
     date      = data["date"]
     quotes    = data.get("quotes", {})
@@ -78,18 +78,19 @@ def generate_report(data: dict, ai_analysis: dict = None,
         return "neutral"
 
     # ── 有效自选股列表 ─────────────────────────────────
-    # allowed_codes=None → 全部（admin pipeline 默认行为）
-    # allowed_codes=set  → 只显示指定代码（per-user push）
-    if allowed_codes is None:
-        eff_watchlist = WATCHLIST
+    # 优先用 allowed_codes（per-user push），否则从今日数据动态推导
+    if allowed_codes is not None:
+        active_codes = allowed_codes
     else:
-        # 从已抓取数据中重建 (name, code, desc) 元组
-        eff_watchlist = [
-            (quotes.get(c, {}).get("name", c), c, "")
-            for c in allowed_codes
-        ]
-        # 行情表也只显示这些代码
-        sorted_stocks = [q for q in sorted_stocks if q["code"] in allowed_codes]
+        # 今天有新闻 OR 有行情的股票 = 今日有动静的
+        active_codes = set(news.keys()) | set(quotes.keys())
+
+    eff_watchlist = [
+        (quotes.get(c, {}).get("name", c), c, "")
+        for c in sorted(active_codes)
+        if c in quotes or c in news
+    ]
+    sorted_stocks = [q for q in sorted_stocks if q["code"] in active_codes]
 
     stock_sections = []
     for name, code, desc in eff_watchlist:
