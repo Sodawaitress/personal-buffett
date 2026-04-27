@@ -118,18 +118,53 @@ def generate_report(data: dict, ai_analysis: dict = None,
             lines.append(f"> ROE：{profile['roe_5y']}  |  关注：{'、'.join(profile.get('watch', []))}")
 
         # 🤖 AI 巴菲特分析
-        if ai_analysis and code in ai_analysis:
-            lines.append(f"> 🤖 **巴菲特分析**：{ai_analysis[code]}")
+        ai_text = (ai_analysis or {}).get(code, "")
+        if ai_text:
+            lines.append(f"> 🤖 **巴菲特分析**：{ai_text}")
 
         lines.append("")  # 空行
 
         # 主力资金流向
         ff = fund_flow.get(code, {})
+        net = ff.get("main_net", 0) if ff else None
         if ff:
-            net = ff.get("main_net", 0)
             ratio = ff.get("main_ratio", 0)
             direction = "📈 净流入" if net >= 0 else "📉 净流出"
             lines.append(f"> 主力资金：{direction} **{abs(net):.2f}亿**（占比{ratio:.1f}%）")
+
+        # 信号分歧检测：AI看多 但机构在流出
+        ai_bullish = any(k in ai_text for k in ["买入", "博弈介入", "适合定投", "适合一次性买入"])
+        ai_bearish = any(k in ai_text for k in ["减仓", "卖出", "坚决回避"])
+        if ai_text and net is not None:
+            if ai_bullish and net < -0.5:
+                lines.append(f"> ⚠️ **信号分歧**：基本面看多，但主力今日净流出 {abs(net):.2f}亿——好消息可能已price in，建议观望等回调")
+
+        # 估值地板检测：大跌 + 历史低估值 → 利空可能已price in
+        current_price = q.get("price")
+        if current_price and ai_text:
+            fund_data  = _db.get_fundamentals(code)
+            price_hist = _db.get_price_history(code, days=90)
+            if price_hist:
+                oldest_price = price_hist[-1].get("price")
+                if oldest_price and oldest_price > 0:
+                    drop_90d = (current_price - oldest_price) / oldest_price * 100
+                    pb_pct   = fund_data.get("pb_percentile_5y")
+                    pe_pct   = fund_data.get("pe_percentile_5y")
+                    oversold = drop_90d < -25
+                    at_floor = (pb_pct is not None and pb_pct < 20) or \
+                               (pe_pct is not None and pe_pct < 20)
+                    if oversold and at_floor:
+                        floor_parts = []
+                        if pb_pct is not None and pb_pct < 20:
+                            floor_parts.append(f"PB处于5年{pb_pct:.0f}%低位")
+                        if pe_pct is not None and pe_pct < 20:
+                            floor_parts.append(f"PE处于5年{pe_pct:.0f}%低位")
+                        label = "⚠️ 减仓信号存疑" if ai_bearish else "🛡️ 安全边际出现"
+                        lines.append(
+                            f"> {label}：近90天跌幅{drop_90d:.1f}%，"
+                            f"{' | '.join(floor_parts)}"
+                            f"——利空可能已price in，建议观望而非割肉"
+                        )
 
         # 大股东增减持
         ins = insider.get(code, [])
