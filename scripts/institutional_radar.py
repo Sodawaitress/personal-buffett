@@ -13,13 +13,17 @@ from datetime import datetime, timedelta
 
 import akshare as ak
 
-from scripts.config import CN_TZ, WATCHLIST, HK_WATCHLIST
+from scripts.config import CN_TZ
 
 
 # ── 工具 ─────────────────────────────────────────────────────────────
 
 def _cn_codes():
-    return [code for _, code, _ in WATCHLIST]
+    try:
+        import db
+        return [code for code, _ in db.get_all_cn_watchlist_stocks()]
+    except Exception:
+        return []
 
 
 def _safe_float(val, default=0.0):
@@ -143,7 +147,7 @@ def detect_patterns(quotes: dict, fund_flow: dict, lhb: dict) -> dict:
       龙虎吸筹 — LHB 机构净买入 > 1亿
     """
     patterns = {}
-    for _, code, _ in WATCHLIST:
+    for code in _cn_codes():
         q  = quotes.get(code, {})
         ff = fund_flow.get(code, {})
         lb = lhb.get(code, {})
