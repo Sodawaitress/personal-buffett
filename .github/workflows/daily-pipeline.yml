@@ -1,0 +1,62 @@
+name: 股票雷达 Daily Pipeline
+
+on:
+  schedule:
+    # 08:00 UTC = 16:00 CST，A股收盘后一小时，工作日
+    - cron: '0 8 * * 1-5'
+  workflow_dispatch:        # 允许手动触发
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev/annulus
+        uses: actions/checkout@v4
+        with:
+          ref: dev/annulus
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # data/radar.db 持久化：每次 restore 最新的 DB，跑完后以新 run_id 存回
+      - name: Restore database from cache
+        uses: actions/cache@v4
+        with:
+          path: data/radar.db
+          key: radar-db-${{ github.run_id }}
+          restore-keys: |
+            radar-db-
+
+      - name: Ensure data directory exists
+        run: mkdir -p data
+
+      # 第一次运行（无缓存）时，从 config.WATCHLIST 种入默认用户和自选股
+      - name: Bootstrap DB if empty
+        env:
+          BOOTSTRAP_USER_EMAIL: ${{ secrets.BOOTSTRAP_USER_EMAIL }}
+          BOOTSTRAP_WECOM_KEY:  ${{ secrets.SERVERCHAN_KEY }}
+          SERVERCHAN_KEY:       ${{ secrets.SERVERCHAN_KEY }}
+        run: python scripts/bootstrap_gha.py
+
+      - name: Run pipeline
+        env:
+          SERVERCHAN_KEY:       ${{ secrets.SERVERCHAN_KEY }}
+          GROQ_API_KEY:         ${{ secrets.GROQ_API_KEY }}
+          DISCORD_BOT_TOKEN:    ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID:   ${{ secrets.DISCORD_CHANNEL_ID }}
+        run: python -m scripts.stock_pipeline
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-report-${{ github.run_id }}
+          path: /tmp/stock_report.md
+          retention-days: 30

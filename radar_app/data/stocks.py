@@ -76,6 +76,7 @@ def all_watched_codes():
 
 
 def get_all_cn_watchlist_stocks():
+    """所有用户的A股自选股（含休眠用户）。"""
     with get_conn() as c:
         rows = c.execute(
             """
@@ -87,6 +88,68 @@ def get_all_cn_watchlist_stocks():
         """
         ).fetchall()
         return [(r[0], r[1]) for r in rows]
+
+
+def get_active_watchlist_stocks():
+    """只返回开启了 daily push 的用户的A股自选股（pipeline 抓取范围）。"""
+    with get_conn() as c:
+        rows = c.execute(
+            """
+            SELECT DISTINCT w.stock_code, COALESCE(s.name_cn, s.name, w.stock_code)
+            FROM user_watchlist w
+            JOIN stocks s ON s.code = w.stock_code
+            JOIN user_push_settings p ON p.user_id = w.user_id
+            WHERE s.market = 'cn'
+              AND p.notify_daily = 1
+            ORDER BY w.stock_code
+        """
+        ).fetchall()
+        return [(r[0], r[1]) for r in rows]
+
+
+def is_data_fresh(code: str, data_type: str, max_hours: float = 8.0) -> bool:
+    """
+    检查某支股票的某类数据是否仍在新鲜期内。
+
+    data_type:
+      'price'     — stock_prices 表，按 fetched_at
+      'news'      — stock_news 表，按最新一条 publish_time
+      'fund_flow' — stock_fund_flow 表，按 date（今日是否已有记录）
+    """
+    now = datetime.now(CN_TZ)
+    with get_conn() as c:
+        if data_type == 'price':
+            row = c.execute(
+                "SELECT fetched_at FROM stock_prices WHERE code=? ORDER BY fetched_at DESC LIMIT 1",
+                (code,)
+            ).fetchone()
+            if not row:
+                return False
+            last = datetime.fromisoformat(row[0]).replace(tzinfo=CN_TZ) if '+' not in row[0] else datetime.fromisoformat(row[0])
+            return (now - last).total_seconds() < max_hours * 3600
+
+        if data_type == 'news':
+            row = c.execute(
+                "SELECT publish_time FROM stock_news WHERE code=? ORDER BY publish_time DESC LIMIT 1",
+                (code,)
+            ).fetchone()
+            if not row:
+                return False
+            try:
+                last = datetime.fromisoformat(row[0]).replace(tzinfo=CN_TZ)
+                return (now - last).total_seconds() < max_hours * 3600
+            except Exception:
+                return False
+
+        if data_type == 'fund_flow':
+            today = now.strftime('%Y-%m-%d')
+            row = c.execute(
+                "SELECT 1 FROM stock_fund_flow WHERE code=? AND date=?",
+                (code, today)
+            ).fetchone()
+            return row is not None
+
+    return False
 
 
 def get_users_with_daily_push():
