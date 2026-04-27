@@ -171,7 +171,7 @@ def run_quant_only(job_id: int, code: str, market: str, user_id: int = None):
         else:
             log("  ⏭ 资金信号缓存新鲜，跳过")
 
-        _run_layer2(code, market, log, user_id)
+        _run_with_timeout(_run_layer2, [code, market, log, user_id], "Layer2量化", log, T_AI)
         log("✅ 完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
     except Exception as e:
@@ -326,7 +326,7 @@ def start_analysis_only(user_id: int, code: str, market: str) -> int:
     return start_quant_only(user_id, code, market)
 
 
-def run_news_update(job_id: int, code: str, market: str):
+def run_news_update(job_id: int, code: str, market: str, user_id: int = None):
     logs = []
 
     def log(msg):
@@ -335,19 +335,10 @@ def run_news_update(job_id: int, code: str, market: str):
 
     try:
         db.update_job(job_id, status="running")
-        today_cn = datetime.now(CN_TZ).strftime("%Y-%m-%d")
-        with db.get_conn() as c:
-            count = c.execute(
-                "SELECT COUNT(*) FROM stock_news WHERE code=? AND fetched_date=?",
-                (code, today_cn),
-            ).fetchone()[0]
-        if count >= 3:
-            log(f"  ℹ️ 今日已有 {count} 条新闻，跳过重复抓取")
-            db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
-            return
-
         log(f"▶ 更新新闻: {code}")
         _run_with_timeout(_fetch_1c1_news, [code, market, log], "1c1·新闻", log, T_NEWS)
+        log("  重新计算量化评级（应用新新闻）…")
+        _run_with_timeout(_run_layer2, [code, market, log, user_id], "Layer2量化", log, T_AI)
         log("✅ 新闻更新完成")
         db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
     except Exception as e:
@@ -356,7 +347,7 @@ def run_news_update(job_id: int, code: str, market: str):
 
 def start_news_update(user_id: int, code: str, market: str) -> int:
     job_id = db.create_job(user_id, code, "news_update")
-    t = threading.Thread(target=run_news_update, args=(job_id, code, market), daemon=True)
+    t = threading.Thread(target=run_news_update, args=(job_id, code, market, user_id), daemon=True)
     t.start()
     return job_id
 

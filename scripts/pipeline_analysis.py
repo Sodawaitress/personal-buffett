@@ -368,11 +368,12 @@ def _run_layer2(code, market, log, user_id=None):
     earnings_flags = _analyze_earnings_quality(_annual)
     data_warnings = _validate_signals(code, fundamentals)
 
+    _key = news_signals.get("key_signals", [])
     news_for_rating = {
-        "high_pos_buyback": 1 if "回购" in news_signals.get("summary", "") else 0,
-        "mid_pos_dividend": 1 if "分红" in news_signals.get("summary", "") else 0,
-        "high_neg_resignation": 1 if "离职" in news_signals.get("summary", "") else 0,
-        "mid_neg_reduction": 1 if "减持" in news_signals.get("summary", "") else 0,
+        "high_pos_buyback":     1 if "回购" in _key else 0,
+        "mid_pos_dividend":     1 if any(k in _key for k in ("分红", "派息")) else 0,
+        "high_neg_resignation": 1 if any(k in _key for k in ("辞职", "离职")) else 0,
+        "mid_neg_reduction":    1 if "减持" in _key else 0,
     }
 
     quant_result = QuantitativeRater().rate_stock(

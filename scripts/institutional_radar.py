@@ -21,7 +21,7 @@ from scripts.config import CN_TZ
 def _cn_codes():
     try:
         import db
-        return [code for code, _ in db.get_all_cn_watchlist_stocks()]
+        return [code for code, _ in db.get_active_watchlist_stocks()]
     except Exception:
         return []
 
@@ -117,7 +117,7 @@ def fetch_restricted_releases(days_ahead: int = 14) -> list:
             code = str(row.get("股票代码", "")).zfill(6)
             if code not in codes:
                 continue
-            ratio = _safe_float(row.get("占解禁前流通市值比例", 0)) * 100
+            ratio = _safe_float(row.get("占解禁前流通市值比例", 0))
             if ratio < 1.0:
                 continue
             releases.append({

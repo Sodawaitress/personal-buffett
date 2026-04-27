@@ -273,12 +273,12 @@ def analyze_stock_v2(code: str, name: str, market: str,
         _sig = fundamentals.get("signals", {}) if fundamentals else {}
         price_52week_pct = _sig.get("price_position")  # pipeline 里算好的 0-100
 
-        # 转换新闻信号为评级系统需要的格式
+        _key = news_signals.get("key_signals", [])
         news_signals_for_rating = {
-            "high_pos_buyback": 1 if "回购" in news_signals.get("summary", "") else 0,
-            "mid_pos_dividend": 1 if "分红" in news_signals.get("summary", "") else 0,
-            "high_neg_resignation": 1 if "离职" in news_signals.get("summary", "") else 0,
-            "mid_neg_reduction": 1 if "减持" in news_signals.get("summary", "") else 0,
+            "high_pos_buyback":     1 if "回购" in _key else 0,
+            "mid_pos_dividend":     1 if any(k in _key for k in ("分红", "派息")) else 0,
+            "high_neg_resignation": 1 if any(k in _key for k in ("辞职", "离职")) else 0,
+            "mid_neg_reduction":    1 if "减持" in _key else 0,
         }
 
         # 调用定量评级系统
@@ -375,11 +375,12 @@ def analyze_stock_v2(code: str, name: str, market: str,
     try:
         from scripts.quantitative_rating import QuantitativeRater
         annual_data = fundamentals.get("annual", []) if fundamentals else []
+        _key2 = news_signals.get("key_signals", [])
         _ns = {
-            "high_pos_buyback":    1 if "回购" in news_signals.get("summary", "") else 0,
-            "mid_pos_dividend":    1 if "分红" in news_signals.get("summary", "") else 0,
-            "high_neg_resignation":1 if "离职" in news_signals.get("summary", "") else 0,
-            "mid_neg_reduction":   1 if "减持" in news_signals.get("summary", "") else 0,
+            "high_pos_buyback":     1 if "回购" in _key2 else 0,
+            "mid_pos_dividend":     1 if any(k in _key2 for k in ("分红", "派息")) else 0,
+            "high_neg_resignation": 1 if any(k in _key2 for k in ("辞职", "离职")) else 0,
+            "mid_neg_reduction":    1 if "减持" in _key2 else 0,
         }
         _rating = QuantitativeRater().rate_stock(
             code=code,
