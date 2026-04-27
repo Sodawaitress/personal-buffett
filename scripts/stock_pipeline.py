@@ -25,6 +25,7 @@ from scripts.buffett_analyst import analyze_all
 from scripts.macro_fetch import fetch_all_macro
 from scripts.nz_fetch import fetch_rbnz_news, fetch_nzx_announcements, fetch_nzx_earnings_calendar
 from scripts.stock_fetch import fetch_cn_earnings_calendar
+from scripts.institutional_radar import run_institutional_radar
 
 
 # ── 运行抓取 ──────────────────────────────────────────
@@ -209,11 +210,12 @@ def main():
     data["nzx_announcements"] = fetch_nzx_announcements()
     data["nzx_earnings"]      = fetch_nzx_earnings_calendar()
 
+    date_str = data["date"]
+
     if not trading_day:
         # 休息日：只存新闻，不跑 AI 分析，不生成报告，不推送
         print("  ⏭️ 休息日：跳过 AI 分析和报告生成")
         _db.init_db()
-        date_str = data["date"]
         for code, items in data.get("news", {}).items():
             for n in items:
                 _db.upsert_news(code, n["title"], n.get("source",""), n.get("link",""),
@@ -232,7 +234,11 @@ def main():
     # ── 收盘后刷新所有用户持仓的量化评级（Layer 2，零 LLM token）──
     _refresh_user_holdings_layer2(date_str)
 
+    print("\n🏦 Step 2.5/3：机构雷达...")
+    institutional_section = run_institutional_radar(data)
+
     report = generate_report(data, ai_analysis)
+    report = report + "\n\n" + institutional_section
     with open(REPORT_OUTPUT, "w", encoding="utf-8") as f:
         f.write(report)
     print(f"✅ 报告 {len(report)} 字符 → {REPORT_OUTPUT}")
@@ -240,7 +246,6 @@ def main():
     # ── 持久化到 SQLite ────────────────────────────────
     print("  💾 写入数据库...")
     _db.init_db()
-    date_str = data["date"]
 
     # 行情
     for code, q in data.get("quotes", {}).items():
