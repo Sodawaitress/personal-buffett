@@ -1,9 +1,19 @@
 """Watchlist-related routes extracted from the legacy app module."""
 
+import json
+import ssl
+import threading
+import urllib.request
+from datetime import datetime
+
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 
 import db
+from radar_app.data.core import get_conn
+from radar_app.data.jobs import create_job, update_job
+from radar_app.data.users import get_push_settings
 from radar_app.shared.auth import login_required
+from radar_app.shared.runtime import CN_TZ
 from radar_app.shared.startup import ensure_db_ready
 from radar_app.watchlist.service import (
     add_stock_and_start_analysis,
@@ -11,6 +21,110 @@ from radar_app.watchlist.service import (
     build_watchlist_context,
     update_watchlist_stock_status,
 )
+
+
+def _send_serverchan(key: str, title: str, content: str):
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        payload = json.dumps({"title": title, "desp": content}).encode()
+        req = urllib.request.Request(
+            f"https://sctapi.ftqq.com/{key}.send",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, context=ctx, timeout=10)
+    except Exception:
+        pass
+
+
+def _precursor_worker(job_id: int, user_id: int):
+    logs = []
+
+    def log(msg):
+        logs.append(msg)
+        update_job(job_id, status="running", log="\n".join(logs[-30:]))
+
+    try:
+        update_job(job_id, status="running")
+        log("▶ 开始扫描前兆信号（调研 + 融券 + 参与度）…")
+
+        from scripts.precursor_scan import run_precursor_scan
+        result = run_precursor_scan()
+
+        scanned = result.get("scanned", 0)
+        active  = result.get("active", 0)
+        log(f"✅ 完成：{scanned} 只扫描，{active} 只活跃")
+
+        # 读缓存里的活跃股，生成推送内容
+        with get_conn() as c:
+            rows = c.execute(
+                """
+                SELECT p.code, s.name, p.score, p.survey_json, p.partic_json
+                FROM stock_precursor_cache p
+                LEFT JOIN stocks s ON s.code = p.code
+                WHERE p.is_active = 1
+                  AND p.fetched_at = (
+                      SELECT MAX(fetched_at) FROM stock_precursor_cache WHERE code = p.code
+                  )
+                ORDER BY p.score DESC
+                LIMIT 10
+                """,
+            ).fetchall()
+
+        date_str = datetime.now(CN_TZ).strftime("%m-%d %H:%M")
+        lines = [f"**机构雷达扫描** · {date_str}",
+                 f"扫描 {scanned} 只 A 股，{active} 只有明显信号\n"]
+        for row in rows:
+            rec = dict(row)
+            name = rec.get("name") or rec["code"]
+            lines.append(f"**{name}（{rec['code']}）**")
+            try:
+                sv = json.loads(rec.get("survey_json") or "{}")
+                events = sv.get("events") or []
+                if events:
+                    sp = [e for e in events if e.get("is_specific")]
+                    latest = events[0]
+                    kind = "专项调研" if sp else "参加会议"
+                    lines.append(f"  📋 调研 {latest['date']} · {latest['n_inst']}家机构{kind}")
+                else:
+                    lines.append("  📋 调研 近期无记录")
+            except Exception:
+                pass
+            try:
+                pa = json.loads(rec.get("partic_json") or "{}")
+                if pa.get("valid"):
+                    latest_v = pa.get("latest", 0)
+                    avg_v    = pa.get("avg_30d", 0)
+                    trend    = pa.get("trend", "中性")
+                    price_chg = pa.get("price_change_pct", 0.0)
+                    chg_str  = f"+{price_chg:.1f}%" if price_chg >= 0 else f"{price_chg:.1f}%"
+                    spike_flag = "⚡" if pa.get("spike") else ""
+                    lines.append(f"  📊 参与度 {latest_v:.0f}（均值{avg_v:.0f}，趋势{trend}）{spike_flag} · 当日{chg_str}")
+            except Exception:
+                pass
+            try:
+                sh = json.loads(rec.get("short_json") or "{}")
+                if sh.get("valid"):
+                    lines.append(f"  📉 融券 {sh.get('desc', '')[:40]}")
+            except Exception:
+                pass
+            lines.append("")  # 空行分隔
+
+        push_settings = get_push_settings(user_id) or {}
+        key = push_settings.get("wecom_webhook", "")
+        if key:
+            _send_serverchan(key, f"机构雷达 · {active} 只活跃", "\n".join(lines))
+            log("📲 推送已发送")
+        else:
+            log("⚠️ 未配置 Server酱 SendKey，跳过推送")
+
+        update_job(job_id, status="done", log="\n".join(logs[-30:]))
+
+    except Exception as e:
+        update_job(job_id, status="failed", error=str(e), log="\n".join(logs[-30:]))
 
 
 def register_watchlist_routes(app):
@@ -63,6 +177,21 @@ def register_watchlist_routes(app):
         if not payload:
             return jsonify({'error': 'invalid status'}), 400
         return jsonify(payload)
+
+    @app.route('/api/precursor-scan', methods=['POST'])
+    @login_required
+    def start_precursor_scan():
+        user_id = session['user_id']
+        job_id = create_job(user_id, 'cn', 'precursor_scan')
+        t = threading.Thread(target=_precursor_worker, args=(job_id, user_id), daemon=True)
+        t.start()
+        return jsonify({'job_id': job_id})
+
+    @app.route('/api/signals/watchlist')
+    @login_required
+    def api_watchlist_signals():
+        from radar_app.data.signal_events import get_watchlist_signals
+        return jsonify(get_watchlist_signals(session['user_id']))
 
     @app.route('/watchlist/performance')
     @login_required

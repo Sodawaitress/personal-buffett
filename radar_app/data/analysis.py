@@ -5,17 +5,6 @@ from radar_app.data.market import get_stock_news
 
 
 def save_analysis(code, period, analysis_date, **kwargs):
-    new_cols = [
-        "ALTER TABLE analysis_results ADD COLUMN trade_block TEXT",
-        "ALTER TABLE analysis_results ADD COLUMN quant_score INTEGER",
-        "ALTER TABLE analysis_results ADD COLUMN quant_components TEXT",
-    ]
-    with get_conn() as c:
-        for sql in new_cols:
-            try:
-                c.execute(sql)
-            except Exception:
-                pass
     cols = ["code", "period", "analysis_date"] + list(kwargs.keys())
     vals = [code, period, analysis_date] + list(kwargs.values())
     placeholders = ",".join(["?"] * len(vals))

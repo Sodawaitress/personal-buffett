@@ -93,6 +93,23 @@
   </div>{# /home-cards-row #}
 
   {# ══════════════════════════════════
+     US-76 今日信号 · 最值得关注榜单
+     ══════════════════════════════════ #}
+  {% if has_cn_stocks %}
+  <div class="signal-radar-section" id="signal-radar">
+    <div class="sr-header">
+      <span class="section-label">今日信号</span>
+      <span class="sr-subtitle">根据你的A股自选股，实时扫描机构动向</span>
+      <button class="sr-refresh-btn" id="sr-refresh-btn" onclick="loadRadarSignals()" title="刷新信号">↺</button>
+    </div>
+    <hr class="section-rule">
+    <div id="sr-body">
+      <div class="sr-loading"><span class="spinner-sm"></span> 扫描中…</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ══════════════════════════════════
      市场信息流 — NYT 双栏
      ══════════════════════════════════ #}
   <div class="news-section-wrap">
@@ -314,10 +331,137 @@ function updateCompound() {
   document.getElementById('years-val').textContent = years + '年';
 }
 
-// ── 页面加载时绑定搜索框 ───────────────────────────────
+// ── 页面加载时绑定搜索框 + 信号雷达 ──────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initSearch('search-q', 'search-dropdown', 'add-code', 'add-name', 'add-market', 'add-asset-type');
+  if (document.getElementById('signal-radar')) loadRadarSignals();
 });
+
+// ── US-76 今日信号 · 最值得关注榜单 ──────────────────────
+async function loadRadarSignals() {
+  const body = document.getElementById('sr-body');
+  const btn  = document.getElementById('sr-refresh-btn');
+  if (!body) return;
+  body.innerHTML = '<div class="sr-loading"><span class="spinner-sm"></span> 扫描中…</div>';
+  if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
+  try {
+    const resp = await fetch('/api/signals/watchlist');
+    const data = await resp.json();
+    body.innerHTML = _renderRadarSignals(data);
+  } catch(e) {
+    body.innerHTML = '<div class="sr-empty">加载失败，请稍后重试</div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+  }
+}
+
+function _renderRadarSignals(data) {
+  const triggered  = data.triggered  || [];
+  const approaching = data.approaching || [];
+  const scanned    = data.scanned || 0;
+
+  if (!triggered.length && !approaching.length) {
+    return `<div class="sr-empty">
+      <div class="sr-empty-icon">📡</div>
+      <div class="sr-empty-title">暂无信号共振</div>
+      <div class="sr-empty-desc">已扫描 ${scanned} 只A股，目前没有 ≥2 个同向信号同时出现。<br>
+      继续观察，机构动向出现时会第一时间显示。</div>
+    </div>`;
+  }
+
+  let html = '';
+
+  if (triggered.length) {
+    html += '<div class="sr-list">';
+    for (const item of triggered) {
+      html += _renderTriggeredCard(item);
+    }
+    html += '</div>';
+  }
+
+  if (approaching.length) {
+    html += `<div class="sr-approaching-header">接近触发 · 信号预警</div>`;
+    html += '<div class="sr-approaching-list">';
+    for (const item of approaching) {
+      html += _renderApproachingCard(item);
+    }
+    html += '</div>';
+  }
+
+  html += `<div class="sr-footer">已扫描 ${scanned} 只A股</div>`;
+  return html;
+}
+
+function _renderTriggeredCard(item) {
+  const dir      = item.resonance.direction;
+  const domSigs  = item.resonance.dominant_signals || [];
+  const ageLabel = item.precursor_age ? `· ${item.precursor_age}` : '';
+  const statusDot = item.status === 'holding'
+    ? '<span class="sr-status-dot sr-dot-hold" title="持有中"></span>'
+    : '<span class="sr-status-dot sr-dot-watch" title="观察中"></span>';
+
+  const dirClass = dir === 'bull' ? 'sr-card-bull' : 'sr-card-bear';
+  const dirBadge = dir === 'bull'
+    ? '<span class="sr-dir-badge sr-bull-badge">看多共振</span>'
+    : '<span class="sr-dir-badge sr-bear-badge">看空共振</span>';
+  const cnt = item.resonance.resonance_count;
+
+  const sigTags = domSigs.slice(0, 3).map(s =>
+    `<span class="sr-sig-tag sr-sig-${s.direction}">${s.label}</span>`
+  ).join('');
+
+  const detail = domSigs[0]?.detail ? `<div class="sr-sig-detail">${domSigs[0].detail}</div>` : '';
+
+  return `
+  <a class="sr-card ${dirClass}" href="/stock/${item.code}?tab=radar">
+    <div class="sr-card-side"></div>
+    <div class="sr-card-body">
+      <div class="sr-card-top">
+        ${statusDot}
+        <span class="sr-code">${item.code}</span>
+        <span class="sr-name">${item.name}</span>
+        ${dirBadge}
+        <span class="sr-age">${ageLabel}</span>
+      </div>
+      <div class="sr-sig-tags">${sigTags}</div>
+      ${detail}
+      <div class="sr-resonance-bar-wrap">
+        <div class="sr-resonance-bar" style="width:${Math.min(100, cnt * 33)}%"></div>
+        <span class="sr-resonance-label">${cnt} 个信号共振</span>
+      </div>
+    </div>
+  </a>`;
+}
+
+function _renderApproachingCard(item) {
+  const bars  = item.approaching_bars || [];
+  const topPct = bars[0]?.pct || 0;
+  const statusDot = item.status === 'holding'
+    ? '<span class="sr-status-dot sr-dot-hold" title="持有中"></span>'
+    : '<span class="sr-status-dot sr-dot-watch" title="观察中"></span>';
+
+  const barsHtml = bars.map(b => `
+    <div class="sr-appr-row">
+      <span class="sr-appr-label">${b.label}</span>
+      <div class="sr-appr-bar-track">
+        <div class="sr-appr-bar sr-appr-${b.direction}" style="width:${b.pct}%"></div>
+      </div>
+      <span class="sr-appr-pct">${b.pct}%</span>
+    </div>
+    <div class="sr-appr-hint">${b.hint}</div>
+  `).join('');
+
+  return `
+  <a class="sr-approaching-card" href="/stock/${item.code}?tab=radar">
+    <div class="sr-appr-top">
+      ${statusDot}
+      <span class="sr-code">${item.code}</span>
+      <span class="sr-name">${item.name}</span>
+      <span class="sr-appr-badge">接近触发 ${topPct}%</span>
+    </div>
+    <div class="sr-appr-bars">${barsHtml}</div>
+  </a>`;
+}
 
 // ── 股票搜索 ───────────────────────────────────────────
 function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId) {

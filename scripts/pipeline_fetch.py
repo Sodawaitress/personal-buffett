@@ -161,7 +161,7 @@ def _fetch_1c1_news(code, market, log):
 
                 stock = db.get_stock(code)
                 name_en = (stock or {}).get("name", code)
-                query = _req.utils.quote(f"{name_en} {code} stock news 2026")
+                query = _req.utils.quote(f"{name_en} {code} stock news {datetime.now(CN_TZ).year}")
                 rss_url = f"https://news.google.com/rss/search?q={query}&hl=en&gl=US&ceid=US:en"
                 feed = feedparser.parse(rss_url)
                 added = 0

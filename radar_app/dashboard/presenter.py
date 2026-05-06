@@ -65,6 +65,7 @@ def present_index_stock(row, snapshot, pending_job):
         "main_net": fund_flow.get("main_net") if fund_flow else None,
         "pending_job": pending_job,
         "analysis_date": analysis.get("analysis_date", "") if analysis else "",
+        "status": row.get("status", "watching"),
     }
     stock["alert_level"], stock["alert_reason"] = index_alert(stock)
     return stock

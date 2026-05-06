@@ -48,6 +48,7 @@ def build_dashboard_context(user_id, region, locale="en"):
     intl_news.extend(get_fomc_news_items(limit=2))
     return {
         "stocks": stocks,
+        "has_cn_stocks": any(s.get("market") == "cn" and s.get("status") in ("holding", "watching") for s in stocks),
         "local_stocks": [stock for stock in stocks if stock["market"] == region],
         "intl_stocks": [stock for stock in stocks if stock["market"] != region],
         "local_news": get_local_news("cn" if locale == "zh" else "nz"),

@@ -155,7 +155,7 @@ def analyze_stock_v2(code: str, name: str, market: str,
     # 新闻：先排序过滤，再取前8
     # 新闻量化分析
     sorted_news = _score_news(news)
-    news_signals = _analyze_news_signals(news)
+    news_signals = _analyze_news_signals(news, company_name=name)
 
     # 新闻显示（带情绪标签）
     news_lines_list = []
@@ -213,7 +213,7 @@ def analyze_stock_v2(code: str, name: str, market: str,
 
     user_msg = f"""公司：{name}（{code}）
 市场：{market.upper()}{st_warning}
-{warnings_str}{earnings_str}{trading_str}{events_str}{price_str}
+{warnings_str}{trading_str}{events_str}{price_str}
 {ff_str}
 {profile_str}
 {fundamentals_str}
@@ -344,8 +344,9 @@ def analyze_stock_v2(code: str, name: str, market: str,
                 roe = signals.get("roe", 0)
                 pm = signals.get("profit_margin", 0)
                 de = signals.get("debt_to_equity", 0)
-                de = de / 100 if de > 2.0 else de
-                red_flags = sum([roe < 0.05 or roe < 0, pm < 0, de > 2.0])
+                if de > 100:  # 百分比格式（如80表示80%），转为小数
+                    de = de / 100
+                red_flags = sum([roe < 0.05, pm < 0, de > 2.0])
                 if red_flags >= 2:
                     grade, conclusion = "C", "卖出"
                 elif red_flags == 1:
@@ -488,10 +489,19 @@ def analyze_stock_v3(code: str, name: str, market: str,
         for n in sorted_news
     ) or "  暂无近期新闻"
     ns = news_signals or {}
-    news_meta = (
-        f"情绪：{ns.get('sentiment_avg', 0)} | "
-        f"关键信号：{', '.join(ns.get('key_signals', [])) or '无'}"
-    )
+    _news_meta_parts = [
+        f"情绪：{ns.get('sentiment_avg', 0)}",
+        f"关键信号：{', '.join(ns.get('key_signals', [])) or '无'}",
+    ]
+    if ns.get("entity_mismatches"):
+        _news_meta_parts.append(f"⚠️已过滤{len(ns['entity_mismatches'])}条同名关联公司新闻")
+    if ns.get("dilution_warning"):
+        _news_meta_parts.append(f"稀释警告：{ns['dilution_warning']}")
+    if ns.get("recent_gain_pct") is not None:
+        _news_meta_parts.append(f"recent_gain_pct={ns['recent_gain_pct']}")
+    if ns.get("restructuring_event_count"):
+        _news_meta_parts.append(f"重整事件数={ns['restructuring_event_count']}")
+    news_meta = " | ".join(_news_meta_parts)
 
     # ── 持仓成本 ──────────────────────────────────────────
     entry_str = build_v3_entry_context(market, price or {}, entry_price=entry_price, buy_date=buy_date)

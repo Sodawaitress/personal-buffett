@@ -43,20 +43,38 @@ def upsert_stock_news(code, title, source, link, publish_time, fetched_date):
     return nid
 
 
+def _sentiment_label(val) -> str:
+    """Convert stored REAL sentiment (-1.0/0.0/1.0) to display label."""
+    if val is None:
+        return ""
+    try:
+        v = float(val)
+    except (TypeError, ValueError):
+        return str(val)  # already a string label
+    if v > 0.3:
+        return "positive"
+    if v < -0.3:
+        return "negative"
+    return "neutral"
+
+
 def get_stock_news(code, days=7):
     cutoff = (datetime.now(CN_TZ) - timedelta(days=days)).strftime("%Y-%m-%d")
     with get_conn() as c:
-        return [
-            dict(r)
-            for r in c.execute(
-                """
+        rows = c.execute(
+            """
             SELECT * FROM stock_news
             WHERE code=? AND fetched_date>=?
             ORDER BY publish_time DESC LIMIT 20
-        """,
-                (code, cutoff),
-            )
-        ]
+            """,
+            (code, cutoff),
+        ).fetchall()
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["sentiment"] = _sentiment_label(d.get("sentiment"))
+        result.append(d)
+    return result
 
 
 def upsert_market_news(region, category, title, link, source, publish_time, fetched_date):
@@ -228,3 +246,105 @@ def get_inst_quarterly(code: str) -> dict:
             (code,),
         ).fetchone()
         return dict(row) if row else {}
+
+
+# ── 机构前兆信号缓存（US-69）────────────────────────────────────────
+
+def save_precursor_cache(code: str, survey: dict, short_selling: dict,
+                         participation: dict, score: float, is_active: bool):
+    fetched_at = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M")
+    with get_conn() as c:
+        c.execute(
+            """INSERT OR REPLACE INTO stock_precursor_cache
+               (code, fetched_at, survey_json, short_json, partic_json, score, is_active)
+               VALUES(?,?,?,?,?,?,?)""",
+            (code, fetched_at,
+             json.dumps(survey, ensure_ascii=False) if survey else None,
+             json.dumps(short_selling, ensure_ascii=False) if short_selling else None,
+             json.dumps(participation, ensure_ascii=False) if participation else None,
+             score, int(is_active)),
+        )
+
+
+def get_precursor_cache(code: str) -> dict:
+    """返回最新一条缓存记录，含 age_hours 字段。"""
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT * FROM stock_precursor_cache WHERE code=? ORDER BY fetched_at DESC LIMIT 1",
+            (code,),
+        ).fetchone()
+    if not row:
+        return {}
+    rec = dict(row)
+    try:
+        if rec.get("survey_json"):
+            rec["survey"] = json.loads(rec["survey_json"])
+        if rec.get("short_json"):
+            rec["short_selling"] = json.loads(rec["short_json"])
+        if rec.get("partic_json"):
+            rec["participation"] = json.loads(rec["partic_json"])
+        fetched = datetime.fromisoformat(rec["fetched_at"].replace(" ", "T"))
+        if fetched.tzinfo is None:
+            fetched = fetched.replace(tzinfo=CN_TZ)
+        rec["age_hours"] = (datetime.now(CN_TZ) - fetched).total_seconds() / 3600
+    except Exception:
+        rec["age_hours"] = 999
+    return rec
+
+
+def get_precursor_summary(user_id: int, limit: int = 3) -> list:
+    """返回该用户持有/观察 A 股中 is_active=1 的 Top N，按 score 降序。"""
+    with get_conn() as c:
+        rows = c.execute(
+            """
+            SELECT p.code, s.name, p.score, p.survey_json, p.short_json, p.partic_json, p.fetched_at
+            FROM stock_precursor_cache p
+            JOIN stocks s ON s.code = p.code
+            JOIN user_watchlist w ON w.stock_code = p.code AND w.user_id = ?
+            WHERE p.is_active = 1
+              AND w.status IN ('holding','watching')
+              AND p.fetched_at = (
+                  SELECT MAX(fetched_at) FROM stock_precursor_cache WHERE code = p.code
+              )
+            ORDER BY p.score DESC
+            LIMIT ?
+            """,
+            (user_id, limit),
+        ).fetchall()
+    result = []
+    for row in rows:
+        rec = dict(row)
+        tags = []
+        try:
+            sv = json.loads(rec.get("survey_json") or "{}")
+            if sv.get("events"):
+                specific = [e for e in sv["events"] if e.get("is_specific")]
+                tags.append(f"近期{'专程拜访' if specific else '有机构调研'}")
+        except Exception:
+            pass
+        try:
+            sh = json.loads(rec.get("short_json") or "{}")
+            if sh.get("trend") == "做空增加":
+                pct = sh.get("change_pct", 0)
+                tags.append(f"融券做空 +{pct:.0f}%")
+            elif sh.get("trend") == "做空减少":
+                tags.append("融券做空在减少")
+        except Exception:
+            pass
+        try:
+            pa = json.loads(rec.get("partic_json") or "{}")
+            if pa.get("spike"):
+                latest = pa.get("latest", 0)
+                avg = pa.get("avg_30d", 0)
+                diff = latest - avg
+                tags.append(f"机构参与度异常（+{diff:.0f}%）")
+        except Exception:
+            pass
+        result.append({
+            "code": rec["code"],
+            "name": rec["name"],
+            "score": rec["score"],
+            "tags": tags,
+            "fetched_at": rec["fetched_at"],
+        })
+    return result

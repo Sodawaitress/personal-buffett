@@ -315,6 +315,34 @@ def init_db():
             answer     TEXT,
             asked_at   TEXT DEFAULT (datetime('now'))
         );
+
+        -- 机构前兆信号每日缓存（US-69）
+        CREATE TABLE IF NOT EXISTS stock_precursor_cache (
+            code        TEXT NOT NULL,
+            fetched_at  TEXT NOT NULL,
+            survey_json TEXT,
+            short_json  TEXT,
+            partic_json TEXT,
+            score       REAL DEFAULT 0,
+            is_active   INTEGER DEFAULT 0,
+            PRIMARY KEY (code, fetched_at)
+        );
+
+        -- 用户信号预测记录（US-75 预言家日报）
+        CREATE TABLE IF NOT EXISTS signal_predictions (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id           INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            code              TEXT REFERENCES stocks(code),
+            created_at        TEXT DEFAULT (datetime('now')),
+            direction         TEXT NOT NULL,
+            note              TEXT,
+            signal_snapshot   TEXT,
+            resolved_at       TEXT,
+            actual_return_5d  REAL,
+            actual_return_10d REAL,
+            correct           INTEGER
+        );
+        CREATE INDEX IF NOT EXISTS idx_signal_pred_user ON signal_predictions(user_id, code);
         """
         )
 
@@ -328,6 +356,8 @@ def _migrate():
         ("user_watchlist", "sell_price", "REAL"),
         ("user_watchlist", "entry_grade", "TEXT"),
         ("analysis_results", "framework_used", "TEXT"),
+        ("analysis_results", "quant_score", "INTEGER"),
+        ("analysis_results", "quant_components", "TEXT"),
         ("stocks", "asset_type", "TEXT DEFAULT '股票'"),
     ]
     with get_conn() as c:

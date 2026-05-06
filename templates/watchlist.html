@@ -48,16 +48,11 @@
     </div>
 
     <div class="wl-toolbar-controls">
+      {# 机构雷达扫描 #}
+      <button class="wl-icon-btn" id="precursor-scan-btn" onclick="startPrecursorScan()" title="扫描全部 A 股的机构调研 + 参与度，结果推送微信">机构雷达</button>
+
       {# 视图切换（单按钮） #}
       <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">{{ t.wl_view_toggle }}</button>
-
-      {# 分析（进入选择模式） #}
-      <button class="wl-icon-btn wl-analyze-btn" id="analyze-mode-btn" onclick="toggleSelectMode()">{{ t.wl_analyze_btn }}</button>
-
-      {# 全部重跑（admin only） #}
-      {% if session.role == 'admin' %}
-      <button class="wl-icon-btn" id="rerun-all-btn" onclick="rerunAll()" title="{{ t.wl_rerun_tooltip }}">{{ t.wl_rerun_all }}</button>
-      {% endif %}
 
       {# 添加 #}
       <button class="wl-icon-btn wl-add-btn" onclick="toggleAddPanel()">
@@ -201,7 +196,7 @@
           <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">{{ t.btn_read_letter }}</button>
           {% endif %}
           {% if s.status != 'sold' %}
-          <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.wl_analyze_btn }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
+          <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.js_quant_only_msg }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
           {% endif %}
           <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
                 onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
@@ -330,7 +325,7 @@
               <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">{{ t.status_sold_short }}</button>
             </div>
             {% if s.status != 'sold' %}
-            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="{{ t.wl_analyze_btn }}">↻</button>
+            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="{{ t.js_quant_only_msg }}">↻</button>
             {% endif %}
             {% if s.has_letter %}
             <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn" title="{{ t.btn_read_letter }}">✉</button>
@@ -367,7 +362,6 @@
   <span class="batch-bar-info"><strong id="batch-count">0</strong> {{ t.batch_selected }}</span>
   <button class="batch-bar-btn" id="select-all-btn" onclick="toggleSelectAll()">{{ t.batch_select_all }}</button>
   <button class="batch-bar-btn" onclick="batchAnalyze()">{{ t.batch_analyse_each }}</button>
-  <button class="batch-bar-btn" onclick="batchPortfolio()">{{ t.batch_analyse_portfolio }}</button>
   <button class="batch-bar-btn batch-bar-cancel" onclick="selectNone()">{{ t.batch_cancel }}</button>
 </div>
 
@@ -619,6 +613,9 @@ function toggleSelectAll() {
   onCheckChange();
 }
 function onCheckChange() {
+  const anyChecked = document.querySelectorAll('.stock-checkbox:checked').length > 0;
+  if (anyChecked && !_selectMode) enterSelectMode();
+  else if (!anyChecked && _selectMode) exitSelectMode();
   document.querySelectorAll('.holding-card').forEach(card => {
     const cb = card.querySelector('.stock-checkbox');
     card.classList.toggle('card-selected', !!(cb && cb.checked));
@@ -962,6 +959,77 @@ function _checkNotifBannerEmpty() {
     const banner = document.getElementById('notif-banner');
     if (banner) banner.remove();
   }
+}
+
+// ── 机构雷达扫描 ──────────────────────────────────────────
+let _precursorJobId = null;
+let _precursorTimer = null;
+
+async function startPrecursorScan() {
+  const btn = document.getElementById('precursor-scan-btn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = '扫描中…';
+
+  _showPrecursorToast('⏳ 正在扫描全部 A 股机构信号（约 15 分钟）…', 'info', false);
+
+  try {
+    const res = await fetch('/api/precursor-scan', { method: 'POST' });
+    const data = await res.json();
+    _precursorJobId = data.job_id;
+    _precursorTimer = setInterval(_pollPrecursorJob, 5000);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = '机构雷达';
+    _showPrecursorToast('❌ 启动失败，请重试', 'error', true);
+  }
+}
+
+async function _pollPrecursorJob() {
+  if (!_precursorJobId) return;
+  try {
+    const res = await fetch(`/api/job/${_precursorJobId}`);
+    const data = await res.json();
+    if (data.status === 'done') {
+      _precursorDone(data);
+    } else if (data.status === 'failed') {
+      _precursorFailed(data.error || '未知错误');
+    }
+  } catch (e) { /* 网络抖动，继续轮询 */ }
+}
+
+function _precursorDone(data) {
+  clearInterval(_precursorTimer);
+  const btn = document.getElementById('precursor-scan-btn');
+  btn.disabled = false;
+  btn.textContent = '机构雷达';
+  const log = (data.log || '').split('\n').filter(l => l.includes('✅') || l.includes('📲') || l.includes('活跃'));
+  const summary = log.slice(-3).join(' · ') || '扫描完成';
+  _showPrecursorToast(`✅ ${summary}`, 'success', true);
+}
+
+function _precursorFailed(err) {
+  clearInterval(_precursorTimer);
+  const btn = document.getElementById('precursor-scan-btn');
+  btn.disabled = false;
+  btn.textContent = '机构雷达';
+  _showPrecursorToast(`❌ 扫描失败：${err}`, 'error', true);
+}
+
+function _showPrecursorToast(msg, type, autoDismiss) {
+  let el = document.getElementById('precursor-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'precursor-toast';
+    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;max-width:340px;padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.5;box-shadow:0 2px 12px rgba(0,0,0,.2);cursor:pointer';
+    el.onclick = () => el.remove();
+    document.body.appendChild(el);
+  }
+  const colors = { info: '#1565c0', success: '#2e7d32', error: '#b71c1c' };
+  el.style.background = colors[type] || colors.info;
+  el.style.color = '#fff';
+  el.textContent = msg;
+  if (autoDismiss) setTimeout(() => el && el.remove(), 8000);
 }
 </script>
 {% endblock %}

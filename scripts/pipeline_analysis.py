@@ -364,8 +364,27 @@ def _run_layer2(code, market, log, user_id=None):
         except Exception:
             pass
 
-    news_signals = _analyze_news_signals(news)
+    name = (stock or {}).get("name", code)
+    news_signals = _analyze_news_signals(news, company_name=name)
     earnings_flags = _analyze_earnings_quality(_annual)
+
+    # 困境/重整股：注入近5日涨跌幅（催化剂耗尽检测）
+    if company_type == "distressed":
+        try:
+            events_recent = db.get_stock_events(code, limit=20)
+            restructuring_events = [
+                e for e in (events_recent or [])
+                if e.get("event_type") in ("restructuring_announced", "restructuring_vote", "restructuring_approved")
+            ]
+            if restructuring_events and price:
+                cur = price.get("price", 0)
+                chg = price.get("change_pct")
+                # 用当日变化作为近期信号的代理指标（完整5日历史需另建价格表）
+                if cur and chg is not None:
+                    news_signals["recent_gain_pct"] = round(chg, 2)
+                    news_signals["restructuring_event_count"] = len(restructuring_events)
+        except Exception:
+            pass
     data_warnings = _validate_signals(code, fundamentals)
 
     _key = news_signals.get("key_signals", [])
