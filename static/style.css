@@ -4808,6 +4808,33 @@ footer small {
   white-space: nowrap;
 }
 
+/* ── 多空比例条 ──────────────────────────────────────── */
+.sr-sig-tags-bear { margin-top: 3px; }
+.sr-ratio-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.sr-ratio-bar {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  flex: 1;
+  background: var(--rule);
+}
+.sr-ratio-bull { background: #81c784; height: 100%; }
+.sr-ratio-bear { background: #e57373; height: 100%; }
+.sr-ratio-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.sr-ratio-bull-label { color: #2e7d32; }
+.sr-ratio-bear-label { color: #c62828; }
+.sr-ratio-sep { color: var(--ink-faint); font-size: 10px; }
+
 /* ── 接近触发区 ───────────────────────────────────────── */
 .sr-approaching-header {
   font-family: var(--serif);

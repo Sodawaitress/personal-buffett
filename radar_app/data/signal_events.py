@@ -223,6 +223,8 @@ def _calc_resonance(signals: list[dict]) -> dict:
         "direction":        direction,
         "bull_count":       len(bull),
         "bear_count":       len(bear),
+        "bull_weight":      bull_w,
+        "bear_weight":      bear_w,
         "resonance_count":  count,
         "dominant_signals": dominant,
     }

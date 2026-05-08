@@ -394,7 +394,7 @@ function _renderRadarSignals(data) {
 
 function _renderTriggeredCard(item) {
   const dir      = item.resonance.direction;
-  const domSigs  = item.resonance.dominant_signals || [];
+  const allSigs  = item.signals || [];
   const ageLabel = item.precursor_age ? `· ${item.precursor_age}` : '';
   const statusDot = item.status === 'holding'
     ? '<span class="sr-status-dot sr-dot-hold" title="持有中"></span>'
@@ -402,15 +402,40 @@ function _renderTriggeredCard(item) {
 
   const dirClass = dir === 'bull' ? 'sr-card-bull' : 'sr-card-bear';
   const dirBadge = dir === 'bull'
-    ? '<span class="sr-dir-badge sr-bull-badge">看多共振</span>'
-    : '<span class="sr-dir-badge sr-bear-badge">看空共振</span>';
-  const cnt = item.resonance.resonance_count;
+    ? '<span class="sr-dir-badge sr-bull-badge">看多为主</span>'
+    : '<span class="sr-dir-badge sr-bear-badge">看空为主</span>';
 
-  const sigTags = domSigs.slice(0, 3).map(s =>
-    `<span class="sr-sig-tag sr-sig-${s.direction}">${s.label}</span>`
+  // 按方向分组展示所有信号
+  const bullSigs = allSigs.filter(s => s.direction === 'bull');
+  const bearSigs = allSigs.filter(s => s.direction === 'bear');
+  const bullW = item.resonance.bull_weight || 0;
+  const bearW = item.resonance.bear_weight || 0;
+  const total = bullW + bearW || 1;
+  const bullPct = Math.round(bullW / total * 100);
+  const bearPct = 100 - bullPct;
+
+  const bullTagsHtml = bullSigs.map(s =>
+    `<span class="sr-sig-tag sr-sig-bull" title="${s.detail || ''}">${s.label}</span>`
+  ).join('');
+  const bearTagsHtml = bearSigs.map(s =>
+    `<span class="sr-sig-tag sr-sig-bear" title="${s.detail || ''}">${s.label}</span>`
   ).join('');
 
+  // 主方向信号的第一条 detail
+  const domSigs = item.resonance.dominant_signals || [];
   const detail = domSigs[0]?.detail ? `<div class="sr-sig-detail">${domSigs[0].detail}</div>` : '';
+
+  // 多空比例条
+  const ratioBar = `
+    <div class="sr-ratio-wrap">
+      <div class="sr-ratio-bar">
+        <div class="sr-ratio-bull" style="width:${bullPct}%"></div>
+        <div class="sr-ratio-bear" style="width:${bearPct}%"></div>
+      </div>
+      <span class="sr-ratio-label sr-ratio-bull-label">看多 ${bullPct}%</span>
+      <span class="sr-ratio-sep">·</span>
+      <span class="sr-ratio-label sr-ratio-bear-label">看空 ${bearPct}%</span>
+    </div>`;
 
   return `
   <a class="sr-card ${dirClass}" href="/stock/${item.code}?tab=radar">
@@ -423,12 +448,10 @@ function _renderTriggeredCard(item) {
         ${dirBadge}
         <span class="sr-age">${ageLabel}</span>
       </div>
-      <div class="sr-sig-tags">${sigTags}</div>
+      ${bullTagsHtml ? `<div class="sr-sig-tags">${bullTagsHtml}</div>` : ''}
+      ${bearTagsHtml ? `<div class="sr-sig-tags sr-sig-tags-bear">${bearTagsHtml}</div>` : ''}
       ${detail}
-      <div class="sr-resonance-bar-wrap">
-        <div class="sr-resonance-bar" style="width:${Math.min(100, cnt * 33)}%"></div>
-        <span class="sr-resonance-label">${cnt} 个信号共振</span>
-      </div>
+      ${ratioBar}
     </div>
   </a>`;
 }
