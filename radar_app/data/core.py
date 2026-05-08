@@ -328,6 +328,17 @@ def init_db():
             PRIMARY KEY (code, fetched_at)
         );
 
+        -- 机构调研事件永久记录（防止 AKShare 滚动窗口丢数据）
+        CREATE TABLE IF NOT EXISTS survey_events (
+            code        TEXT NOT NULL,
+            event_date  TEXT NOT NULL,
+            n_inst      INTEGER,
+            is_specific INTEGER DEFAULT 0,
+            source      TEXT,
+            PRIMARY KEY (code, event_date)
+        );
+        CREATE INDEX IF NOT EXISTS idx_survey_events_code ON survey_events(code, event_date);
+
         -- 用户信号预测记录（US-75 预言家日报）
         CREATE TABLE IF NOT EXISTS signal_predictions (
             id                INTEGER PRIMARY KEY AUTOINCREMENT,

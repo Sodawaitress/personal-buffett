@@ -4827,12 +4827,33 @@ footer small {
   text-decoration: none;
   color: inherit;
   border: 1px dashed var(--rule);
+  border-left: 3px dashed #9e9e9e;
   border-radius: 4px;
   padding: 8px 12px;
   background: var(--paper);
   transition: border-color 0.15s;
 }
 .sr-approaching-card:hover { border-color: var(--ink-faint); }
+.sr-approaching-bull { border-left: 3px dashed #81c784; }
+.sr-approaching-bear { border-left: 3px dashed #e57373; }
+.sr-appr-dir-badge {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.sr-appr-dir-bull {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+.sr-appr-dir-bear {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
 
 .sr-appr-top {
   display: flex;

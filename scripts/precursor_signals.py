@@ -367,7 +367,24 @@ def fetch_precursor_signals(codes: list = None) -> dict:
         if i > 0 and i % 5 == 0:
             time.sleep(1)  # 避免 API 限速
 
-        sv = surveys.get(code, {"score": 0, "desc": "近期无机构调研", "events": []})
+        sv = surveys.get(code) or {}
+        # 如果 live 拉取无调研事件，回退到缓存里 30 天内的历史记录
+        if not sv.get("events"):
+            try:
+                from radar_app.data.market import get_precursor_cache
+                from datetime import timedelta as _td
+                cached = get_precursor_cache(code)
+                old_events = (cached.get("survey") or {}).get("events") or []
+                cutoff = (datetime.now(CN_TZ) - _td(days=30)).strftime("%Y-%m-%d")
+                fresh = [e for e in old_events if str(e.get("date",""))[:10] >= cutoff]
+                if fresh:
+                    sv = {**(sv or {}), "events": fresh,
+                          "score": sv.get("score") or 3,
+                          "desc": f"缓存：{fresh[0].get('n_inst','')}家调研 {fresh[0].get('date','')[:10]}"}
+            except Exception:
+                pass
+        if not sv:
+            sv = {"score": 0, "desc": "近期无机构调研", "events": []}
 
         print(f"  🔍 前兆信号 [{i+1}/{len(codes)}] {code}：融券趋势…")
         short = fetch_short_selling_trend(code)

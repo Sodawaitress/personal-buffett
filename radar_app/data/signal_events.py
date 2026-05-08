@@ -9,7 +9,32 @@ import json
 from datetime import datetime, timedelta
 
 from radar_app.data.core import CN_TZ, get_conn
-from radar_app.data.stocks import get_fundamentals, get_fund_flow, get_user_watchlist
+from radar_app.data.stocks import get_fund_flow, get_user_watchlist
+
+_SIGNALS_MAX_AGE_H = 48   # signals_json 超过这个小时数视为过期，不用 margin 信号
+
+
+def _get_fundamentals_with_age(code: str) -> tuple[dict, float]:
+    """返回 (signals_dict, age_hours)，age 超过阈值时 margin 信号应跳过。"""
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT signals_json, updated_at FROM stock_fundamentals WHERE code=?",
+            (code,)
+        ).fetchone()
+    if not row:
+        return {}, 999
+    signals = {}
+    try:
+        signals = json.loads(row["signals_json"] or "{}") or {}
+    except Exception:
+        pass
+    age_h = 999
+    try:
+        updated = datetime.fromisoformat((row["updated_at"] or "").replace(" ", "T"))
+        age_h = (datetime.now() - updated).total_seconds() / 3600
+    except Exception:
+        pass
+    return signals, age_h
 
 
 # ── 信号定义与方向 ────────────────────────────────────────────────────
@@ -35,7 +60,9 @@ RESONANCE_THRESHOLD = 2  # ≥2 个同向信号才上榜
 
 
 def _parse_precursor_cache(code: str) -> dict:
-    """从 stock_precursor_cache 读最新缓存，返回 {survey, short_selling, participation}."""
+    """从 stock_precursor_cache 读最新缓存，返回 {survey, short_selling, participation}.
+    当缓存 survey 为空时，从 survey_events 永久表补回最近 60 天的事件。
+    """
     with get_conn() as c:
         row = c.execute(
             "SELECT survey_json, short_json, partic_json, fetched_at "
@@ -52,10 +79,33 @@ def _parse_precursor_cache(code: str) -> dict:
         rec["fetched_at"]    = row["fetched_at"] or ""
     except Exception:
         pass
+
+    # 如果缓存里没有调研事件，从永久表补回最近 60 天
+    cached_events = (rec.get("survey") or {}).get("events") or []
+    if not cached_events:
+        try:
+            cutoff = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+            with get_conn() as c:
+                perm_rows = c.execute(
+                    "SELECT event_date, n_inst, is_specific FROM survey_events "
+                    "WHERE code=? AND event_date>=? ORDER BY event_date DESC",
+                    (code, cutoff),
+                ).fetchall()
+            if perm_rows:
+                events = [
+                    {"date": r["event_date"], "n_inst": r["n_inst"],
+                     "is_specific": bool(r["is_specific"]), "source": "survey_events"}
+                    for r in perm_rows
+                ]
+                rec["survey"] = {**(rec.get("survey") or {}), "events": events}
+        except Exception:
+            pass
+
     return rec
 
 
-def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict) -> list[dict]:
+def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
+                    signals_age_h: float = 0) -> list[dict]:
     """
     对单只股票检测当前活跃信号列表。
     每个 signal: {key, label, direction, weight, detail}
@@ -102,31 +152,33 @@ def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict) 
         elif "减少" in trend:
             add("short_down", sh.get("desc", "")[:40])
 
-    # ── 4. 主力资金 ───────────────────────────────────────────────
+    # ── 4. 主力资金（用 ratio 相对指标，>3% 才算有效信号）─────
     main_net   = fund_flow.get("main_net")
     main_ratio = fund_flow.get("main_ratio")
-    if main_net is not None:
+    if main_ratio is not None:
         try:
-            mn = float(main_net)
-            ratio_str = f"（占比 {main_ratio:.1f}%）" if main_ratio else ""
-            if mn > 0:
-                add("main_flow_in",  f"净流入 {mn:.2f} 亿{ratio_str}")
-            elif mn < 0:
-                add("main_flow_out", f"净流出 {abs(mn):.2f} 亿{ratio_str}")
+            mr = float(main_ratio)
+            mn = float(main_net or 0)
+            if abs(mr) >= 3:
+                detail = f"净占比 {mr:+.1f}%，净{'流入' if mn > 0 else '流出'} {abs(mn):.2f} 亿"
+                if mr > 0:
+                    add("main_flow_in",  detail)
+                else:
+                    add("main_flow_out", detail)
         except (TypeError, ValueError):
             pass
 
-    # ── 5. 机构持仓变动 ──────────────────────────────────────────
+    # ── 5. 机构持仓变动（至少2家同向才算有效信号）───────────────
     inc = int(signals.get("inst_increased") or 0)
     dec = int(signals.get("inst_decreased") or 0)
-    if inc > 0 and inc > dec:
-        add("inst_buying", f"{inc} 家增持，{dec} 家减持")
-    elif dec > 0 and dec > inc:
+    if inc >= 2 and inc > dec:
+        add("inst_buying",  f"{inc} 家增持，{dec} 家减持")
+    elif dec >= 2 and dec > inc:
         add("inst_selling", f"{dec} 家减持，{inc} 家增持")
 
-    # ── 6. 融资余额 ──────────────────────────────────────────────
+    # ── 6. 融资余额（仅用 48h 内的新鲜数据）────────────────
     margin_pct = signals.get("margin_change_pct")
-    if margin_pct is not None:
+    if margin_pct is not None and signals_age_h <= _SIGNALS_MAX_AGE_H:
         try:
             mp = float(margin_pct)
             if mp >= 15:
@@ -171,7 +223,8 @@ def _calc_resonance(signals: list[dict]) -> dict:
     }
 
 
-def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict) -> list[dict]:
+def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict,
+                      signals_age_h: float = 0) -> list[dict]:
     """
     计算各信号离触发阈值还差多少（0-100%，100=已触发）。
     用于空态时展示"快要发生什么"的进度条。
@@ -213,9 +266,9 @@ def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict
                 "direction": "bull",
             })
 
-    # 融资余额变化：绝对值 / 15% 进度
+    # 融资余额变化：绝对值 / 15% 进度（仅用新鲜数据）
     margin_pct = signals.get("margin_change_pct")
-    if margin_pct is not None:
+    if margin_pct is not None and signals_age_h <= _SIGNALS_MAX_AGE_H:
         try:
             mp = abs(float(margin_pct))
             pct = min(99, round(mp / 15 * 100))
@@ -272,13 +325,12 @@ def get_watchlist_signals(user_id: int) -> dict:
         code = s["stock_code"]
 
         # 读数据
-        precursor  = _parse_precursor_cache(code)
-        fund_flow  = get_fund_flow(code)
-        funds      = get_fundamentals(code)
-        raw_signals = funds.get("signals", {}) if isinstance(funds, dict) else {}
+        precursor   = _parse_precursor_cache(code)
+        fund_flow   = get_fund_flow(code)
+        raw_signals, signals_age_h = _get_fundamentals_with_age(code)
 
         # 信号检测
-        detected = _detect_signals(code, precursor, fund_flow, raw_signals)
+        detected = _detect_signals(code, precursor, fund_flow, raw_signals, signals_age_h)
         if not detected:
             continue
 
@@ -296,21 +348,25 @@ def get_watchlist_signals(user_id: int) -> dict:
         if resonance["direction"] != "mixed" and resonance["resonance_count"] >= RESONANCE_THRESHOLD:
             triggered.append(entry)
         else:
-            bars = _calc_approaching(code, precursor, fund_flow, raw_signals)
+            bars = _calc_approaching(code, precursor, fund_flow, raw_signals, signals_age_h)
             if bars:
                 entry["approaching_bars"] = bars
                 approaching.append(entry)
 
-    # 排序：triggered 按共振信号数降序
-    triggered.sort(key=lambda x: x["resonance"]["resonance_count"], reverse=True)
-    # approaching 按最高进度条降序
+    # 排序：先按信号总权重降序，权重相同时再按信号数降序
+    def _sort_key(item):
+        sigs = item["resonance"]["dominant_signals"]
+        total_weight = sum(s["weight"] for s in sigs)
+        return (total_weight, item["resonance"]["resonance_count"])
+
+    triggered.sort(key=_sort_key, reverse=True)
     approaching.sort(
         key=lambda x: max((b["pct"] for b in x.get("approaching_bars", [])), default=0),
         reverse=True,
     )
 
     return {
-        "triggered":   triggered[:8],
+        "triggered":   triggered[:12],
         "approaching": approaching[:5],
         "scanned":     len(cn_stocks),
     }

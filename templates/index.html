@@ -436,9 +436,13 @@ function _renderTriggeredCard(item) {
 function _renderApproachingCard(item) {
   const bars  = item.approaching_bars || [];
   const topPct = bars[0]?.pct || 0;
+  const topDir = bars[0]?.direction || 'bull';
   const statusDot = item.status === 'holding'
     ? '<span class="sr-status-dot sr-dot-hold" title="持有中"></span>'
     : '<span class="sr-status-dot sr-dot-watch" title="观察中"></span>';
+  const dirBadge = topDir === 'bull'
+    ? '<span class="sr-appr-dir-badge sr-appr-dir-bull">看多预警</span>'
+    : '<span class="sr-appr-dir-badge sr-appr-dir-bear">看空预警</span>';
 
   const barsHtml = bars.map(b => `
     <div class="sr-appr-row">
@@ -452,11 +456,12 @@ function _renderApproachingCard(item) {
   `).join('');
 
   return `
-  <a class="sr-approaching-card" href="/stock/${item.code}?tab=radar">
+  <a class="sr-approaching-card sr-approaching-${topDir}" href="/stock/${item.code}?tab=radar">
     <div class="sr-appr-top">
       ${statusDot}
       <span class="sr-code">${item.code}</span>
       <span class="sr-name">${item.name}</span>
+      ${dirBadge}
       <span class="sr-appr-badge">接近触发 ${topPct}%</span>
     </div>
     <div class="sr-appr-bars">${barsHtml}</div>

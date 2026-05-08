@@ -252,18 +252,59 @@ def get_inst_quarterly(code: str) -> dict:
 
 def save_precursor_cache(code: str, survey: dict, short_selling: dict,
                          participation: dict, score: float, is_active: bool):
+    """写入前兆缓存。
+    如果新拉取的 survey 没有 events，但缓存里有 30 天内的历史事件，
+    保留旧 survey 数据（不用空值覆盖有效记录）。
+    """
     fetched_at = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M")
+
+    # 方案A：survey 为空时，保留缓存里 30 天内的旧事件
+    survey_to_save = survey
+    new_events = (survey or {}).get("events") or []
+    if not new_events:
+        old = get_precursor_cache(code)
+        old_survey = old.get("survey") or {}
+        old_events = old_survey.get("events") or []
+        if old_events:
+            try:
+                cutoff = datetime.now(CN_TZ) - timedelta(days=30)
+                fresh = [
+                    e for e in old_events
+                    if datetime.strptime(e["date"][:10], "%Y-%m-%d") >= cutoff.replace(tzinfo=None)
+                ]
+                if fresh:
+                    survey_to_save = {**(survey or {}), "events": fresh}
+            except Exception:
+                pass
+
     with get_conn() as c:
         c.execute(
             """INSERT OR REPLACE INTO stock_precursor_cache
                (code, fetched_at, survey_json, short_json, partic_json, score, is_active)
                VALUES(?,?,?,?,?,?,?)""",
             (code, fetched_at,
-             json.dumps(survey, ensure_ascii=False) if survey else None,
+             json.dumps(survey_to_save, ensure_ascii=False) if survey_to_save else None,
              json.dumps(short_selling, ensure_ascii=False) if short_selling else None,
              json.dumps(participation, ensure_ascii=False) if participation else None,
              score, int(is_active)),
         )
+        # 永久积累调研事件，防止 AKShare 滚动窗口丢失历史记录
+        all_events = list(new_events) or []
+        if not all_events and survey_to_save:
+            all_events = survey_to_save.get("events") or []
+        for ev in all_events:
+            try:
+                c.execute(
+                    """INSERT OR IGNORE INTO survey_events
+                       (code, event_date, n_inst, is_specific, source)
+                       VALUES(?,?,?,?,?)""",
+                    (code, str(ev.get("date", ""))[:10],
+                     int(ev.get("n_inst") or 0),
+                     int(bool(ev.get("is_specific"))),
+                     ev.get("source", "")),
+                )
+            except Exception:
+                pass
 
 
 def get_precursor_cache(code: str) -> dict:

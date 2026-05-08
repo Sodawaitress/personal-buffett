@@ -103,6 +103,7 @@
 - **US-67 机构前兆信号（2026-05-01）**：`scripts/precursor_signals.py` 新模块；三类前兆信号（机构调研热度`stock_jgdy_tj_em`/融券余量变化`stock_margin_detail_sse/szse`/机构参与度趋势`stock_comment_detail_zlkp_jgcyd_em`）；接入 `compute_intention_score()` 新增3个权重项（survey 1.5/short_selling 1.0/participation 0.7）；所有10个信号描述全部改为人话（用"公司高管用自己的钱买了"而非"高管增持"）；五一假期API返回null的回退处理
 - **US-68 机构雷达叙事重设计（2026-05-03）**：`_classify_inst_sellers()` 区分ETF被动调仓 vs 主动基金；`_build_observations()` 生成"综合来看"观察列表；`_SIGNAL_CONTEXT` 每个信号附"这是什么"人话解释；前兆信号移至页面顶端；`_renderIntention()` 完全重写为叙事结构；`signals_snapshot` 含 inst_top/margin/fund_flow；语言原则：只陈述观察、解释情境，不替用户下结论
 - **US-76 最值得关注榜单（2026-05-06）**：`radar_app/data/signal_events.py` 新模块；11类信号（调研/参与度/融券/主力资金/机构增减持/融资余额）事件检测 + 共振算法（≥2同向信号触发上榜）；`/api/signals/watchlist` GET 端点（读本地缓存，<0.1s）；首页今日信号区块（`has_cn_stocks` 控制显隐，有A股才展示）；上榜卡片（看多/看空方向色条 + 信号tag + 共振进度条）；空态"接近触发"预览（4类信号进度条 + 触发条件提示）；点击跳转 `/stock/{code}?tab=radar`；实测60只A股扫描，8只上榜，5只接近触发
+- **US-76 数据质量修复（2026-05-08）**：主力资金改用 ratio≥3% 相对阈值（原 net>0 对小盘误判）；机构持仓要求≥2家同向才触发（原≥1）；融资余额信号加48h新鲜度门控（`signals_age_h`）；`survey_events` 永久积累表（`core.py` 新建表，`save_precursor_cache` 写入，`_parse_precursor_cache` 回填兜底，历史191条事件backfill完成）；接近触发区增加方向感知（看多/看空预警色标签 + 卡片左侧色条）
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）
