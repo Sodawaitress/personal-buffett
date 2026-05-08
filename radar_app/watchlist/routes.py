@@ -193,6 +193,40 @@ def register_watchlist_routes(app):
         from radar_app.data.signal_events import get_watchlist_signals
         return jsonify(get_watchlist_signals(session['user_id']))
 
+    _precursor_scan_lock = threading.Lock()
+    _precursor_scan_running = {'value': False, 'started_at': None}
+
+    @app.route('/api/signals/scan', methods=['POST'])
+    @login_required
+    def api_signals_scan():
+        import subprocess, os
+        if _precursor_scan_running['value']:
+            return jsonify({'status': 'running', 'started_at': _precursor_scan_running['started_at']})
+
+        def _run():
+            _precursor_scan_running['value'] = True
+            _precursor_scan_running['started_at'] = datetime.now(CN_TZ).isoformat()
+            try:
+                root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                subprocess.run(
+                    ['python3', 'scripts/precursor_signals.py'],
+                    cwd=root, capture_output=True, timeout=600
+                )
+            finally:
+                _precursor_scan_running['value'] = False
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        return jsonify({'status': 'started'})
+
+    @app.route('/api/signals/scan/status')
+    @login_required
+    def api_signals_scan_status():
+        return jsonify({
+            'running': _precursor_scan_running['value'],
+            'started_at': _precursor_scan_running['started_at'],
+        })
+
     @app.route('/watchlist/performance')
     @login_required
     def performance_page():

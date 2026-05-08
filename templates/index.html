@@ -100,7 +100,7 @@
     <div class="sr-header">
       <span class="section-label">今日信号</span>
       <span class="sr-subtitle">根据你的A股自选股，实时扫描机构动向</span>
-      <button class="sr-refresh-btn" id="sr-refresh-btn" onclick="loadRadarSignals()" title="刷新信号">↺</button>
+      <button class="sr-refresh-btn" id="sr-refresh-btn" onclick="triggerPrecursorScan()" title="重新拉取最新数据（约3-5分钟）">↺</button>
     </div>
     <hr class="section-rule">
     <div id="sr-body">
@@ -342,7 +342,7 @@ async function loadRadarSignals() {
   const body = document.getElementById('sr-body');
   const btn  = document.getElementById('sr-refresh-btn');
   if (!body) return;
-  body.innerHTML = '<div class="sr-loading"><span class="spinner-sm"></span> 扫描中…</div>';
+  body.innerHTML = '<div class="sr-loading"><span class="spinner-sm"></span> 读取信号…</div>';
   if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
   try {
     const resp = await fetch('/api/signals/watchlist');
@@ -353,6 +353,53 @@ async function loadRadarSignals() {
   } finally {
     if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
   }
+}
+
+async function triggerPrecursorScan() {
+  const body = document.getElementById('sr-body');
+  const btn  = document.getElementById('sr-refresh-btn');
+  if (!body || !btn) return;
+
+  // 先检查是否已在跑
+  try {
+    const st = await fetch('/api/signals/scan/status');
+    const stData = await st.json();
+    if (stData.running) {
+      _pollScanStatus();
+      return;
+    }
+  } catch(e) {}
+
+  // 启动扫描
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  body.innerHTML = '<div class="sr-loading"><span class="spinner-sm"></span> 正在从 AKShare 拉取最新数据，约需 3-5 分钟…</div>';
+  try {
+    await fetch('/api/signals/scan', { method: 'POST' });
+  } catch(e) {
+    body.innerHTML = '<div class="sr-empty">启动失败，请稍后重试</div>';
+    btn.disabled = false; btn.classList.remove('spinning');
+    return;
+  }
+  _pollScanStatus();
+}
+
+function _pollScanStatus() {
+  const body = document.getElementById('sr-body');
+  const btn  = document.getElementById('sr-refresh-btn');
+  const timer = setInterval(async () => {
+    try {
+      const st = await fetch('/api/signals/scan/status');
+      const stData = await st.json();
+      if (!stData.running) {
+        clearInterval(timer);
+        await loadRadarSignals();
+      }
+    } catch(e) {
+      clearInterval(timer);
+      if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+    }
+  }, 8000);
 }
 
 function _renderRadarSignals(data) {
