@@ -122,10 +122,12 @@ def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
             "detail":    detail,
         })
 
-    # ── 1. 机构调研 ───────────────────────────────────────────────
+    # ── 1. 机构调研（仅用 30 天内的事件）────────────────────────────
     sv = precursor.get("survey", {})
     if isinstance(sv, dict):
-        events = sv.get("events") or []
+        cutoff_30 = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        events = [e for e in (sv.get("events") or [])
+                  if str(e.get("date", ""))[:10] >= cutoff_30]
         if events:
             specific = [e for e in events if e.get("is_specific")]
             if specific:
@@ -133,7 +135,10 @@ def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
                 add("survey_visit", f"{latest.get('n_inst','')}家机构专项调研 · {latest.get('date','')[:10]}")
             else:
                 latest = events[0]
-                add("survey_active", f"{latest.get('n_inst','')}家机构调研 · {latest.get('date','')[:10]}")
+                # survey_active 要求至少 3 家机构，1-2 家视为例行拜访
+                n = int(latest.get("n_inst") or 0)
+                if n >= 3:
+                    add("survey_active", f"{n}家机构调研 · {latest.get('date','')[:10]}")
 
     # ── 2. 机构参与度 ─────────────────────────────────────────────
     pa = precursor.get("participation", {})
