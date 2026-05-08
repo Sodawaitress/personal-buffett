@@ -4630,6 +4630,77 @@ footer small {
    US-76 今日信号 · 最值得关注榜单
    ══════════════════════════════════════════════════════ */
 
+/* ── 首页加载 overlay ─────────────────────────────── */
+.home-loader {
+  position: fixed;
+  inset: 0;
+  background: var(--paper);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease;
+}
+.home-loader.hl-fade { opacity: 0; pointer-events: none; }
+.hl-card {
+  width: min(340px, 88vw);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.hl-brand {
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+.hl-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hl-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+.hl-step.hl-active { opacity: 1; }
+.hl-step.hl-done   { opacity: 0.55; }
+.hl-step.hl-skip   { opacity: 0.25; }
+.hl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.hl-active .hl-dot { background: var(--ink); animation: hl-pulse 1.2s infinite; }
+.hl-done .hl-dot   { background: #81c784; animation: none; }
+@keyframes hl-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.6; }
+}
+.hl-text {
+  font-family: -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  flex: 1;
+}
+.hl-status {
+  font-size: 12px;
+  color: #81c784;
+  min-width: 16px;
+  text-align: right;
+}
+.hl-note {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
 .signal-radar-section {
   margin: 24px 0 0;
   padding: 0 0 8px;

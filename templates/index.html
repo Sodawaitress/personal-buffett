@@ -4,6 +4,32 @@
 {% block pulse_bar %}{% endblock %}
 
 {% block content %}
+
+{# ── 首页加载 overlay ── #}
+<div id="home-loader" class="home-loader" style="display:none">
+  <div class="hl-card">
+    <div class="hl-brand">私人巴菲特</div>
+    <div class="hl-steps" id="hl-steps">
+      <div class="hl-step" id="hl-step-price">
+        <span class="hl-dot"></span>
+        <span class="hl-text">获取最新价格</span>
+        <span class="hl-status" id="hl-s-price"></span>
+      </div>
+      <div class="hl-step" id="hl-step-flow">
+        <span class="hl-dot"></span>
+        <span class="hl-text">检查主力资金流向</span>
+        <span class="hl-status" id="hl-s-flow"></span>
+      </div>
+      <div class="hl-step" id="hl-step-precursor">
+        <span class="hl-dot"></span>
+        <span class="hl-text">更新机构前兆信号</span>
+        <span class="hl-status" id="hl-s-precursor"></span>
+      </div>
+    </div>
+    <div class="hl-note" id="hl-note">数据更新中，请稍候…</div>
+  </div>
+</div>
+
 <div class="page-container">
 
   {# ── 简洁报头 ── #}
@@ -98,9 +124,8 @@
   {% if has_cn_stocks %}
   <div class="signal-radar-section" id="signal-radar">
     <div class="sr-header">
-      <span class="section-label">今日信号</span>
-      <span class="sr-subtitle">根据你的A股自选股，实时扫描机构动向</span>
-      <button class="sr-refresh-btn" id="sr-refresh-btn" onclick="triggerPrecursorScan()" title="重新拉取最新数据（约3-5分钟）">↺</button>
+      <span class="section-label">最新信号</span>
+      <span class="sr-subtitle" id="sr-subtitle">A股机构动向扫描</span>
     </div>
     <hr class="section-rule">
     <div id="sr-body">
@@ -331,11 +356,101 @@ function updateCompound() {
   document.getElementById('years-val').textContent = years + '年';
 }
 
-// ── 页面加载时绑定搜索框 + 信号雷达 ──────────────────────
+// ── 页面加载：先拉数据，再显示内容 ──────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initSearch('search-q', 'search-dropdown', 'add-code', 'add-name', 'add-market', 'add-asset-type');
+  {% if has_cn_stocks %}
+  runHomeLoader();
+  {% else %}
   if (document.getElementById('signal-radar')) loadRadarSignals();
+  {% endif %}
 });
+
+async function runHomeLoader() {
+  const overlay = document.getElementById('home-loader');
+  overlay.style.display = 'flex';
+
+  // 启动后端刷新
+  let precursorWillRun = false;
+  try {
+    const resp = await fetch('/api/home/refresh', { method: 'POST' });
+    const data = await resp.json();
+    precursorWillRun = data.precursor_stale;
+  } catch(e) {
+    _hlDone(); return;
+  }
+
+  // 如果前兆不用跑，直接标记完成
+  if (!precursorWillRun) {
+    document.getElementById('hl-step-precursor').classList.add('hl-skip');
+    document.getElementById('hl-s-precursor').textContent = '已是最新';
+  }
+
+  // 轮询状态
+  const poll = setInterval(async () => {
+    try {
+      const st = await fetch('/api/home/refresh/status');
+      const s  = await st.json();
+      _hlUpdateSteps(s.step, precursorWillRun);
+      if (!s.running) {
+        clearInterval(poll);
+        _hlDone();
+      }
+    } catch(e) {
+      clearInterval(poll);
+      _hlDone();
+    }
+  }, 4000);
+}
+
+function _hlUpdateSteps(step, hasPrecursor) {
+  if (step === 'price') {
+    _hlActive('hl-step-price');
+  } else if (step === 'precursor') {
+    _hlDoneStep('hl-step-price', 'hl-s-price');
+    _hlDoneStep('hl-step-flow', 'hl-s-flow');
+    if (hasPrecursor) _hlActive('hl-step-precursor');
+  } else if (step === 'done') {
+    _hlDoneStep('hl-step-price', 'hl-s-price');
+    _hlDoneStep('hl-step-flow', 'hl-s-flow');
+    _hlDoneStep('hl-step-precursor', 'hl-s-precursor');
+  }
+}
+
+function _hlActive(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hl-active');
+}
+function _hlDoneStep(stepId, statusId) {
+  const el = document.getElementById(stepId);
+  const st = document.getElementById(statusId);
+  if (el) { el.classList.remove('hl-active'); el.classList.add('hl-done'); }
+  if (st && !st.textContent) st.textContent = '✓';
+}
+
+function _hlDone() {
+  _hlDoneStep('hl-step-price', 'hl-s-price');
+  _hlDoneStep('hl-step-flow', 'hl-s-flow');
+  _hlDoneStep('hl-step-precursor', 'hl-s-precursor');
+  document.getElementById('hl-note').textContent = '数据已更新，正在载入…';
+
+  // 拿前兆时效写入副标题
+  try {
+    const st = await fetch('/api/home/refresh/status');
+    const s  = await st.json();
+    const sub = document.getElementById('sr-subtitle');
+    if (sub) sub.textContent = `A股机构动向 · 前兆数据${s.precursor_label}`;
+  } catch(e) {}
+
+  setTimeout(() => {
+    const overlay = document.getElementById('home-loader');
+    overlay.classList.add('hl-fade');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      if (document.getElementById('signal-radar')) loadRadarSignals();
+    }, 600);
+  }, 800);
+}
 
 // ── US-76 今日信号 · 最值得关注榜单 ──────────────────────
 async function loadRadarSignals() {
