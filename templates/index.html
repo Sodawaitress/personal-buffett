@@ -386,17 +386,26 @@ async function runHomeLoader() {
     document.getElementById('hl-s-precursor').textContent = '已是最新';
   }
 
-  // 轮询状态
+  // 90 秒超时保险：前兆扫描太慢时先放行，让后台继续跑
+  const maxWait = setTimeout(() => {
+    clearInterval(poll);
+    document.getElementById('hl-note').textContent = '前兆数据仍在后台更新，先带你进去…';
+    _hlDone();
+  }, 90000);
+
+  // 轮询状态（每 4 秒）
   const poll = setInterval(async () => {
     try {
       const st = await fetch('/api/home/refresh/status');
       const s  = await st.json();
       _hlUpdateSteps(s.step, precursorWillRun);
       if (!s.running) {
+        clearTimeout(maxWait);
         clearInterval(poll);
         _hlDone();
       }
     } catch(e) {
+      clearTimeout(maxWait);
       clearInterval(poll);
       _hlDone();
     }
@@ -428,7 +437,7 @@ function _hlDoneStep(stepId, statusId) {
   if (st && !st.textContent) st.textContent = '✓';
 }
 
-function _hlDone() {
+async function _hlDone() {
   _hlDoneStep('hl-step-price', 'hl-s-price');
   _hlDoneStep('hl-step-flow', 'hl-s-flow');
   _hlDoneStep('hl-step-precursor', 'hl-s-precursor');
