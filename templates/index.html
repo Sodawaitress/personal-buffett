@@ -447,10 +447,14 @@ function _renderTriggeredCard(item) {
     ? '<span class="sr-status-dot sr-dot-hold" title="持有中"></span>'
     : '<span class="sr-status-dot sr-dot-watch" title="观察中"></span>';
 
-  const dirClass = dir === 'bull' ? 'sr-card-bull' : 'sr-card-bear';
-  const dirBadge = dir === 'bull'
-    ? '<span class="sr-dir-badge sr-bull-badge">看多为主</span>'
-    : '<span class="sr-dir-badge sr-bear-badge">看空为主</span>';
+  const conflict = item.resonance.has_conflict;
+  const dirClass = conflict ? 'sr-card-mixed'
+    : dir === 'bull' ? 'sr-card-bull' : 'sr-card-bear';
+  const dirBadge = conflict
+    ? '<span class="sr-dir-badge sr-mixed-badge">多空分歧</span>'
+    : dir === 'bull'
+      ? '<span class="sr-dir-badge sr-bull-badge">看多为主</span>'
+      : '<span class="sr-dir-badge sr-bear-badge">看空为主</span>';
 
   // 按方向分组展示所有信号
   const bullSigs = allSigs.filter(s => s.direction === 'bull');

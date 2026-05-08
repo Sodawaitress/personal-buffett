@@ -4707,6 +4707,7 @@ footer small {
 }
 .sr-card-bull .sr-card-side { background: #2e7d32; }
 .sr-card-bear .sr-card-side { background: #c62828; }
+.sr-card-mixed .sr-card-side { background: #f57c00; }
 
 .sr-card-body {
   padding: 10px 12px;
@@ -4762,6 +4763,7 @@ footer small {
 }
 .sr-bull-badge { background: #e8f5e9; color: #2e7d32; }
 .sr-bear-badge { background: #ffebee; color: #c62828; }
+.sr-mixed-badge { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
 
 .sr-sig-tags {
   display: flex;

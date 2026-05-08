@@ -219,8 +219,14 @@ def _calc_resonance(signals: list[dict]) -> dict:
         dominant  = signals
         count     = max(len(bull), len(bear))
 
+    # 当反向权重 >= 主方权重的 50%，标记为分歧（不算纯方向信号）
+    minority_w = bear_w if direction == "bull" else bull_w
+    dominant_w = bull_w if direction == "bull" else bear_w
+    has_conflict = (direction != "mixed") and (dominant_w > 0) and (minority_w / dominant_w >= 0.5)
+
     return {
         "direction":        direction,
+        "has_conflict":     has_conflict,
         "bull_count":       len(bull),
         "bear_count":       len(bear),
         "bull_weight":      bull_w,
