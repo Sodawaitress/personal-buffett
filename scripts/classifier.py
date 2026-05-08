@@ -60,7 +60,11 @@ _CN_ETF_PREFIXES = ("159", "510", "511", "512", "513", "515", "516", "517",
                     "165", "166", "167", "168")
 
 _FUND_NAME_KW = ("ETF", "LOF", "FOF", "基金", "混合", "货币市场", "债券型",
-                 "股票型", "指数型", "增强型", "QDII", "量化")
+                 "股票型", "指数型", "增强型", "QDII", "量化",
+                 # 海外基金常见命名
+                 "Fund", "Trust", "Hedged", "Index", "Total World",
+                 "Total Market", "SmartShares", "Vanguard", "iShares",
+                 "Diversified", "Fixed Interest", "NZBond", "NZCash")
 
 def _is_etf(code: str, name: str) -> bool:
     """检测是否为 ETF 或基金产品（含场外基金）。"""

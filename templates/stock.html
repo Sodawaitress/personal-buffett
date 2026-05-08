@@ -513,11 +513,15 @@
       {% set sector = signals.get('sector') if signals else none %}
       {% set framework_lbl = {
         'mature_value': t.fw_mature_value,
-        'growth_tech': t.fw_growth_tech,
-        'financial': t.fw_financial,
-        'cyclical': t.fw_cyclical,
-        'utility': t.fw_utility,
-        'speculative': t.fw_speculative
+        'growth_tech':  t.fw_growth_tech,
+        'financial':    t.fw_financial,
+        'cyclical':     t.fw_cyclical,
+        'utility':      t.fw_utility,
+        'speculative':  t.fw_speculative,
+        'etf':          '指数基金 / ETF',
+        'pre_profit':   '成长期（未盈利）',
+        'distressed':   '困境股',
+        'bank_insurance': '银行 / 保险'
       }.get((meta.company_type if meta else ''), '') %}
       <div class="stock-info-row" style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 0;font-size:12px;color:var(--ink-muted)">
         <span><strong>{{ t.lbl_market_label }}</strong> {{ market | upper }}</span>
@@ -525,7 +529,6 @@
         {% if sector %}<span><strong>{{ t.lbl_sector_label }}</strong> {{ sector }}</span>{% endif %}
         {% if meta and meta.market_tier %}<span><strong>{{ t.lbl_board_label }}</strong> {{ meta.market_tier }}</span>{% endif %}
         {% if framework_lbl %}<span><strong>{{ t.lbl_type_label }}</strong> {{ framework_lbl }}</span>{% endif %}
-        {% if meta and meta.company_type %}<span style="color:var(--ink-faint)">{{ meta.company_type }}</span>{% endif %}
       </div>
 
       {# 基本面指标 #}
