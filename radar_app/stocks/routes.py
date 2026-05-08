@@ -185,8 +185,8 @@ def register_stock_routes(app):
         cached = get_precursor_cache(code) if not force_refresh else {}
         cache_age_h = cached.get("age_hours", 999)
 
-        if cached and cache_age_h < 6:
-            # 缓存未过期（6小时内），直接用
+        if cached and cache_age_h < 48:
+            # 48 小时内的缓存直接用；首页加载已负责每日刷新
             stock_precursor = {
                 "survey":        cached.get("survey", {}),
                 "short_selling": cached.get("short_selling", {}),
@@ -196,9 +196,19 @@ def register_stock_routes(app):
             fetched_at_str = cached.get("fetched_at", "")[:16]
             from_cache = True
         else:
-            # 缓存缺失或过期，现场拉取后写入缓存
+            # 完全没有缓存时才现场拉（加 30 秒超时保护）
             try:
-                precursor = fetch_precursor_signals([code])
+                import signal as _sig
+
+                def _timeout_handler(signum, frame):
+                    raise TimeoutError("precursor fetch timeout")
+
+                _sig.signal(_sig.SIGALRM, _timeout_handler)
+                _sig.alarm(30)
+                try:
+                    precursor = fetch_precursor_signals([code])
+                finally:
+                    _sig.alarm(0)
             except Exception:
                 precursor = {}
             stock_precursor = precursor.get(code, {})
