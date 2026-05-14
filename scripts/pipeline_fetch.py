@@ -400,6 +400,24 @@ def _fetch_signals(code, market, log):
     except Exception as e:
         log(f"       ⚠️ 投行信号获取失败: {e}")
 
+    # 计算机构背离分并存入 signals_json
+    try:
+        from radar_app.data.signal_events import _calc_divergence
+        from radar_app.data.market import get_precursor_cache
+
+        fresh = (db.get_fundamentals(code) or {}).get("signals", {})
+        precursor = get_precursor_cache(code)
+        div = _calc_divergence(precursor, fresh)
+        db.upsert_signals(code, {
+            "divergence_score":     div["total"],
+            "divergence_level":     div["level"],
+            "divergence_action":    div["action"],
+            "divergence_breakdown": div["breakdown"],
+        })
+        log(f"       背离分: {div['total']:+d} ({div['level']})")
+    except Exception as e:
+        log(f"       ⚠️ 背离分计算失败: {e}")
+
 
 def _fetch_1b_financials(code, market, log):
     _fetch_financials(code, market, log)

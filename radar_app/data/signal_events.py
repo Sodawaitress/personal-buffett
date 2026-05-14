@@ -13,6 +13,9 @@ from radar_app.data.stocks import get_fund_flow, get_user_watchlist
 
 _SIGNALS_MAX_AGE_H = 48   # signals_json 超过这个小时数视为过期，不用 margin 信号
 
+_ETF_PASSIVE_KEYWORDS  = ("ETF", "联接", "指数", "LOF")
+_STRONG_ACTIVE_KEYWORDS = ("社保", "QFII", "陆股通", "汇金", "养老", "险资")
+
 
 def _get_fundamentals_with_age(code: str) -> tuple[dict, float]:
     """返回 (signals_dict, age_hours)，age 超过阈值时 margin 信号应跳过。"""
@@ -236,6 +239,104 @@ def _calc_resonance(signals: list[dict]) -> dict:
     }
 
 
+def _calc_divergence(precursor: dict, signals: dict, signals_age_h: float = 0) -> dict:
+    """
+    机构背离分：量化消息面与机构真实行为的背离程度。
+    返回 {total, level, action, breakdown: {short, inst_quality, survey_consistency}}
+    分值范围 -6 到 +6；≤-3 出货陷阱，≥+4 强共振。
+    """
+    breakdown = {}
+
+    # 1. 融券信号（margin_change_pct，正值=融券余额上升=做空加仓）
+    short_score = 0
+    if signals_age_h <= _SIGNALS_MAX_AGE_H:
+        mp = signals.get("margin_change_pct")
+        if mp is not None:
+            try:
+                mp = float(mp)
+                if mp > 15:
+                    short_score = -2
+                elif mp > 5:
+                    short_score = -1
+                elif mp < -15:
+                    short_score = 2
+                elif mp < -5:
+                    short_score = 1
+                # else 0
+            except (TypeError, ValueError):
+                pass
+    breakdown["short"] = short_score
+
+    # 2. 机构持仓质量（inst_top 增减持方类型）
+    inst_score = 0
+    inst_top = signals.get("inst_top") or []
+    if inst_top:
+        increased = [h for h in inst_top if (h.get("change") or 0) > 0]
+        decreased = [h for h in inst_top if (h.get("change") or 0) < 0]
+
+        def _is_passive(name: str) -> bool:
+            return any(kw in name for kw in _ETF_PASSIVE_KEYWORDS)
+
+        def _is_strong_active(name: str) -> bool:
+            return any(kw in name for kw in _STRONG_ACTIVE_KEYWORDS)
+
+        active_out = any(not _is_passive(h.get("name", "")) for h in decreased)
+        active_in  = any(_is_strong_active(h.get("name", "")) or
+                         (not _is_passive(h.get("name", ""))) for h in increased)
+        passive_only_in = increased and all(_is_passive(h.get("name", "")) for h in increased)
+
+        if decreased and active_out:
+            inst_score = -2
+        elif decreased and not active_out:
+            inst_score = -1
+        elif increased and active_in and not passive_only_in:
+            inst_score = 2
+        elif passive_only_in:
+            inst_score = 1
+        # else 0
+    breakdown["inst_quality"] = inst_score
+
+    # 3. 调研-做空一致性
+    survey_score = 0
+    sv = precursor.get("survey") or {}
+    events = sv.get("events") or []
+    survey_active = False
+    if events:
+        try:
+            latest_date = datetime.strptime(events[0]["date"][:10], "%Y-%m-%d")
+            survey_active = (datetime.now() - latest_date).days <= 30
+        except Exception:
+            pass
+
+    if survey_active:
+        mp_val = signals.get("margin_change_pct")
+        try:
+            mp_val = float(mp_val) if mp_val is not None else None
+        except (TypeError, ValueError):
+            mp_val = None
+
+        if mp_val is not None and mp_val > 5:
+            survey_score = -2
+        elif mp_val is not None and mp_val < -5:
+            survey_score = 2
+        else:
+            survey_score = 1
+    breakdown["survey_consistency"] = survey_score
+
+    total = short_score + inst_score + survey_score
+
+    if total <= -3:
+        level, action = "trap",      "机构在利用消息出货，不要追"
+    elif total <= 0:
+        level, action = "mixed",     "消息面和机构行为不一致，观望"
+    elif total <= 3:
+        level, action = "supported", "机构行为与消息共振，可以关注"
+    else:
+        level, action = "resonance", "消息+机构+资金全面共振，真实机会"
+
+    return {"total": total, "level": level, "action": action, "breakdown": breakdown}
+
+
 def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict,
                       signals_age_h: float = 0) -> list[dict]:
     """
@@ -347,7 +448,8 @@ def get_watchlist_signals(user_id: int) -> dict:
         if not detected:
             continue
 
-        resonance = _calc_resonance(detected)
+        resonance  = _calc_resonance(detected)
+        divergence = _calc_divergence(precursor, raw_signals, signals_age_h)
 
         entry = {
             "code":            code,
@@ -355,6 +457,7 @@ def get_watchlist_signals(user_id: int) -> dict:
             "status":          s.get("status", "watching"),
             "signals":         detected,
             "resonance":       resonance,
+            "divergence":      divergence,
             "precursor_age":   _cache_age_label(precursor.get("fetched_at", "")),
         }
 

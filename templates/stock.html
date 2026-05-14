@@ -345,11 +345,27 @@
               </span>
             </div>
             {% endif %}
+            {# inst_top 明细 — 名字 + ETF/主动标签 #}
+            {% if signals and signals.get("inst_top") %}
+              {% for h in signals.inst_top[:4] %}
+              {% set is_passive = ("ETF" in h.name or "联接" in h.name or "指数" in h.name or "LOF" in h.name) %}
+              <div class="signal-item signal-item-inst">
+                <span class="signal-key inst-name">{{ h.name[:10] }}{% if h.name|length > 10 %}…{% endif %}</span>
+                <span class="signal-val">
+                  <span class="inst-type-tag {{ 'inst-tag-passive' if is_passive else 'inst-tag-active' }}">{{ "被动ETF" if is_passive else "主动" }}</span>
+                  <span class="{{ 'up' if h.change > 0 else 'down' }}">{{ "%+.2f"|format(h.change) }}%</span>
+                  <span class="inst-ratio">持{{ "%.2f"|format(h.ratio) }}%</span>
+                </span>
+              </div>
+              {% endfor %}
+            {% endif %}
             {% if signals and signals.get("margin_direction") %}
             <div class="signal-item">
               <span class="signal-key">{{ t.lbl_margin_dir }}</span>
-              <span class="signal-val">{{ signals.margin_direction }}
+              <span class="signal-val {{ 'down' if signals.get('margin_change_pct', 0) > 5 else ('up' if signals.get('margin_change_pct', 0) < -5 else '') }}">
+                {{ signals.margin_direction }}
                 {% if signals.get("margin_balance") %} {{ "%.1f"|format(signals.margin_balance / 1e8) }}亿{% endif %}
+                {% if signals.get("margin_change_pct") is not none %} ({{ "%+.1f"|format(signals.margin_change_pct) }}%){% endif %}
               </span>
             </div>
             {% endif %}
@@ -458,7 +474,76 @@
             {% endif %}
           </div>
         </div>
+        {# 机构背离分 · 仅A股 #}
+        {% if market == "cn" and divergence %}
+        {% set dv = divergence %}
+        {% set dv_icons = {"trap": "🔴", "mixed": "🟡", "supported": "🟢", "resonance": "✅"} %}
+        {% set dv_icon = dv_icons.get(dv.level, "⚪") %}
+        {% set dv_score_str = ("+" ~ dv.total) if dv.total >= 0 else (dv.total | string) %}
+        <div class="signal-group">
+          <div class="signal-group-label">机构背离分</div>
+          <div class="signal-items">
+            <div class="signal-item">
+              <span class="signal-key">综合评分</span>
+              <span class="signal-val">
+                <span class="diverg-chip-inline diverg-{{ dv.level }}">{{ dv_icon }} {{ dv_score_str }}</span>
+                <span class="muted" style="font-size:11px;margin-left:6px;">{{ dv.action }}</span>
+              </span>
+            </div>
+            {% if dv.breakdown %}
+            {% set bd = dv.breakdown %}
+            <div class="signal-item">
+              <span class="signal-key">融券信号</span>
+              <span class="signal-val {{ 'down' if bd.short < 0 else ('up' if bd.short > 0 else '') }}">
+                {{ ("+" ~ bd.short) if bd.short >= 0 else bd.short }}
+                <span class="muted" style="font-size:11px;">
+                  {% if bd.short <= -2 %}做空大幅加仓{% elif bd.short == -1 %}做空小幅加仓{% elif bd.short == 0 %}基本不变{% elif bd.short == 1 %}做空小幅撤退{% else %}做空大幅撤退{% endif %}
+                </span>
+              </span>
+            </div>
+            <div class="signal-item">
+              <span class="signal-key">机构质量</span>
+              <span class="signal-val {{ 'down' if bd.inst_quality < 0 else ('up' if bd.inst_quality > 0 else '') }}">
+                {{ ("+" ~ bd.inst_quality) if bd.inst_quality >= 0 else bd.inst_quality }}
+                <span class="muted" style="font-size:11px;">
+                  {% if bd.inst_quality <= -2 %}主动资金出逃{% elif bd.inst_quality == -1 %}ETF掩护出货{% elif bd.inst_quality == 0 %}信号不明{% elif bd.inst_quality == 1 %}被动ETF配置{% else %}主动资金进场{% endif %}
+                </span>
+              </span>
+            </div>
+            <div class="signal-item">
+              <span class="signal-key">调研一致性</span>
+              <span class="signal-val {{ 'down' if bd.survey_consistency < 0 else ('up' if bd.survey_consistency > 0 else '') }}">
+                {{ ("+" ~ bd.survey_consistency) if bd.survey_consistency >= 0 else bd.survey_consistency }}
+                <span class="muted" style="font-size:11px;">
+                  {% if bd.survey_consistency <= -2 %}调研热+融券增，矛盾{% elif bd.survey_consistency == 0 %}无近期调研{% elif bd.survey_consistency == 1 %}调研+融券平{% else %}调研热+融券减，共振{% endif %}
+                </span>
+              </span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
       </div>{# /.signal-panel #}
+
+      {# ── 消息-机构背离警告 ── #}
+      {% if market == "cn" and divergence and news %}
+        {% set pos_ct2 = news | selectattr("sentiment", "equalto", "positive") | list | length %}
+        {% set neg_ct2 = news | selectattr("sentiment", "equalto", "negative") | list | length %}
+        {% set news_bull = pos_ct2 > neg_ct2 %}
+        {% if news_bull and divergence.total <= -2 %}
+        <div class="diverg-news-warning {{ 'diverg-warn-trap' if divergence.total <= -3 else 'diverg-warn-mixed' }}">
+          <span class="diverg-warn-icon">⚠</span>
+          <span class="diverg-warn-body">
+            <strong>消息面偏正面，但机构行为背离（背离分 {{ ("+" ~ divergence.total) if divergence.total >= 0 else divergence.total }}）</strong>
+            {% if divergence.total <= -3 %} — 符合「消息出货」特征，机构可能正在利用正面消息减仓。
+            {% else %} — 消息与机构方向不完全一致，保持谨慎。
+            {% endif %}
+            <a href="#tab-radar" onclick="switchTab('radar', document.querySelector('.tab-btn[onclick*=radar]'))" class="diverg-warn-link">查看机构雷达 →</a>
+          </span>
+        </div>
+        {% endif %}
+      {% endif %}
 
       {# ── 新闻列表 ── #}
       {% if news %}

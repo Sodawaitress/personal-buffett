@@ -308,7 +308,9 @@ def save_precursor_cache(code: str, survey: dict, short_selling: dict,
 
 
 def get_precursor_cache(code: str) -> dict:
-    """返回最新一条缓存记录，含 age_hours 字段。"""
+    """返回最新一条缓存记录，含 age_hours 字段。
+    若缓存 survey.events 为空，从 survey_events 永久表补回近 60 天数据。
+    """
     with get_conn() as c:
         row = c.execute(
             "SELECT * FROM stock_precursor_cache WHERE code=? ORDER BY fetched_at DESC LIMIT 1",
@@ -330,6 +332,28 @@ def get_precursor_cache(code: str) -> dict:
         rec["age_hours"] = (datetime.now(CN_TZ) - fetched).total_seconds() / 3600
     except Exception:
         rec["age_hours"] = 999
+
+    # 若缓存里没有调研事件，从 survey_events 永久表补回近 60 天
+    cached_events = (rec.get("survey") or {}).get("events") or []
+    if not cached_events:
+        try:
+            cutoff = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+            with get_conn() as c:
+                perm_rows = c.execute(
+                    "SELECT event_date, n_inst, is_specific FROM survey_events "
+                    "WHERE code=? AND event_date>=? ORDER BY event_date DESC",
+                    (code, cutoff),
+                ).fetchall()
+            if perm_rows:
+                events = [
+                    {"date": r["event_date"], "n_inst": r["n_inst"],
+                     "is_specific": bool(r["is_specific"]), "source": "survey_events"}
+                    for r in perm_rows
+                ]
+                rec["survey"] = {**(rec.get("survey") or {}), "events": events}
+        except Exception:
+            pass
+
     return rec
 
 

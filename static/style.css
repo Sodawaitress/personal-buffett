@@ -924,6 +924,36 @@ hr.magic-rule, .magic-rule {
   position: relative;
 }
 
+/* ── 已添加 highlight flash ─────────────────────────── */
+@keyframes wl-already-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(46,125,50,0.5); background: #e8f5e9; }
+  50%  { box-shadow: 0 0 0 6px rgba(46,125,50,0.15); background: #c8e6c9; }
+  100% { box-shadow: 0 0 0 0 rgba(46,125,50,0); background: var(--paper-2); }
+}
+.wl-already-highlight { animation: wl-already-flash 2s ease-out forwards; }
+
+/* ── 已添加 toast ────────────────────────────────────── */
+.wl-already-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: #2e7d32;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 9999;
+  pointer-events: none;
+}
+.wl-already-toast.wl-toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .holding-card.holding-pending {
   border-color: var(--gold);
   opacity: 0.85;
@@ -2457,6 +2487,45 @@ footer small {
 .signal-val.muted { color: var(--ink-faint); font-style: italic; }
 .signal-val.up   { color: #c62828; }
 .signal-val.down { color: #2e7d32; }
+
+/* ── inst_top detail rows ──────────────────────────── */
+.signal-item-inst { padding-left: 8px; border-left: 2px solid var(--rule); }
+.inst-name        { min-width: 100px !important; }
+.inst-type-tag    { display: inline-block; padding: 0 5px; border-radius: 8px; font-size: 10px; font-weight: 600; margin-right: 4px; }
+.inst-tag-passive { background: #fff8e1; color: #8d5e00; border: 1px solid #ffe082; }
+.inst-tag-active  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.inst-ratio       { color: var(--ink-faint); font-size: 11px; margin-left: 4px; }
+
+/* ── 机构背离分 inline chip (signal panel) ──────────── */
+.diverg-chip-inline {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.diverg-trap      { background: #fde8e8; color: #c62828; border: 1px solid #ef9a9a; }
+.diverg-mixed     { background: #fff8e1; color: #8d5e00; border: 1px solid #ffe082; }
+.diverg-supported { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.diverg-resonance { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+/* ── 消息-机构背离警告条 ────────────────────────────── */
+.diverg-news-warning {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.diverg-warn-trap  { background: #fff5f5; border: 1px solid #ffcdd2; }
+.diverg-warn-mixed { background: #fffde7; border: 1px solid #fff59d; }
+.diverg-warn-icon  { font-size: 16px; flex-shrink: 0; padding-top: 1px; }
+.diverg-warn-body  { color: var(--ink); }
+.diverg-warn-link  { margin-left: 6px; color: var(--ink-muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
 
 .news-list-divider {
   font-family: -apple-system, sans-serif;
@@ -4907,6 +4976,22 @@ footer small {
 .sr-ratio-bull-label { color: #2e7d32; }
 .sr-ratio-bear-label { color: #c62828; }
 .sr-ratio-sep { color: var(--ink-faint); font-size: 10px; }
+
+/* ── 机构背离分 chip ─────────────────────────────────── */
+.sr-diverg-chip {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: default;
+}
+.sr-diverg-trap      { background: #fde8e8; color: #c62828; border: 1px solid #ef9a9a; }
+.sr-diverg-mixed     { background: #fff8e1; color: #8d5e00; border: 1px solid #ffe082; }
+.sr-diverg-supported { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.sr-diverg-resonance { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
 
 /* ── 接近触发区 ───────────────────────────────────────── */
 .sr-approaching-header {

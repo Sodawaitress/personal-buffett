@@ -2,6 +2,8 @@
 
 from datetime import datetime, timezone
 
+from radar_app.data.market import get_precursor_cache
+from radar_app.data.signal_events import _calc_divergence, _SIGNALS_MAX_AGE_H
 from radar_app.legacy.pipeline import compute_trading_params
 from radar_app.shared.market import MARKET_CURRENCY
 from radar_app.shared.runtime import CN_TZ
@@ -90,6 +92,33 @@ def age_minutes(ts_str, now_utc):
             return float("inf")
 
 
+def _build_divergence(code, signals, market, fund):
+    """Compute divergence live (from stored fields) or fall back to precursor+signals."""
+    if market != "cn" or not signals:
+        return None
+    # Prefer pre-computed value stored by pipeline
+    if "divergence_score" in signals:
+        return {
+            "total":     signals["divergence_score"],
+            "level":     signals.get("divergence_level", "mixed"),
+            "action":    signals.get("divergence_action", ""),
+            "breakdown": signals.get("divergence_breakdown", {}),
+        }
+    # Fall back: compute live (no survey data available here)
+    try:
+        updated_at = (fund or {}).get("updated_at", "")
+        age_h = 0
+        if updated_at:
+            dt = datetime.fromisoformat(str(updated_at).replace(" ", "T"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+        precursor = get_precursor_cache(code)
+        return _calc_divergence(precursor, signals, signals_age_h=age_h)
+    except Exception:
+        return None
+
+
 def present_stock_page(bundle):
     fund = bundle["fund"]
     signals = fund.get("signals", {}) if fund else {}
@@ -97,6 +126,7 @@ def present_stock_page(bundle):
     signals, annual = format_non_cn_financials(signals, annual, bundle["analysis"])
 
     now_utc = datetime.now(timezone.utc)
+    divergence = _build_divergence(bundle["code"], signals, bundle["market"], fund)
     return {
         "stock": bundle["stock"],
         "price": bundle["price"],
@@ -108,6 +138,7 @@ def present_stock_page(bundle):
         "ff_hist": bundle["ff_hist"],
         "north_bound": bundle["north_bound"],
         "signals": signals,
+        "divergence": divergence,
         "annual": annual,
         "pe_current": fund.get("pe_current") if fund else None,
         "pe_percentile_5y": fund.get("pe_percentile_5y") if fund else None,

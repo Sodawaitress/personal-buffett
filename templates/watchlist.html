@@ -916,16 +916,42 @@ async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selected
   }
 }
 function selectStock(code, name, market, assetType, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inputId) {
+  document.getElementById('search-dropdown').classList.remove('open');
+  document.getElementById(inputId).value = '';
+
+  // ── 已添加检查 ──────────────────────────────────────
+  const existing = document.querySelector(`.holding-card[data-code="${code}"], .wl-list-row[data-code="${code}"]`);
+  if (existing) {
+    existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    existing.classList.add('wl-already-highlight');
+    setTimeout(() => existing.classList.remove('wl-already-highlight'), 2000);
+    _showAlreadyToast(name, code);
+    return;
+  }
+
   document.getElementById(codeId).value       = code;
   document.getElementById(nameId).value       = name;
   document.getElementById(marketId).value     = market;
   if (assetTypeId) document.getElementById(assetTypeId).value = assetType || '';
-  document.getElementById(inputId).value      = '';
   const atLabel = assetType && assetType !== '股票' ? ` · ${assetType}` : '';
   document.getElementById(labelId).textContent = `${name} (${code}) · ${market.toUpperCase()}${atLabel}`;
   document.getElementById(selectedId).style.display = 'flex';
   document.getElementById(btnId).disabled = false;
-  document.getElementById('search-dropdown').classList.remove('open');
+}
+
+function _showAlreadyToast(name, code) {
+  const existing = document.getElementById('wl-already-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'wl-already-toast';
+  toast.className = 'wl-already-toast';
+  toast.innerHTML = `<span>✓ <strong>${name}</strong>（${code}）已在自选股，已跳转</span>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('wl-toast-show'));
+  setTimeout(() => {
+    toast.classList.remove('wl-toast-show');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
 }
 
 // ── US-65 差评预警 ──────────────────────────────────
