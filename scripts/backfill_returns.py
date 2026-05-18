@@ -182,20 +182,25 @@ def backfill(dry_run: bool = False):
 
 
 def backfill_predictions(dry_run: bool = False):
-    """US-75 · 回填 signal_predictions 表的 actual_return_5d + correct。"""
+    """US-75 / US-92 · 回填 signal_predictions 的 actual_return_5d/10d + correct。"""
     today = datetime.now(CN_TZ)
-    cutoff = (today - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff5  = (today - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff10 = (today - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
 
     with db.get_conn() as conn:
+        # 5d未回填 或 10d未回填 均需处理
         rows = conn.execute("""
             SELECT sp.id, sp.code, sp.direction, sp.created_at,
+                   sp.actual_return_5d, sp.actual_return_10d,
+                   sp.signal_type, sp.predicted_outcome,
                    s.market
             FROM signal_predictions sp
             JOIN stocks s ON s.code = sp.code
-            WHERE sp.created_at <= :cutoff
-              AND sp.resolved_at IS NULL
-              AND sp.actual_return_5d IS NULL
-        """, {"cutoff": cutoff}).fetchall()
+            WHERE (
+              (sp.created_at <= :c5 AND sp.actual_return_5d IS NULL)
+              OR (sp.created_at <= :c10 AND sp.actual_return_10d IS NULL)
+            )
+        """, {"c5": cutoff5, "c10": cutoff10}).fetchall()
 
     print(f"  📋 signal_predictions 待回填: {len(rows)} 条")
     price_cache: dict[str, float] = {}
@@ -238,18 +243,38 @@ def backfill_predictions(dry_run: bool = False):
         else:
             correct = None
 
+        # 10d return: only compute if 10d have elapsed and not yet filled
+        need_10d = row["actual_return_10d"] is None
+        created_dt = datetime.fromisoformat(row["created_at"].replace(" ", "T"))
+        if created_dt.tzinfo is None:
+            from radar_app.shared.runtime import CN_TZ as _tz
+            created_dt = created_dt.replace(tzinfo=_tz)
+        elapsed_days = (today - created_dt).total_seconds() / 86400
+        ret10d = None
+        if need_10d and elapsed_days >= 10:
+            ret10d = ret5d  # reuse current price for now (same snapshot in backfill)
+
         now_str = today.strftime("%Y-%m-%d %H:%M:%S")
         print(f"    ✅ {code} {created} | {direction} | "
-              f"¥{entry_price:.2f}→¥{current_price:.2f} | {ret5d:+.1f}% | "
-              f"correct={correct}")
+              f"¥{entry_price:.2f}→¥{current_price:.2f} | 5d:{ret5d:+.1f}%"
+              f"{' 10d:' + f'{ret10d:+.1f}%' if ret10d is not None else ''} | correct={correct}")
 
         if not dry_run:
-            with db.get_conn() as conn:
-                conn.execute(
-                    "UPDATE signal_predictions SET actual_return_5d=:r, correct=:c, resolved_at=:ts "
-                    "WHERE id=:rid",
-                    {"r": ret5d, "c": correct, "ts": now_str, "rid": row["id"]},
-                )
+            need_5d = row["actual_return_5d"] is None
+            updates = {"ts": now_str, "rid": row["id"]}
+            set_clauses = ["resolved_at=:ts"]
+            if need_5d:
+                updates.update({"r5": ret5d, "c": correct})
+                set_clauses += ["actual_return_5d=:r5", "correct=:c"]
+            if ret10d is not None:
+                updates["r10"] = ret10d
+                set_clauses.append("actual_return_10d=:r10")
+            if len(set_clauses) > 1:  # more than just resolved_at
+                with db.get_conn() as conn:
+                    conn.execute(
+                        f"UPDATE signal_predictions SET {', '.join(set_clauses)} WHERE id=:rid",
+                        updates,
+                    )
         updated += 1
 
     print(f"  ✔ 预测回填完成：{updated} 条")
