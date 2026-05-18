@@ -93,6 +93,11 @@ function pollJob(jobId) {
         const grade = d.analysis && d.analysis.grade;
         _finishProgress(jobId, grade);
         _finishProgress('tab-' + jobId, grade);
+        // On single-scroll detail page: save #letter to sessionStorage so reload scrolls there
+        const stockCode = window._stockCode;
+        if (stockCode && document.getElementById('detail-anchor-nav')) {
+          sessionStorage.setItem('detail_section_' + stockCode, 'letter');
+        }
         setTimeout(() => location.reload(), 1200);
       } else if (d.status === 'failed') {
         clearInterval(iv);
@@ -179,6 +184,8 @@ function _markLetterReady(code, btn) {
 function _reloadOnLetterModalClose() {
   const modalEl = document.getElementById('letter-modal');
   if (!modalEl) return;
+  // Single-scroll detail page has its own scroll logic; no reload needed there.
+  if (document.getElementById('detail-anchor-nav')) return;
   modalEl.addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
 }
 

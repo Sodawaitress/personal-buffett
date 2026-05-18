@@ -8,6 +8,17 @@ from radar_app.legacy.pipeline import compute_trading_params
 from radar_app.shared.market import MARKET_CURRENCY
 from radar_app.shared.runtime import CN_TZ
 
+try:
+    from scripts.buffett_signals import (
+        describe_margin_context,
+        describe_survey_context,
+        describe_participation_context,
+        label_news_vs_institution,
+    )
+    _SIGNAL_CTX_OK = True
+except Exception:
+    _SIGNAL_CTX_OK = False
+
 _PASSIVE_KW = ("ETF", "联接", "指数", "LOF", "沪深300", "中证500", "中证1000")
 
 
@@ -302,6 +313,134 @@ def _build_divergence(code, signals, market, fund):
         return None
 
 
+def _news_direction(news: list) -> str:
+    """Derive overall news direction from sentiment counts."""
+    if not news:
+        return "neutral"
+    pos = sum(1 for n in news if (n.get("sentiment") or "") == "positive")
+    neg = sum(1 for n in news if (n.get("sentiment") or "") == "negative")
+    if pos > neg and pos > len(news) * 0.4:
+        return "positive"
+    if neg > pos and neg > len(news) * 0.4:
+        return "negative"
+    return "neutral"
+
+
+def _inst_direction(divergence: dict, signals: dict) -> str:
+    """Derive overall institutional direction from divergence + signals."""
+    if divergence:
+        level = divergence.get("level", "mixed")
+        if level == "confirm_bull":
+            return "bullish"
+        if level in ("bear_trap", "sell_signal"):
+            return "bearish"
+    if signals:
+        inc = signals.get("inst_increased", 0) or 0
+        dec = signals.get("inst_decreased", 0) or 0
+        if inc > dec + 1:
+            return "bullish"
+        if dec > inc + 1:
+            return "bearish"
+    return "neutral"
+
+
+def _build_divergence_card(news_dir: str, inst_dir: str, divergence: dict) -> dict | None:
+    """Build the divergence summary card for the market section header."""
+    if inst_dir == "neutral":
+        return None
+    label_map = {
+        ("positive", "bullish"):  ("consistent", "新闻看多，机构在加仓", "信号一致，关注买点"),
+        ("positive", "bearish"):  ("danger",     "新闻看多，但机构在减仓", "注意「消息出货」——新闻可能掩盖机构撤退"),
+        ("negative", "bullish"):  ("opportunity","新闻看空，但机构在布局", "可能是底部逆向机会，等待催化剂"),
+        ("negative", "bearish"):  ("consistent", "新闻看空，机构同步撤退", "信号一致，暂时观望"),
+        ("neutral",  "bullish"):  ("mild",       "消息面平静，机构在悄悄买入", "可观察，等正面催化剂"),
+        ("neutral",  "bearish"):  ("mild",       "消息面平静，但机构在减仓", "留意是否有未公开的负面信号"),
+    }
+    entry = label_map.get((news_dir, inst_dir))
+    if not entry:
+        return None
+    card_type, headline, note = entry
+    action = (divergence or {}).get("action", "")
+    return {
+        "type": card_type,
+        "headline": headline,
+        "note": note,
+        "action": action,
+    }
+
+
+def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: float) -> dict:
+    """Compute cross-product signal contexts from precursor cache."""
+    if not _SIGNAL_CTX_OK or not precursor:
+        return {}
+    survey    = precursor.get("survey") or {}
+    short_s   = precursor.get("short_selling") or {}
+    partic    = precursor.get("participation") or {}
+
+    sv_events  = survey.get("events") or []
+    sv_count   = len([e for e in sv_events if e.get("date", "")[:7] == datetime.now(CN_TZ).strftime("%Y-%m")])
+    sv_avg     = survey.get("monthly_avg", 0) or 0
+    sv_foreign = survey.get("has_foreign", False)
+    sv_repeat  = survey.get("repeat_institution", False)
+
+    sh_change  = short_s.get("change_pct", 0) or 0
+
+    pt_latest  = partic.get("latest_pct", 0) or 0
+    pt_avg     = partic.get("avg_30d_pct", 0) or 0
+    pt_trend   = partic.get("trend", "中性") or "中性"
+    pt_spike   = bool(partic.get("spike"))
+
+    try:
+        margin_ctx = describe_margin_context(
+            change_pct=sh_change,
+            price_change_pct=price_change_pct,
+            participation_vs_avg=pt_latest - pt_avg,
+            participation_spike=pt_spike,
+            survey_count_30d=sv_count,
+            survey_avg_monthly=sv_avg,
+        )
+    except Exception:
+        margin_ctx = {}
+
+    try:
+        survey_ctx = describe_survey_context(
+            count_30d=sv_count,
+            avg_monthly=sv_avg,
+            has_foreign=sv_foreign,
+            repeat_institution=sv_repeat,
+            margin_change_pct=sh_change,
+            participation_vs_avg=pt_latest - pt_avg,
+        )
+    except Exception:
+        survey_ctx = {}
+
+    try:
+        partic_ctx = describe_participation_context(
+            latest=pt_latest,
+            avg_30d=pt_avg,
+            trend=pt_trend,
+            spike=pt_spike,
+            price_change_pct=price_change_pct,
+            margin_change_pct=sh_change,
+        )
+    except Exception:
+        partic_ctx = {}
+
+    return {"margin": margin_ctx, "survey": survey_ctx, "participation": partic_ctx}
+
+
+def _label_news(news: list, inst_dir: str) -> list:
+    """Add consistency label to each news article."""
+    if not _SIGNAL_CTX_OK or not news:
+        return news or []
+    result = []
+    for n in (news or []):
+        n = dict(n)
+        n["consistency"] = label_news_vs_institution(n.get("sentiment") or "neutral", inst_dir)
+        result.append(n)
+    return result
+
+
 def present_stock_page(bundle):
     fund = bundle["fund"]
     signals = fund.get("signals", {}) if fund else {}
@@ -309,16 +448,28 @@ def present_stock_page(bundle):
     signals, annual = format_non_cn_financials(signals, annual, bundle["analysis"])
 
     now_utc = datetime.now(timezone.utc)
-    divergence = _build_divergence(bundle["code"], signals, bundle["market"], fund)
+    market = bundle["market"]
+    divergence = _build_divergence(bundle["code"], signals, market, fund)
     resonance = compute_resonance(
         signals, divergence,
         bundle["fund_flow"], bundle["north_bound"],
-        bundle["news"], bundle["market"],
+        bundle["news"], market,
     )
+
+    # US-92: divergence card + signal contexts + labeled news
+    news_dir = _news_direction(bundle["news"])
+    inst_dir = _inst_direction(divergence, signals)
+    divergence_card = _build_divergence_card(news_dir, inst_dir, divergence)
+
+    price_change = ((bundle["price"] or {}).get("change_pct") or 0) if bundle["price"] else 0
+    precursor = get_precursor_cache(bundle["code"]) if market == "cn" else {}
+    signal_contexts = _build_signal_contexts(precursor, signals, price_change) if market == "cn" else {}
+    news_labeled = _label_news(bundle["news"], inst_dir)
+
     return {
         "stock": bundle["stock"],
         "price": bundle["price"],
-        "news": bundle["news"],
+        "news": news_labeled,
         "analysis": bundle["analysis"],
         "history": bundle["history"],
         "prices": bundle["prices"],
@@ -335,12 +486,12 @@ def present_stock_page(bundle):
         "resonance": resonance,
         "pending_job": bundle["pending_job"],
         "in_watchlist": bundle["in_watchlist"],
-        "market": bundle["market"],
+        "market": market,
         "meta": bundle["meta"],
         "events": bundle["events"],
-        "currency": MARKET_CURRENCY.get(bundle["market"], "$"),
+        "currency": MARKET_CURRENCY.get(market, "$"),
         "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
-        "trading_params": compute_trading_params(bundle["price"], signals, market=bundle["market"]),
+        "trading_params": compute_trading_params(bundle["price"], signals, market=market),
         "data_freshness": {
             "price": age_label(bundle["price"].get("fetched_at") if bundle["price"] else None, now_utc),
             "finance": age_label(fund.get("updated_at") if fund else None, now_utc),
@@ -351,6 +502,11 @@ def present_stock_page(bundle):
             "finance": age_minutes(fund.get("updated_at") if fund else None, now_utc) > 7 * 1440,
             "analysis": age_minutes(bundle["analysis"].get("analysis_date") if bundle["analysis"] else None, now_utc) > 3 * 1440,
         },
+        # US-92 extras
+        "divergence_card": divergence_card,
+        "signal_contexts": signal_contexts,
+        "precursor": precursor,
+        "market_currency": MARKET_CURRENCY,
     }
 
 

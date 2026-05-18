@@ -137,7 +137,8 @@
 
   <hr class="section-rule" style="margin:0 0 0">
 
-  {# ── Sub-page navigation ── #}
+  {% if not single_page %}
+  {# ── Sub-page navigation (legacy tab mode) ── #}
   <div class="stock-subnav" id="stock-subnav">
 
     <a href="{{ url_for('stock_letter', code=stock.code) }}"
@@ -173,3 +174,4 @@
     </a>
 
   </div>
+  {% endif %}

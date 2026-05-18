@@ -40,59 +40,37 @@ def register_stock_routes(app):
     @app.route('/stock/<path:code>')
     @login_required
     def stock_page(code):
-        return redirect(url_for('stock_letter', code=code.upper()))
-
-    @app.route('/stock/<path:code>/letter')
-    @login_required
-    def stock_letter(code):
         context = _stock_context(code.upper())
         if not context:
             flash('Stock not found. Add it to your watchlist first.', 'warning')
             return redirect(url_for('index'))
-        context['active_tab'] = 'letter'
-        return render_template('stock/letter.html', **context)
+        return render_template('stock/detail.html', **context)
+
+    # Legacy tab URLs → redirect to single-scroll page with anchor
+    @app.route('/stock/<path:code>/letter')
+    @login_required
+    def stock_letter(code):
+        return redirect(url_for('stock_page', code=code.upper()) + '#letter', 301)
 
     @app.route('/stock/<path:code>/signals')
     @login_required
     def stock_signals(code):
-        context = _stock_context(code.upper())
-        if not context:
-            flash('Stock not found. Add it to your watchlist first.', 'warning')
-            return redirect(url_for('index'))
-        context['active_tab'] = 'signals'
-        return render_template('stock/signals.html', **context)
+        return redirect(url_for('stock_page', code=code.upper()) + '#market', 301)
 
     @app.route('/stock/<path:code>/fundamentals')
     @login_required
     def stock_fundamentals_page(code):
-        context = _stock_context(code.upper())
-        if not context:
-            flash('Stock not found. Add it to your watchlist first.', 'warning')
-            return redirect(url_for('index'))
-        context['active_tab'] = 'fundamentals'
-        return render_template('stock/fundamentals.html', **context)
+        return redirect(url_for('stock_page', code=code.upper()) + '#fundamentals', 301)
 
     @app.route('/stock/<path:code>/events')
     @login_required
     def stock_events_page(code):
-        context = _stock_context(code.upper())
-        if not context:
-            flash('Stock not found. Add it to your watchlist first.', 'warning')
-            return redirect(url_for('index'))
-        context['active_tab'] = 'events'
-        return render_template('stock/events.html', **context)
+        return redirect(url_for('stock_page', code=code.upper()) + '#events', 301)
 
     @app.route('/stock/<path:code>/radar')
     @login_required
     def stock_radar_page(code):
-        context = _stock_context(code.upper())
-        if not context:
-            flash('Stock not found. Add it to your watchlist first.', 'warning')
-            return redirect(url_for('index'))
-        if context.get('market') != 'cn':
-            return redirect(url_for('stock_letter', code=code.upper()))
-        context['active_tab'] = 'radar'
-        return render_template('stock/radar.html', **context)
+        return redirect(url_for('stock_page', code=code.upper()) + '#market', 301)
 
     @app.route('/api/news/<code>')
     @login_required
@@ -360,6 +338,16 @@ def register_stock_routes(app):
             return jsonify({'error': 'invalid direction'}), 400
         note = (data.get('note') or '')[:80]
 
+        _VALID_SIGNAL_TYPES = {'margin', 'survey', 'participation', 'fund_flow',
+                               'insider', 'northbound', 'block_trade', 'inst_hold', 'general'}
+        signal_type = data.get('signal_type') or 'general'
+        if signal_type not in _VALID_SIGNAL_TYPES:
+            signal_type = 'general'
+
+        predicted_outcome = data.get('predicted_outcome') or None
+        if predicted_outcome not in ('confirms', 'fails', None):
+            predicted_outcome = None
+
         # snapshot the current precursor cache for this code (best effort)
         pure = code.upper().split('.')[0].zfill(6)
         snap_json = None
@@ -383,9 +371,10 @@ def register_stock_routes(app):
         with get_conn() as c:
             c.execute(
                 "INSERT INTO signal_predictions "
-                "(user_id, code, created_at, direction, note, signal_snapshot) "
-                "VALUES (:uid,:code,:now,:dir,:note,:snap)",
-                {"uid": user_id, "code": pure, "now": now, "dir": direction, "note": note, "snap": snap_json},
+                "(user_id, code, created_at, direction, note, signal_snapshot, signal_type, predicted_outcome) "
+                "VALUES (:uid,:code,:now,:dir,:note,:snap,:stype,:outcome)",
+                {"uid": user_id, "code": pure, "now": now, "dir": direction, "note": note,
+                 "snap": snap_json, "stype": signal_type, "outcome": predicted_outcome},
             )
         return jsonify({'ok': True})
 
@@ -398,10 +387,11 @@ def register_stock_routes(app):
         user_id = session.get('user_id')
         with get_conn() as c:
             rows = c.execute(
-                "SELECT id, direction, note, created_at, correct, actual_return_5d "
+                "SELECT id, direction, note, created_at, correct, actual_return_5d, "
+                "signal_type, predicted_outcome "
                 "FROM signal_predictions "
                 "WHERE user_id=:uid AND code=:code "
-                "ORDER BY created_at DESC LIMIT 5",
+                "ORDER BY created_at DESC LIMIT 10",
                 {"uid": user_id, "code": pure},
             ).fetchall()
         return jsonify([dict(r) for r in rows])
