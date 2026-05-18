@@ -3870,155 +3870,358 @@ GET https://efts.sec.gov/LATEST/search-index?q="TICKER_SYMBOL"&forms=SC+13D&date
 
 ---
 
-### US-92 · 详情页导航重构：从 Tab 到锚点滚动 + 新闻×机构融合
+### US-92 · 详情页全面重设计：锚点滚动 + 新闻×机构融合 + 信号叉乘情境 + 预测追踪
 
-**As a** 用户
-**I want to** 在详情页上下滚动就能读完整张研究报告，不需要在多个 tab 之间反复切换
-**So that** 刷新数据后不会跳回第一页，新闻和机构信号的关系也能自然呈现
-
----
-
-#### 背景：Tab 的三个根本问题
-
-1. **刷新丢位置**：`/api/run-institutional-radar` 等异步刷新完成后 JS 执行 `location.reload()`，页面强制回到第一个 tab，用户失去上下文
-2. **信息孤岛**：新闻说的（公开叙事）和机构做的（实际行为）在不同 tab 里，用户无法感知背离
-3. **导航噪音**：5 个 tab 平等权重，用户不知道先看哪个；大部分内容不是决策关键
+**As a** 用户  
+**I want to** 在详情页上下滚动读完整张研究报告，不切换 tab，刷新数据后不丢失阅读位置，并能直接看到新闻叙事与机构行为之间是否存在背离  
+**So that** 我的决策流程是：先看结论 → 再验证市场信号 → 最后看数据，而不是在五个孤立的 tab 之间拼图
 
 ---
 
-#### 新页面架构：单页锚点报告
+#### 一、为什么 Tab 不行
 
-Tab 栏改为**粘性锚点导航条**（sticky anchor nav），点击时平滑滚动到对应区块，而非切换页面。
+| 问题 | 现状 | 影响 |
+|------|------|------|
+| 刷新丢位置 | `loadIntentionTab()` / `pollJob()` 完成后执行 `location.reload()`，强制回页面顶部 | 用户在机构雷达看到一半，刷新后被踢到巴菲特信 |
+| 信息孤岛 | 新闻在 signals tab，机构雷达在 radar tab，背离是两者对比才能发现的 | 看不到"新闻正面但机构在减持"这个最重要的警告 |
+| 权重平等 | 5个 tab 等宽，用户不知道先看哪个 | 每次进页面都得重新定向 |
+| 重复加载 | 每个 tab 独立触发请求 | 机构雷达每次切过去都要等 15 秒 |
+
+---
+
+#### 二、页面新架构：单页四区块 + 粘性锚点导航
 
 ```
-┌─ 股票头部（评级 + 价格 + 操作按钮）──────────────────────────────┐
-│                                                                   │
-│  [粘性导航]  判断  ·  市场  ·  基本面  ·  事件                   │
-│  ↑ 滚到顶自动高亮当前区块                                         │
-└───────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  ← 我的选股    茅台 · 600519 · A股                              │
+│  ¥1,850  +0.8%  │  B+ 可以考虑买入  │  [更新数据 ▾]            │
+│                                                                  │
+│  ⚠ 消息面偏正面，但机构在减持——注意背离（divergence: -3）      │  ← 仅 danger/opportunity 时显示
+└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  [粘性锚点导航]  § 判断  ·  § 市场  ·  § 基本面  ·  § 事件    │
+└──────────────────────────────────────────────────────────────────┘
 
-§1 判断
-   巴菲特信全文
-   买入区间 / 止损位卡片
+━━━━ §1 判断 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  巴菲特信全文
+  [操作参数卡]  买入区间1 / 买入区间2 / 减仓区间 / 止损位
 
-§2 市场在说什么（新闻 × 机构 合并）
-   ┌─ 背离摘要行 ──────────────────────────────────────────────────┐
-   │  新闻面：📈 偏正面（本周 6/8 条正面）                         │
-   │  机构行为：有 3 家在减持，无新增调研                           │
-   │  ⚠ 消息面与机构行为背离——新闻正面但机构在撤                  │
-   └───────────────────────────────────────────────────────────────┘
-   ┌─ 机构信号区（A股：显示 / 非A股：显示可用数据或"数据不足"）──┐
-   │  综合研判（US-88/91 共振卡片）                                 │
-   │  前兆信号（调研 / 融券 / 参与度）— 完整叉乘情境（见下）       │
-   └───────────────────────────────────────────────────────────────┘
-   ┌─ 新闻列表 ────────────────────────────────────────────────────┐
-   │  📈/📉/➖ 每条新闻 + 情绪标注 + 与机构意向一致/矛盾标注       │
-   └───────────────────────────────────────────────────────────────┘
+━━━━ §2 市场在说什么 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-§3 基本面
-   财务指标趋势表
-   估值 / 护城河
+  ┌─ 背离摘要卡 ─────────────────────────────────────────────────┐
+  │  新闻面   📈 偏正面（本周 6/8 条正面）                       │
+  │  机构行为  ↓ 有 3 家在减持，融券30日增 +42%                  │
+  │  ⚠ 消息面与机构行为背离——典型出货特征，谨慎追涨             │
+  └──────────────────────────────────────────────────────────────┘
 
-§4 重大事件
-   事件时间线
+  [综合研判卡]  US-88/91 共振结果
+    看多信号  ██░░░  2/4 独立来源同向
+    ⚠ 主动基金本季净减持（可能是赎回压力）
+
+  ┌─ 调研热度 ──────────────────────────────────────────────────┐
+  │  📋  近30天有 3 家机构专程来调研                             │
+  │      比近3月均值高出 2.1 倍——机构兴趣突然觉醒               │
+  │      其中有外资机构（信息优势更强）                          │
+  │      同期融券减少 → 空头撤退，组合信号偏积极                 │
+  │  ─────────────────────────────────────────────────────────  │
+  │  [+] 你的判断：这个信号5天内会成立吗？                       │
+  └──────────────────────────────────────────────────────────────┘
+
+  ┌─ 融券余量 ──────────────────────────────────────────────────┐
+  │  🔻  做空力量在温和增加（+28%，2.1万→2.7万股）              │
+  │      今日价格涨 +0.8%                                        │
+  │      → 空头在对抗上涨——若涨势持续会被迫认亏                  │
+  │      机构参与度高于均值 +15%，参与度飙升                     │
+  │      → 轧空可能正在酝酿，有大量买盘在场                      │
+  │  ─────────────────────────────────────────────────────────  │
+  │  [原始数据 ▾]  余量 2.7万股 / 变化 +28% / 日期               │
+  │  [+] 你的判断                                                │
+  └──────────────────────────────────────────────────────────────┘
+
+  ┌─ 机构参与度 ────────────────────────────────────────────────┐
+  │  📊  近5天机构参与度从 34 升至 41                           │
+  │      今日价格涨 → 机构活跃 + 上涨，趋势有支撑               │
+  │  [+] 你的判断                                                │
+  └──────────────────────────────────────────────────────────────┘
+
+  情绪分布  📈 6  ➖ 2  📉 0    过去 7 天
+
+  📈  [公司发布超预期季报]         来源  3天前   ⚠ 与机构行为矛盾
+  📈  [管理层增持 500 万元]        来源  5天前   ✓ 与机构行为一致
+  ➖  [行业政策征求意见稿]         来源  6天前
+  📈  [新产品获得大客户订单]       来源  6天前   ⚠ 与机构行为矛盾
+
+━━━━ §3 基本面 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  财务指标趋势表 / 估值历史 / 护城河
+
+━━━━ §4 重大事件 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  事件时间线 / 手动录入（admin）
 ```
 
 ---
 
-#### 融券信号：完整叉乘情境
+#### 三、全局背离提示行（头部，仅关键时出现）
 
-融券卡片不再只显示"融券余量增加"，而是根据**5档变化幅度 × 价格方向 × 参与度 × 调研**输出完整情境句：
+**计算输入：**
+- `news_direction`：近7天 `avg_sentiment` > 0.2 → positive；< -0.2 → negative；else neutral
+- `inst_direction`：来自 `intention_phase`（已有字段）：大量买入/悄悄建仓 → bullish；陆续减持/加速离场 → bearish；其余 → neutral
 
-**5 档基础判断**
+**9种组合 → 显示规则：**
 
-| 变化幅度 | 情境描述 |
-|---------|---------|
-| > +50% | 有人在大举押注这只股票会跌 |
-| +15% ~ +50% | 做空力量在温和增加 |
-| -15% ~ +15% | 做空方向没有明显变化 |
-| -50% ~ -15% | 之前做空的人在减少赌注 |
-| < -50% | 做空者在加速离场 |
-
-**叉乘价格方向后的叙事（示例）**
-
-| 融券 | 价格 | 叙事 |
-|-----|------|------|
-| 大增 | 涨>1% | 有人在逆势押跌——如果涨势持续，这些空头会被迫认亏，可能推动更大的上涨（轧空） |
-| 大增 | 跌>1% | 空头建仓成功，市场在跟着它们的方向走 |
-| 大增 | 横盘 | 有人在悄悄建空仓，还没触发明显价格压力 |
-| 大减 | 涨 | 空头被迫认亏平仓——可能是被轧出去了，不是主动看多 |
-| 大减 | 跌/横 | 空头主动获利了结，这通常是更可信的底部信号 |
-
-**再叉乘参与度**
-
-| 融券 | 参与度 | 价格 | 叙事补充 |
-|-----|--------|------|---------|
-| 大增 | 飙升 | 涨 | **轧空可能正在发生**——大量机构涌入，空头在承压 |
-| 大增 | 飙升 | 跌 | **机构在集中出货**——空头和卖方联手，信号较强 |
-| 大减 | 飙升 | 涨 | 空头平仓 + 大量买盘涌入，双向推涨 |
-
-**再叉乘调研**
-
-| 融券 | 调研 | 叙事补充 |
-|-----|------|---------|
-| 大增 | 近期有专项调研 | 机构内部有分歧——有人在研究买，有人在做空；两边都在下注 |
-| 大减 | 近期有专项调研 | 空头撤退 + 有机构在调研考察，组合偏向积极 |
-
-每张融券卡片根据当前实际数据（`margin_change_pct` / `price_change_pct` / `inst_participation` / `survey_count_30d`）**动态选择上述叙事**，输出一句完整的情境描述，不显示原始数字计算过程。
+| 新闻面 | 机构行为 | 类型 | 提示文字 | 出现位置 |
+|--------|---------|------|---------|---------|
+| 正面 | 看多 | aligned_bull | ✅ 消息面和机构行为一致看多 | 仅 §2 摘要卡 |
+| 负面 | 看空 | aligned_bear | 📉 消息面和机构行为一致看空 | 仅 §2 摘要卡 |
+| **正面** | **看空** | **danger** | ⚠ 消息面正面，但机构在减持——注意出货特征 | **头部 + §2** |
+| **负面** | **看多** | **opportunity** | 🔍 新闻面负面，但有机构在悄悄建仓 | **头部 + §2** |
+| 正面 | 中性 | mild | 新闻偏正面，机构暂无明显动向 | 仅 §2 摘要卡 |
+| 负面 | 中性 | mild | 新闻偏负面，机构暂无明显动向 | 仅 §2 摘要卡 |
+| 中性 | 看多 | mild | 机构在建仓，新闻面平静 | 仅 §2 摘要卡 |
+| 中性 | 看空 | mild | 机构在减持，新闻面平静 | 仅 §2 摘要卡 |
+| 中性 | 中性 | none | 不显示 | — |
 
 ---
 
-#### 刷新后保位置
+#### 四、三个叉乘情境函数完整规格
 
-异步数据刷新完成后，不再执行 `location.reload()`，改为：
-1. 局部更新对应 DOM 区块的数据
-2. 或若必须整页刷新，刷新前记录 `sessionStorage.setItem('detail_scroll', window.scrollY)`，刷新后 `window.scrollTo(0, saved_y)`
+##### 4a. `describe_margin_context()` — 融券五档 × 价格 × 参与度 × 调研
 
----
-
-#### 预测录入 + US-24 接入
-
-每个信号卡片底部加轻量预测输入（折叠，点 "+" 展开）：
-
+函数签名：
 ```
-[+] 你的判断
-  ○ 这个信号会成立（5天内验证）
+describe_margin_context(
+    change_pct: float,           # short_selling.change_pct
+    price_change_pct: float,     # 今日价格变化%
+    participation_vs_avg: float, # participation.latest - avg_30d
+    participation_spike: bool,   # latest > avg + 1.5σ
+    survey_count_30d: int,
+    survey_avg_monthly: float,
+) -> dict  # {tier, base_desc, price_context, participation_context,
+           #  survey_context, full_desc, direction, signal_strength}
+```
+
+**5档 tier：**
+
+| change_pct | tier | base_desc |
+|---|---|---|
+| ≥ +50% | heavy_short | 有人在大举押注这只股票会跌 |
+| +15% ~ +50% | mild_short | 做空力量在温和增加 |
+| -15% ~ +15% | neutral | 做空方向没有明显变化（不继续叉乘，直接返回 neutral） |
+| -50% ~ -15% | mild_cover | 之前做空的人在减少赌注 |
+| ≤ -50% | heavy_cover | 做空者在加速离场 |
+
+**× 价格方向（price_dir: up>+1% / flat / down<-1%）完整矩阵：**
+
+| tier | price_dir | price_context | direction | strength |
+|---|---|---|---|---|
+| heavy_short | up | 空头在逆势押跌——涨势若持续空头会被迫认亏（轧空风险） | mixed | 3 |
+| heavy_short | down | 空头建仓成功，市场在跟着它们的方向走 | bearish | 3 |
+| heavy_short | flat | 有人在悄悄建空仓，还没触发明显价格压力 | bearish | 2 |
+| mild_short | up | 有做空力量，但涨势在压制它们 | mixed | 2 |
+| mild_short | down | 做空力量在增加，价格跟随下行 | bearish | 2 |
+| mild_short | flat | 做空在温和积累，方向待定 | bearish | 1 |
+| mild_cover | up | 空头在撤退同时价格在涨——可能是被动止损 | bullish | 1 |
+| mild_cover | down/flat | 空头主动获利了结，谨慎乐观 | bullish | 2 |
+| heavy_cover | up | 空头加速离场 + 价格上涨——轧空可能正在发生 | bullish | 3 |
+| heavy_cover | down/flat | 空头大举撤退，底部信号较可信 | bullish | 3 |
+
+**× 参与度（participation_spike=True 时追加，覆盖关键组合）：**
+
+| tier | price_dir | 追加文字 |
+|---|---|---|
+| heavy_short 或 mild_short | up | 轧空可能正在发生——大量机构涌入，空头承压 |
+| heavy_short 或 mild_short | down | 机构在集中出货——空头和卖方联手，信号较强 |
+| heavy_short 或 mild_short | flat | 机构大量交易但价格未动，博弈激烈 |
+| mild_cover 或 heavy_cover | up | 空头平仓 + 大量买盘，双向推涨，趋势较强 |
+
+**× 调研（has_recent_survey = count_30d > 0 且 count > avg × 1.3，作为独立补充句）：**
+
+| tier | has_recent_survey | survey_context |
+|---|---|---|
+| heavy_short 或 mild_short | True | 同期有机构来调研——内部可能有分歧，有人做空有人研究买 |
+| mild_cover 或 heavy_cover | True | 空头撤退 + 有机构调研，组合信号偏正面 |
+| neutral | True | 融券无异动，但有机构在调研——可能在评估买入时机 |
+
+---
+
+##### 4b. `describe_survey_context()` — 调研强度 × 外资 × 重复 × 融券 × 参与度
+
+函数签名：
+```
+describe_survey_context(
+    count_30d: int,
+    avg_monthly: float,
+    has_foreign: bool,
+    repeat_institution: bool,
+    margin_change_pct: float,
+    participation_vs_avg: float,
+) -> dict  # {intensity, base_desc, modifiers: list[str], full_desc, direction, signal_strength}
+```
+
+**调研强度档位：**
+
+| 条件 | intensity | base_desc |
+|---|---|---|
+| count_30d > avg × 2.0 | surge | 机构兴趣突然觉醒——近期密集调研，频率是平时 N 倍 |
+| count_30d > avg × 1.3 | elevated | 机构关注度上升，调研比平时多 |
+| avg × 0.7 ≤ count ≤ avg × 1.3 | normal | 调研频率正常，无异常 |
+| count_30d < avg × 0.7 | declining | 机构关注度在下降 |
+| count_30d == 0 | none | 近期无机构调研 |
+
+**修饰词（按优先级叠加，最多3条）：**
+
+| 条件 | 修饰词 |
+|---|---|
+| has_foreign == True | 其中有外资/头部私募（信息优势更强） |
+| repeat_institution == True | 有机构多次拜访——可能在做深度尽调 |
+| surge/elevated + margin_change_pct < -15 | 空头同期撤退——调研热 + 做空减少，双重正面信号 |
+| surge/elevated + margin_change_pct > +15 | 空头同期增加——内部有分歧，有人调研有人做空 |
+| surge/elevated + participation_vs_avg > 10 | 机构不只在看，参与度也在上升——可能已在建仓 |
+| declining/none | 机构注意力转移，关注度下滑 |
+
+---
+
+##### 4c. `describe_participation_context()` — 参与度趋势 × 价格 × 融券
+
+函数签名：
+```
+describe_participation_context(
+    latest: float,
+    avg_30d: float,
+    trend: str,              # "上升"|"下降"|"中性"（participation.trend）
+    spike: bool,
+    price_change_pct: float,
+    margin_change_pct: float,
+) -> dict
+```
+
+**完整情境矩阵：**
+
+| spike | trend | price_dir | margin | full_desc | direction |
+|---|---|---|---|---|---|
+| True | — | up | — | 今天机构交易异常活跃，价格上涨——有机构在主动买入 | bullish |
+| True | — | down | — | 今天机构交易异常活跃，价格下跌——有机构在出货 | bearish |
+| True | — | flat | heavy_short | 机构大量交易但价格未动，融券也在增加——博弈激烈 | mixed |
+| True | — | flat | — | 机构大量交易但价格未动，方向待定 | mixed |
+| False | 上升 | up | — | 机构越来越关注，并跟随上涨，趋势有支撑 | bullish |
+| False | 上升 | down | — | 机构活跃度上升但价格在跌，可能有分歧 | mixed |
+| False | 上升 | flat | — | 机构在悄悄布局，还未触发价格变化 | bullish |
+| False | 下降 | any | — | 机构在减少操作，关注度下滑 | bearish |
+| False | 中性 | any | — | 机构参与度平稳，没有异常波动 | neutral |
+
+---
+
+#### 五、新闻 × 机构意向一致性标注
+
+每条新闻附小标签，基于该条 `sentiment` × 当前 `inst_direction`：
+
+| sentiment | inst_direction | label | 显示文字 |
+|---|---|---|---|
+| positive | bullish | consistent | ✓ 与机构方向一致（绿） |
+| positive | bearish | divergent | ⚠ 与机构行为矛盾（橙） |
+| negative | bullish | contrarian | 🔍 机构在逢低建仓？（蓝） |
+| negative | bearish | consistent | ✓ 一致（均看空）（绿） |
+| neutral | any | none | 不标注 |
+| any | neutral | none | 不标注 |
+
+---
+
+#### 六、刷新后保位置
+
+**方案A（优先）：局部 DOM 刷新**
+- 机构雷达区已是 `loadIntentionTab()` 异步渲染，本身不 reload，保持此机制
+- `pollJob()` 完成后调 `refreshSectionData(section)` 局部刷新，不执行 `location.reload()`
+
+**方案B（降级兜底）：**
+```javascript
+// pollJob 完成时（reload 前）
+sessionStorage.setItem('s_scroll_' + stockCode, window.scrollY);
+// DOMContentLoaded 时
+const y = sessionStorage.getItem('s_scroll_' + stockCode);
+if (y) {
+  window.scrollTo({top: +y, behavior: 'instant'});
+  sessionStorage.removeItem('s_scroll_' + stockCode);
+}
+```
+
+---
+
+#### 七、预测录入 UI + 历史积累
+
+**信号卡片底部折叠区：**
+```
+[+ 记录你的判断]
+
+  ● 这个信号会成立（5天后验证：价格方向与信号一致）
   ○ 这个信号会被证伪
-  [记录]
+  [备注，可选]  [记录]
+
+── 已有记录 ──────────────────────────────
+  2026-04-20  调研热度 → 预测：成立
+  结果：✓ 对了，5日后 +4.2%
 ```
 
-记录写入 `user_predictions` 表（与 US-24 共用），5天后由 `backfill_returns.py` 自动核对，结果回填到信号卡片底部显示"✓ 对了 +3.2%" 或 "✗ 错了 -1.1%"。
+**DB 变更：**
+```sql
+-- user_predictions 新增字段
+ALTER TABLE user_predictions ADD COLUMN signal_type TEXT;
+-- "margin"|"survey"|"participation"|"fund_flow"|"north_bound"
+ALTER TABLE user_predictions ADD COLUMN signal_snapshot TEXT;  -- JSON 快照
+ALTER TABLE user_predictions ADD COLUMN predicted_outcome TEXT;
+-- "confirms"（信号成立）| "fails"（被证伪）
 
-同时在 precursor_cache 表中积累历史信号快照（当天之外的日期也保留），为将来的信号准确率统计提供数据基础。
+-- 新表：precursor 历史快照（每天一条，保留90天）
+CREATE TABLE IF NOT EXISTS precursor_history (
+  id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+  code               TEXT NOT NULL,
+  snapshot_date      DATE NOT NULL,
+  survey_json        TEXT,
+  short_json         TEXT,
+  participation_json TEXT,
+  price_change_pct   REAL,
+  created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(code, snapshot_date)
+);
+```
+
+`save_precursor_cache()` 每次同时写入 `precursor_history`（INSERT OR IGNORE），保留90天滚动窗口（定期清理超出的旧记录）。
+
+`backfill_returns.py` 扩展：查找5天前未验证的 signal 预测 → 对比价格 → 更新 outcome_correct / return_5d。
 
 ---
 
-#### Acceptance Criteria
+#### 八、Acceptance Criteria
 
-**导航**
-- [ ] 详情页改为单页四区块（判断 / 市场 / 基本面 / 事件），Tab 改为粘性锚点导航条
-- [ ] 滚动时锚点导航自动高亮当前可见区块（IntersectionObserver）
-- [ ] 异步刷新完成后恢复滚动位置，不强制回到页面顶部
+**导航重构**
+- [ ] 5个 tab 路由合并为单页 `/stock/<code>`，四个锚点 `#s-verdict / #s-market / #s-fundamentals / #s-events`
+- [ ] 粘性锚点导航条（`position:sticky; top:60px`），IntersectionObserver 自动高亮当前区块
+- [ ] 旧 tab 路由（`/letter`, `/signals`, `/radar`, `/fundamentals`, `/events`）302 重定向到新单页
+- [ ] `pollJob()` 完成后不执行 `location.reload()`，改为局部刷新或 scroll 位置恢复
+
+**全局背离提示行**
+- [ ] 仅 danger / opportunity 状态显示在头部；其余只在 §2 摘要卡显示
+- [ ] 纯规则计算（avg_sentiment + intention_phase），不新增 LLM 调用
+- [ ] 机构数据不足时（非A股或 intention_phase 为空）不显示头部提示行
 
 **§2 市场区块**
-- [ ] 区块顶部显示「背离摘要行」：新闻情绪方向 + 机构行为方向 + 背离提示（三个状态：一致/背离/数据不足）
-- [ ] A股：显示完整机构信号（综合研判 + 前兆信号）；非A股：显示技术信号 + 可用的外部机构数据，数据不足时显示"数据有限，仅供参考"
-- [ ] 新闻列表每条标注情绪（📈/➖/📉）+ 与机构意向一致性（✓一致 / ⚠矛盾 / 无标注）
-- [ ] 背离摘要行数据来自 `divergence_score`（已有字段），不新增 LLM 调用
+- [ ] 背离摘要卡展示：新闻面方向 + 机构行为方向 + 上表对应文字 + 对应背景色
+- [ ] A股三个前兆信号卡片，各自展示对应 describe_*_context() 输出的完整叙事句
+- [ ] 每条新闻显示 label_news_vs_institution() 标注（neutral 不标注）
+- [ ] 非A股：前兆信号区替换为说明文字，不崩溃
 
-**融券叉乘情境**
-- [ ] `scripts/buffett_signals.py` 新增 `describe_margin_context(margin_change_pct, price_change_pct, participation_vs_avg, survey_count_30d) -> str` 函数
-- [ ] 函数覆盖上述叉乘表格全部情境，返回完整叙事句（中文，≤50字）
-- [ ] 机构雷达区块的融券卡片使用此函数输出，不再显示裸数字（裸数字可折叠在"查看原始数据"里）
-- [ ] `tests/test_signals.py` 覆盖：大增×涨、大增×跌、大减×涨、大减×横、中性、各加参与度飙升 case
+**叉乘情境函数**
+- [ ] scripts/buffett_signals.py 新增三个函数（describe_margin_context / describe_survey_context / describe_participation_context），均为纯规则，不调 Groq
+- [ ] tests/test_signals.py 每个函数覆盖 ≥6 个 case（强信号 / 弱信号 / 无信号 / 关键叉乘组合）
 
 **预测追踪**
-- [ ] 每个前兆信号卡片底部有可折叠的「你的判断」输入（"会成立" / "会被证伪" 两选一 + 可选备注）
-- [ ] 预测写入 `user_predictions` 表，`signal_type` 字段记录是哪类信号（margin/survey/participation）
-- [ ] 5天后 `backfill_returns.py` 自动核对，结果显示在卡片底部
-- [ ] precursor_cache 表保留滚动窗口历史（至少90天），不只保留最新一条
+- [ ] user_predictions 表 migration 新增 signal_type / signal_snapshot / predicted_outcome
+- [ ] 新建 precursor_history 表，save_precursor_cache() 同时写入
+- [ ] 前兆信号卡片底部折叠预测输入，POST /api/predict/signal
+- [ ] backfill_returns.py 扩展 signal 核对逻辑
+- [ ] 已有预测结果显示在对应卡片底部
 
 **不做（本 US 范围外）**
-- 融券叉乘情境的 LLM 生成（纯规则函数，不调 Groq）
-- US-79 美股机构数据拉取（数据层单独做）
-- 重写现有 CSS 布局系统
+- 叉乘情境的 LLM 生成（纯规则，不调 Groq）
+- US-79 美股机构数据层
+- CSS 布局系统重写（新增必要样式类即可）
+- 历史信号准确率统计页面（数据先积累）
+
