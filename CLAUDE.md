@@ -160,6 +160,35 @@
 
 ---
 
+## Fly.io 部署流程（每次部署必读）
+
+**配置**：`fly.toml`（app=personal-buffett, region=syd, port=8080），启动脚本 `deploy/start.sh`，入口 `run:app`（gunicorn）。
+
+**标准部署命令**（按顺序执行）：
+
+```bash
+# 1. 清除 macOS 元数据文件（外置磁盘上必须做，否则 depot builder 会报 xattr 错误）
+find . -name "._*" -not -path "*/.git/*" -delete
+
+# 2. 部署（remote-only = 在 fly 云端 build，不依赖本地 Docker）
+COPYFILE_DISABLE=1 flyctl deploy --remote-only
+```
+
+**已知坑**：
+- `/Volumes/` 路径下的 macOS `._*` 元数据文件会导致 depot builder 报 `failed to xattr: operation not permitted`，`.dockerignore` 里的 `._*` 规则来不及生效，必须先手动删除
+- `COPYFILE_DISABLE=1` 防止 macOS 在传输过程中重新生成 `._*`
+- 部署完成后 fly 可能报 "not listening on 0.0.0.0:8080"——这是时序问题，gunicorn 启动需要几秒（seed_demo.py 先跑），等健康检查通过就正常了
+
+**验证部署**：
+
+```bash
+flyctl logs -a personal-buffett --no-tail | grep -E "(gunicorn|seed_demo|Error|started)"
+```
+
+看到 `Starting gunicorn` + `[seed_demo] seeded` 即为成功。
+
+---
+
 ## 代码规范
 
 - 改文件前必须先 Read，用 Edit 局部修改，**不用 Write 整体覆盖**
