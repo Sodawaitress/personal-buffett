@@ -267,3 +267,259 @@ def _score_news(news: list) -> list:
             pass
 
     return [n for _, n in filtered]
+
+
+# ── 前兆信号叉乘情境函数 ──────────────────────────────────────────────────────
+
+def describe_margin_context(
+    change_pct: float,
+    price_change_pct: float,
+    participation_vs_avg: float,
+    participation_spike: bool,
+    survey_count_30d: int,
+    survey_avg_monthly: float,
+) -> dict:
+    """融券余量5档 × 价格方向 × 参与度飙升 × 调研，返回完整叙事情境。"""
+    # 5档 tier
+    if change_pct >= 50:
+        tier = "heavy_short"
+        base = "有人在大举押注这只股票会跌"
+    elif change_pct >= 15:
+        tier = "mild_short"
+        base = "做空力量在温和增加"
+    elif change_pct <= -50:
+        tier = "heavy_cover"
+        base = "做空者在加速离场"
+    elif change_pct <= -15:
+        tier = "mild_cover"
+        base = "之前做空的人在减少赌注"
+    else:
+        return {
+            "tier": "neutral", "base_desc": "做空方向没有明显变化",
+            "price_context": "", "participation_context": "", "survey_context": "",
+            "full_desc": "做空方向没有明显变化，该信号参考意义有限",
+            "direction": "neutral", "signal_strength": 0,
+        }
+
+    # 价格方向
+    if price_change_pct > 1:
+        price_dir = "up"
+    elif price_change_pct < -1:
+        price_dir = "down"
+    else:
+        price_dir = "flat"
+
+    _price_matrix = {
+        ("heavy_short", "up"):   ("空头在逆势押跌——涨势若持续空头会被迫认亏（轧空风险）",   "mixed",   3),
+        ("heavy_short", "down"): ("空头建仓成功，市场在跟着它们的方向走",                   "bearish",  3),
+        ("heavy_short", "flat"): ("有人在悄悄建空仓，还没触发明显价格压力",                 "bearish",  2),
+        ("mild_short",  "up"):   ("有做空力量，但涨势在压制它们",                           "mixed",    2),
+        ("mild_short",  "down"): ("做空力量在增加，价格跟随下行",                           "bearish",  2),
+        ("mild_short",  "flat"): ("做空在温和积累，方向待定",                               "bearish",  1),
+        ("mild_cover",  "up"):   ("空头在撤退同时价格在涨——可能是被动止损",                 "bullish",  1),
+        ("mild_cover",  "down"): ("空头主动获利了结，谨慎乐观",                             "bullish",  2),
+        ("mild_cover",  "flat"): ("空头主动获利了结，谨慎乐观",                             "bullish",  2),
+        ("heavy_cover", "up"):   ("空头加速离场 + 价格上涨——轧空可能正在发生",              "bullish",  3),
+        ("heavy_cover", "down"): ("空头大举撤退，底部信号较可信",                           "bullish",  3),
+        ("heavy_cover", "flat"): ("空头大举撤退，底部信号较可信",                           "bullish",  3),
+    }
+    price_ctx, direction, strength = _price_matrix.get(
+        (tier, price_dir), ("方向待定", "neutral", 1)
+    )
+
+    # × 参与度飙升
+    part_ctx = ""
+    if participation_spike:
+        _part_map = {
+            ("heavy_short", "up"):   "轧空可能正在发生——大量机构涌入，空头承压",
+            ("heavy_short", "down"): "机构在集中出货——空头和卖方联手，信号较强",
+            ("heavy_short", "flat"): "机构大量交易但价格未动，博弈激烈",
+            ("mild_short",  "up"):   "轧空可能正在发生——大量机构涌入，空头承压",
+            ("mild_short",  "down"): "机构在集中出货——空头和卖方联手，信号较强",
+            ("mild_short",  "flat"): "机构大量交易但价格未动，博弈激烈",
+            ("mild_cover",  "up"):   "空头平仓 + 大量买盘，双向推涨，趋势较强",
+            ("heavy_cover", "up"):   "空头平仓 + 大量买盘，双向推涨，趋势较强",
+        }
+        part_ctx = _part_map.get((tier, price_dir), "")
+        if part_ctx and direction == "mixed":
+            direction = "bullish" if price_dir == "up" else "bearish"
+
+    # × 调研
+    survey_ctx = ""
+    has_survey = survey_count_30d > 0 and (
+        survey_avg_monthly <= 0 or survey_count_30d > survey_avg_monthly * 1.3
+    )
+    if has_survey:
+        if tier in ("heavy_short", "mild_short"):
+            survey_ctx = "同期有机构来调研——内部可能有分歧，有人做空有人研究买"
+        elif tier in ("mild_cover", "heavy_cover"):
+            survey_ctx = "空头撤退 + 有机构调研，组合信号偏正面"
+
+    parts = [base, price_ctx]
+    if part_ctx:
+        parts.append(part_ctx)
+    if survey_ctx:
+        parts.append(survey_ctx)
+    full = "；".join(p for p in parts if p)
+
+    return {
+        "tier": tier,
+        "base_desc": base,
+        "price_context": price_ctx,
+        "participation_context": part_ctx,
+        "survey_context": survey_ctx,
+        "full_desc": full,
+        "direction": direction,
+        "signal_strength": strength,
+    }
+
+
+def describe_survey_context(
+    count_30d: int,
+    avg_monthly: float,
+    has_foreign: bool,
+    repeat_institution: bool,
+    margin_change_pct: float,
+    participation_vs_avg: float,
+) -> dict:
+    """调研强度 × 外资/重复 × 融券方向 × 参与度，返回完整叙事情境。"""
+    if avg_monthly <= 0:
+        avg_monthly = 1.0
+
+    ratio = count_30d / avg_monthly
+    if count_30d == 0:
+        intensity = "none"
+        base = "近期无机构调研"
+        direction = "neutral"
+        strength = 0
+    elif ratio >= 2.0:
+        intensity = "surge"
+        base = f"机构兴趣突然觉醒——近期密集调研，频率是平时的 {ratio:.1f} 倍"
+        direction = "bullish"
+        strength = 3
+    elif ratio >= 1.3:
+        intensity = "elevated"
+        base = "机构关注度上升，调研比平时多"
+        direction = "bullish"
+        strength = 2
+    elif ratio >= 0.7:
+        intensity = "normal"
+        base = "调研频率正常，无异常"
+        direction = "neutral"
+        strength = 0
+    else:
+        intensity = "declining"
+        base = "机构关注度在下降，调研减少"
+        direction = "bearish"
+        strength = 1
+
+    modifiers = []
+    if has_foreign and intensity in ("surge", "elevated"):
+        modifiers.append("其中有外资/头部私募（信息优势更强）")
+    if repeat_institution and intensity in ("surge", "elevated"):
+        modifiers.append("有机构多次拜访——可能在做深度尽调")
+    if intensity in ("surge", "elevated"):
+        if margin_change_pct <= -15:
+            modifiers.append("空头同期撤退——调研热 + 做空减少，双重正面信号")
+        elif margin_change_pct >= 15:
+            modifiers.append("空头同期增加——内部有分歧，有人调研有人做空")
+            direction = "mixed"
+        if participation_vs_avg > 10:
+            modifiers.append("机构不只在看，参与度也在上升——可能已在建仓")
+    if intensity in ("declining", "none"):
+        modifiers.append("机构注意力转移，关注度下滑")
+
+    full = base
+    if modifiers:
+        full += "；" + "；".join(modifiers[:3])
+
+    return {
+        "intensity": intensity,
+        "base_desc": base,
+        "modifiers": modifiers,
+        "full_desc": full,
+        "direction": direction,
+        "signal_strength": strength,
+    }
+
+
+def describe_participation_context(
+    latest: float,
+    avg_30d: float,
+    trend: str,
+    spike: bool,
+    price_change_pct: float,
+    margin_change_pct: float,
+) -> dict:
+    """机构参与度趋势 × 价格方向 × 融券状态，返回完整叙事情境。"""
+    if price_change_pct > 1:
+        price_dir = "up"
+    elif price_change_pct < -1:
+        price_dir = "down"
+    else:
+        price_dir = "flat"
+
+    heavy_short = margin_change_pct >= 15
+
+    if spike:
+        if price_dir == "up":
+            desc = "今天机构交易异常活跃，价格上涨——有机构在主动买入"
+            direction = "bullish"
+            strength = 3
+        elif price_dir == "down":
+            desc = "今天机构交易异常活跃，价格下跌——有机构在出货"
+            direction = "bearish"
+            strength = 3
+        elif heavy_short:
+            desc = "机构大量交易但价格未动，融券也在增加——博弈激烈"
+            direction = "mixed"
+            strength = 2
+        else:
+            desc = "机构大量交易但价格未动，方向待定"
+            direction = "mixed"
+            strength = 2
+    elif trend == "上升":
+        if price_dir == "up":
+            desc = "机构越来越关注，并跟随上涨，趋势有支撑"
+            direction = "bullish"
+            strength = 2
+        elif price_dir == "down":
+            desc = "机构活跃度上升但价格在跌，可能有分歧"
+            direction = "mixed"
+            strength = 1
+        else:
+            desc = "机构在悄悄布局，还未触发价格变化"
+            direction = "bullish"
+            strength = 1
+    elif trend == "下降":
+        desc = "机构在减少操作，关注度下滑"
+        direction = "bearish"
+        strength = 1
+    else:
+        desc = "机构参与度平稳，没有异常波动"
+        direction = "neutral"
+        strength = 0
+
+    return {
+        "full_desc": desc,
+        "direction": direction,
+        "signal_strength": strength,
+        "spike": spike,
+        "trend": trend,
+        "price_dir": price_dir,
+    }
+
+
+def label_news_vs_institution(sentiment: str, inst_direction: str) -> str:
+    """每条新闻与当前机构意向的一致性标注。
+    Returns: 'consistent' | 'divergent' | 'contrarian' | 'none'
+    """
+    if not inst_direction or inst_direction == "neutral":
+        return "none"
+    matrix = {
+        ("positive", "bullish"): "consistent",
+        ("positive", "bearish"): "divergent",
+        ("negative", "bullish"): "contrarian",
+        ("negative", "bearish"): "consistent",
+    }
+    return matrix.get((sentiment, inst_direction), "none")

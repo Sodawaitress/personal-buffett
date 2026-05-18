@@ -313,6 +313,30 @@ def save_precursor_cache(code: str, survey: dict, short_selling: dict,
                 "score": score, "is_active": int(is_active),
             },
         )
+        # 同时写入 precursor_history（每日快照，INSERT OR IGNORE 不覆盖历史）
+        today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+        try:
+            c.execute(
+                """
+                INSERT OR IGNORE INTO precursor_history
+                    (code, snapshot_date, survey_json, short_json, participation_json)
+                VALUES (:code, :date, :survey, :short, :partic)
+                """,
+                {
+                    "code": code, "date": today,
+                    "survey": json.dumps(survey_to_save, ensure_ascii=False) if survey_to_save else None,
+                    "short":  json.dumps(short_selling,  ensure_ascii=False) if short_selling  else None,
+                    "partic": json.dumps(participation,  ensure_ascii=False) if participation  else None,
+                },
+            )
+            # 清理 90 天以外的旧快照
+            c.execute(
+                "DELETE FROM precursor_history WHERE code=:code AND snapshot_date < date('now','-90 days')",
+                {"code": code},
+            )
+        except Exception:
+            pass
+
         all_events = list(new_events) or []
         if not all_events and survey_to_save:
             all_events = survey_to_save.get("events") or []

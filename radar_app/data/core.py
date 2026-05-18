@@ -432,7 +432,21 @@ _SCHEMA_SQL = """
             actual_return_10d REAL,
             correct           INTEGER
         );
-        CREATE INDEX IF NOT EXISTS idx_signal_pred_user ON signal_predictions(user_id, code)
+        CREATE INDEX IF NOT EXISTS idx_signal_pred_user ON signal_predictions(user_id, code);
+
+        -- 前兆信号每日历史快照（US-92 预测追踪数据基础）
+        CREATE TABLE IF NOT EXISTS precursor_history (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            code               TEXT NOT NULL,
+            snapshot_date      DATE NOT NULL,
+            survey_json        TEXT,
+            short_json         TEXT,
+            participation_json TEXT,
+            price_change_pct   REAL,
+            created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(code, snapshot_date)
+        );
+        CREATE INDEX IF NOT EXISTS idx_precursor_history_code ON precursor_history(code, snapshot_date);
 """
 
 
@@ -448,7 +462,9 @@ def _migrate():
         ("analysis_results", "quant_score", "INTEGER"),
         ("analysis_results", "quant_components", "TEXT"),
         ("stocks", "asset_type", "TEXT DEFAULT '股票'"),
-        ("user_watchlist", "removed_at", "TIMESTAMP"),
+        ("user_watchlist",    "removed_at",        "TIMESTAMP"),
+        ("signal_predictions", "signal_type",       "TEXT"),
+        ("signal_predictions", "predicted_outcome", "TEXT"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).
