@@ -181,9 +181,10 @@ def compute_resonance(signals: dict, divergence: dict, fund_flow: dict,
 
 
 def format_non_cn_financials(signals, annual, analysis):
-    if not signals or annual:
+    if not signals:
         return signals, annual
 
+    # Normalize signals floats (yfinance returns decimal ratios, e.g. 0.235 for 23.5%)
     if "roe" in signals and isinstance(signals["roe"], (int, float)):
         signals["roe"] = f"{signals['roe']*100:.1f}%"
     if "roa" in signals and isinstance(signals["roa"], (int, float)):
@@ -202,19 +203,30 @@ def format_non_cn_financials(signals, annual, analysis):
             signals["debt_ratio"] = f"{debt_to_equity:.2f}x"
             signals["debt_ratio_note"] = "D/E ratio（非负债率%）"
 
-    signals["year"] = (
-        analysis["analysis_date"][:4]
-        if analysis and "analysis_date" in analysis
-        else datetime.now(CN_TZ).strftime("%Y")
-    )
-    annual = [{
-        "year": signals.get("year", "—"),
-        "roe": signals.get("roe", "—"),
-        "net_margin": signals.get("net_margin", "—"),
-        "debt_ratio": signals.get("debt_ratio", "—"),
-        "debt_ratio_note": signals.get("debt_ratio_note"),
-        "profit_growth": "—",
-    }]
+    # Normalize annual rows (pipeline stores already-multiplied floats, e.g. 23.5 for 23.5%)
+    for row in annual:
+        if "roe" in row and isinstance(row["roe"], (int, float)):
+            row["roe"] = f"{row['roe']:.1f}%"
+        if "net_margin" in row and isinstance(row["net_margin"], (int, float)):
+            row["net_margin"] = f"{row['net_margin']:.1f}%"
+        if "debt_ratio" in row and isinstance(row["debt_ratio"], (int, float)):
+            row["debt_ratio"] = f"{row['debt_ratio']:.1f}%"
+
+    if not annual:
+        # Build synthetic single-year entry from signals when pipeline has no annual data
+        signals["year"] = (
+            analysis["analysis_date"][:4]
+            if analysis and "analysis_date" in analysis
+            else datetime.now(CN_TZ).strftime("%Y")
+        )
+        annual = [{
+            "year": signals.get("year", "—"),
+            "roe": signals.get("roe", "—"),
+            "net_margin": signals.get("net_margin", "—"),
+            "debt_ratio": signals.get("debt_ratio", "—"),
+            "debt_ratio_note": signals.get("debt_ratio_note"),
+            "profit_growth": "—",
+        }]
     return signals, annual
 
 
