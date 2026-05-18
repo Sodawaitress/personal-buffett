@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} — {{ t.tab_news }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="stock-page">
+{% include 'stock/_head.html' %}
+
+  <div class="stock-page-body">
+
+    {# ── 综合研判（结论先行）── #}
+    {% if resonance and resonance.direction != 'unknown' %}
+    <div class="resonance-hero resonance-{{ resonance.direction }}">
+      <div class="resonance-hero-top">
+        <div class="resonance-hero-dir">
+          {% if resonance.direction == 'bullish' %}看多信号
+          {% elif resonance.direction == 'bearish' %}看空信号
+          {% else %}信号分歧{% endif %}
+        </div>
+        <div class="resonance-hero-score">
+          {% for i in range(resonance.max_score) %}<span class="rdot-lg {% if i < resonance.score %}rdot-on{% else %}rdot-off{% endif %}"></span>{% endfor %}
+          <span class="resonance-hero-score-text">{{ resonance.score }}/{{ resonance.max_score }} 独立来源共振</span>
+        </div>
+      </div>
+      {% if resonance.strongest_combo %}
+      <div class="resonance-hero-combo">{{ resonance.strongest_combo }}</div>
+      {% endif %}
+      {% if resonance.divergence_text %}
+      <div class="resonance-hero-diverg">⚠ {{ resonance.divergence_text }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# ── 三列信号地图 ── #}
+    {% set cur_sym = market_currency.get(market, "$") %}
+    {% set tech = (signals or {}).get("technicals", {}) %}
+    {% set inst_us = (signals or {}).get("inst_us", {}) %}
+    <div class="signal-3col">
+
+      {# 列 A — 内部人视角 · 最可信 #}
+      <div class="signal-col">
+        <div class="signal-col-head">
+          <span class="signal-col-title">内部人视角</span>
+          <span class="signal-col-cred">最可信</span>
+        </div>
+        {% if market == "cn" %}
+          {% if signals and signals.get("inst_top") %}
+            {% for h in signals.inst_top[:6] %}
+            {% set is_passive = (h.name and ("ETF" in h.name or "联接" in h.name or "指数" in h.name or "LOF" in h.name or "沪深300" in h.name or "中证" in h.name)) %}
+            {% if not is_passive %}
+            <div class="srow">
+              <span class="srow-label">{{ h.name[:10] }}{% if h.name|length > 10 %}…{% endif %}</span>
+              <span class="srow-val {{ 'up' if h.change > 0 else ('down' if h.change < 0 else '') }}">
+                <span class="inst-type-tag inst-tag-active">主动</span>
+                {{ "%+.2f"|format(h.change) }}% {% if h.change > 0 %}▲{% elif h.change < 0 %}▼{% else %}→{% endif %}
+              </span>
+            </div>
+            {% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if signals and signals.get("inst_increased") is not none %}
+          {% set inc = signals.inst_increased | int %}
+          {% set dec = signals.inst_decreased | int %}
+          <div class="srow srow-summary">
+            <span class="srow-label">机构总体</span>
+            <span class="srow-val {{ 'up' if inc > dec else ('down' if dec > inc else '') }}">↑{{ inc }} / ↓{{ dec }}</span>
+          </div>
+          {% endif %}
+          {% if divergence and divergence.get("breakdown") %}
+          {% set bd = divergence.breakdown %}
+          {% if bd.get("survey_consistency", 0) != 0 %}
+          <div class="srow">
+            <span class="srow-label">调研信号</span>
+            <span class="srow-val {{ 'up' if bd.survey_consistency > 0 else 'down' }}">
+              {% if bd.survey_consistency >= 2 %}调研热+融券减 ▲{% elif bd.survey_consistency == 1 %}调研活跃{% elif bd.survey_consistency == -1 %}调研热融券增{% else %}矛盾信号 ▼{% endif %}
+            </span>
+          </div>
+          {% endif %}
+          {% endif %}
+          {% if not (signals and (signals.get("inst_top") or signals.get("inst_increased") is not none)) %}
+          <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+          {% endif %}
+        {% else %}
+          {# 美股/其他 #}
+          {% set activist = (signals or {}).get("activist_13d", {}) %}
+          {% set insider  = (signals or {}).get("insider_us", {}) %}
+          {% if activist and activist.get("found") %}
+          <div class="srow srow-tier1">
+            <span class="srow-label">⚡ 维权进场</span>
+            <span class="srow-val up">{{ activist.get("name","")[:20] }} ▲</span>
+          </div>
+          {% endif %}
+          {% if insider and insider.get("cluster_buy") %}
+          <div class="srow-tag srow-tag-bull">多高管同步买入 ⚡</div>
+          {% endif %}
+          {% if insider and insider.get("buyers") %}
+            {% for b in insider.buyers[:3] %}
+            <div class="srow">
+              <span class="srow-label">{{ b.role[:14] if b.role else b.name[:14] }}</span>
+              <span class="srow-val up">${{ "%.0f"|format(b.value / 1000) }}K ▲买入</span>
+            </div>
+            {% endfor %}
+          {% elif not (activist and activist.get("found")) %}
+          <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {# 列 B — 市场情绪 · 中等可信 #}
+      <div class="signal-col">
+        <div class="signal-col-head">
+          <span class="signal-col-title">市场情绪</span>
+          <span class="signal-col-cred">中等可信</span>
+        </div>
+        {% if market == "cn" %}
+          {% if north_bound and north_bound.get("total_net") is not none %}
+          <div class="srow">
+            <span class="srow-label">北向资金</span>
+            <span class="srow-val {{ 'up' if north_bound.total_net >= 0 else 'down' }}">
+              {{ "%+.2f"|format(north_bound.total_net) }}B
+              (沪{{ "%+.1f"|format(north_bound.get("sh_net", 0)) }} 深{{ "%+.1f"|format(north_bound.get("sz_net", 0)) }})
+              {% if north_bound.total_net >= 0 %}▲{% else %}▼{% endif %}
+            </span>
+          </div>
+          {% else %}
+          <div class="srow">
+            <span class="srow-label">北向资金</span>
+            <span class="srow-val muted">{{ t.lbl_data_accumulating }}</span>
+          </div>
+          {% endif %}
+          {% if fund_flow and fund_flow.main_net is not none %}
+          <div class="srow">
+            <span class="srow-label">主力资金</span>
+            <span class="srow-val {{ 'up' if fund_flow.main_net >= 0 else 'down' }}">
+              {{ "%+.2f"|format(fund_flow.main_net) }}亿
+              {% if fund_flow.main_ratio is not none %}({{ "%+.1f"|format(fund_flow.main_ratio) }}%){% endif %}
+              {% if fund_flow.main_net >= 0 %}▲{% else %}▼{% endif %}
+            </span>
+          </div>
+          {% else %}
+          <div class="srow">
+            <span class="srow-label">主力资金</span>
+            <span class="srow-val muted">{{ t.lbl_data_accumulating }}</span>
+          </div>
+          {% endif %}
+          {% if divergence and divergence.get("breakdown") %}
+          {% set sh = divergence.breakdown.get("short", 0) %}
+          <div class="srow">
+            <span class="srow-label">融券方向</span>
+            <span class="srow-val {{ 'up' if sh > 0 else ('down' if sh < 0 else '') }}">
+              {% if sh >= 2 %}做空大幅撤退 ▲{% elif sh == 1 %}做空小幅撤退{% elif sh == 0 %}基本不变{% elif sh == -1 %}做空小幅加仓{% else %}做空大幅加仓 ▼{% endif %}
+            </span>
+          </div>
+          {% endif %}
+        {% else %}
+          {% set short_float = inst_us.get("short_float_pct") %}
+          {% set short_trend = inst_us.get("short_trend_pct") %}
+          {% set analyst_net = inst_us.get("top_analyst_net") %}
+          {% if short_float is not none %}
+          <div class="srow">
+            <span class="srow-label">做空比例</span>
+            <span class="srow-val {{ 'down' if short_float > 15 else '' }}">
+              {{ "%.1f"|format(short_float) }}%
+              {% if short_trend is not none %}
+              <span class="{{ 'up' if short_trend < -10 else ('down' if short_trend > 20 else '') }}">
+                ({{ "%+.0f"|format(short_trend) }}% {% if short_trend < -10 %}↓空头撤{% elif short_trend > 20 %}↑空头增{% else %}→持平{% endif %})
+              </span>
+              {% endif %}
+            </span>
+          </div>
+          {% endif %}
+          {% if analyst_net is not none %}
+          <div class="srow">
+            <span class="srow-label">投行评级</span>
+            <span class="srow-val {{ 'up' if analyst_net >= 2 else ('down' if analyst_net <= -2 else '') }}">
+              净{{ "%+d"|format(analyst_net) }}次 {% if analyst_net >= 2 %}▲升级{% elif analyst_net <= -2 %}▼降级{% else %}→中性{% endif %}
+            </span>
+          </div>
+          {% endif %}
+          {% set pos = (signals or {}).get("price_position") %}
+          {% if pos is not none %}
+          <div class="srow">
+            <span class="srow-label">52周位置</span>
+            <span class="srow-val {{ 'up' if pos < 30 else ('down' if pos > 80 else '') }}">
+              {{ "%.0f"|format(pos) }}% {{ t.lbl_pos_high if pos > 70 else (t.lbl_pos_low if pos < 30 else t.lbl_pos_mid) }}
+            </span>
+          </div>
+          {% elif (signals or {}).get("week_52_low") %}
+          <div class="srow">
+            <span class="srow-label">{{ t.lbl_52w_range }}</span>
+            <span class="srow-val">{{ cur_sym }}{{ signals.week_52_low }} – {{ cur_sym }}{{ signals.week_52_high }}</span>
+          </div>
+          {% endif %}
+          {% if short_float is none and pos is none and analyst_net is none %}
+          <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {# 列 C — 结构背景 · 背景参考 #}
+      <div class="signal-col">
+        <div class="signal-col-head">
+          <span class="signal-col-title">结构背景</span>
+          <span class="signal-col-cred">背景参考</span>
+        </div>
+        {% if market == "cn" and tech %}
+          {% set pct60  = tech.get("price_vs_ma60") %}
+          {% set pct250 = tech.get("price_vs_ma250") %}
+          {% if tech.get("ma60") and pct60 is not none %}
+          <div class="srow">
+            <span class="srow-label">MA60</span>
+            <span class="srow-val {{ 'up' if pct60 > 0 else 'down' }}">
+              {{ cur_sym }}{{ "%.2f"|format(tech.ma60) }} ({{ "%+.1f"|format(pct60) }}%)
+            </span>
+          </div>
+          {% endif %}
+          {% if tech.get("ma250") and pct250 is not none %}
+          <div class="srow">
+            <span class="srow-label">MA250</span>
+            <span class="srow-val {{ 'up' if pct250 > 0 else 'down' }}">
+              {{ cur_sym }}{{ "%.2f"|format(tech.ma250) }} ({{ "%+.1f"|format(pct250) }}%)
+            </span>
+          </div>
+          {% endif %}
+          {% if tech.get("vwap60") %}
+          <div class="srow">
+            <span class="srow-label">VWAP60</span>
+            <span class="srow-val {{ 'up' if tech.get('price_vs_vwap60', 0) > 0 else 'down' }}">
+              {{ cur_sym }}{{ "%.2f"|format(tech.vwap60) }} ({{ "%+.1f"|format(tech.get("price_vs_vwap60", 0)) }}%)
+            </span>
+          </div>
+          {% endif %}
+          {% if tech.get("vwap120") %}
+          <div class="srow">
+            <span class="srow-label">VWAP120</span>
+            <span class="srow-val {{ 'up' if tech.get('price_vs_vwap120', 0) > 0 else 'down' }}">
+              {{ cur_sym }}{{ "%.2f"|format(tech.vwap120) }} ({{ "%+.1f"|format(tech.get("price_vs_vwap120", 0)) }}%)
+            </span>
+          </div>
+          {% endif %}
+        {% endif %}
+        {% if inst_us and inst_us.get("inst_pct") is not none %}
+        <div class="srow">
+          <span class="srow-label">机构持仓率</span>
+          <span class="srow-val">{{ "%.1f"|format(inst_us.inst_pct * 100 if inst_us.inst_pct < 2 else inst_us.inst_pct) }}%
+            {% if inst_us.get("inst_count") %}<span class="srow-sub">（{{ inst_us.inst_count }}家）</span>{% endif %}
+          </span>
+        </div>
+        {% if inst_us.get("insider_pct") is not none %}
+        <div class="srow">
+          <span class="srow-label">内部人持仓</span>
+          <span class="srow-val">{{ "%.1f"|format(inst_us.insider_pct * 100 if inst_us.insider_pct < 2 else inst_us.insider_pct) }}%</span>
+        </div>
+        {% endif %}
+        {% set anc = inst_us.get("active_net_change") %}
+        {% if anc is not none %}
+        <div class="srow">
+          <span class="srow-label">主动基金</span>
+          <span class="srow-val {{ 'up' if anc > 0 else ('down' if anc < 0 else '') }}">
+            {{ "%+.2f"|format(anc * 100) }}pp {% if anc > 0 %}▲增持{% elif anc < 0 %}▼减持{% else %}→持平{% endif %}
+          </span>
+        </div>
+        {% endif %}
+        {% set top_h = inst_us.get("top_holders", []) %}
+        {% if top_h %}
+        <div class="inst-holders-mini">
+          {% for h in top_h[:5] %}
+          <div class="inst-holder-row">
+            <span class="inst-holder-type inst-type-{{ h.get('type','other') }}">{{ {'passive':'指数','bank':'投行','active':'主动','hedge':'对冲'}.get(h.get('type',''),'其他') }}</span>
+            <span class="inst-holder-name">{{ h.name[:22] }}</span>
+            <span class="inst-holder-change {{ 'up' if h.get('change',0) > 0 else ('down' if h.get('change',0) < 0 else '') }}">{{ "%+.2f"|format(h.get('change',0)*100) }}pp</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
+        {% if news %}
+        {% set pos_ct = news | selectattr("sentiment", "equalto", "positive") | list | length %}
+        {% set neg_ct = news | selectattr("sentiment", "equalto", "negative") | list | length %}
+        {% set neu_ct = news | length - pos_ct - neg_ct %}
+        {% set dominant = "positive" if pos_ct > neg_ct and pos_ct > neu_ct else ("negative" if neg_ct > pos_ct and neg_ct > neu_ct else "neutral") %}
+        <div class="srow">
+          <span class="srow-label">新闻情绪</span>
+          <span class="srow-val {{ 'up' if dominant == 'positive' else ('down' if dominant == 'negative' else '') }}">
+            📈{{ pos_ct }} ➖{{ neu_ct }} 📉{{ neg_ct }}
+          </span>
+        </div>
+        <div class="srow">
+          <span class="srow-label">情绪倾向</span>
+          <span class="srow-val {{ 'up' if dominant == 'positive' else ('down' if dominant == 'negative' else '') }}">
+            {{ t.lbl_sentiment_pos if dominant == "positive" else (t.lbl_sentiment_neg if dominant == "negative" else t.lbl_sentiment_neu) }}
+          </span>
+        </div>
+        {% else %}
+        <div class="srow">
+          <span class="srow-label">新闻情绪</span>
+          <span class="srow-val muted">{{ t.lbl_no_news_signal }}</span>
+        </div>
+        {% endif %}
+        {% if not (market == "cn" and tech) and not (inst_us and inst_us.get("inst_pct") is not none) and not news %}
+        <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+        {% endif %}
+      </div>
+
+    </div>{# /.signal-3col #}
+
+    {# ── 消息-机构背离警告 ── #}
+    {% if market == "cn" and divergence and news %}
+      {% set pos_ct2 = news | selectattr("sentiment", "equalto", "positive") | list | length %}
+      {% set neg_ct2 = news | selectattr("sentiment", "equalto", "negative") | list | length %}
+      {% set news_bull = pos_ct2 > neg_ct2 %}
+      {% if news_bull and divergence.total <= -2 %}
+      <div class="diverg-news-warning {{ 'diverg-warn-trap' if divergence.total <= -3 else 'diverg-warn-mixed' }}">
+        <span class="diverg-warn-icon">⚠</span>
+        <span class="diverg-warn-body">
+          <strong>消息面偏正面，但机构行为背离（背离分 {{ ("+" ~ divergence.total) if divergence.total >= 0 else divergence.total }}）</strong>
+          {% if divergence.total <= -3 %} — 符合「消息出货」特征，机构可能正在利用正面消息减仓。
+          {% else %} — 消息与机构方向不完全一致，保持谨慎。
+          {% endif %}
+          {% if market == "cn" %}
+          <a href="{{ url_for('stock_radar_page', code=stock.code) }}" class="diverg-warn-link">查看机构雷达 →</a>
+          {% endif %}
+        </span>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    {# ── 新闻列表 ── #}
+    {% if news %}
+    <div class="news-list-divider">{{ t.lbl_latest_news }}</div>
+    {% for n in news %}
+    <div class="news-article">
+      <div class="news-kicker">
+        {{ n.source }}
+        {% if n.sentiment == 'positive' %}<span title="{{ t.lbl_positive }}">📈</span>
+        {% elif n.sentiment == 'negative' %}<span title="{{ t.lbl_negative }}">📉</span>
+        {% elif n.sentiment %}<span title="{{ t.lbl_neutral }}">➖</span>{% endif %}
+      </div>
+      {% if n.link %}
+      <a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
+      {% else %}
+      <div class="news-headline-plain">{{ n.title }}</div>
+      {% endif %}
+      <div class="news-byline">{{ n.publish_time[:10] if n.publish_time else '' }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_news_found }}</p>
+    {% endif %}
+
+  </div>{# /.stock-page-body #}
+
+  {% if in_watchlist %}
+  <div class="stock-remove-zone">
+    <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
+      <button type="submit" class="btn-remove-stock"
+              onclick="return confirm('{{ t.btn_remove_stock }} {{ stock.name }}?')">{{ t.btn_remove_stock }}</button>
+    </form>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window._t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  gen_letter:       {{ t.js_gen_letter | tojson }},
+  letter_ready:     {{ t.js_letter_ready | tojson }},
+  generating:       {{ t.js_generating | tojson }},
+  read_letter:      {{ t.js_read_letter | tojson }},
+  letter_ready_lbl: {{ t.js_letter_ready_label | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+  full_update_lbl:  {{ t.btn_full_update | tojson }},
+  is_admin:         {{ (session.role == 'admin') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
+{% endblock %}

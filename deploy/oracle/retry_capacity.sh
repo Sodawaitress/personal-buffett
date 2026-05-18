@@ -7,6 +7,9 @@ MAX_ATTEMPTS="${MAX_ATTEMPTS:-6}"
 SLEEP_SECONDS="${SLEEP_SECONDS:-30}"
 FOREVER="${FOREVER:-0}"
 RETRY_ON_ANY_ERROR="${RETRY_ON_ANY_ERROR:-0}"
+INSTANCE_NAME="${INSTANCE_NAME:-sabertooth}"
+OCI_OCPUS="${OCI_OCPUS:-1}"
+OCI_MEMORY_GB="${OCI_MEMORY_GB:-6}"
 
 if [ ! -x "$DEPLOY_SCRIPT" ]; then
   chmod +x "$DEPLOY_SCRIPT"
@@ -22,7 +25,7 @@ try_deploy() {
   local log_file
   log_file="$(mktemp -t oracle-capacity)"
 
-  if OCI_SHAPE="$shape" OCI_IMAGE_OS_VERSION="$image_os_version" bash "$DEPLOY_SCRIPT" >"$log_file" 2>&1; then
+  if INSTANCE_NAME="$INSTANCE_NAME" OCI_SHAPE="$shape" OCI_OCPUS="$OCI_OCPUS" OCI_MEMORY_GB="$OCI_MEMORY_GB" OCI_IMAGE_OS_VERSION="$image_os_version" bash "$DEPLOY_SCRIPT" >"$log_file" 2>&1; then
     cat "$log_file"
     rm -f "$log_file"
     return 0
@@ -45,13 +48,8 @@ while :; do
     break
   fi
 
-  if (( attempt % 2 == 1 )); then
-    shape="VM.Standard.A1.Flex"
-    image_os_version="24.04"
-  else
-    shape="VM.Standard.E2.1.Micro"
-    image_os_version="24.04"
-  fi
+  shape="VM.Standard.A1.Flex"
+  image_os_version="24.04"
 
   log "attempt ${attempt}/${MAX_ATTEMPTS}: ${shape}"
 

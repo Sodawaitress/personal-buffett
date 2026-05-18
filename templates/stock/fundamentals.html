@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} — {{ t.tab_archive }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="stock-page">
+{% include 'stock/_head.html' %}
+
+  <div class="stock-page-body">
+
+    {# ── 历史分析 ── #}
+    <div class="archive-section-title">{{ t.lbl_history }}</div>
+    {% if history %}
+    {% for h in history %}
+    <div class="history-item {{ 'history-current' if loop.first else '' }}">
+      <div class="history-header">
+        <span class="wax-seal wax-seal-sm grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
+          {{ h.grade or '—' }}
+        </span>
+        <span class="history-conclusion">{{ h.conclusion }}</span>
+        <span class="history-date">{{ h.analysis_date }}</span>
+      </div>
+      <p class="history-reasoning">{{ (h.reasoning or '')[:300] }}</p>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_history }}</p>
+    {% endif %}
+
+    {# ── 公司概览 ── #}
+    <div class="archive-section-title">{{ t.lbl_company_overview }}</div>
+
+    {% set sector = signals.get('sector') if signals else none %}
+    {% set framework_lbl = {
+      'mature_value': t.fw_mature_value,
+      'growth_tech':  t.fw_growth_tech,
+      'financial':    t.fw_financial,
+      'cyclical':     t.fw_cyclical,
+      'utility':      t.fw_utility,
+      'speculative':  t.fw_speculative,
+      'etf':          '指数基金 / ETF',
+      'pre_profit':   '成长期（未盈利）',
+      'distressed':   '困境股',
+      'bank_insurance': '银行 / 保险'
+    }.get((meta.company_type if meta else ''), '') %}
+    <div class="stock-info-row" style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 0;font-size:12px;color:var(--ink-muted)">
+      <span><strong>{{ t.lbl_market_label }}</strong> {{ market | upper }}</span>
+      <span><strong>{{ t.lbl_code_label }}</strong> {{ stock.code }}</span>
+      {% if sector %}<span><strong>{{ t.lbl_sector_label }}</strong> {{ sector }}</span>{% endif %}
+      {% if meta and meta.market_tier %}<span><strong>{{ t.lbl_board_label }}</strong> {{ meta.market_tier }}</span>{% endif %}
+      {% if framework_lbl %}<span><strong>{{ t.lbl_type_label }}</strong> {{ framework_lbl }}</span>{% endif %}
+    </div>
+
+    {# ── 基本面指标 ── #}
+    <section class="fund-section">
+      <div class="fund-section-label">{{ t.lbl_fundamentals }}</div>
+      <hr class="section-rule">
+      {% set lat = annual[0] if annual else none %}
+      {% if not lat and signals %}{% set lat = signals %}{% endif %}
+
+      {# ── Metric verdict classes ── #}
+      {% set _pe_v = pe_current if pe_current else (price.pe_ratio if price and price.pe_ratio else none) %}
+      {% if _pe_v is not none and _pe_v <= 0 %}{% set pe_vc = 'verdict-bad' %}
+      {% elif _pe_v is not none and _pe_v < 15 %}{% set pe_vc = 'verdict-good' %}
+      {% elif _pe_v is not none and _pe_v > 60 %}{% set pe_vc = 'verdict-bad' %}
+      {% elif _pe_v is not none and _pe_v > 35 %}{% set pe_vc = 'verdict-warn' %}
+      {% else %}{% set pe_vc = '' %}{% endif %}
+      {% set _pb_v = pb_current if pb_current else (price.pb_ratio if price and price.pb_ratio else none) %}
+      {% if _pb_v is not none and _pb_v < 1.5 %}{% set pb_vc = 'verdict-good' %}
+      {% elif _pb_v is not none and _pb_v > 5 %}{% set pb_vc = 'verdict-bad' %}
+      {% elif _pb_v is not none and _pb_v > 3 %}{% set pb_vc = 'verdict-warn' %}
+      {% else %}{% set pb_vc = '' %}{% endif %}
+      {% set _roe_str = lat.roe if lat and lat.roe else '' %}
+      {% if '%' in _roe_str %}
+        {% set _roe_f = _roe_str | replace('%','') | float %}
+        {% if _roe_f >= 15 %}{% set roe_vc = 'verdict-good' %}
+        {% elif _roe_f < 0 %}{% set roe_vc = 'verdict-bad' %}
+        {% elif _roe_f < 8 %}{% set roe_vc = 'verdict-warn' %}
+        {% else %}{% set roe_vc = '' %}{% endif %}
+      {% else %}{% set roe_vc = '' %}{% endif %}
+      {% set _nm_str = lat.net_margin if lat and lat.net_margin else '' %}
+      {% if '%' in _nm_str %}
+        {% set _nm_f = _nm_str | replace('%','') | float %}
+        {% if _nm_f >= 20 %}{% set nm_vc = 'verdict-good' %}
+        {% elif _nm_f < 0 %}{% set nm_vc = 'verdict-bad' %}
+        {% elif _nm_f < 5 %}{% set nm_vc = 'verdict-warn' %}
+        {% else %}{% set nm_vc = '' %}{% endif %}
+      {% else %}{% set nm_vc = '' %}{% endif %}
+      {% set _dr_str = lat.debt_ratio if lat and lat.debt_ratio else '' %}
+      {% if _dr_str and lat and lat.debt_ratio_note %}
+        {% set _dr_f = _dr_str | replace('%','') | float %}
+        {% if _dr_f < 1 %}{% set dr_vc = 'verdict-good' %}
+        {% elif _dr_f > 5 %}{% set dr_vc = 'verdict-bad' %}
+        {% elif _dr_f > 3 %}{% set dr_vc = 'verdict-warn' %}
+        {% else %}{% set dr_vc = '' %}{% endif %}
+      {% elif '%' in _dr_str %}
+        {% set _dr_f = _dr_str | replace('%','') | float %}
+        {% if _dr_f < 40 %}{% set dr_vc = 'verdict-good' %}
+        {% elif _dr_f > 75 %}{% set dr_vc = 'verdict-bad' %}
+        {% elif _dr_f > 60 %}{% set dr_vc = 'verdict-warn' %}
+        {% else %}{% set dr_vc = '' %}{% endif %}
+      {% else %}{% set dr_vc = '' %}{% endif %}
+      {% set _roic_v = signals.get("roic_latest") if signals else none %}
+      {% if _roic_v is not none %}
+        {% set _roic_f = _roic_v | float %}
+        {% if _roic_f >= 15 %}{% set roic_vc = 'verdict-good' %}
+        {% elif _roic_f < 0 %}{% set roic_vc = 'verdict-bad' %}
+        {% elif _roic_f < 6 %}{% set roic_vc = 'verdict-warn' %}
+        {% else %}{% set roic_vc = '' %}{% endif %}
+      {% else %}{% set roic_vc = '' %}{% endif %}
+
+      <div class="fund-metrics-grid">
+
+        <div class="fund-metric-card {{ pe_vc }}">
+          <div class="fund-metric-label">{{ t.lbl_pe }}</div>
+          <div class="fund-metric-value">
+            {% if pe_current %}{{ "%.1f"|format(pe_current) }}x
+            {% elif price and price.pe_ratio %}{{ "%.1f"|format(price.pe_ratio) }}x
+            {% else %}<span class="fund-accumulating">—</span>{% endif %}
+          </div>
+          {% if pe_percentile_5y is not none %}
+          <div class="fund-metric-note">5Y {{ pe_percentile_5y }}%ile
+            <span style="color:{% if pe_percentile_5y > 70 %}#c62828{% elif pe_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
+              {% if pe_percentile_5y > 70 %}{{ t.lbl_expensive }}{% elif pe_percentile_5y < 30 %}{{ t.lbl_cheap }}{% else %}—{% endif %}
+            </span>
+          </div>
+          {% endif %}
+          {% set _h = metric_hints.get('pe') if metric_hints else none %}
+          {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+        </div>
+
+        <div class="fund-metric-card {{ pb_vc }}">
+          <div class="fund-metric-label">{{ t.lbl_pb }}</div>
+          <div class="fund-metric-value">
+            {% if pb_current %}{{ "%.2f"|format(pb_current) }}x
+            {% elif price and price.pb_ratio %}{{ "%.2f"|format(price.pb_ratio) }}x
+            {% else %}<span class="fund-accumulating">—</span>{% endif %}
+          </div>
+          {% if pb_percentile_5y is not none %}
+          <div class="fund-metric-note">5Y {{ pb_percentile_5y }}%ile
+            <span style="color:{% if pb_percentile_5y > 70 %}#c62828{% elif pb_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
+              {% if pb_percentile_5y > 70 %}{{ t.lbl_expensive }}{% elif pb_percentile_5y < 30 %}{{ t.lbl_cheap }}{% else %}—{% endif %}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="fund-metric-card {{ roe_vc }}">
+          <div class="fund-metric-label">ROE <span style="font-weight:400;font-size:10px">（{{ lat.year if lat else '—' }}）</span></div>
+          <div class="fund-metric-value">
+            {% if lat and lat.roe %}{{ lat.roe }}
+            {% else %}<span class="fund-accumulating">—</span>{% endif %}
+          </div>
+          {% if annual | length >= 2 and lat and lat.roe and annual[1].roe %}
+          <div class="fund-metric-note">
+            {{ annual[1].year }}: {{ annual[1].roe }}
+            {% set cur_v = lat.roe | replace('%','') | float %}
+            {% set prev_v = annual[1].roe | replace('%','') | float %}
+            <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
+          </div>
+          {% endif %}
+          {% set _h = metric_hints.get('roe') if metric_hints else none %}
+          {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+        </div>
+
+        <div class="fund-metric-card {{ nm_vc }}">
+          <div class="fund-metric-label">{{ t.lbl_net_margin }}</div>
+          <div class="fund-metric-value">
+            {% if lat and lat.net_margin %}{{ lat.net_margin }}
+            {% else %}<span class="fund-accumulating">—</span>{% endif %}
+          </div>
+          {% if annual | length >= 2 and lat and lat.net_margin and annual[1].net_margin %}
+          <div class="fund-metric-note">
+            {{ annual[1].year }}: {{ annual[1].net_margin }}
+            {% set cur_v = lat.net_margin | replace('%','') | float %}
+            {% set prev_v = annual[1].net_margin | replace('%','') | float %}
+            <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
+          </div>
+          {% endif %}
+          {% set _h = metric_hints.get('net_margin') if metric_hints else none %}
+          {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+        </div>
+
+        <div class="fund-metric-card {{ dr_vc }}">
+          <div class="fund-metric-label">
+            {% if lat and lat.debt_ratio_note %}D/E{% else %}{{ t.lbl_debt_ratio_cn }}{% endif %}
+          </div>
+          <div class="fund-metric-value">
+            {% if lat and lat.debt_ratio %}
+              {% if lat.debt_ratio_note %}
+                <span title="{{ lat.debt_ratio_note }}">{{ lat.debt_ratio }}</span>
+              {% else %}
+                {{ lat.debt_ratio }}
+              {% endif %}
+            {% else %}<span class="fund-accumulating">—</span>{% endif %}
+          </div>
+          {% set _h = metric_hints.get('debt_ratio') if metric_hints else none %}
+          {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+        </div>
+
+        <div class="fund-metric-card {{ roic_vc }}">
+          <div class="fund-metric-label">ROIC</div>
+          <div class="fund-metric-value">
+            {% set roic = signals.get("roic_latest") if signals else none %}
+            {% if roic %}{{ roic }}%{% else %}<span class="fund-accumulating">—</span>{% endif %}
+          </div>
+          {% set rt = signals.get("roic_trend",[]) if signals else [] %}
+          {% if rt | length >= 2 %}
+          <div class="fund-metric-note">
+            {{ rt[1].year }}: {{ rt[1].roic }}%
+            <span style="color:{% if rt[0].roic >= rt[1].roic %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if rt[0].roic >= rt[1].roic else '↓' }}</span>
+          </div>
+          {% endif %}
+          {% set _h = metric_hints.get('roic') if metric_hints else none %}
+          {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+        </div>
+
+      </div>
+
+      {% if annual | length > 1 %}
+      <div style="margin-top:20px;overflow-x:auto">
+        <table style="font-size:12px;font-family:-apple-system,sans-serif;border-collapse:collapse;min-width:480px">
+          <tr style="color:var(--ink-muted);border-bottom:1px solid var(--rule-light)">
+            <th style="text-align:left;padding:4px 8px;font-weight:600">{{ t.lbl_year }}</th>
+            {% for row in annual %}<th style="text-align:right;padding:4px 8px;font-weight:400">{{ row.year }}</th>{% endfor %}
+          </tr>
+          {% for field, label in [("roe","ROE"),("net_margin",t.lbl_net_margin_short),("debt_ratio",t.lbl_debt_ratio_short),("profit_growth",t.lbl_profit_growth)] %}
+          <tr style="border-bottom:1px solid var(--rule-light)">
+            <td style="padding:4px 8px;color:var(--ink-muted)">{{ label }}</td>
+            {% for row in annual %}
+            <td style="text-align:right;padding:4px 8px;font-variant-numeric:tabular-nums">
+              {% if row.get(field) %}{{ row.get(field) }}{% else %}—{% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+    </section>
+
+    {# ── 主力资金历史（仅 A 股）── #}
+    {% if market == "cn" %}
+    <section class="fund-section">
+      <div class="fund-section-label">{{ t.lbl_main_flow_hist }}</div>
+      <hr class="section-rule">
+      {% if ff_hist %}
+      <div class="fund-chart-wrap">
+        <canvas id="ffChart" height="100"></canvas>
+      </div>
+      <div class="ff-summary">
+        {% set total = namespace(v=0) %}
+        {% for f in ff_hist %}{% set total.v = total.v + f.main_net %}{% endfor %}
+        Last {{ ff_hist|length }} sessions net:
+        <strong class="{{ 'fund-in' if total.v >= 0 else 'fund-out' }}">
+          {{ 'In' if total.v >= 0 else 'Out' }} {{ "%.2f"|format(total.v | abs) }}B
+        </strong>
+      </div>
+      {% else %}
+      <div class="fund-empty">{{ t.lbl_fund_flow_empty }}</div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {# ── 护城河评估 ── #}
+    <section class="fund-section">
+      <div class="fund-section-label">{{ t.lbl_moat_eval }}</div>
+      <hr class="section-rule">
+      {% set latest_a = history[0] if history else none %}
+      {% set moat_dir = signals.get("moat_direction") if signals else none %}
+      {% if latest_a and latest_a.moat %}
+      <p class="fund-text">{{ latest_a.moat }}</p>
+      {% elif moat_dir or (latest_a and latest_a.reasoning) %}
+      {% if moat_dir %}
+      <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:600;color:var(--ink)">{{ t.lbl_moat_direction }}</span>
+        <span style="font-size:13px;padding:3px 10px;border-radius:12px;font-weight:600;
+          background:{% if '拓宽' in moat_dir %}#e8f5e9{% elif '收窄' in moat_dir %}#fdecea{% else %}#f5f0e8{% endif %};
+          color:{% if '拓宽' in moat_dir %}#2e7d32{% elif '收窄' in moat_dir %}#c62828{% else %}var(--ink-2){% endif %}">
+          {{ moat_dir }}
+        </span>
+      </div>
+      {% endif %}
+      {% if latest_a and latest_a.reasoning %}
+      <p class="fund-text" style="margin-top:8px">{{ latest_a.reasoning }}</p>
+      {% endif %}
+      {% else %}
+      <p class="fund-note" style="padding:12px 0">{{ t.lbl_moat_pending }}</p>
+      {% endif %}
+    </section>
+
+    {# ── 技术支撑位（A股专属）── #}
+    {% if market == "cn" %}
+    {% set tech = signals.get("technicals", {}) if signals else {} %}
+    <section class="fund-section" style="margin-top:32px">
+      <div class="fund-section-label">{{ t.lbl_tech_levels }}</div>
+      <hr class="section-rule">
+      {% if tech %}
+      {% set cur = price.price if price else none %}
+      {% set ns = namespace(above=0, total=0) %}
+      {% for key in ["ma20","ma60","ma120","ma250"] %}
+        {% set pct = tech.get("price_vs_" ~ key) %}
+        {% if tech.get(key) and pct is not none %}
+          {% set ns.total = ns.total + 1 %}
+          {% if pct < 0 %}{% set ns.above = ns.above + 1 %}{% endif %}
+        {% endif %}
+      {% endfor %}
+
+      <div class="tech-ladder">
+        {% set above_levels = [] %}
+        {% for key, name, desc in [
+            ("ma60","MA60","60-day"),("ma120","MA120","120-day"),
+            ("ma250","MA250","250-day"),("ma20","MA20","20-day")] %}
+          {% set val = tech.get(key) %}
+          {% set pct = tech.get("price_vs_" ~ key) %}
+          {% if val and pct is not none and pct < 0 %}
+            {% set _ = above_levels.append((val, pct, name, desc)) %}
+          {% endif %}
+        {% endfor %}
+        {% for val, pct, name, desc in above_levels | sort(attribute=0, reverse=True) %}
+        {% set bar_w = [pct|abs / 20 * 100, 100]|min %}
+        <div class="tech-level">
+          <span class="tech-price-val">¥{{ val }}</span>
+          <span class="tech-dot tech-dot-above"></span>
+          <div class="tech-label-wrap"><span class="tech-label-name">{{ name }}</span><span class="tech-label-desc">{{ desc }}</span></div>
+          <div class="tech-bar-wrap"><div class="tech-bar tech-bar-above" style="width:{{ bar_w }}%"></div></div>
+          <span class="tech-pct-badge tech-pct-above">▲ {{ pct|abs|round(1) }}%</span>
+        </div>
+        {% endfor %}
+
+        {% if cur %}
+        <div class="tech-current-row">
+          <div class="tech-current-dot"></div>
+          <span class="tech-current-price">¥{{ "%.2f"|format(cur) }}</span>
+          <span class="tech-current-label">{{ t.lbl_current_price_label }}</span>
+          {% if ns.above == ns.total and ns.total > 0 %}
+            <span style="font-size:11px;color:#c62828;margin-left:auto;font-weight:600">⚠ All MAs below</span>
+          {% elif ns.above == 0 %}
+            <span style="font-size:11px;color:#2e7d32;margin-left:auto;font-weight:600">✓ All MAs above</span>
+          {% else %}
+            <span style="font-size:11px;color:var(--ink-muted);margin-left:auto">{{ ns.above }} below / {{ ns.total - ns.above }} above</span>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% for key, name, desc in [
+            ("ma60","MA60","60-day"),("ma120","MA120","120-day"),
+            ("ma250","MA250","250-day"),("ma20","MA20","20-day")] %}
+          {% set val = tech.get(key) %}
+          {% set pct = tech.get("price_vs_" ~ key) %}
+          {% if val and pct is not none and pct >= 0 %}
+          {% set bar_w = [pct / 20 * 100, 100]|min %}
+          <div class="tech-level">
+            <span class="tech-price-val">¥{{ val }}</span>
+            <span class="tech-dot tech-dot-below"></span>
+            <div class="tech-label-wrap"><span class="tech-label-name">{{ name }}</span><span class="tech-label-desc">{{ desc }}</span></div>
+            <div class="tech-bar-wrap"><div class="tech-bar tech-bar-below" style="width:{{ bar_w }}%"></div></div>
+            <span class="tech-pct-badge tech-pct-below">▼ {{ pct|round(1) }}%</span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if ns.above == ns.total and ns.total > 0 %}
+      <div class="tech-danger-banner">⚠ Price has broken below all {{ ns.total }} moving average supports — MAs may now act as resistance on rebounds.</div>
+      {% elif ns.above == 0 and ns.total > 0 %}
+      <div class="tech-safe-banner">✓ Price is above all moving averages — multi-layer support in place, trend is healthy.</div>
+      {% endif %}
+
+      {% set v60 = tech.get("vwap60") %}{% set p60 = tech.get("price_vs_vwap60") %}
+      {% set v120 = tech.get("vwap120") %}{% set p120 = tech.get("price_vs_vwap120") %}
+      {% if v60 or v120 %}
+      <div class="tech-vwap-block">
+        {% if v60 %}
+        <div class="tech-vwap-item">
+          <span class="tech-vwap-label">{{ t.lbl_vwap_recent_cost }}</span>
+          <span class="tech-vwap-val">¥{{ v60 }}</span>
+          {% if p60 is not none %}
+          <span class="tech-vwap-note" style="color:{% if p60 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
+            {% if p60 >= 0 %}+{{ p60|round(1) }}% above — recent buyers profitable{% else %}-{{ p60|abs|round(1) }}% below — {% if p60 < -5 %}most recent buyers trapped{% else %}slightly underwater{% endif %}{% endif %}
+          </span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if v120 %}
+        <div class="tech-vwap-item">
+          <span class="tech-vwap-label">{{ t.lbl_vwap_mid_cost }}</span>
+          <span class="tech-vwap-val">¥{{ v120 }}</span>
+          {% if p120 is not none %}
+          <span class="tech-vwap-note" style="color:{% if p120 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
+            {% if p120 >= 0 %}+{{ p120|round(1) }}% above — mid-term holders profitable{% else %}-{{ p120|abs|round(1) }}% below — {% if p120 < -5 %}mid-term holders mostly trapped{% else %}mid-term cost slightly high{% endif %}{% endif %}
+          </span>
+          {% endif %}
+        </div>
+        {% endif %}
+        <p class="tech-vwap-footnote">
+          <strong>VWAP</strong> = price averaged by daily volume, reflecting the average cost of actual trades over the period.
+        </p>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <p class="fund-note">{{ t.lbl_tech_data_pending }}</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {# ── 价格历史 ── #}
+    {% if prices %}
+    <section class="fund-section" style="margin-top:24px">
+      <div class="fund-section-label">{{ t.lbl_price_history }}</div>
+      <hr class="section-rule">
+      <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>Time</th><th>Price</th><th>Change</th><th>Volume</th></tr></thead>
+        <tbody>
+        {% for p in prices %}
+        <tr>
+          <td>{{ p.fetched_at[:16] if p.fetched_at else '—' }}</td>
+          <td>{{ currency }}{{ "%.2f"|format(p.price) if p.price else '—' }}</td>
+          <td class="{{ 'up' if p.change_pct and p.change_pct >= 0 else 'down' if p.change_pct else '' }}">
+            {{ "%+.2f"|format(p.change_pct) + '%' if p.change_pct is not none else '—' }}
+          </td>
+          <td>{{ "%.0f"|format(p.volume) if p.volume else '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </section>
+    {% endif %}
+
+  </div>{# /.stock-page-body #}
+
+  {% if in_watchlist %}
+  <div class="stock-remove-zone">
+    <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
+      <button type="submit" class="btn-remove-stock"
+              onclick="return confirm('{{ t.btn_remove_stock }} {{ stock.name }}?')">{{ t.btn_remove_stock }}</button>
+    </form>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+window._t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+  full_update_lbl:  {{ t.btn_full_update | tojson }},
+  is_admin:         {{ (session.role == 'admin') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
+<script>
+// Fund flow chart — init on page load (no lazy-load needed on dedicated page)
+(function() {
+  const canvas = document.getElementById('ffChart');
+  if (!canvas) return;
+  const labels = {{ (ff_hist | map(attribute='date') | list) | tojson if ff_hist else '[]' }};
+  const nets   = {{ (ff_hist | map(attribute='main_net') | list) | tojson if ff_hist else '[]' }};
+  if (!nets.length) return;
+  const colors = nets.map(v => v >= 0 ? 'rgba(45,122,45,0.75)' : 'rgba(192,57,43,0.75)');
+  new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Main Flow (B)', data: nets, backgroundColor: colors, borderWidth: 1 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? 'In +' : 'Out ') + Math.abs(ctx.raw).toFixed(2) + 'B' } } },
+      scales: {
+        x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#666', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'B' }, grid: { color: '#e8e4de' } }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

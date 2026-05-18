@@ -30,7 +30,8 @@ def _get_price_changes(codes: list[str]) -> dict[str, float]:
     """从 stock_prices 取每只股票最新的涨跌幅，返回 {code: change_pct}。"""
     if not codes:
         return {}
-    placeholders = ",".join("?" * len(codes))
+    placeholders = ", ".join(f":c{i}" for i in range(len(codes)))
+    params = {f"c{i}": code for i, code in enumerate(codes)}
     with get_conn() as c:
         rows = c.execute(
             f"""
@@ -38,7 +39,7 @@ def _get_price_changes(codes: list[str]) -> dict[str, float]:
             WHERE code IN ({placeholders})
               AND fetched_at = (SELECT MAX(fetched_at) FROM stock_prices WHERE code = stock_prices.code)
             """,
-            codes,
+            params,
         ).fetchall()
     return {r["code"]: (r["change_pct"] or 0.0) for r in rows}
 

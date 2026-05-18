@@ -11,7 +11,10 @@ from radar_app.data.stocks import _guess_market, all_watched_codes, get_latest_p
 def save_north_bound(data: dict):
     with get_conn() as c:
         c.execute("DELETE FROM market_data WHERE data_type='north_bound'")
-        c.execute("INSERT INTO market_data(data_type, payload) VALUES('north_bound', ?)", (json.dumps(data, ensure_ascii=False),))
+        c.execute(
+            "INSERT INTO market_data(data_type, payload) VALUES('north_bound', :payload)",
+            {"payload": json.dumps(data, ensure_ascii=False)},
+        )
 
 
 def get_north_bound() -> dict:
@@ -32,13 +35,18 @@ def get_north_bound() -> dict:
 def upsert_stock_news(code, title, source, link, publish_time, fetched_date):
     nid = hashlib.md5(f"{title}{link}".encode()).hexdigest()
     with get_conn() as c:
-        c.execute("INSERT OR IGNORE INTO stocks(code,name,market,currency) VALUES(?,?,?,'CNY')", (code, code, _guess_market(code)))
+        c.execute(
+            "INSERT INTO stocks(code,name,market,currency) VALUES(:code,:code,:market,'CNY') ON CONFLICT DO NOTHING",
+            {"code": code, "market": _guess_market(code)},
+        )
         c.execute(
             """
-            INSERT OR IGNORE INTO stock_news(id,code,title,link,source,publish_time,fetched_date)
-            VALUES(?,?,?,?,?,?,?)
-        """,
-            (nid, code, title, link, source, publish_time, fetched_date),
+            INSERT INTO stock_news(id,code,title,link,source,publish_time,fetched_date)
+            VALUES(:id,:code,:title,:link,:source,:publish_time,:fetched_date)
+            ON CONFLICT DO NOTHING
+            """,
+            {"id": nid, "code": code, "title": title, "link": link, "source": source,
+             "publish_time": publish_time, "fetched_date": fetched_date},
         )
     return nid
 
@@ -50,7 +58,7 @@ def _sentiment_label(val) -> str:
     try:
         v = float(val)
     except (TypeError, ValueError):
-        return str(val)  # already a string label
+        return str(val)
     if v > 0.3:
         return "positive"
     if v < -0.3:
@@ -64,10 +72,10 @@ def get_stock_news(code, days=7):
         rows = c.execute(
             """
             SELECT * FROM stock_news
-            WHERE code=? AND fetched_date>=?
+            WHERE code=:code AND fetched_date>=:cutoff
             ORDER BY publish_time DESC LIMIT 20
             """,
-            (code, cutoff),
+            {"code": code, "cutoff": cutoff},
         ).fetchall()
     result = []
     for r in rows:
@@ -82,10 +90,12 @@ def upsert_market_news(region, category, title, link, source, publish_time, fetc
     with get_conn() as c:
         c.execute(
             """
-            INSERT OR IGNORE INTO market_news(id,region,category,title,link,source,publish_time,fetched_date)
-            VALUES(?,?,?,?,?,?,?,?)
-        """,
-            (nid, region, category, title, link, source, publish_time, fetched_date),
+            INSERT INTO market_news(id,region,category,title,link,source,publish_time,fetched_date)
+            VALUES(:id,:region,:category,:title,:link,:source,:publish_time,:fetched_date)
+            ON CONFLICT DO NOTHING
+            """,
+            {"id": nid, "region": region, "category": category, "title": title, "link": link,
+             "source": source, "publish_time": publish_time, "fetched_date": fetched_date},
         )
 
 
@@ -96,36 +106,36 @@ def get_market_news(region, category=None, days=3):
             rows = c.execute(
                 """
                 SELECT * FROM market_news
-                WHERE region=? AND category=? AND fetched_date>=?
+                WHERE region=:region AND category=:category AND fetched_date>=:cutoff
                 ORDER BY publish_time DESC LIMIT 10
-            """,
-                (region, category, cutoff),
+                """,
+                {"region": region, "category": category, "cutoff": cutoff},
             ).fetchall()
         else:
             rows = c.execute(
                 """
-            SELECT * FROM market_news
-            WHERE region=? AND fetched_date>=?
-            ORDER BY publish_time DESC LIMIT 20
-        """,
-                (region, cutoff),
+                SELECT * FROM market_news
+                WHERE region=:region AND fetched_date>=:cutoff
+                ORDER BY publish_time DESC LIMIT 20
+                """,
+                {"region": region, "cutoff": cutoff},
             ).fetchall()
         return [dict(r) for r in rows]
 
 
 def save_market_data(data_type, payload_dict):
     with get_conn() as c:
-        c.execute("INSERT INTO market_data(data_type, payload) VALUES(?,?)", (data_type, json.dumps(payload_dict, ensure_ascii=False)))
+        c.execute(
+            "INSERT INTO market_data(data_type, payload) VALUES(:type,:payload)",
+            {"type": data_type, "payload": json.dumps(payload_dict, ensure_ascii=False)},
+        )
 
 
 def get_latest_market_data(data_type):
     with get_conn() as c:
         row = c.execute(
-            """
-            SELECT * FROM market_data WHERE data_type=?
-            ORDER BY fetched_at DESC LIMIT 1
-        """,
-            (data_type,),
+            "SELECT * FROM market_data WHERE data_type=:type ORDER BY fetched_at DESC LIMIT 1",
+            {"type": data_type},
         ).fetchone()
         if not row:
             return {}
@@ -165,7 +175,8 @@ def upsert_quote(code, date, price, change_pct, amount):
 
 def get_quotes(date=None):
     codes = all_watched_codes()
-    return [get_latest_price(code) for code in codes if get_latest_price(code)]
+    prices = [get_latest_price(code) for code in codes]
+    return [p for p in prices if p]
 
 
 # ── 机构雷达 DB 层 ────────────────────────────────────
@@ -173,16 +184,19 @@ def get_quotes(date=None):
 def upsert_northbound_hist(date: str, total_net: float):
     with get_conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO northbound_history(date, total_net) VALUES(?,?)",
-            (date, total_net),
+            """
+            INSERT INTO northbound_history(date, total_net) VALUES(:date,:total_net)
+            ON CONFLICT(date) DO UPDATE SET total_net=excluded.total_net
+            """,
+            {"date": date, "total_net": total_net},
         )
 
 
 def get_northbound_hist(days: int = 10) -> list:
     with get_conn() as c:
         rows = c.execute(
-            "SELECT date, total_net FROM northbound_history ORDER BY date DESC LIMIT ?",
-            (days,),
+            "SELECT date, total_net FROM northbound_history ORDER BY date DESC LIMIT :days",
+            {"days": days},
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -190,9 +204,12 @@ def get_northbound_hist(days: int = 10) -> list:
 def upsert_block_trade(code: str, trade_date: str, premium_pct: float, amount_mn: float):
     with get_conn() as c:
         c.execute(
-            """INSERT OR IGNORE INTO block_trades(code, trade_date, premium_pct, amount_mn)
-               VALUES(?,?,?,?)""",
-            (code, trade_date, premium_pct, amount_mn),
+            """
+            INSERT INTO block_trades(code, trade_date, premium_pct, amount_mn)
+            VALUES(:code,:trade_date,:premium_pct,:amount_mn)
+            ON CONFLICT DO NOTHING
+            """,
+            {"code": code, "trade_date": trade_date, "premium_pct": premium_pct, "amount_mn": amount_mn},
         )
 
 
@@ -200,8 +217,8 @@ def get_block_trades(code: str, days: int = 7) -> list:
     cutoff = (datetime.now(CN_TZ) - timedelta(days=days)).strftime("%Y-%m-%d")
     with get_conn() as c:
         rows = c.execute(
-            "SELECT * FROM block_trades WHERE code=? AND trade_date >= ? ORDER BY trade_date DESC",
-            (code, cutoff),
+            "SELECT * FROM block_trades WHERE code=:code AND trade_date >= :cutoff ORDER BY trade_date DESC",
+            {"code": code, "cutoff": cutoff},
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -211,10 +228,13 @@ def upsert_insider_change(code: str, holder_name: str, role: str,
                            change_date: str):
     with get_conn() as c:
         c.execute(
-            """INSERT OR IGNORE INTO insider_changes
-               (code, holder_name, role, change_type, shares, avg_price, change_date)
-               VALUES(?,?,?,?,?,?,?)""",
-            (code, holder_name, role, change_type, shares, avg_price, change_date),
+            """
+            INSERT INTO insider_changes(code, holder_name, role, change_type, shares, avg_price, change_date)
+            VALUES(:code,:holder_name,:role,:change_type,:shares,:avg_price,:change_date)
+            ON CONFLICT DO NOTHING
+            """,
+            {"code": code, "holder_name": holder_name, "role": role, "change_type": change_type,
+             "shares": shares, "avg_price": avg_price, "change_date": change_date},
         )
 
 
@@ -222,28 +242,31 @@ def get_insider_changes(code: str, days: int = 30) -> list:
     cutoff = (datetime.now(CN_TZ) - timedelta(days=days)).strftime("%Y-%m-%d")
     with get_conn() as c:
         rows = c.execute(
-            "SELECT * FROM insider_changes WHERE code=? AND change_date >= ? ORDER BY change_date DESC",
-            (code, cutoff),
+            "SELECT * FROM insider_changes WHERE code=:code AND change_date >= :cutoff ORDER BY change_date DESC",
+            {"code": code, "cutoff": cutoff},
         ).fetchall()
         return [dict(r) for r in rows]
 
 
-def upsert_inst_quarterly(code: str, quarter: str,
-                           shareholder_cnt: int, sh_pct_change: float):
+def upsert_inst_quarterly(code: str, quarter: str, shareholder_cnt: int, sh_pct_change: float):
     with get_conn() as c:
         c.execute(
-            """INSERT OR REPLACE INTO inst_quarterly
-               (code, quarter, shareholder_cnt, sh_pct_change)
-               VALUES(?,?,?,?)""",
-            (code, quarter, shareholder_cnt, sh_pct_change),
+            """
+            INSERT INTO inst_quarterly(code, quarter, shareholder_cnt, sh_pct_change)
+            VALUES(:code,:quarter,:shareholder_cnt,:sh_pct_change)
+            ON CONFLICT(code, quarter) DO UPDATE SET
+                shareholder_cnt=excluded.shareholder_cnt,
+                sh_pct_change=excluded.sh_pct_change
+            """,
+            {"code": code, "quarter": quarter, "shareholder_cnt": shareholder_cnt, "sh_pct_change": sh_pct_change},
         )
 
 
 def get_inst_quarterly(code: str) -> dict:
     with get_conn() as c:
         row = c.execute(
-            "SELECT * FROM inst_quarterly WHERE code=? ORDER BY quarter DESC LIMIT 1",
-            (code,),
+            "SELECT * FROM inst_quarterly WHERE code=:code ORDER BY quarter DESC LIMIT 1",
+            {"code": code},
         ).fetchone()
         return dict(row) if row else {}
 
@@ -252,19 +275,14 @@ def get_inst_quarterly(code: str) -> dict:
 
 def save_precursor_cache(code: str, survey: dict, short_selling: dict,
                          participation: dict, score: float, is_active: bool):
-    """写入前兆缓存。
-    如果新拉取的 survey 没有 events，但缓存里有 30 天内的历史事件，
-    保留旧 survey 数据（不用空值覆盖有效记录）。
-    """
+    """写入前兆缓存。survey 为空时保留缓存里 30 天内的旧事件。"""
     fetched_at = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M")
 
-    # 方案A：survey 为空时，保留缓存里 30 天内的旧事件
     survey_to_save = survey
     new_events = (survey or {}).get("events") or []
     if not new_events:
         old = get_precursor_cache(code)
-        old_survey = old.get("survey") or {}
-        old_events = old_survey.get("events") or []
+        old_events = (old.get("survey") or {}).get("events") or []
         if old_events:
             try:
                 cutoff = datetime.now(CN_TZ) - timedelta(days=30)
@@ -279,42 +297,50 @@ def save_precursor_cache(code: str, survey: dict, short_selling: dict,
 
     with get_conn() as c:
         c.execute(
-            """INSERT OR REPLACE INTO stock_precursor_cache
+            """
+            INSERT INTO stock_precursor_cache
                (code, fetched_at, survey_json, short_json, partic_json, score, is_active)
-               VALUES(?,?,?,?,?,?,?)""",
-            (code, fetched_at,
-             json.dumps(survey_to_save, ensure_ascii=False) if survey_to_save else None,
-             json.dumps(short_selling, ensure_ascii=False) if short_selling else None,
-             json.dumps(participation, ensure_ascii=False) if participation else None,
-             score, int(is_active)),
+               VALUES(:code,:fetched_at,:survey,:short,:partic,:score,:is_active)
+            ON CONFLICT(code, fetched_at) DO UPDATE SET
+               survey_json=excluded.survey_json, short_json=excluded.short_json,
+               partic_json=excluded.partic_json, score=excluded.score, is_active=excluded.is_active
+            """,
+            {
+                "code": code, "fetched_at": fetched_at,
+                "survey": json.dumps(survey_to_save, ensure_ascii=False) if survey_to_save else None,
+                "short": json.dumps(short_selling, ensure_ascii=False) if short_selling else None,
+                "partic": json.dumps(participation, ensure_ascii=False) if participation else None,
+                "score": score, "is_active": int(is_active),
+            },
         )
-        # 永久积累调研事件，防止 AKShare 滚动窗口丢失历史记录
         all_events = list(new_events) or []
         if not all_events and survey_to_save:
             all_events = survey_to_save.get("events") or []
         for ev in all_events:
             try:
                 c.execute(
-                    """INSERT OR IGNORE INTO survey_events
-                       (code, event_date, n_inst, is_specific, source)
-                       VALUES(?,?,?,?,?)""",
-                    (code, str(ev.get("date", ""))[:10],
-                     int(ev.get("n_inst") or 0),
-                     int(bool(ev.get("is_specific"))),
-                     ev.get("source", "")),
+                    """
+                    INSERT INTO survey_events(code, event_date, n_inst, is_specific, source)
+                    VALUES(:code,:event_date,:n_inst,:is_specific,:source)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    {
+                        "code": code, "event_date": str(ev.get("date", ""))[:10],
+                        "n_inst": int(ev.get("n_inst") or 0),
+                        "is_specific": int(bool(ev.get("is_specific"))),
+                        "source": ev.get("source", ""),
+                    },
                 )
             except Exception:
                 pass
 
 
 def get_precursor_cache(code: str) -> dict:
-    """返回最新一条缓存记录，含 age_hours 字段。
-    若缓存 survey.events 为空，从 survey_events 永久表补回近 60 天数据。
-    """
+    """返回最新缓存记录；survey.events 为空时从 survey_events 永久表补回近60天数据。"""
     with get_conn() as c:
         row = c.execute(
-            "SELECT * FROM stock_precursor_cache WHERE code=? ORDER BY fetched_at DESC LIMIT 1",
-            (code,),
+            "SELECT * FROM stock_precursor_cache WHERE code=:code ORDER BY fetched_at DESC LIMIT 1",
+            {"code": code},
         ).fetchone()
     if not row:
         return {}
@@ -333,7 +359,6 @@ def get_precursor_cache(code: str) -> dict:
     except Exception:
         rec["age_hours"] = 999
 
-    # 若缓存里没有调研事件，从 survey_events 永久表补回近 60 天
     cached_events = (rec.get("survey") or {}).get("events") or []
     if not cached_events:
         try:
@@ -341,8 +366,8 @@ def get_precursor_cache(code: str) -> dict:
             with get_conn() as c:
                 perm_rows = c.execute(
                     "SELECT event_date, n_inst, is_specific FROM survey_events "
-                    "WHERE code=? AND event_date>=? ORDER BY event_date DESC",
-                    (code, cutoff),
+                    "WHERE code=:code AND event_date>=:cutoff ORDER BY event_date DESC",
+                    {"code": code, "cutoff": cutoff},
                 ).fetchall()
             if perm_rows:
                 events = [
@@ -365,16 +390,16 @@ def get_precursor_summary(user_id: int, limit: int = 3) -> list:
             SELECT p.code, s.name, p.score, p.survey_json, p.short_json, p.partic_json, p.fetched_at
             FROM stock_precursor_cache p
             JOIN stocks s ON s.code = p.code
-            JOIN user_watchlist w ON w.stock_code = p.code AND w.user_id = ?
+            JOIN user_watchlist w ON w.stock_code = p.code AND w.user_id = :uid
             WHERE p.is_active = 1
               AND w.status IN ('holding','watching')
               AND p.fetched_at = (
                   SELECT MAX(fetched_at) FROM stock_precursor_cache WHERE code = p.code
               )
             ORDER BY p.score DESC
-            LIMIT ?
+            LIMIT :limit
             """,
-            (user_id, limit),
+            {"uid": user_id, "limit": limit},
         ).fetchall()
     result = []
     for row in rows:

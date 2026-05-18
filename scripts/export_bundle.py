@@ -165,8 +165,8 @@ def build_export_bundle(code: str, user_id: int = None) -> dict:
         try:
             with db.get_conn() as c:
                 row = c.execute(
-                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
-                    (user_id, code),
+                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=:uid AND stock_code=:code",
+                    {"uid": user_id, "code": code},
                 ).fetchone()
                 if row and row["buy_price"]:
                     cur = price.get("price")

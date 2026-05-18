@@ -109,13 +109,12 @@ def send_serverchan(key: str, title: str, content: str):
 
 def _refresh_user_holdings_layer2(date_str: str):
     """
-    收盘后对所有用户的持仓股跑一次 Layer 2（纯数学，零 LLM）。
-    刷新量化评级 + trading_params 存入 DB，让今日推送用上今天的数据。
+    Post-close refresh: Layer 2 (quant) for all user stocks.
+    CN stocks: Layer 2 only (LLM already ran via analyze_all).
+    Non-CN stocks (NZ/US/HK): full Layer 2 + Layer 3 LLM narrative.
     """
-    from scripts.pipeline import _run_layer2
-    import threading
+    from scripts.pipeline import _run_analysis, _run_layer2
 
-    # 收集所有需要刷新的代码（去重）
     push_users = _db.get_users_with_daily_push()
     codes_to_refresh = set()
     for u in push_users:
@@ -127,19 +126,24 @@ def _refresh_user_holdings_layer2(date_str: str):
     if not codes_to_refresh:
         return
 
-    print(f"  📊 Layer 2 刷新 {len(codes_to_refresh)} 只股票的量化评级...")
+    print(f"  📊 Refreshing {len(codes_to_refresh)} stocks (quant + LLM for non-CN)...")
     refreshed = 0
     for code in sorted(codes_to_refresh):
         stock = _db.get_stock(code)
         market = (stock or {}).get("market", "cn")
         logs = []
         try:
-            _run_layer2(code, market, lambda msg: logs.append(msg))
+            if market == "cn":
+                # CN: quant only — LLM already ran via analyze_all()
+                _run_layer2(code, market, lambda msg: logs.append(msg))
+            else:
+                # Non-CN (NZ, US, HK): full pipeline including LLM narrative
+                _run_analysis(code, market, lambda msg: logs.append(msg))
             refreshed += 1
         except Exception as e:
-            print(f"    ⚠️ {code} Layer 2 失败: {e}")
+            print(f"    ⚠️ {code} ({market}) failed: {e}")
 
-    print(f"  ✅ Layer 2 刷新完成：{refreshed}/{len(codes_to_refresh)} 只")
+    print(f"  ✅ Refresh done: {refreshed}/{len(codes_to_refresh)}")
 
 
 def send_wechat(title: str, content: str):

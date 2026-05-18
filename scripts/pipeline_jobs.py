@@ -48,33 +48,35 @@ def _run_with_timeout(fn, args, label: str, log, timeout: int = T_BASIC):
 def _data_age_minutes(code: str, step: str) -> float:
     now_utc = datetime.now(timezone.utc)
     today_cn = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    price_cutoff = (now_utc - timedelta(minutes=15)).isoformat()
     try:
         with db.get_conn() as c:
             if step == "price":
                 count = c.execute(
-                    "SELECT COUNT(*) FROM stock_prices WHERE code=? "
-                    "AND fetched_at > datetime('now', '-15 minutes')",
-                    (code,),
-                ).fetchone()[0]
+                    "SELECT COUNT(*) AS n FROM stock_prices WHERE code=:code AND fetched_at > :cutoff",
+                    {"code": code, "cutoff": price_cutoff},
+                ).fetchone()["n"]
                 return 0 if count > 0 else float("inf")
             if step == "news":
                 count = c.execute(
-                    "SELECT COUNT(*) FROM stock_news WHERE code=? AND fetched_date=?",
-                    (code, today_cn),
-                ).fetchone()[0]
+                    "SELECT COUNT(*) AS n FROM stock_news WHERE code=:code AND fetched_date=:today",
+                    {"code": code, "today": today_cn},
+                ).fetchone()["n"]
                 return 0 if count >= 3 else float("inf")
             if step == "fund_flow":
                 row = c.execute(
-                    "SELECT date FROM stock_fund_flow WHERE code=? ORDER BY date DESC LIMIT 1",
-                    (code,),
+                    "SELECT date FROM stock_fund_flow WHERE code=:code ORDER BY date DESC LIMIT 1",
+                    {"code": code},
                 ).fetchone()
-                return 0 if (row and row[0] == today_cn) else float("inf")
+                return 0 if (row and row["date"] == today_cn) else float("inf")
             if step in ("fundamentals", "advanced", "technicals", "signals"):
-                row = c.execute("SELECT updated_at FROM stock_fundamentals WHERE code=?", (code,)).fetchone()
-                if not row or not row[0]:
+                row = c.execute(
+                    "SELECT updated_at FROM stock_fundamentals WHERE code=:code", {"code": code}
+                ).fetchone()
+                if not row or not row["updated_at"]:
                     return float("inf")
                 try:
-                    dt = datetime.fromisoformat(row[0])
+                    dt = datetime.fromisoformat(row["updated_at"])
                     if dt.tzinfo is None:
                         dt = dt.replace(tzinfo=timezone.utc)
                     return (now_utc - dt).total_seconds() / 60
@@ -247,16 +249,22 @@ def run_letter_only(job_id: int, code: str, market: str, user_id: int = None):
         earnings_flags = _analyze_earnings_quality(_annual)
 
         entry_price, buy_date = None, None
+        user_locale = "zh"
         if user_id:
             try:
                 with db.get_conn() as c:
                     row = c.execute(
-                        "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
-                        (user_id, code),
+                        "SELECT u.locale, w.buy_price, w.buy_date "
+                        "FROM users u "
+                        "LEFT JOIN user_watchlist w ON w.user_id=u.id AND w.stock_code=:code "
+                        "WHERE u.id=:uid",
+                        {"code": code, "uid": user_id},
                     ).fetchone()
-                    if row and row["buy_price"]:
-                        entry_price = float(row["buy_price"])
-                        buy_date = row["buy_date"]
+                    if row:
+                        user_locale = row["locale"] or "zh"
+                        if row["buy_price"]:
+                            entry_price = float(row["buy_price"])
+                            buy_date = row["buy_date"]
             except Exception:
                 pass
 
@@ -278,6 +286,7 @@ def run_letter_only(job_id: int, code: str, market: str, user_id: int = None):
                 buy_date=buy_date,
                 data_warnings=[],
                 earnings_flags=earnings_flags,
+                locale=user_locale,
             )
             if result and result.get("letter_html"):
                 today = datetime.now(CN_TZ).strftime("%Y-%m-%d")

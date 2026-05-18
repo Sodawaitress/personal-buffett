@@ -273,8 +273,8 @@ def _run_fund_analysis(code, stock, price, log, user_id=None):
         try:
             with db.get_conn() as c:
                 rows = c.execute(
-                    "SELECT stock_code FROM user_watchlist WHERE user_id=? AND status!='sold'",
-                    (user_id,)
+                    "SELECT stock_code FROM user_watchlist WHERE user_id=:uid AND status!='sold'",
+                    {"uid": user_id},
                 ).fetchall()
                 existing_codes = [r["stock_code"] for r in rows if r["stock_code"] != code]
         except Exception:
@@ -316,7 +316,7 @@ def _run_fund_analysis(code, stock, price, log, user_id=None):
     )
 
 
-def _run_layer2(code, market, log, user_id=None):
+def _run_layer2(code, market, log, user_id=None, locale="zh"):
     from scripts.buffett_analyst import _analyze_news_signals
     from scripts.quantitative_rating import QuantitativeRater
 
@@ -355,8 +355,8 @@ def _run_layer2(code, market, log, user_id=None):
         try:
             with db.get_conn() as c:
                 row = c.execute(
-                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
-                    (user_id, code),
+                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=:uid AND stock_code=:code",
+                    {"uid": user_id, "code": code},
                 ).fetchone()
                 if row and row["buy_price"]:
                     entry_price = float(row["buy_price"])
@@ -403,6 +403,7 @@ def _run_layer2(code, market, log, user_id=None):
         pb_percentile=fundamentals.get("pb_percentile_5y"),
         price_52week_pct=_signals.get("price_position"),
         news_signals=news_for_rating,
+        locale=locale,
     )
     log(f"       量化评级: {quant_result['grade']} {quant_result['score']}/100 · {quant_result['conclusion']}")
 
@@ -452,14 +453,25 @@ def _run_layer2(code, market, log, user_id=None):
 
 
 def _run_analysis(code, market, log, user_id=None):
+    # Resolve locale once, used by both quantitative rater and LLM narrative
+    _user_locale = "zh"
+    if user_id:
+        try:
+            with db.get_conn() as _c:
+                _urow = _c.execute("SELECT locale FROM users WHERE id=:uid", {"uid": user_id}).fetchone()
+                if _urow:
+                    _user_locale = _urow["locale"] or "zh"
+        except Exception:
+            pass
+
     log("  [4/4] Layer 2 量化评级…")
     try:
-        quant_result, trading_params, ctx = _run_layer2(code, market, log, user_id)
+        quant_result, trading_params, ctx = _run_layer2(code, market, log, user_id, locale=_user_locale)
     except Exception as e:
         log(f"       ⚠️ Layer 2 失败: {e}")
         return
 
-    log("  [4/4] Layer 3 LLM叙事…")
+    log("  [4/4] Layer 3 LLM narrative…")
     try:
         from scripts.buffett_analyst import analyze_stock_v3
 
@@ -480,6 +492,8 @@ def _run_analysis(code, market, log, user_id=None):
             buy_date=ctx["buy_date"],
             data_warnings=ctx["data_warnings"],
             earnings_flags=ctx["earnings_flags"],
+            inst_signals=ctx["signals"].get("inst_us") if market != "cn" else None,
+            locale=_user_locale,
         )
         if result:
             today = datetime.now(CN_TZ).strftime("%Y-%m-%d")

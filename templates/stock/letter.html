@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} — {{ t.tab_brief }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="stock-page">
+{% include 'stock/_head.html' %}
+
+  <div class="stock-page-body">
+
+    {% if pending_job %}
+    <div class="analysis-pending-block" id="pending-block" data-job="{{ pending_job.id }}">
+      <div class="analysis-progress" id="progress-tab-{{ pending_job.id }}">
+        <div class="progress-track"><div class="progress-fill" id="pfill-tab-{{ pending_job.id }}"></div></div>
+        <span class="progress-label" id="plabel-tab-{{ pending_job.id }}">{{ t.lbl_analysing }}</span>
+      </div>
+    </div>
+
+    {% elif analysis %}
+
+    {# ── Verdict bar — 结论先行 ── #}
+    {% set grade_tier = analysis.grade[0] if analysis.grade else 'C' %}
+    <div class="verdict-bar verdict-{{ grade_tier }}">
+      <span class="verdict-grade-big">{{ analysis.grade or '—' }}</span>
+      <div class="verdict-body">
+        <div class="verdict-conclusion">{{ analysis.conclusion }}</div>
+        <div class="verdict-date">{{ analysis.analysis_date }}</div>
+      </div>
+      {% if stock.asset_type not in ('场外基金', 'ETF') %}
+      <div>
+        {% if analysis.letter_html %}
+        <button onclick="showLetter()" class="btn-outline-ink btn-sm" style="white-space:nowrap">{{ t.js_read_letter }}</button>
+        {% else %}
+        <a href="#" id="letter-btn-{{ stock.code }}" onclick="triggerLetterGeneration('{{ stock.code }}');return false" class="btn-outline-ink btn-sm" style="font-size:12px;text-decoration:none;display:inline-block">重新生成信件</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── AI 推理摘要 ── #}
+    <p class="brief-reasoning">{{ analysis.reasoning }}</p>
+
+    {# ── 维度 pills ── #}
+    {% if analysis.framework_used == 'fund_v1' %}
+    {% set dims = [
+      (t.dim_product_quality, analysis.moat),
+      (t.dim_target_quality,  analysis.management),
+      (t.dim_portfolio_fit,   analysis.valuation),
+      (t.dim_execution,       analysis.behavioral),
+    ] %}
+    {% else %}
+    {% set dims = [
+      (t.dim_moat,       analysis.moat),
+      (t.dim_mgmt,       analysis.management),
+      (t.dim_valuation,  analysis.valuation),
+      (t.dim_fund_flow,  analysis.fund_flow_summary),
+      (t.dim_behavioral, analysis.behavioral),
+      (t.dim_macro,      analysis.macro_sensitivity),
+    ] %}
+    {% endif %}
+    {% set has_dims = dims | selectattr(1) | list %}
+    {% if has_dims %}
+    <div class="dim-pills">
+      {% for label, val in has_dims %}
+      <div class="dim-pill">
+        <span class="dim-pill-label">{{ label }}</span>
+        <span class="dim-pill-val">{{ val }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if analysis.framework_used == 'fund_v1' and analysis.quant_score %}
+    <div class="fund-total-score" style="margin-top:12px">{{ t.lbl_total_score }} <strong>{{ analysis.quant_score }}/100</strong></div>
+    {% endif %}
+
+    {# ── 操作参数卡片 ── #}
+    {% set is_fund = analysis.framework_used == 'fund_v1' %}
+    {% set has_tech  = trading_params and trading_params.entry_1_label and not is_fund %}
+    {% set has_trade = analysis and analysis.trade_block %}
+    {% if has_tech or has_trade %}
+    <div class="trade-block" style="margin-top:20px">
+      <div class="trade-block-title">{{ t.lbl_trade_params }}
+        <span style="font-size:10px;font-weight:400;opacity:.7;margin-left:6px">
+          {{ t.lbl_trade_ma_basis if has_tech else t.lbl_trade_no_tech }}
+        </span>
+      </div>
+      <div class="trade-rows">
+        {% if has_tech %}
+        {% if trading_params.position_label %}
+        <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_position }}</span><span class="trade-val">{{ trading_params.position_label }}</span></div>
+        {% endif %}
+        {% if trading_params.reduce_label %}
+        <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_reduce }}</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
+        {% endif %}
+        <div class="trade-row">
+          <span class="trade-label">{{ t.lbl_trade_resistance1 if trading_params.entry_1_is_resistance else t.lbl_trade_entry1 }}</span>
+          <span class="trade-val">{{ trading_params.entry_1_label }}</span>
+        </div>
+        {% if trading_params.entry_2_label %}
+        <div class="trade-row">
+          <span class="trade-label">{{ t.lbl_trade_resistance2 if trading_params.entry_2_is_resistance else t.lbl_trade_entry2 }}</span>
+          <span class="trade-val">{{ trading_params.entry_2_label }}</span>
+        </div>
+        {% endif %}
+        {% if trading_params.stop_loss_label %}
+        <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_stop_loss }}</span><span class="trade-val">{{ trading_params.stop_loss_label }}</span></div>
+        {% endif %}
+        {% endif %}
+        {% if has_trade %}
+        <script>
+        (function(){
+          var data = {{ analysis.trade_block | tojson }};
+          if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e){} }
+          var rows = document.querySelector('.trade-block .trade-rows');
+          var llmRows = '';
+          if (data['减仓区间'] && !rows.querySelector('[data-key="reduce"]')) {
+            llmRows += '<div class="trade-row"><span class="trade-label" data-key="reduce">' + window._t.reduce_zone + '</span><span class="trade-val">' + data['减仓区间'] + '</span></div>';
+          }
+          if (data['买入区间1'] && !rows.querySelector('[data-key="entry1"]')) {
+            llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry1">' + window._t.buy_zone_1 + '</span><span class="trade-val">' + data['买入区间1'] + '</span></div>';
+          }
+          if (data['买入区间2'] && !rows.querySelector('[data-key="entry2"]')) {
+            llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry2">' + window._t.buy_zone_2 + '</span><span class="trade-val">' + data['买入区间2'] + '</span></div>';
+          }
+          if (data['仓位策略']) llmRows += '<div class="trade-row"><span class="trade-label">' + window._t.position_size + '</span><span class="trade-val">' + data['仓位策略'] + '</span></div>';
+          if (data['关键监控']) llmRows += '<div class="trade-row"><span class="trade-label">' + window._t.key_watch + '</span><span class="trade-val">' + data['关键监控'] + '</span></div>';
+          if (llmRows) document.currentScript.insertAdjacentHTML('beforebegin', llmRows);
+        })();
+        </script>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    {# ── No analysis yet ── #}
+    <div class="empty-state" style="padding:60px 0;text-align:center">
+      <p style="color:var(--ink-muted);margin-bottom:16px">{{ t.lbl_no_analysis_yet }}</p>
+      <button onclick="triggerAnalysis('{{ stock.code }}');" class="btn-ink">{{ t.btn_buffett_check }}</button>
+    </div>
+    {% endif %}
+
+  </div>{# /.stock-page-body #}
+
+  {% if in_watchlist %}
+  <div class="stock-remove-zone">
+    <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
+      <button type="submit" class="btn-remove-stock"
+              onclick="return confirm('{{ t.btn_remove_stock }} {{ stock.name }}?')">{{ t.btn_remove_stock }}</button>
+    </form>
+  </div>
+  {% endif %}
+
+</div>{# /.stock-page #}
+
+{# 巴菲特信 Modal #}
+<div id="letter-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content letter-modal-content">
+      <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
+        <h6 class="modal-title" style="font-family:Georgia,serif">{{ t.letter_modal_for }} {{ stock.name }}</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body letter-body" id="letter-modal-body"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window._t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  gen_letter:       {{ t.js_gen_letter | tojson }},
+  letter_ready:     {{ t.js_letter_ready | tojson }},
+  generating:       {{ t.js_generating | tojson }},
+  read_letter:      {{ t.js_read_letter | tojson }},
+  letter_ready_lbl: {{ t.js_letter_ready_label | tojson }},
+  reduce_zone:      {{ t.js_reduce_zone | tojson }},
+  buy_zone_1:       {{ t.js_buy_zone_1 | tojson }},
+  buy_zone_2:       {{ t.js_buy_zone_2 | tojson }},
+  position_size:    {{ t.js_position_size | tojson }},
+  key_watch:        {{ t.js_key_watch | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+  full_update_lbl:  {{ t.btn_full_update | tojson }},
+  is_admin:         {{ (session.role == 'admin') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
+<script>
+function showLetter() {
+  const body = document.getElementById('letter-modal-body');
+  {% if analysis and analysis.letter_html %}
+  body.innerHTML = `
+    <div class="letter-paper">
+      <div class="letter-location">{{ t.letter_location }} · {{ analysis.analysis_date }}</div>
+      <div class="letter-salutation">{{ t.letter_salutation }}</div>
+      <div class="letter-body-text">{{ analysis.letter_html | replace('\n','<br>') | safe }}</div>
+      <div class="letter-sig">{{ t.letter_sig }}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
+      <div class="letter-grade">
+        <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade or '—' }}</span>
+        <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion }}</span>
+      </div>
+      <div class="letter-footer">{{ t.letter_data_as_of }} {{ analysis.analysis_date }} · {{ t.letter_disclaimer }}</div>
+    </div>`;
+  {% else %}
+  body.textContent = '{{ t.letter_none }}';
+  {% endif %}
+  new bootstrap.Modal(document.getElementById('letter-modal')).show();
+}
+</script>
+{% endblock %}

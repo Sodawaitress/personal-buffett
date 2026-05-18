@@ -141,47 +141,55 @@
 
 ---
 
-### US-07 · 投资组合综合分析（Portfolio Analysis）
+### US-07 · 「你在赌什么」——组合叙事页
 
-**As a** 用户  
-**I want to** 把我持仓的股票作为一个整体来分析，看组合层面的结论  
-**So that** 我能判断整体配置是否合理、风险是否集中、哪里有机会
+**As a** 持有多只股票的用户
+**I want to** 一眼看清我手里这几张牌合起来是什么故事
+**So that** 我知道自己是在分散押注还是在一个方向上全押，心里有底
 
-**页面：** `/portfolio`
+> **设计原则：** 不是「投资组合优化」，是「帮用户看清自己在赌什么」。
+> 不建议操作，只陈述观察。语气：巴菲特写给老朋友的信，不是基金经理的季报。
 
-**两种入口：**
-1. 首页顶部「组合视图」按钮（全部持仓一起分析）
-2. 勾选若干张持仓卡片后点「一起分析」（只分析选中的，见 US-12）
+**页面：** `/portfolio`  
+**入口：** 首页持仓区「看这个组合」按钮（持仓 ≥ 2 只时显示）
 
-**内容分为两层：**
+**内容：**
 
-**A. 横向对比表（单只 → 组合视图）**
+**A. 宏观押注标签（无 LLM，规则引擎）**
+
+从每只持仓最新分析的 `company_type` + 行业关键词自动归组：
 ```
-股票        评级   结论         最新价    涨跌   资金流向
-NVDA        A     买入         $875     +2.1%  ↑主力流入
-三一重工    B+    持有观察     ¥15.2    -0.3%  ↓轻微流出
-FPH.NZ      B     合理估值     $22.1    +0.8%  —
+你现在押注的方向：
+  中国制造复苏    ████  三一重工  海螺水泥
+  AI 基础设施     ██    NVDA
+  NZ 本地消费     █     FPH.NZ
 ```
-- 按评级降序排列
-- 点击某行跳转单股详情页
+- 同一方向 ≥ 2 只时，显示「集中提示」（不是警告，是陈述）
+- 无评判文案，只说「你在这个方向上押了 X 只」
 
-**B. 组合级别 LLM 分析（巴菲特怎么看这个组合）**
-```
-[组合分析信]
-你持有的这几只股票中，NVDA 占据 AI 基础设施赛道…
-三一重工和 NVDA 之间的宏观关联性较低，有一定分散效果…
-整体看：进攻性偏强（A股 + 美科技），建议留意…
+**B. 联动风险提示（无 LLM，规则引擎）**
 
-结论：组合配置合理，但集中于科技/制造两极，缺乏防御性资产。
+基于市场 + 行业分组：同市场同行业的两只 → 「这两只很可能一起动」
 ```
-- 仅在用户手动触发时生成（按钮「让巴菲特看这个组合」）
-- LLM 输入：各股最新分析结果 + 持仓比例（如有）
-- 不自动运行，避免无谓消耗 API
+注意：三一重工 + 海螺水泥 都是 A 股基建，宏观消息会同向影响
+```
+- 只在有明确重叠时显示，没有重叠就不显示这一区块
+
+**C. 组合叙事信（LLM，手动触发）**
+
+按钮「让巴菲特看这个组合」→ 生成一封 150-200 字的信：
+- 核心问题：这几张牌互相是什么关系？你是在分散还是集中？
+- LLM 输入：各股最新 `reasoning` + `company_type` + `grade`
+- 语气：不优化配置，只帮用户「看清自己在做什么」
+- 生成后存入 `portfolio_analysis` 表，不重复触发
 
 **Acceptance Criteria:**
-- 对比表无需 LLM，实时从 DB 读取
-- 组合分析信需手动触发，生成后存入 DB（portfolio_analysis 表）
-- 支持「选中几只」进入此页面（与 US-12 联动）
+- [ ] A/B 两区块纯规则，无 LLM，页面加载即显示
+- [ ] 宏观押注标签：`company_type` 归组，相同方向 ≥ 2 只标「集中」
+- [ ] 联动风险：同市场同 `company_type` 的持仓对，显示联动提示
+- [ ] C 区块手动触发，生成后缓存，不自动重跑
+- [ ] 持仓 < 2 只时整页显示「还没有足够的牌来讲故事」
+- [ ] 不出现「建议」「应该」「优化」等指导性措辞
 
 ---
 
@@ -1401,32 +1409,54 @@ PE 12.3x · 市值1980亿 · 主力+0.5亿
 
 ---
 
-### US-39 · 组合表现 vs 沪深300（基准比较）
+### US-39 · 「你的眼光在变准吗」——判断力成长记录
 
-**As a** 用户  
-**I want to** 在算账页看到我的整体持仓表现跟沪深300指数的对比  
-**So that** 我能知道自己选股是否真的跑赢大盘，还是还不如买 ETF
+**As a** 用过这个工具一段时间的用户
+**I want to** 知道我的选股判断是不是在进步
+**So that** 我能建立对自己判断力的信心，而不是每次都凭感觉
 
-**实现方案：**
-- 沪深300当日收盘价：AKShare `stock_zh_index_daily`（代码 `sh000300`）
-- 对比维度：
-  - 用户持仓加权平均收益率 vs 同期沪深300涨跌幅（按持有起始日计算）
-  - 胜率：有买入价的股票中，跑赢同期沪深300的占比
-- 算法：TWRR（时间加权收益率）——消除资金进出时点影响
+> **设计原则：** 不和大盘比，和自己过去的判断比。
+> 框架是「成功记录」，不是「错误审判」。
+> 跌了的票叫「学习时刻」，不叫失败。
 
-**展示（算账页新增）：**
+**页面：** 算账页（`/watchlist/performance`）底部新增区块
+
+**计算范围：**
+- 只统计有明确看多判断的记录：`grade IN ('A', 'B+')` 且 `conclusion IN ('买入', '持有')`
+- 且有 `buy_price` + `buy_date`（能算实际回报的）
+- 持有中的按当前价计算浮动，已卖出的按卖出价计算
+
+**展示：**
 ```
-你的判断力 vs 大盘
-持仓加权收益   +8.3%
-同期沪深300    +5.1%
-超额收益       +3.2% ✓ 跑赢大盘
+你的眼光在变准吗？
+
+近 90 天打了"买入"的  8 只
+  ✓ 之后涨了          5 只  （62.5%）
+  ◎ 学习时刻          3 只
+
+和更早的判断比：
+  90天前准确率  44%  →  近期 62%  ↑ 在进步
+
+你判断最准的行业：NZ 本地消费（3/3）
 ```
+
+**细节规则：**
+- 「涨了」= buy_date 后持有至今（或卖出日）涨幅 > +3%
+- 「学习时刻」= 跌幅 > -3%（不说「错误」「亏损」）
+- ±3% 以内 = 「还在观察中」，不计入准确率
+- 「更早的判断」= 90 天以前的记录，样本 < 3 只则不显示趋势对比
+- 行业准确率：按 `company_type` 分组，≥ 3 只才展示
+
+**空态（数据不足）：**
+「还没有足够的记录——等你打了几个带买入价的判断，这里会开始追踪你的眼光。」
 
 **Acceptance Criteria:**
-- 算账页底部新增"vs 大盘"模块
-- 至少有 1 只有买入日期的持仓才显示（否则显示"数据不足"）
-- 沪深300基准取每只持仓的买入日到今天的区间收益（不是单一时间点）
-- 跑输大盘时不隐藏，直接显示负超额收益
+- [ ] 算账页底部新增此区块，样本 < 3 只时显示空态文案
+- [ ] 准确率计算：grade A/B+ + conclusion 买入/持有 + 有 buy_price + buy_date
+- [ ] 涨跌阈值 ±3%，中间地带不计入准确率
+- [ ] 趋势对比：近90天 vs 90天前，样本各自 ≥ 3 只才显示
+- [ ] 行业准确率：≥ 3 只同类型才显示，用 company_type 分组
+- [ ] 全程无「跑赢大盘」「跑输」「亏损」「失败」等措辞
 
 ---
 
@@ -3274,3 +3304,566 @@ CREATE TABLE signal_predictions (
 - [ ] 预测 pill 按钮：无边框圆润 pill，提交后 scale 动效
 - [ ] 整个新增区域在手机端（< 480px）正常显示，时间线点不溢出
 
+
+---
+
+### US-79 · 美股机构信号数据层（类型分类 + Pipeline）
+
+**As a** 持有美股/港股用户
+**I want to** 看到机构对这只股票的类型化持仓信号（谁在持、方向如何）
+**So that** 我能区分「指数基金被动买入」和「主动基金真正看好」这两种完全不同的信号
+
+**核心设计原则：**
+不同类型机构的行动意义截然不同——
+- 被动指数基金（Vanguard/BlackRock/State Street）买入 = 跟踪指数，**无信号意义**
+- 主动基金（Fidelity/T.Rowe/Wellington）增仓 = 真实的 alpha 判断，**有信号意义**
+- 投行账户（JPMorgan/Morgan Stanley）= 大部分是客户资产代管，**信号弱**
+- 养老/主权基金（CalPERS/TIAA）= 长期稳定持有，换手率极低，**结构背景参考**
+- 对冲基金（Citadel/Renaissance）= 高换手，但减仓是强空头信号
+
+**机构类型分类引擎（字符串匹配）：**
+```python
+PASSIVE_INDEX  = ["Vanguard", "BlackRock", "State Street", "Geode", "Schwab Index",
+                  "iShares", "SPDR", "Dimensional Fund"]
+INVESTMENT_BANK = ["JPMorgan", "Morgan Stanley", "Goldman Sachs", "Wells Fargo",
+                   "Citibank", "Bank of America", "Merrill Lynch", "UBS", "Barclays"]
+ACTIVE_MANAGER = ["Fidelity", "T. Rowe Price", "Wellington", "Capital Group",
+                  "Dodge & Cox", "American Funds", "Putnam", "MFS Investment",
+                  "Invesco", "Franklin Templeton"]
+PENSION_SOVEREIGN = ["CalPERS", "TIAA", "Teachers", "Retirement", "Pension",
+                     "Sovereign", "Endowment", "Foundation", "Insurance"]
+HEDGE_FUND     = ["Renaissance", "Citadel", "Point72", "Two Sigma", "AQR",
+                  "Viking", "Pershing Square", "Third Point", "Elliott",
+                  "Greenlight", "Baupost", "Bridgewater", "Millennium"]
+```
+
+**数据来源（yfinance，全部免费）：**
+```python
+ticker.institutional_holders   # DataFrame: Holder / pctHeld / pctChange / Shares / Value
+ticker.major_holders           # DataFrame: insidersPercentHeld / institutionsPercentHeld / institutionsCount
+ticker.info["shortPercentOfFloat"]    # 做空比例（流通股）
+ticker.info["sharesShort"]            # 当前空头股数
+ticker.info["sharesShortPriorMonth"]  # 上月空头股数（趋势计算）
+ticker.info["shortRatio"]             # 做空回补天数
+ticker.upgrades_downgrades            # DataFrame: Firm / Grade / Action（Upgraded/Downgraded）
+```
+
+**关键计算字段：**
+```python
+active_net_change   # 主动基金 pctChange 加权均值（过滤掉被动基金）
+short_trend_pct     # (sharesShort - sharesShortPriorMonth) / sharesShortPriorMonth
+top_analyst_net     # Goldman/MS/JPMorgan 近30天升级次数 - 降级次数
+inst_pct_total      # 机构总持仓%
+insider_pct         # 内部人持仓%
+```
+
+**Acceptance Criteria:**
+- [ ] `pipeline_fetch.py` 新增 `_fetch_us_institutional(code, market, log)` 函数，market in (us, hk, au, nz) 时调用（港股和 AU/NZ 数据稀疏时优雅降级）
+- [ ] 机构类型分类函数 `classify_institution_type(name: str) -> str` 按上述字典匹配，无匹配返回 "other"
+- [ ] `active_net_change` 计算：仅对 `ACTIVE_MANAGER` 类型的 pctChange 求加权平均，被动基金不参与
+- [ ] `short_trend_pct` 计算：两月空头数量差比例，正值=做空增加，负值=空头撤退
+- [ ] `top_analyst_net` 计算：过滤 Firm 含 Goldman/Morgan Stanley/JPMorgan/BofA，近30天升级-降级净值
+- [ ] 数据存入 `signals_json` → `inst_us` 字段，结构：
+  ```json
+  {
+    "inst_pct": 65.7,
+    "insider_pct": 1.6,
+    "inst_count": 7612,
+    "active_net_change": 0.8,
+    "short_float_pct": 11.2,
+    "short_trend_pct": -18.5,
+    "short_ratio": 3.2,
+    "top_analyst_net": 2,
+    "top_holders": [
+      {"name": "Vanguard", "type": "passive", "pct_held": 6.49, "pct_change": 0.1},
+      {"name": "Fidelity", "type": "active", "pct_held": 2.84, "pct_change": 1.2},
+      {"name": "Elliott", "type": "hedge", "pct_held": 0.8, "pct_change": 0.8}
+    ]
+  }
+  ```
+- [ ] 缓存 48h（机构季报数据变动慢）
+- [ ] 巴菲特信 prompt 注入：「主动基金净增持 X%；做空比例 Y% 并（上升/下降 Z%）；顶级投行近30天净 N 次升级」
+- [ ] 港股/AU/NZ 数据不足时降级展示「数据有限，仅供参考」，不报错
+
+---
+
+### US-80 · 新闻情绪可见度提升
+
+**As a** 用户
+**I want to** 在选股列表和股票卡片上直接看到新闻情绪倾向
+**So that** 不需要点进详情页就能感知市场情绪变化
+
+**现状问题：** sentiment 数据已经计算并存库，但只在 stock.html 详情页的信号 Tab 里能看到，首页/选股列表完全看不到。
+
+**改动点：**
+
+1. **选股列表卡片（watchlist.html）：** 在股票名称下方加一个小色条/emoji标签
+   - 📈 多条正面新闻（avg_sentiment > 0.3）
+   - 📉 多条负面新闻（avg_sentiment < -0.3）
+   - ➖ 中性或无新闻
+
+2. **首页卡片（index.html）：** 同上，wax seal 旁边加情绪标签
+
+3. **信号面板（stock.html）：** 已有，保持不变
+
+**Acceptance Criteria:**
+- [ ] watchlist.html 卡片：情绪标签在股票名旁边，不影响现有布局
+- [ ] 情绪数据从 `stock_news` 表聚合（最近7天的 sentiment 均值）
+- [ ] 无新闻或新闻不足3条时不显示标签
+- [ ] 不增加任何额外 DB 查询（复用已有 snapshot 数据）
+
+---
+
+### US-81 · Demo 股票策展（「有钱又年轻」组合）
+
+**背景：** 老师和公司看 demo 时，默认 seed 股票应该让人有共鸣、有故事、价值观友好。
+
+**选股原则：**
+- 认知度高（名字听过）
+- 有鲜明的 Buffett letter 张力（好公司不等于好股价）
+- 价值观友好：女性创始 / queer-friendly / 非争议性
+- 市场多样：US 为主 + NZ 本地
+
+**确定的 Demo 组合（7 只）：**
+
+| 代码 | 公司 | 市场 | 故事一句话 |
+|------|------|------|-----------|
+| AAPL | Apple | US | Buffett 亲持，生态护城河教科书 |
+| NVDA | Nvidia | US | AI 基础设施霸主，估值是信仰题 |
+| DUOL | Duolingo | US | 猫头鹰的参与度能变成定价权吗？|
+| LULU | Lululemon | US | $150 瑜伽裤背后是真实的品牌护城河 |
+| SPOT | Spotify | US | 赢了用户，能赢钱吗？|
+| XRO.NZ | Xero | NZ | 从惠灵顿出发的全球 SaaS 护城河 |
+| ETSY | Etsy | US | 创作者经济的护城河 vs Temu 的价格战 |
+
+**实现：** 更新 `deploy/seed_demo.py` 的 STOCKS / PRICES / FUNDAMENTALS / ANALYSES，每只预写完整 Buffett 信件。
+
+**Acceptance Criteria:**
+- [ ] seed_demo.py 包含 7 只股票的完整数据
+- [ ] 每只股票有预写 letter_html（300-400 字，Buffett 口吻，英文）
+- [ ] grade / conclusion / moat / management / valuation / quant_score 全部填写
+- [ ] 新用户访问 /demo 立即看到有内容的选股页面
+
+
+---
+
+## 来自 Piwakawaka 对比分析的改进项（US-82 ~ US-87）
+
+> 参考项目：Lincoln University COMP639 Studio Projects 1 & 2（Piwakawaka 捕猎站管理系统）
+> 分析日期：2026-05-15
+> 适用范围：personal-buffett 为主，部分适用 xinglu
+
+---
+
+### US-82 · 软删除（Soft Delete）— watchlist + xinglu
+
+**As a** 用户
+**I want to** 误删自选股后能恢复，或至少历史分析记录不丢失
+**So that** 操作失误不会造成不可逆的数据损失
+
+**背景：** Piwakawaka 所有 trap/line 删除都是打 `is_retired` 标记而非真删。personal-buffett 的 `user_watchlist` 现在是真删——用户手滑移除一只股票，该股票所有历史分析上下文都丢失关联。
+
+**改动：**
+- `user_watchlist` 加 `removed_at TIMESTAMP` 字段（NULL = 正常，有值 = 已移除）
+- 所有查询加 `WHERE removed_at IS NULL`
+- 「移除」操作改为 `UPDATE ... SET removed_at = NOW()`
+- `db.remove_user_stock()` 函数改为软删除
+- xinglu 同理适用于 journey 相关表
+
+**Acceptance Criteria:**
+- [ ] `_migrate()` 加 `ALTER TABLE user_watchlist ADD COLUMN removed_at TIMESTAMP`
+- [ ] `list_watchlist_rows()` 加 `AND removed_at IS NULL` 过滤
+- [ ] `remove_user_stock()` 改为 UPDATE 而非 DELETE
+- [ ] 原有功能不受影响（移除后股票从列表消失，行为一致）
+- [ ] 历史 `analysis_results` 通过 `code` 字段仍可查到
+
+---
+
+### US-83 · Demo Story Count-up 动画
+
+**As a** 访问 /demo/story 的潜在用户
+**I want to** 看到数字（市值、P/E、护城河分数）从 0 滚动增长到真实值
+**So that** 数据展示有视觉冲击力，不是静态数字
+
+**背景：** Piwakawaka dashboard 用 `setInterval` 实现 count-up 动画，视觉效果好，成本极低（纯 JS，20 行）。demo/story 是对外展示页，适合加这个效果。
+
+**改动：**
+- `demo_story.html` 给所有 `.metric-val` 元素加 `data-target` 属性存真实值
+- 页面加载后 JS 把所有 metric-val 从 0 滚动到 target
+- 数字格式保留原始单位（$3.25T 保持 T 后缀，32/35 保持 /35）
+- 每个 slide 进入视口时才触发 count-up（结合现有 IntersectionObserver）
+
+**Acceptance Criteria:**
+- [ ] 每只股票 slide 的三个数字（市值 / P/E / 护城河）从 0 动画增长到真实值
+- [ ] 动画在 slide 进入视口时触发，不是页面加载时
+- [ ] 有单位后缀的数字（T/B/×）在动画结束后保持后缀
+- [ ] 动画时长约 800ms，easing in-out
+
+---
+
+### US-84 · htmx 替换 watchlist JS fetch
+
+**As a** 开发者
+**I want to** 用 htmx 替换 watchlist.html 里的手写 fetch + DOM 操作
+**So that** 代码量减少一半，行为更可预测，后端测试更容易
+
+**背景：** Piwakawaka Project 2 引入 htmx 做局部刷新。personal-buffett watchlist.html 里有大量手写 `fetch` + 手动 DOM 更新（status 切换、分析触发、移除操作），用 htmx 可以大幅简化。
+
+**改动目标（选择性替换，不是全量）：**
+- 状态切换（watching / holding / sold）→ `hx-post` + `hx-swap="none"`
+- 移除操作 → `hx-delete` + `hx-target` 移除卡片
+- 分析触发 → 保持现有 JS（有 polling 逻辑，htmx 不适合）
+
+**Acceptance Criteria:**
+- [ ] htmx CDN 加入 base.html（或 watchlist.html）
+- [ ] status 切换按钮改用 `hx-post`，移除对应 JS switchStatus()
+- [ ] 移除按钮改用 `hx-delete` + `hx-confirm`
+- [ ] 行为与现有完全一致，无视觉差异
+- [ ] watchlist.html JS 代码量净减少 ≥ 30%
+
+---
+
+### US-85 · Flask `g` 请求作用域 DB 连接
+
+**As a** 运维/开发者
+**I want to** 每个 HTTP 请求只开一个数据库连接，请求结束自动关闭
+**So that** 高并发时不会因重复开连接造成资源浪费
+
+**背景：** Piwakawaka 用 Flask `g` 对象缓存 request-scoped 连接：
+```python
+def get_db():
+    if 'db' not in g:
+        g.db = connect(...)
+    return g.db
+
+@app.teardown_appcontext
+def close_db(e=None):
+    db = g.pop('db', None)
+    if db: db.close()
+```
+personal-buffett 和 xinglu 目前每次 `get_conn()` 都打开新连接（SQLite with_statement，问题不大，但不规范）。
+
+**改动：**
+- `radar_app/data/core.py` 的 `get_conn()` 改为 Flask `g` 模式
+- `teardown_appcontext` 注册自动关闭
+- xinglu `db.py` 同样改造
+
+**Acceptance Criteria:**
+- [ ] 同一请求内多次调用 `get_conn()` 返回同一个连接对象
+- [ ] 请求结束后连接自动关闭（`teardown_appcontext`）
+- [ ] 现有所有路由行为不变
+- [ ] 适用 personal-buffett 和 xinglu 两个 app
+
+---
+
+### US-86 · 服务端 `WHERE 1=1` 动态筛选（信号扫描 API）
+
+**As a** 用户
+**I want to** 按市场/评级/护城河分数筛选自选股
+**So that** 持仓变多后能快速找到「最值得看」的股票
+
+**背景：** Piwakawaka 的 catches 过滤页用 `WHERE 1=1` 动态构建 SQL，支持多条件组合筛选。personal-buffett watchlist 目前只有前端 JS 排序，没有服务端过滤。当用户有 30+ 股票时，服务端过滤才有价值。
+
+**改动：**
+- `/api/watchlist/filter` GET 端点，接受 `market=`, `grade=`, `min_moat=` 参数
+- `WHERE 1=1` + 条件拼接构建查询
+- watchlist.html 搜索框旁加 filter chips（市场 / 评级）
+- 触发服务端过滤而非纯前端 JS
+
+**Acceptance Criteria:**
+- [ ] `/api/watchlist/filter?grade=A&market=cn` 返回正确子集
+- [ ] watchlist.html 前端 filter UI（市场 chip + 评级 chip）
+- [ ] 与现有前端排序兼容（先服务端过滤，再前端排序）
+- [ ] 不影响搜索框现有行为
+
+---
+
+### US-87 · Blueprint 路由重构（deferred）
+
+**As a** 开发者
+**I want to** 用 Flask Blueprint 替换现有 `register_*_routes()` 模式
+**So that** 每个功能模块有独立的 url_prefix、template_folder，测试更容易
+
+**背景：** Piwakawaka 用标准 Blueprint 组织路由（auth, catches, lines, admin, reports 各一个 blueprint）。personal-buffett 用自定义 `register_*_routes(app)` 函数，功能等价但不是 Flask 标准做法。
+
+**状态：** Deferred — 功能不受影响，暂不实现。等功能稳定后做一次性迁移。
+
+**改动范围（记录供未来参考）：**
+- `radar_app/auth/routes.py` → `auth_bp = Blueprint('auth', __name__)`
+- `radar_app/watchlist/routes.py` → `watchlist_bp`
+- `radar_app/stocks/routes.py` → `stocks_bp`
+- `radar_app/routes.py` 改为 `app.register_blueprint(auth_bp)` 等
+- 现有 `url_for('login')` 等需要更新为 `url_for('auth.login')`
+
+**Acceptance Criteria:** N/A（deferred）
+
+---
+
+## 信号体系升级（US-88 ~ US-91）
+
+> 设计背景：现有信号 tab 把所有信号平铺，没有层次，用户必须自己归纳结论。  
+> 问题的根本是信息呈现顺序与人脑决策顺序相反——数据在上，结论在下。  
+> 这一组 US 从架构到数据全部重新设计，A 股和美股用同一套框架，只是数据源不同。
+
+---
+
+### US-88 · 信号页面架构重设计（结论先行 + 三列分类 + 独立性检验）
+
+**As a** 投资者
+**I want to** 打开信号 tab 第一眼看到综合结论，而不是一堆平铺的数据列表
+**So that** 我的决策流程更自然：先有锚点，再验证细节，而不是先读完所有数据再自己归纳
+
+**核心设计原则：**
+
+人脑投资决策的自然顺序是：
+1. 「结论是什么？」— 先给一个锚点，再去质疑它
+2. 「谁在行动？」— 比我懂的人在做什么（内部人视角）
+3. 「市场在怎么想？」— 大众/机构情绪状态（市场情绪）
+4. 「背景是什么？」— 理解当前信号的结构性背景
+
+现有页面的顺序是反的：先数据，后结论，且所有信号权重平等展示。
+
+**新信息架构：**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [综合研判]                                                  │
+│  共振方向：看多  ████████░░  4/5 独立信号同向              │
+│  最强组合：CEO 自购 × 空头撤退 × 维权进场（三独立来源）    │
+│  主要分歧：主动基金本季净减持（可能是赎回压力，非判断）     │
+└─────────────────────────────────────────────────────────────┘
+
+┌──────────────────┬──────────────────┬──────────────────┐
+│  内部人视角      │  市场情绪        │  结构背景        │
+│  （最可信）      │  （中等可信）    │  （背景参考）    │
+├──────────────────┼──────────────────┼──────────────────┤
+│ 👔 高管自购 ▲   │ 📉 做空撤退 ▲   │ 🏛 机构持仓 67% │
+│ 🎯 维权进场 ▲   │ 📊 投行升级 ▲   │ 主动/被动 23/44 │
+│ 🦁 大鳄动向 →   │ 🌊 外资流向 ▲   │ 🔒 解禁压力 低  │
+└──────────────────┴──────────────────┴──────────────────┘
+
+[近期事件时间轴]          [独立性检验]
+CEO 买入 2025-05-10       CEO 买入 × 做空撤退 = 独立 ✅
+Elliott 13D 2025-05-08    同一消息来源多次不叠加 ⚠️
+```
+
+**三列的逻辑：**
+- **内部人视角**：高管/维权投资者/知名基金——这些人有最多信息，且用真金白银表态
+- **市场情绪**：做空比例/投行评级/外资方向——反映市场共识与博弈状态
+- **结构背景**：机构持仓率/主动vs被动比例/解禁压力——理解信号的背景，不是直接决策依据
+
+**信号独立性逻辑：**
+独立信号 = 来自不同决策主体、不同动机的行动。两个独立信号同向 > 五个相关信号同向。
+```
+独立组合示例：
+  CEO 买入 × 做空比例下降   → 完全独立（不同人，不同动机）✅
+  CEO 买入 × CEO 媒体乐观   → 不独立（同一信息源）⚠️
+  维权进场 × 主动基金增仓   → 独立（动机不同：逼管理层 vs 押增长）✅
+  多家投行同时升级          → 弱独立（可能存在内部信息流动）⚠️
+```
+
+**Acceptance Criteria:**
+- [ ] 信号 tab 顶部显示「综合研判」卡片（≤3 行高）：共振方向色块 + 「N/M 独立信号看多/看空」+ 最强共振短语（≤20字）+ 主要分歧（若有，橙色字体）
+- [ ] 共振方向色块：看多绿色 / 看空红色 / 分歧黄色
+- [ ] 综合研判内容由后端 `compute_resonance()` 函数生成（不硬编码），A 股和美股共用接口
+- [ ] 三列布局（桌面端）：内部人视角 / 市场情绪 / 结构背景，每列顶部有小字标注信号可信度
+- [ ] 每个信号条目显示：方向箭头（▲↑ 看多 / ▼↓ 看空 / → 中性）+ 一句人话描述 + 数据来源标注
+- [ ] 分歧信号（一列看多另一列看空）在综合研判卡片中单独橙色高亮，附「可能解释」（一句话）
+- [ ] 「近期事件时间轴」：仅显示事件型信号（CEO 买入、13D 申报、重大评级变化），最新在上，最多7条
+- [ ] 「独立性检验」：仅在存在 ≥2 个同向信号时显示，标明哪些信号组合是真正独立的
+- [ ] 结构型信号（机构持仓%、做空比例区间）不进入时间轴，以数字仪表盘形式展示
+- [ ] A 股和美股都使用此架构，信号来源不同，呈现框架完全相同
+- [ ] 移动端（<768px）：三列改为竖向堆叠，综合研判卡片始终固定在顶部
+- [ ] 数据缺失时每个格子显示「暂无数据」占位，不影响其他列布局
+
+---
+
+### US-89 · 美股 C 级高管 Cluster 买入信号（Form 4 精准过滤）
+
+**As a** 持有美股的用户
+**I want to** 看到 CEO/CFO 等核心管理层用个人资金公开市场买入自家股票的记录
+**So that** 我能识别「内部最知情的人正在用真金白银表态」这个最高置信度信号
+
+**为什么这个信号最可靠：**
+高管使用个人税后收入、公开市场购买、承受法律申报义务——这是最难造假的看多表态。
+学术研究长期确认：CEO cluster 买入后 12 个月，跑赢市场平均 +8～+15%。
+关键是「Cluster」——多名高管同一时期都在买，说明不只是个人判断，而是管理层集体信心。
+
+**必须过滤的噪音：**
+```
+❌ 股票期权行权（option exercise）— 不是主动买入，是履行合同权利
+❌ 计划性卖出（10b5-1 plan）— 预先设定的自动卖出，不反映当前判断
+❌ 金额 < $100K — 太小，可能只是走形式
+❌ 一般员工 — 只看 CEO / CFO / COO / President / Chairman / Board Director
+✅ 公开市场买入（Open Market Purchase）
+✅ 职位：CEO / CFO / COO / President / Chairman / Director
+✅ 金额 ≥ $100K（单笔）
+```
+
+**Cluster 定义：**
+30 天内 ≥ 2 名符合条件的 C 级高管各自独立买入，且合计金额 ≥ $500K → 标记为 Cluster Buy
+
+**数据来源：** `yfinance ticker.insider_transactions`（基于 SEC Form 4，T+2 强制申报，免费）
+
+**Acceptance Criteria:**
+- [ ] `_fetch_us_insiders(code, market, log)` 函数在 `pipeline_fetch.py`，market=us 时调用
+- [ ] 过滤逻辑：role 含 CEO/CFO/COO/President/Chairman/Director；transaction=="Buy"；text 不含 "option"/"exercise"/"plan"；value ≥ $100K
+- [ ] Cluster 检测：近 30 天内过滤后记录 ≥ 2 条，合计 value ≥ $500K → `cluster_buy: true`
+- [ ] 数据存入 `signals_json` → `insider_us` 字段：
+  ```json
+  {
+    "cluster_buy": true,
+    "buy_count_30d": 3,
+    "total_value_30d": 2800000,
+    "sell_count_30d": 1,
+    "transactions": [
+      {"role": "CEO", "name": "Tim Cook", "value": 2100000, "date": "2025-05-10", "type": "buy"},
+      {"role": "CFO", "name": "Luca Maestri", "value": 450000, "date": "2025-05-09", "type": "buy"}
+    ]
+  }
+  ```
+- [ ] 信号级别：`cluster_buy=true` → Tier 1，在综合研判卡片中直接显示（不需要展开）
+- [ ] stock.html 内部人视角列：显示最近 3 笔有效买入（角色/金额/日期），Cluster 时整行加绿色左边条 + 「多人同步买入」标签
+- [ ] 高管卖出记录同样显示，但默认折叠（卖出信号弱，避免误导）
+- [ ] 卖出说明小字：「高管卖出常因税务/多元化，不代表看跌；买入才是强信号」
+- [ ] Cached 24h（Form 4 最慢 T+2 更新，24h 间隔足够）
+- [ ] 港股/AU/NZ 不调用此函数（无 SEC Form 4 机制）
+
+---
+
+### US-90 · SEC EDGAR 13D 维权申报监测
+
+**As a** 持有美股的用户
+**I want to** 第一时间知道顶级维权投资者是否已进入我持有的公司
+**So that** 我能识别「有人要逼管理层改变」这个强催化剂信号，在价格大幅反应前获知
+
+**为什么 13D 是 Tier 1 信号：**
+- 持股超过 5% 且有「改变公司意图」→ 必须在 10 天内提交 13D
+- 这不是普通持仓申报——13D 意味着：「我进来了，我要做点什么」
+- 来自 Elliott/Starboard/Icahn 的 13D，当天股价平均涨幅 5-15%
+- 但凡有这些名字出现，管理层必须回应——这是有牙齿的信号
+
+**已知顶级维权投资者（优先级最高）：**
+```python
+TIER_1_ACTIVISTS = {
+    "Elliott":        "Elliott Management（Paul Singer，以技巧和法律手段著称，胜率极高）",
+    "Starboard":      "Starboard Value（Jeff Smith，过去10年维权胜率最高）",
+    "Third Point":    "Third Point（Dan Loeb，以犀利公开信著称）",
+    "Trian":          "Trian Fund Management（Nelson Peltz，Disney/P&G/Unilever）",
+    "ValueAct":       "ValueAct Capital（温和但有效，偏治理改善）",
+    "Jana":           "Jana Partners（数据驱动，ESG 角度切入）",
+}
+TIER_2_ACTIVISTS = {
+    "Icahn":          "Carl Icahn（老派但有效，换董事会专家）",
+    "Pershing Square": "Pershing Square（Bill Ackman，创意极佳但风险集中）",
+    "Greenlight":     "Greenlight Capital（David Einhorn，曾成功做空雷曼）",
+}
+```
+
+**数据来源：** SEC EDGAR 全文检索 API（完全免费，无需注册）
+```
+GET https://efts.sec.gov/LATEST/search-index?q="TICKER_SYMBOL"&forms=SC+13D&dateRange=custom&startdt=YYYY-MM-DD
+```
+
+**Acceptance Criteria:**
+- [ ] `scripts/sec_edgar.py` 新模块，包含 `fetch_13d_filings(ticker: str, days: int = 90) -> list`
+- [ ] 调用 EDGAR API，解析返回：filing_date / filer_name / accession_number / pct_held（从文件正文提取，允许失败降级）
+- [ ] 维权投资者匹配：filer_name 模糊匹配 `TIER_1_ACTIVISTS` 和 `TIER_2_ACTIVISTS` key，命中则标记 tier
+- [ ] 接入 `_fetch_1c2_capital()` for market=us，调用 `sec_edgar.fetch_13d_filings()`
+- [ ] 数据存入 `signals_json` → `activist_13d` 字段：
+  ```json
+  {
+    "found": true,
+    "filer": "Elliott Management",
+    "tier": 1,
+    "filing_date": "2025-05-08",
+    "pct_held": 5.2,
+    "description": "Elliott Management（Paul Singer，以技巧和法律手段著称，胜率极高）",
+    "accession": "0001234567-25-000123"
+  }
+  ```
+- [ ] Tier 1 维权进场 → 综合研判卡片显示「⚡ 顶级维权投资者已进场」（橙色强调，最高优先级）
+- [ ] Tier 2 维权进场 → 内部人视角列显示，不进综合研判主标题
+- [ ] 巴菲特信 prompt 注入（仅 found=true 时）：「[机构名] 已于 [日期] 建仓 X%，预计将推动管理层治理改善，这是市场罕见的强催化剂信号」
+- [ ] 超时保护：EDGAR API 请求 timeout=10s，失败时优雅降级（不报错，`found: false`）
+- [ ] Cached 24h（13D 变化不频繁，超时代价高）
+- [ ] 仅支持美股（有 SEC ticker）；港股/AU/NZ 不调用，直接返回 `{found: false}`
+
+---
+
+### US-91 · 美股信号综合研判引擎（独立性检验 + 共振分析）
+
+**As a** 投资者
+**I want to** 系统自动分析哪些信号相互独立、哪些信号存在分歧
+**So that** 我不会因为「5 个信号都看多」就误以为很有把握——真正的把握来自独立信号的共振
+
+**核心概念：信号独立性**
+
+两个信号来自同一信息源或同一决策主体 → 不独立，不能叠加置信度
+两个信号来自完全不同的行为者、不同动机 → 独立，共振才有意义
+
+```
+独立性矩阵（美股）：
+  信号 A              信号 B              独立性    原因
+  ------------------  ------------------  --------  -------------------------
+  CEO 买入           做空比例下降        ✅ 独立   内部人 vs 空头市场
+  CEO 买入           Elliott 13D          ✅ 独立   管理层 vs 外部维权
+  Elliott 13D        主动基金增仓        ✅ 独立   逼迫治理 vs 押增长
+  CEO 买入           CEO 接受采访称乐观  ❌ 不独立 同一信息来源
+  多家投行同时升级   同一天发布报告      ⚠️ 弱独立 可能存在信息流动
+  做空下降           Berkshire 新建仓    ✅ 独立   空头撤退 vs 价值买入
+```
+
+**共振分数计算逻辑：**
+```
+将所有信号分为三个独立组：
+  组 A（内部人行为）：insider_us.cluster_buy / activist_13d.found
+  组 B（市场结构）：short_trend_pct / short_float_pct
+  组 C（机构动向）：active_net_change / top_analyst_net
+
+规则：
+  - 同一组内无论多少信号都只算 1 分（避免内部相关性叠加）
+  - 跨组同向计数：每跨越一个组，+1 共振点
+  - 最高 3 分（三组全部同向）= 最强信号
+  - 分歧 = 任意两组方向相反 → 标记分歧并生成解释
+
+信号方向判断：
+  cluster_buy=true → 组 A 方向 = BULLISH
+  activist_13d.found=true → 组 A 方向 = BULLISH（维权一般是逼迫改变，短期看多）
+  short_trend_pct < -10% → 组 B 方向 = BULLISH（空头在撤退）
+  short_trend_pct > +20% → 组 B 方向 = BEARISH
+  active_net_change > 0.5 → 组 C 方向 = BULLISH
+  active_net_change < -0.5 → 组 C 方向 = BEARISH
+  top_analyst_net >= 2 → 组 C 方向 = BULLISH（需与 active_net_change 同向才算）
+```
+
+**分歧解释模板：**
+```
+主动基金净减持（可能原因：基金赎回压力 / 季末再平衡，不一定是对公司的判断）
+做空比例上升（可能原因：对冲持仓 / 风险对冲，需结合具体原因判断）
+高管无显著买入（可能原因：静默期限制 / 锁定期，不代表看跌）
+```
+
+**Acceptance Criteria:**
+- [ ] `compute_us_resonance(signals_json: dict) -> dict` 函数，接受完整 signals_json，输出：
+  ```json
+  {
+    "direction": "bullish",
+    "score": 3,
+    "max_score": 3,
+    "strongest_combo": "CEO 自购 × 空头撤退 × 维权进场 — 三个独立来源同向看多",
+    "divergence": "主动基金本季净减持（可能是赎回压力，而非对公司的判断）",
+    "group_signals": {
+      "insider": {"direction": "bullish", "triggers": ["cluster_buy", "activist_13d"]},
+      "market":  {"direction": "bullish", "triggers": ["short_retreating"]},
+      "institution": {"direction": "mixed", "triggers": ["analyst_upgrade", "active_net_bearish"]}
+    }
+  }
+  ```
+- [ ] 独立性检验：同组内信号不叠加分数（组 A 只算 1 分，无论 cluster_buy 和 activist_13d 是否都触发）
+- [ ] 「最强共振」文字生成逻辑：取分数最高的跨组组合，按模板生成「X × Y — [一句解释]」
+- [ ] 「主要分歧」：当任意两组方向相反时，选择最值得注意的矛盾组合生成解释文字
+- [ ] 无数据时（美股分析还未跑）返回 `{direction: "unknown", score: 0, strongest_combo: null}`
+- [ ] A 股版 `compute_cn_resonance()` 用相同接口格式（数据来源不同：divergence_score / precursor / fund_flow）
+- [ ] 两者最终都汇入 US-88 的综合研判卡片，前端代码不区分市场
+- [ ] 函数位置：`scripts/buffett_signals.py`（已有文件，信号分析类集中在此）
+- [ ] 单元测试覆盖：`tests/test_resonance.py`，至少包含「全看多/全看空/分歧/无数据」四个 case

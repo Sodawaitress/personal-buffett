@@ -13,7 +13,10 @@ bootstrap_paths()
 import time
 from datetime import datetime, timezone, timedelta
 from scripts.buffett_groq import _call_groq
-from scripts.buffett_prompts import FRAMEWORK_MAP, SYSTEM_DAILY, SYSTEM_LETTER, SYSTEM_PERIOD
+from scripts.buffett_prompts import (
+    FRAMEWORK_MAP, SYSTEM_DAILY, SYSTEM_LETTER, SYSTEM_PERIOD,
+    get_framework,
+)
 from scripts.buffett_signals import _analyze_news_signals, _score_news
 from scripts.buffett_context import (
     build_behavioral_context,
@@ -426,6 +429,16 @@ def analyze_stock_v2(code: str, name: str, market: str,
 _MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩"}
 
 
+_CONCLUSION_EN = {
+    "买入": "Buy", "持有": "Hold", "观察": "Watch", "减持": "Reduce", "卖出": "Sell",
+    "博弈介入": "Speculative Play", "观望等待": "Wait and See", "坚决回避": "Avoid",
+    "高风险持有": "High-Risk Hold", "回避": "Avoid",
+    "适合定投": "Dollar-Cost Average", "适合一次性买入": "Lump Sum Buy",
+    "当前估值偏高建议等待": "Overvalued — Wait", "行业过于集中风险偏高": "High Sector Concentration Risk",
+    "基金模式": "Fund Mode",
+}
+
+
 def analyze_stock_v3(code: str, name: str, market: str,
                      quant_result: dict, trading_params: dict,
                      news: list, news_signals: dict,
@@ -433,19 +446,17 @@ def analyze_stock_v3(code: str, name: str, market: str,
                      fundamentals: dict = None, events: list = None,
                      company_type: str = None,
                      entry_price: float = None, buy_date: str = None,
-                     data_warnings: list = None, earnings_flags: list = None) -> dict:
+                     data_warnings: list = None, earnings_flags: list = None,
+                     inst_signals: dict = None,
+                     locale: str = "zh") -> dict:
     """
-    Layer 3：mini-prompt LLM叙事。
-    Layer 2 已计算好 quant_result + trading_params 并存入 DB。
-    这里只让 LLM 写叙事信件，不重算评级，不重算价格。
-    总 token 消耗约 ~700（vs v2 的 ~3500）。
+    Layer 3: mini-prompt LLM narrative letter.
+    Layer 2 has already computed quant_result + trading_params.
+    locale="en" switches to English system prompts and output.
     """
-    # ── 框架路由 ─────────────────────────────────────────
-    framework_name, system_prompt = FRAMEWORK_MAP.get(
-        company_type or "mature_value",
-        ("buffett", SYSTEM_LETTER)
-    )
-    print(f"    框架路由: {company_type or 'mature_value'} → {framework_name}")
+    # ── Framework routing ───────────────────────────────
+    framework_name, system_prompt = get_framework(company_type, locale)
+    print(f"    framework: {company_type or 'mature_value'} → {framework_name} [{locale}]")
 
     # ── 量化结果摘要（Layer 2 已算好） ────────────────────
     score  = quant_result.get("score", 0)
@@ -465,57 +476,102 @@ def analyze_stock_v3(code: str, name: str, market: str,
     safety_sc, safety_reasons = _comp("safety")
     val_sc,    val_reasons    = _comp("valuation")
 
-    quant_lines = [
-        f"量化评分：{score}/100 → {grade}级 · {conclusion}",
-        f"护城河 {moat_sc}/35：{'; '.join(moat_reasons) or '数据不足'}",
-        f"成长/管理层 {growth_sc}/30：{'; '.join(growth_reasons) or '数据不足'}",
-        f"安全性 {safety_sc}/20：{'; '.join(safety_reasons) or '数据不足'}",
-        f"估值 {val_sc}/15：{'; '.join(val_reasons) or '数据不足'}",
-    ]
+    conclusion_display = _CONCLUSION_EN.get(conclusion, conclusion) if locale == "en" else conclusion
+    _na = "No data" if locale == "en" else "数据不足"
+    _red = "Red flags" if locale == "en" else "红旗"
+
+    if locale == "en":
+        quant_lines = [
+            f"Quant score: {score}/100 → Grade {grade} · {conclusion_display}",
+            f"Moat {moat_sc}/35: {'; '.join(moat_reasons) or _na}",
+            f"Growth/Mgmt {growth_sc}/30: {'; '.join(growth_reasons) or _na}",
+            f"Safety {safety_sc}/20: {'; '.join(safety_reasons) or _na}",
+            f"Valuation {val_sc}/15: {'; '.join(val_reasons) or _na}",
+        ]
+    else:
+        quant_lines = [
+            f"量化评分：{score}/100 → {grade}级 · {conclusion}",
+            f"护城河 {moat_sc}/35：{'; '.join(moat_reasons) or _na}",
+            f"成长/管理层 {growth_sc}/30：{'; '.join(growth_reasons) or _na}",
+            f"安全性 {safety_sc}/20：{'; '.join(safety_reasons) or _na}",
+            f"估值 {val_sc}/15：{'; '.join(val_reasons) or _na}",
+        ]
     if quant_result.get("red_flags"):
-        quant_lines.append(f"⚠️ 红旗：{'; '.join(quant_result['red_flags'][:2])}")
+        quant_lines.append(f"⚠️ {_red}: {'; '.join(quant_result['red_flags'][:2])}")
     quant_str = "\n".join(quant_lines)
 
-    # ── 价格 + 市场位置 ───────────────────────────────────
     price_str = build_v3_price_context(market, price or {})
-
-    # ── 操作参数摘要 ──────────────────────────────────────
     trading_str = build_trading_context(company_type, trading_params, compact=True)
 
-    # ── 新闻：只取最重要的3条 ─────────────────────────────
     sorted_news = _score_news(news)[:3]
+    _no_news = "  No recent news" if locale == "en" else "  暂无近期新闻"
     news_lines = "\n".join(
-        f"  • {n.get('title','')[:80]}（{n.get('source','')}）"
+        f"  • {n.get('title','')[:80]} ({n.get('source','')})"
         for n in sorted_news
-    ) or "  暂无近期新闻"
+    ) or _no_news
     ns = news_signals or {}
+    _no_sig = "none" if locale == "en" else "无"
     _news_meta_parts = [
-        f"情绪：{ns.get('sentiment_avg', 0)}",
-        f"关键信号：{', '.join(ns.get('key_signals', [])) or '无'}",
+        f"sentiment: {ns.get('sentiment_avg', 0)}" if locale == "en" else f"情绪：{ns.get('sentiment_avg', 0)}",
+        f"key signals: {', '.join(ns.get('key_signals', [])) or _no_sig}" if locale == "en" else f"关键信号：{', '.join(ns.get('key_signals', [])) or _no_sig}",
     ]
     if ns.get("entity_mismatches"):
-        _news_meta_parts.append(f"⚠️已过滤{len(ns['entity_mismatches'])}条同名关联公司新闻")
+        _news_meta_parts.append(f"⚠️ filtered {len(ns['entity_mismatches'])} mismatched entity news" if locale == "en" else f"⚠️已过滤{len(ns['entity_mismatches'])}条同名关联公司新闻")
     if ns.get("dilution_warning"):
-        _news_meta_parts.append(f"稀释警告：{ns['dilution_warning']}")
+        _news_meta_parts.append(f"dilution warning: {ns['dilution_warning']}" if locale == "en" else f"稀释警告：{ns['dilution_warning']}")
     if ns.get("recent_gain_pct") is not None:
         _news_meta_parts.append(f"recent_gain_pct={ns['recent_gain_pct']}")
     if ns.get("restructuring_event_count"):
-        _news_meta_parts.append(f"重整事件数={ns['restructuring_event_count']}")
+        _news_meta_parts.append(f"restructuring_event_count={ns['restructuring_event_count']}")
     news_meta = " | ".join(_news_meta_parts)
 
-    # ── 持仓成本 ──────────────────────────────────────────
     entry_str = build_v3_entry_context(market, price or {}, entry_price=entry_price, buy_date=buy_date)
-
-    # ── 数据警告（仅传关键项，节省 token） ───────────────
     warn_str = build_mini_warning_context(data_warnings=data_warnings, earnings_flags=earnings_flags)
 
-    # ── 组装 mini user_msg ────────────────────────────────
-    user_msg = f"""公司：{name}（{code}）市场：{market.upper()}
+    # US-79: institutional signals injection for non-CN markets
+    inst_str = ""
+    if inst_signals and market != "cn":
+        _parts = []
+        anc = inst_signals.get("active_net_change")
+        if anc is not None:
+            _dir = "净增持" if anc >= 0 else "净减持"
+            _parts.append(f"主动基金{_dir} {abs(anc)*100:.2f}pp" if locale == "zh" else f"Active funds net {'bought' if anc >= 0 else 'sold'} {abs(anc)*100:.2f}pp")
+        sf = inst_signals.get("short_float_pct")
+        st = inst_signals.get("short_trend_pct")
+        if sf is not None:
+            _trend = ""
+            if st is not None:
+                _trend = f"（{'↑上升' if st > 0 else '↓下降'} {abs(st):.1f}%）" if locale == "zh" else f" ({'rising' if st > 0 else 'falling'} {abs(st):.1f}%)"
+            _parts.append(f"做空比例 {sf:.1f}%{_trend}" if locale == "zh" else f"Short float {sf:.1f}%{_trend}")
+        tan = inst_signals.get("top_analyst_net")
+        if tan is not None:
+            _parts.append(f"顶级投行近90天净{'升' if tan >= 0 else '降'}级 {abs(tan)} 次" if locale == "zh" else f"Top analyst net {'upgrades' if tan >= 0 else 'downgrades'}: {abs(tan)}")
+        if _parts:
+            _label = "【机构信号】" if locale == "zh" else "[Institutional signals]"
+            inst_str = f"\n{_label}\n" + "\n".join(f"  {p}" for p in _parts)
+
+    if locale == "en":
+        user_msg = f"""Company: {name} ({code})  Market: {market.upper()}
+{price_str}{entry_str}{warn_str}
+
+[Layer 2 quant results — finalised, do not change grade or conclusion]
+{quant_str}
+{trading_str}{inst_str}
+
+[Recent news — top 3]
+{news_lines}
+{news_meta}
+
+Write a 150–250 word analysis letter.
+- Use Buffett's voice; conclusion paragraph must reference the quant rating (Grade {grade} · {conclusion_display}); do not change the grade or conclusion
+- If trade parameters are provided, output a ===TRADE=== block after the conclusion (fill in only "Position strategy" and "Key triggers"; copy all pre-calculated price lines verbatim)"""
+    else:
+        user_msg = f"""公司：{name}（{code}）市场：{market.upper()}
 {price_str}{entry_str}{warn_str}
 
 【Layer 2 量化结果（已定案，LLM 不得更改评级）】
 {quant_str}
-{trading_str}
+{trading_str}{inst_str}
 
 【近期新闻（前3条重要新闻）】
 {news_lines}
@@ -528,10 +584,14 @@ def analyze_stock_v3(code: str, name: str, market: str,
     raw = _call_groq(system_prompt, user_msg, max_tokens=500)
 
     if not raw:
-        # LLM失败，用量化结果生成最简化信件
-        letter_html = f"基于量化分析：{reasoning}\n\n评级：{grade}级，{conclusion}。"
-        if trading_params and trading_params.get("position_label"):
-            letter_html += f"\n\n操作参数：{trading_params['position_label']}"
+        if locale == "en":
+            letter_html = f"Based on quantitative analysis: {reasoning}\n\nRating: Grade {grade}, {conclusion_display}."
+            if trading_params and trading_params.get("position_label"):
+                letter_html += f"\n\nTrade parameters: {trading_params['position_label']}"
+        else:
+            letter_html = f"基于量化分析：{reasoning}\n\n评级：{grade}级，{conclusion}。"
+            if trading_params and trading_params.get("position_label"):
+                letter_html += f"\n\n操作参数：{trading_params['position_label']}"
         return {
             "conclusion":        conclusion,
             "grade":             grade,

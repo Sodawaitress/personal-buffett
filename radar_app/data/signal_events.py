@@ -21,8 +21,8 @@ def _get_fundamentals_with_age(code: str) -> tuple[dict, float]:
     """返回 (signals_dict, age_hours)，age 超过阈值时 margin 信号应跳过。"""
     with get_conn() as c:
         row = c.execute(
-            "SELECT signals_json, updated_at FROM stock_fundamentals WHERE code=?",
-            (code,)
+            "SELECT signals_json, updated_at FROM stock_fundamentals WHERE code=:code",
+            {"code": code},
         ).fetchone()
     if not row:
         return {}, 999
@@ -69,8 +69,8 @@ def _parse_precursor_cache(code: str) -> dict:
     with get_conn() as c:
         row = c.execute(
             "SELECT survey_json, short_json, partic_json, fetched_at "
-            "FROM stock_precursor_cache WHERE code=? ORDER BY fetched_at DESC LIMIT 1",
-            (code,),
+            "FROM stock_precursor_cache WHERE code=:code ORDER BY fetched_at DESC LIMIT 1",
+            {"code": code},
         ).fetchone()
     if not row:
         return {}
@@ -91,8 +91,8 @@ def _parse_precursor_cache(code: str) -> dict:
             with get_conn() as c:
                 perm_rows = c.execute(
                     "SELECT event_date, n_inst, is_specific FROM survey_events "
-                    "WHERE code=? AND event_date>=? ORDER BY event_date DESC",
-                    (code, cutoff),
+                    "WHERE code=:code AND event_date>=:cutoff ORDER BY event_date DESC",
+                    {"code": code, "cutoff": cutoff},
                 ).fetchall()
             if perm_rows:
                 events = [

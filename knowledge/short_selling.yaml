@@ -1,0 +1,181 @@
+name: 融券
+slug: short_selling
+one_liner: 借股票来卖、押注下跌，主要是机构在操作
+
+# 情境从最具体到最笼统排列，第一个匹配的生效
+# triggers.all = 所有条件同时满足
+# triggers: null = 兜底，总是匹配
+# 可用字段：change_pct（融券余量近30日变化%）、price_change_pct（当日涨跌幅%）
+#            pa_spike（机构参与度是否飙升）、has_survey（是否有近期专项调研）
+
+situations:
+
+  - id: squeeze_active
+    label: 轧空可能正在发生
+    triggers:
+      all:
+        - {field: change_pct,       op: ">",  value: 30}
+        - {field: price_change_pct, op: ">",  value: 1.0}
+        - {field: pa_spike,         op: "==", value: true}
+    body: |
+      融券大增的同时股价在涨，机构参与度也飙升。
+      这是「轧空」的典型特征：做空的人被迫买回股票
+      还给券商，这个买入动作本身推动价格进一步上涨，
+      形成正反馈。
+    note: |
+      轧空往往来得快去得也快。这不是基本面改变，
+      是空头被「挤」出去了。注意区分轧空结束后的回落。
+
+  - id: distribution_signal
+    label: 机构可能在集中出货
+    triggers:
+      all:
+        - {field: change_pct,       op: ">",  value: 30}
+        - {field: price_change_pct, op: "<",  value: -1.0}
+        - {field: pa_spike,         op: "==", value: true}
+    body: |
+      融券大增、参与度飙升、当天价格在跌——
+      这三个同时出现，偏向机构在集中抛售。
+      做空的人也在加码，多空双向都在看跌。
+    note: |
+      和轧空相反。结合近期是否有利空公告，
+      判断是新信息驱动还是技术性调整。
+
+  - id: conflicting_signals
+    label: 机构内部有分歧
+    triggers:
+      all:
+        - {field: change_pct,  op: ">",  value: 30}
+        - {field: has_survey,  op: "==", value: true}
+    body: |
+      有机构在做空（融券增加），同时也有机构专程
+      来公司调研。一边在研究买入，一边在押注下跌——
+      聪明钱内部没有共识，通常出现在公司前景有争议
+      或估值有分歧的时候。
+    note: |
+      分歧本身不代表方向，但说明这只股票「有人在认真看」。
+      等后续行动（调研后是否出现大买单）再判断谁赢了。
+
+  - id: shorts_fighting_rally
+    label: 空头在对抗上涨
+    triggers:
+      all:
+        - {field: change_pct,       op: ">", value: 30}
+        - {field: price_change_pct, op: ">", value: 0.5}
+    body: |
+      融券余量在增加（更多人在做空），但价格也在涨。
+      空头在对抗上涨的力量，目前是买方占优。
+    note: |
+      如果涨势持续，空头会承受越来越大的亏损压力，
+      最终被迫买回平仓，可能推动进一步上涨（轧空前兆）。
+
+  - id: shorts_winning
+    label: 做空判断正在验证
+    triggers:
+      all:
+        - {field: change_pct,       op: ">",  value: 30}
+        - {field: price_change_pct, op: "<",  value: -0.5}
+    body: |
+      融券余量增加（做空在加码），同时价格在跌。
+      做空方目前判断正确，空头仓位在盈利。
+    note: |
+      不代表会继续跌。关注融券余量是否还在持续增加，
+      以及是否有基本面原因支撑跌势。
+
+  - id: heavy_short_buildup
+    label: 做空仓位大举增加
+    triggers:
+      all:
+        - {field: change_pct, op: ">", value: 50}
+    body: |
+      融券余量近30天增加超过50%，做空仓位大幅累积。
+      这类操作主要是机构和专业投资者在做——
+      他们在用真金白银押注股价会跌。
+    note: |
+      单独看这个信号方向不明——结合当天涨跌和参与度
+      才能判断空头在建仓还是在被挤压。
+
+  - id: mild_short_increase
+    label: 做空小幅增加
+    triggers:
+      all:
+        - {field: change_pct, op: ">", value: 15}
+    body: |
+      融券余量温和增加，有小幅做空动向，
+      但幅度不大，信号不强。
+    note: 结合其他信号综合判断，单独看参考价值有限。
+
+  - id: shorts_squeezed_out
+    label: 空头被迫离场（轧空尾声）
+    triggers:
+      all:
+        - {field: change_pct,       op: "<",  value: -30}
+        - {field: price_change_pct, op: ">",  value: 1.0}
+        - {field: pa_spike,         op: "==", value: true}
+    body: |
+      融券余量大幅减少、参与度飙升、价格急涨——
+      这是轧空结束阶段的特征：空头被迫买回平仓，
+      大量买入涌入，价格快速拉升。
+    note: |
+      轧空尾声之后买入风险较高，因为「被逼出去的空头」
+      结束后买盘往往迅速枯竭。
+
+  - id: bottom_signal_strong
+    label: 底部信号：空头撤 + 机构在调研
+    triggers:
+      all:
+        - {field: change_pct,  op: "<",  value: -30}
+        - {field: has_survey,  op: "==", value: true}
+    body: |
+      做空的人在撤退（融券余量减少），同时有机构
+      专程来公司调研——空头认为跌够了，
+      有人开始认真考虑买入，两个信号方向一致。
+    note: |
+      这是组合信号里可信度较高的底部参考。
+      调研到真正买入还有时间差，不代表马上涨。
+
+  - id: forced_cover
+    label: 空头认亏平仓（被迫的）
+    triggers:
+      all:
+        - {field: change_pct,       op: "<", value: -30}
+        - {field: price_change_pct, op: ">", value: 0.5}
+    body: |
+      做空的人在买回股票（融券减少），同时价格在涨。
+      可能是赌跌失败，被迫止损买回。
+    note: |
+      和「主动获利了结」不同——这里是涨了被挤出去的。
+      轧空结束后通常会有回落，不要追高。
+
+  - id: voluntary_profit_taking
+    label: 空头主动获利了结
+    triggers:
+      all:
+        - {field: change_pct,       op: "<",  value: -30}
+        - {field: price_change_pct, op: "<=", value: 0}
+    body: |
+      融券余量大减，但价格还没涨——
+      做空的人在低位主动买回获利，选择收手。
+      他们认为跌得差不多了，不再看跌了。
+    note: |
+      这比「被逼出去」更有底部参考价值，
+      因为是空头主动判断跌到位了。结合价格位置看。
+
+  - id: mild_short_retreat
+    label: 空头温和撤退
+    triggers:
+      all:
+        - {field: change_pct, op: "<", value: -15}
+    body: |
+      融券余量小幅减少，有空头在撤退，
+      但幅度不大，信号不强。
+    note: 结合其他信号判断，单独看参考价值有限。
+
+  - id: neutral
+    label: 融券无明显动向
+    triggers: null
+    body: |
+      融券余量变化不大，这个信号目前没有明显参考价值。
+      有些股票本身融券余量就很少（小盘股、科创板部分股票），
+      数据本身可信度也有限。
+    note: ""

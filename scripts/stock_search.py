@@ -29,12 +29,14 @@ _FUND_CACHE_TTL  = 86400   # 1 天
 _CN_CACHE    = None   # [(code, name), ...]
 _PY_INDEX    = None   # [(code, name, initials, full_pinyin), ...]
 _CN_LOADING  = False
+_CN_LOAD_TS  = 0.0    # timestamp when CN loading started (for timeout detection)
 _CN_READY    = threading.Event()
 _ETF_CACHE   = None   # [(code, name), ...]  — ETF traded on exchange
 _ETF_LOADING = False
 _ETF_READY   = threading.Event()
 _FUND_CACHE  = None   # [(code, name), ...]  — 场外基金（全量，~26000）
 _FUND_LOADING = False
+_FUND_LOAD_TS = 0.0
 _FUND_READY  = threading.Event()
 
 # ── 搜索结果缓存（1h TTL，避免重复 yfinance 请求）────────
@@ -152,13 +154,19 @@ def _build_pinyin_index(stocks):
 
 
 def _load_cn():
-    global _CN_CACHE, _PY_INDEX, _CN_LOADING
+    global _CN_CACHE, _PY_INDEX, _CN_LOADING, _CN_LOAD_TS
     if _CN_CACHE:  # non-empty list = loaded successfully; None or [] = not ready
         return _CN_CACHE
     if _CN_LOADING:
         _CN_READY.wait(timeout=60)
-        return _CN_CACHE or []
+        if _CN_CACHE:
+            return _CN_CACHE
+        # Wait timed out and cache is still empty (orphan lock from Flask fork).
+        # Reset loading state and fall through to load directly in this thread.
+        _CN_LOADING = False
+        _CN_READY.clear()
     _CN_LOADING = True
+    _CN_LOAD_TS = time.time()
     try:
         # 1. 尝试从文件缓存读取
         if os.path.exists(_CACHE_FILE):
@@ -249,13 +257,14 @@ def _load_cn_etf():
 
 def _load_cn_funds():
     """加载国内全量场外基金列表（混合/股票/债券/货币等），缓存到 cn_funds.json。"""
-    global _FUND_CACHE, _FUND_LOADING
+    global _FUND_CACHE, _FUND_LOADING, _FUND_LOAD_TS
     if _FUND_CACHE:
         return _FUND_CACHE
     if _FUND_LOADING:
         _FUND_READY.wait(timeout=30)
         return _FUND_CACHE or []
     _FUND_LOADING = True
+    _FUND_LOAD_TS = time.time()
     try:
         if os.path.exists(_FUND_CACHE_FILE):
             age = time.time() - os.path.getmtime(_FUND_CACHE_FILE)

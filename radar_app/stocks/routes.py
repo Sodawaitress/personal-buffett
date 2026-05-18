@@ -25,20 +25,74 @@ from radar_app.stocks.service import (
 )
 
 
+def _demo_block():
+    """Return 403 JSON when a demo user tries to trigger AI analysis."""
+    if session.get("is_demo"):
+        return jsonify({"error": "demo_readonly", "message": "Sign up to run your own analysis."}), 403
+    return None
+
+
 def register_stock_routes(app):
-    @app.route('/stock/<path:code>/fundamentals')
-    @login_required
-    def stock_fundamentals(code):
-        return redirect(url_for('stock_page', code=code.upper()) + '#tab-archive')
+    def _stock_context(code):
+        context = build_stock_page_context(code, session['user_id'])
+        return context
 
     @app.route('/stock/<path:code>')
     @login_required
     def stock_page(code):
-        context = build_stock_page_context(code, session['user_id'])
+        return redirect(url_for('stock_letter', code=code.upper()))
+
+    @app.route('/stock/<path:code>/letter')
+    @login_required
+    def stock_letter(code):
+        context = _stock_context(code.upper())
         if not context:
             flash('Stock not found. Add it to your watchlist first.', 'warning')
             return redirect(url_for('index'))
-        return render_template('stock.html', **context)
+        context['active_tab'] = 'letter'
+        return render_template('stock/letter.html', **context)
+
+    @app.route('/stock/<path:code>/signals')
+    @login_required
+    def stock_signals(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found. Add it to your watchlist first.', 'warning')
+            return redirect(url_for('index'))
+        context['active_tab'] = 'signals'
+        return render_template('stock/signals.html', **context)
+
+    @app.route('/stock/<path:code>/fundamentals')
+    @login_required
+    def stock_fundamentals_page(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found. Add it to your watchlist first.', 'warning')
+            return redirect(url_for('index'))
+        context['active_tab'] = 'fundamentals'
+        return render_template('stock/fundamentals.html', **context)
+
+    @app.route('/stock/<path:code>/events')
+    @login_required
+    def stock_events_page(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found. Add it to your watchlist first.', 'warning')
+            return redirect(url_for('index'))
+        context['active_tab'] = 'events'
+        return render_template('stock/events.html', **context)
+
+    @app.route('/stock/<path:code>/radar')
+    @login_required
+    def stock_radar_page(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found. Add it to your watchlist first.', 'warning')
+            return redirect(url_for('index'))
+        if context.get('market') != 'cn':
+            return redirect(url_for('stock_letter', code=code.upper()))
+        context['active_tab'] = 'radar'
+        return render_template('stock/radar.html', **context)
 
     @app.route('/api/news/<code>')
     @login_required
@@ -53,6 +107,7 @@ def register_stock_routes(app):
     @app.route('/api/analyze/<code>', methods=['POST'])
     @login_required
     def api_analyze(code):
+        if (blocked := _demo_block()): return blocked
         payload = start_stock_job(session['user_id'], code, start_pipeline_job)
         if not payload:
             return jsonify({'error': 'stock not found'}), 404
@@ -61,6 +116,7 @@ def register_stock_routes(app):
     @app.route('/api/analyze-only/<code>', methods=['POST'])
     @login_required
     def api_analyze_only(code):
+        if (blocked := _demo_block()): return blocked
         payload = start_stock_job(session['user_id'], code, start_quant_job)
         if not payload:
             return jsonify({'error': 'stock not found'}), 404
@@ -69,6 +125,7 @@ def register_stock_routes(app):
     @app.route('/api/generate-letter/<code>', methods=['POST'])
     @login_required
     def api_generate_letter(code):
+        if (blocked := _demo_block()): return blocked
         payload = start_stock_job(session['user_id'], code, start_letter_job)
         if not payload:
             return jsonify({'error': 'stock not found'}), 404
@@ -101,6 +158,7 @@ def register_stock_routes(app):
     @app.route('/api/analyze-batch', methods=['POST'])
     @login_required
     def api_analyze_batch():
+        if (blocked := _demo_block()): return blocked
         payload = start_batch_analysis(session['user_id'], (request.get_json() or {}).get('codes', []))
         if not payload:
             return jsonify({'error': 'no codes'}), 400
@@ -309,7 +367,7 @@ def register_stock_routes(app):
             with get_conn() as c:
                 row = c.execute(
                     "SELECT survey_json, short_json, partic_json FROM stock_precursor_cache "
-                    "WHERE code=? ORDER BY fetched_at DESC LIMIT 1", (pure,)
+                    "WHERE code=:code ORDER BY fetched_at DESC LIMIT 1", {"code": pure}
                 ).fetchone()
                 if row:
                     snap_json = _json.dumps({
@@ -326,8 +384,8 @@ def register_stock_routes(app):
             c.execute(
                 "INSERT INTO signal_predictions "
                 "(user_id, code, created_at, direction, note, signal_snapshot) "
-                "VALUES (?,?,?,?,?,?)",
-                (user_id, pure, now, direction, note, snap_json),
+                "VALUES (:uid,:code,:now,:dir,:note,:snap)",
+                {"uid": user_id, "code": pure, "now": now, "dir": direction, "note": note, "snap": snap_json},
             )
         return jsonify({'ok': True})
 
@@ -342,8 +400,8 @@ def register_stock_routes(app):
             rows = c.execute(
                 "SELECT id, direction, note, created_at, correct, actual_return_5d "
                 "FROM signal_predictions "
-                "WHERE user_id=? AND code=? "
+                "WHERE user_id=:uid AND code=:code "
                 "ORDER BY created_at DESC LIMIT 5",
-                (user_id, pure),
+                {"uid": user_id, "code": pure},
             ).fetchall()
         return jsonify([dict(r) for r in rows])

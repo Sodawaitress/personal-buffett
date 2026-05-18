@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} — {{ t.tab_events }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="stock-page">
+{% include 'stock/_head.html' %}
+
+  <div class="stock-page-body">
+
+    {% if events %}
+    <div class="event-timeline">
+      {% set type_labels = {
+        'st_trigger':               t.ev_st_trigger,
+        'st_lifted':                t.ev_st_lifted,
+        'restructuring_announced':  t.ev_restructuring_announced,
+        'restructuring_vote':       t.ev_restructuring_vote,
+        'restructuring_approved':   t.ev_restructuring_approved,
+        'rights_issue':             t.ev_rights_issue,
+        'bonus_share':              t.ev_bonus_share,
+        'name_change':              t.ev_name_change,
+        'delist_warning':           t.ev_delist_warning,
+        'delist_final':             t.ev_delist_final,
+        'major_shareholder_change': t.ev_major_shareholder,
+        'scheme_risk':              t.ev_scheme_risk
+      } %}
+      {% for ev in events %}
+      <div class="event-item event-type-{{ ev.event_type }}">
+        <div class="event-meta">
+          <span class="event-date">{{ ev.event_date or t.ev_date_unknown }}</span>
+          <span class="event-type-label">{{ type_labels.get(ev.event_type, ev.event_type) }}</span>
+          <span class="event-source">{{ ev.source }}</span>
+        </div>
+        <div class="event-summary">{{ ev.summary }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-hint">{{ t.lbl_no_events }}</p>
+    {% endif %}
+
+    {% if session.role == 'admin' %}
+    <div class="event-add-form">
+      <h4>{{ t.lbl_add_event }}</h4>
+      <div class="event-form-row">
+        <select id="evType">
+          <option value="restructuring_announced">{{ t.ev_restructuring_announced }}</option>
+          <option value="restructuring_vote">{{ t.ev_restructuring_vote }}</option>
+          <option value="restructuring_approved">{{ t.ev_restructuring_approved }}</option>
+          <option value="st_trigger">{{ t.ev_st_trigger }}</option>
+          <option value="st_lifted">{{ t.ev_st_lifted }}</option>
+          <option value="rights_issue">{{ t.ev_rights_issue }}</option>
+          <option value="bonus_share">{{ t.ev_bonus_share }}</option>
+          <option value="name_change">{{ t.ev_name_change }}</option>
+          <option value="delist_warning">{{ t.ev_delist_warning }}</option>
+          <option value="major_shareholder_change">{{ t.ev_major_shareholder }}</option>
+          <option value="scheme_risk">{{ t.ev_scheme_risk }}</option>
+        </select>
+        <input type="date" id="evDate" placeholder="{{ t.lbl_event_date_placeholder }}">
+      </div>
+      <textarea id="evSummary" rows="2" placeholder="{{ t.lbl_event_summary_placeholder }}"></textarea>
+      <button onclick="submitEvent('{{ stock.code }}')">{{ t.btn_record_event }}</button>
+      <span id="evMsg" style="font-size:12px;margin-left:8px"></span>
+    </div>
+    {% endif %}
+
+  </div>{# /.stock-page-body #}
+
+  {% if in_watchlist %}
+  <div class="stock-remove-zone">
+    <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
+      <button type="submit" class="btn-remove-stock"
+              onclick="return confirm('{{ t.btn_remove_stock }} {{ stock.name }}?')">{{ t.btn_remove_stock }}</button>
+    </form>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window._t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+  full_update_lbl:  {{ t.btn_full_update | tojson }},
+  is_admin:         {{ (session.role == 'admin') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
+{% endblock %}

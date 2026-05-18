@@ -6,6 +6,7 @@ import sys
 from dotenv import load_dotenv
 from flask import Flask
 
+from radar_app.data.core import teardown_request_conn
 from radar_app.legacy.search_backend import warm_search_backend
 from radar_app.context import register_context_processors
 from radar_app.extensions import init_extensions
@@ -32,6 +33,8 @@ def create_app():
     db.init_db()
     db._migrate()
     db.expire_stale_jobs()
+    from radar_app.shared.i18n import validate_translations
+    validate_translations()
     settings = load_settings()
     root = os.path.dirname(os.path.dirname(__file__))
 
@@ -41,9 +44,11 @@ def create_app():
         static_folder=os.path.join(root, "static"),
     )
     app.secret_key = settings.secret_key
+    app.teardown_appcontext(teardown_request_conn)
     bcrypt, oauth = init_extensions(app)
     register_context_processors(app)
     register_routes(app, bcrypt, oauth)
+
     return app
 
 

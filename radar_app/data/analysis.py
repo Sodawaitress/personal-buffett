@@ -5,11 +5,19 @@ from radar_app.data.market import get_stock_news
 
 
 def save_analysis(code, period, analysis_date, **kwargs):
-    cols = ["code", "period", "analysis_date"] + list(kwargs.keys())
-    vals = [code, period, analysis_date] + list(kwargs.values())
-    placeholders = ",".join(["?"] * len(vals))
+    params = {"code": code, "period": period, "analysis_date": analysis_date, **kwargs}
+    cols = ", ".join(params.keys())
+    placeholders = ", ".join(f":{k}" for k in params)
+    # ON CONFLICT DO UPDATE preserves the row id and only updates changed columns.
+    # INSERT OR REPLACE would delete-then-insert, losing the auto-increment id.
+    update_set = ", ".join(
+        f"{k}=excluded.{k}" for k in params if k not in ("code", "period", "analysis_date")
+    )
+    sql = f"INSERT INTO analysis_results({cols}) VALUES({placeholders})"
+    if update_set:
+        sql += f" ON CONFLICT(code, period, analysis_date) DO UPDATE SET {update_set}"
     with get_conn() as c:
-        c.execute(f"INSERT OR REPLACE INTO analysis_results({','.join(cols)}) VALUES({placeholders})", vals)
+        c.execute(sql, params)
 
 
 def get_latest_analysis(code, period="daily"):
@@ -17,10 +25,10 @@ def get_latest_analysis(code, period="daily"):
         row = c.execute(
             """
             SELECT * FROM analysis_results
-            WHERE code=? AND period=?
+            WHERE code=:code AND period=:period
             ORDER BY analysis_date DESC, id DESC LIMIT 1
-        """,
-            (code, period),
+            """,
+            {"code": code, "period": period},
         ).fetchone()
         return dict(row) if row else {}
 
@@ -31,11 +39,11 @@ def get_analysis_history(code, period="daily", limit=10):
             dict(r)
             for r in c.execute(
                 """
-            SELECT * FROM analysis_results
-            WHERE code=? AND period=?
-            ORDER BY analysis_date DESC LIMIT ?
-        """,
-                (code, period, limit),
+                SELECT * FROM analysis_results
+                WHERE code=:code AND period=:period
+                ORDER BY analysis_date DESC LIMIT :limit
+                """,
+                {"code": code, "period": period, "limit": limit},
             )
         ]
 
@@ -48,21 +56,24 @@ def save_report(date, html, md, period="daily"):
     with get_conn() as c:
         c.execute(
             """
-            INSERT INTO reports(analysis_date,period,html,md) VALUES(?,?,?,?)
+            INSERT INTO reports(analysis_date,period,html,md) VALUES(:date,:period,:html,:md)
             ON CONFLICT(analysis_date,period) DO UPDATE SET html=excluded.html, md=excluded.md
-        """,
-            (date, period, html, md),
+            """,
+            {"date": date, "period": period, "html": html, "md": md},
         )
 
 
 def get_report(date=None, period="daily"):
     with get_conn() as c:
         if date:
-            row = c.execute("SELECT * FROM reports WHERE analysis_date=? AND period=?", (date, period)).fetchone()
+            row = c.execute(
+                "SELECT * FROM reports WHERE analysis_date=:date AND period=:period",
+                {"date": date, "period": period},
+            ).fetchone()
         else:
             row = c.execute(
-                "SELECT * FROM reports WHERE period=? ORDER BY analysis_date DESC, id DESC LIMIT 1",
-                (period,),
+                "SELECT * FROM reports WHERE period=:period ORDER BY analysis_date DESC, id DESC LIMIT 1",
+                {"period": period},
             ).fetchone()
         if not row:
             return None
@@ -77,17 +88,17 @@ def list_reports(limit=30, period=None):
             rows = c.execute(
                 """
                 SELECT analysis_date as date, period, created_at FROM reports
-                WHERE period=? ORDER BY analysis_date DESC LIMIT ?
-            """,
-                (period, limit),
+                WHERE period=:period ORDER BY analysis_date DESC LIMIT :limit
+                """,
+                {"period": period, "limit": limit},
             ).fetchall()
         else:
             rows = c.execute(
                 """
                 SELECT analysis_date as date, period, created_at FROM reports
-                ORDER BY analysis_date DESC LIMIT ?
-            """,
-                (limit,),
+                ORDER BY analysis_date DESC LIMIT :limit
+                """,
+                {"limit": limit},
             ).fetchall()
         return [dict(r) for r in rows]
 
@@ -104,7 +115,7 @@ def get_accuracy_stats():
             WHERE ar.period='daily'
               AND (ar.label_7d_return IS NOT NULL OR ar.label_30d_return IS NOT NULL)
             ORDER BY ar.analysis_date DESC
-        """
+            """
         ).fetchall()
 
     def verdict(conclusion, actual_return):

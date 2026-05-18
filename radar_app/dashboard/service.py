@@ -9,6 +9,7 @@ from radar_app.dashboard.presenter import (
     present_intl_news,
     present_portfolio_brief,
 )
+from radar_app.data.stocks import get_news_sentiment_map
 from radar_app.dashboard.query import (
     get_fomc_news_items,
     get_intl_stock_news,
@@ -24,11 +25,14 @@ from radar_app.shared.runtime import CN_TZ
 
 
 def _build_index_stocks(user_id):
+    rows = list(list_active_watchlist(user_id))
+    codes = [row.get("stock_code") or row.get("code") for row in rows]
+    sentiment_map = get_news_sentiment_map(codes)
     stocks = []
-    for row in list_active_watchlist(user_id):
+    for row in rows:
         code = row.get("stock_code") or row.get("code")
         market = row.get("market")
-        stocks.append(present_index_stock(row, get_stock_snapshot(code, market), get_pending_job(code)))
+        stocks.append(present_index_stock(row, get_stock_snapshot(code, market), get_pending_job(code), sentiment_map.get(code)))
     return stocks
 
 

@@ -1,0 +1,115 @@
+name: 机构参与度
+slug: inst_participation
+one_liner: 今天机构交易占全市场成交的比例——越高说明大资金越活跃，但方向要结合价格判断
+
+# 可用字段：spike（是否飙升）、trend（"上升"|"下降"|"中性"）
+#            price_change_pct（当日涨跌幅%）、short_increasing（融券是否在增加）
+#            latest（当前参与度值）、avg_30d（30日均值）
+
+situations:
+
+  - id: squeeze_signal
+    label: 轧空信号（参与度+涨+融券）
+    triggers:
+      all:
+        - {field: spike,            op: "==", value: true}
+        - {field: price_change_pct, op: ">",  value: 1.0}
+        - {field: short_increasing, op: "==", value: true}
+    body: |
+      参与度飙升、价格在涨、融券余量也在增加——
+      这三个同时出现，高度符合轧空特征：
+      做空方被迫买回，大量成交涌入，推动价格上涨。
+    note: |
+      轧空期间的参与度飙升是「被动」的——不是主动买入，
+      是空头被挤出去。注意区分轧空结束后的参与度回落。
+
+  - id: strong_accumulation
+    label: 机构在大量买入
+    triggers:
+      all:
+        - {field: spike,            op: "==", value: true}
+        - {field: price_change_pct, op: ">",  value: 1.0}
+    body: |
+      今天机构交易量远高于平时，而且价格在涨。
+      两个方向一致，偏向机构在主动买入。
+      大资金愿意在上涨中买入，说明对后市有信心。
+    note: |
+      「参与度飙升」只说明活跃，是买是卖要靠价格方向辅助判断。
+      结合近期是否有调研或利好公告，判断是否有基本面支撑。
+
+  - id: distribution_warning
+    label: 机构可能在出货
+    triggers:
+      all:
+        - {field: spike,            op: "==", value: true}
+        - {field: price_change_pct, op: "<",  value: -1.0}
+    body: |
+      今天机构交易量远高于平时，但价格在跌。
+      大资金活跃+价格下行，偏向机构在借高位出货
+      （把股票卖给追涨的买家）。
+    note: |
+      出货往往是渐进的，不会一次完成。
+      如果这种情况持续几天，警惕趋势转变。
+      结合融券数据：如果融券也在增加，看空力量更集中。
+
+  - id: spike_direction_unclear
+    label: 大资金在大动作，方向待定
+    triggers:
+      all:
+        - {field: spike, op: "==", value: true}
+    body: |
+      今天机构参与度异常偏高（高于近30天均值1.5个标准差以上），
+      说明有大资金在密集操作，但价格方向不明确，
+      无法判断是买入还是卖出。
+    note: |
+      这种情况可能是：换手（有机构在卖，同时另一家机构在买）、
+      大宗交易、或者机构在趁震荡建仓。
+      等明天的价格方向和融券数据，再判断含义。
+
+  - id: trend_up_with_price_rise
+    label: 机构关注度持续上升，且在涨
+    triggers:
+      all:
+        - {field: trend,            op: "==", value: "上升"}
+        - {field: price_change_pct, op: ">",  value: 0}
+    body: |
+      近5天机构参与度在持续上升，今天价格也在涨。
+      大资金的关注度在缓慢增加，同时买盘在支撑价格——
+      这是比「飙升」更温和但持续性更强的信号。
+    note: |
+      渐进式的机构参与度上升，往往比单日飙升更有意义，
+      因为它说明机构是在有计划地介入，而不是单次大动作。
+
+  - id: trend_up_with_price_drop
+    label: 机构关注度上升，但价格在跌
+    triggers:
+      all:
+        - {field: trend,            op: "==", value: "上升"}
+        - {field: price_change_pct, op: "<",  value: 0}
+    body: |
+      近5天机构参与度在上升，但价格今天在跌。
+      大资金越来越活跃，但方向存疑：
+      可能是在逢跌买入，也可能是在出货。
+    note: |
+      结合融券数据和近期调研情况判断。
+      如果是逢跌买入，往往能看到盘中低点有大买单托住。
+
+  - id: trend_declining
+    label: 机构关注度在下滑
+    triggers:
+      all:
+        - {field: trend, op: "==", value: "下降"}
+    body: |
+      近5天机构参与度在持续下降，
+      大资金对这只股票的操作在减少，关注度在退潮。
+    note: |
+      不一定是坏事——有时候机构买完了，参与度自然回落。
+      结合持仓变化和价格趋势综合判断。
+
+  - id: neutral
+    label: 机构参与度平稳
+    triggers: null
+    body: |
+      机构参与度在正常范围内波动，没有异常。
+      这个信号今天没有特别的参考价值。
+    note: ""

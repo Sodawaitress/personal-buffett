@@ -257,12 +257,12 @@ def _score_news(news: list) -> list:
     filtered.sort(key=lambda x: x[0], reverse=True)
 
     # 批量写 sentiment 到 DB（单次连接，减少开销）
-    updates = [(sentiment(n), n.get("id")) for s, n in filtered if n.get("id")]
+    updates = [{"s": sentiment(n), "nid": n.get("id")} for _, n in filtered if n.get("id")]
     if updates:
         import db
         try:
             with db.get_conn() as c:
-                c.executemany("UPDATE stock_news SET sentiment=? WHERE id=?", updates)
+                c.executemany("UPDATE stock_news SET sentiment=:s WHERE id=:nid", updates)
         except Exception:
             pass
 

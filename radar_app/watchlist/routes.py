@@ -169,6 +169,13 @@ def register_watchlist_routes(app):
         db.remove_user_stock(session['user_id'], code)
         return redirect(url_for('watchlist_page'))
 
+    @app.route('/api/stock/<code>/remove', methods=['DELETE'])
+    @login_required
+    def delete_stock(code):
+        """htmx DELETE — soft-deletes from watchlist, returns empty so htmx swaps the element away."""
+        db.remove_user_stock(session['user_id'], code)
+        return '', 200
+
     @app.route('/api/stock/<code>/status', methods=['POST'])
     @login_required
     def update_stock_status(code):
@@ -177,6 +184,39 @@ def register_watchlist_routes(app):
         if not payload:
             return jsonify({'error': 'invalid status'}), 400
         return jsonify(payload)
+
+    @app.route('/api/watchlist/filter')
+    @login_required
+    def api_watchlist_filter():
+        """WHERE 1=1 dynamic server-side filter for watchlist stocks."""
+        user_id = session['user_id']
+        market = request.args.get('market')
+        grade  = request.args.get('grade')
+
+        query = """
+            SELECT w.stock_code
+            FROM user_watchlist w
+            JOIN stocks s ON s.code = w.stock_code
+            LEFT JOIN (
+                SELECT code, grade, MAX(id) AS id
+                FROM analysis_results GROUP BY code
+            ) a ON a.code = w.stock_code
+            WHERE 1=1
+              AND w.user_id  = :user_id
+              AND w.removed_at IS NULL
+        """
+        params = {"user_id": user_id}
+        if market:
+            query += " AND s.market = :market"
+            params["market"] = market
+        if grade:
+            query += " AND UPPER(COALESCE(a.grade,'')) = :grade"
+            params["grade"] = grade.upper()
+
+        from radar_app.data.core import get_conn
+        with get_conn() as c:
+            rows = list(c.execute(query, params))
+        return jsonify({"codes": [r["stock_code"] for r in rows]})
 
     @app.route('/api/precursor-scan', methods=['POST'])
     @login_required

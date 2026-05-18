@@ -22,7 +22,7 @@ from scripts.config import WATCHLIST, HK_WATCHLIST
 db.init_db()
 
 with db.get_conn() as c:
-    count = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    count = c.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
     if count > 0:
         print(f"DB already has {count} user(s) — skipping bootstrap")
         sys.exit(0)
@@ -33,15 +33,14 @@ webhook = os.environ.get("BOOTSTRAP_WECOM_KEY") or os.environ.get("SERVERCHAN_KE
 print(f"Bootstrapping DB: user={email}, webhook={'set' if webhook else 'empty'}")
 
 with db.get_conn() as c:
+    row = c.execute(
+        "INSERT INTO users(email, display_name, role) VALUES(:email,'日报用户','member') RETURNING id",
+        {"email": email},
+    ).fetchone()
+    user_id = row["id"]
     c.execute(
-        "INSERT INTO users(email, display_name, role) VALUES(?,?,?)",
-        (email, "日报用户", "member"),
-    )
-    user_id = c.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()[0]
-    c.execute(
-        """INSERT INTO user_push_settings(user_id, notify_daily, wecom_webhook)
-           VALUES(?,1,?)""",
-        (user_id, webhook),
+        "INSERT INTO user_push_settings(user_id, notify_daily, wecom_webhook) VALUES(:uid,1,:wh)",
+        {"uid": user_id, "wh": webhook},
     )
 
 for name, code, _ in WATCHLIST:

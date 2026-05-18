@@ -1,27 +1,106 @@
 """Database core connection and schema helpers."""
 
 import os
-import sqlite3
+from contextlib import contextmanager
 from datetime import timedelta, timezone
 
+from sqlalchemy import create_engine, event, text
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-DEFAULT_DB_PATH = os.path.join(PROJECT_ROOT, "data", "radar.db")
-DB_PATH = os.environ.get("RADAR_DB_PATH", DEFAULT_DB_PATH)
+_DEFAULT_SQLITE = os.path.join(PROJECT_ROOT, "data", "radar.db")
+
+# Set DATABASE_URL in env to point at Cloud SQL PostgreSQL in production.
+# Local default: SQLite at data/radar.db
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{_DEFAULT_SQLITE}")
+DB_PATH = _DEFAULT_SQLITE  # kept for scripts that log the path
 CN_TZ = timezone(timedelta(hours=8))
 
+_engine = None
 
+
+def get_engine():
+    global _engine
+    if _engine is None:
+        kw = {}
+        if DATABASE_URL.startswith("sqlite"):
+            kw["connect_args"] = {"check_same_thread": False}
+        _engine = create_engine(DATABASE_URL, **kw)
+        if DATABASE_URL.startswith("sqlite"):
+            @event.listens_for(_engine, "connect")
+            def _set_pragmas(dbapi_conn, _):
+                dbapi_conn.execute("PRAGMA foreign_keys = ON")
+    return _engine
+
+
+@contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    """Auto-committing connection context manager.
+
+    Within a Flask request, reuses one connection from Flask g (US-85).
+    Outside a request (scripts, tests), opens a fresh transaction each call.
+    SQL must use named :param style (not positional ?).
+    Rows support dict(row) and row["key"].
+    """
+    try:
+        from flask import g, has_request_context
+        _in_req = has_request_context()
+    except Exception:
+        _in_req = False
+
+    if _in_req:
+        if "_pbc_conn" not in g:
+            g._pbc_conn = get_engine().connect()
+        conn = g._pbc_conn
+        try:
+            yield _ConnWrapper(conn)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+    else:
+        with get_engine().begin() as _raw:
+            yield _ConnWrapper(_raw)
+
+
+def teardown_request_conn(e=None):
+    """Close the per-request DB connection — call from app.teardown_appcontext."""
+    try:
+        from flask import g
+        conn = g.pop("_pbc_conn", None)
+        if conn is not None:
+            conn.close()
+    except Exception:
+        pass
+
+
+class _ConnWrapper:
+    """Makes SQLAlchemy rows dict-like without changing every call site."""
+
+    def __init__(self, conn):
+        self._c = conn
+
+    def execute(self, query, params=None):
+        stmt = text(query) if isinstance(query, str) else query
+        result = self._c.execute(stmt) if params is None else self._c.execute(stmt, params)
+        return result.mappings()
+
+    def executemany(self, query, seq_of_params):
+        stmt = text(query) if isinstance(query, str) else query
+        return self._c.execute(stmt, list(seq_of_params))
 
 
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    with get_conn() as c:
-        c.executescript(
-            """
+    if DATABASE_URL.startswith("sqlite"):
+        os.makedirs(os.path.dirname(_DEFAULT_SQLITE) or ".", exist_ok=True)
+    # Split on ";" so this works for both SQLite and PostgreSQL.
+    # executescript() is SQLite-only; statement-by-statement is universal.
+    stmts = [s.strip() for s in _SCHEMA_SQL.split(";") if s.strip()]
+    with get_engine().begin() as conn:
+        for stmt in stmts:
+            conn.execute(text(stmt))
+
+
+_SCHEMA_SQL = """
         -- 用户
         CREATE TABLE IF NOT EXISTS users (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -353,9 +432,8 @@ def init_db():
             actual_return_10d REAL,
             correct           INTEGER
         );
-        CREATE INDEX IF NOT EXISTS idx_signal_pred_user ON signal_predictions(user_id, code);
-        """
-        )
+        CREATE INDEX IF NOT EXISTS idx_signal_pred_user ON signal_predictions(user_id, code)
+"""
 
 
 def _migrate():
@@ -370,25 +448,29 @@ def _migrate():
         ("analysis_results", "quant_score", "INTEGER"),
         ("analysis_results", "quant_components", "TEXT"),
         ("stocks", "asset_type", "TEXT DEFAULT '股票'"),
+        ("user_watchlist", "removed_at", "TIMESTAMP"),
     ]
-    with get_conn() as c:
-        for table, col, typedef in new_cols:
-            try:
-                c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
-            except Exception:
-                pass
-
-        # 补填已入库基金的 asset_type（根据名称关键词识别）
-        fund_keywords = ["ETF联接", "ETF", "指数", "LOF", "联接A", "联接C", "联接E"]
+    # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
+    # (PostgreSQL aborts the whole transaction on error; SQLite does not).
+    engine = get_engine()
+    for table, col, typedef in new_cols:
         try:
-            rows = c.execute(
-                "SELECT code, name FROM stocks WHERE asset_type IS NULL OR asset_type='股票'"
-            ).fetchall()
-            for row in rows:
-                name = row["name"] or ""
-                if any(kw in name for kw in fund_keywords):
-                    c.execute(
-                        "UPDATE stocks SET asset_type='场外基金' WHERE code=?", (row["code"],)
-                    )
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}"))
         except Exception:
             pass
+
+    fund_keywords = ["ETF联接", "ETF", "指数", "LOF", "联接A", "联接C", "联接E"]
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(text(
+                "SELECT code, name FROM stocks WHERE asset_type IS NULL OR asset_type='股票'"
+            )).mappings().all()
+            for row in rows:
+                if any(kw in (row["name"] or "") for kw in fund_keywords):
+                    conn.execute(
+                        text("UPDATE stocks SET asset_type='场外基金' WHERE code=:code"),
+                        {"code": row["code"]},
+                    )
+    except Exception:
+        pass

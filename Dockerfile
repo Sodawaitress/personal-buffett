@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=8080 \
     FLASK_DEBUG=0 \
-    RADAR_DB_PATH=/data/radar.db
+    DATABASE_URL=sqlite:////data/radar.db
 
 WORKDIR /app
 
@@ -21,4 +21,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "gunicorn run:app --bind 0.0.0.0:${PORT:-8080} --workers 1 --threads 4 --timeout 180"]
+CMD ["sh", "/app/deploy/start.sh"]
