@@ -104,6 +104,16 @@
 - **US-68 机构雷达叙事重设计（2026-05-03）**：`_classify_inst_sellers()` 区分ETF被动调仓 vs 主动基金；`_build_observations()` 生成"综合来看"观察列表；`_SIGNAL_CONTEXT` 每个信号附"这是什么"人话解释；前兆信号移至页面顶端；`_renderIntention()` 完全重写为叙事结构；`signals_snapshot` 含 inst_top/margin/fund_flow；语言原则：只陈述观察、解释情境，不替用户下结论
 - **US-76 最值得关注榜单（2026-05-06）**：`radar_app/data/signal_events.py` 新模块；11类信号（调研/参与度/融券/主力资金/机构增减持/融资余额）事件检测 + 共振算法（≥2同向信号触发上榜）；`/api/signals/watchlist` GET 端点（读本地缓存，<0.1s）；首页今日信号区块（`has_cn_stocks` 控制显隐，有A股才展示）；上榜卡片（看多/看空方向色条 + 信号tag + 共振进度条）；空态"接近触发"预览（4类信号进度条 + 触发条件提示）；点击跳转 `/stock/{code}?tab=radar`；实测60只A股扫描，8只上榜，5只接近触发
 - **US-76 数据质量修复（2026-05-08）**：主力资金改用 ratio≥3% 相对阈值（原 net>0 对小盘误判）；机构持仓要求≥2家同向才触发（原≥1）；融资余额信号加48h新鲜度门控（`signals_age_h`）；`survey_events` 永久积累表（`core.py` 新建表，`save_precursor_cache` 写入，`_parse_precursor_cache` 回填兜底，历史191条事件backfill完成）；接近触发区增加方向感知（看多/看空预警色标签 + 卡片左侧色条）
+- **US-92 详情页全面重设计（2026-05-18）**：
+  - 4个纯规则函数（`describe_margin_context` / `describe_survey_context` / `describe_participation_context` / `label_news_vs_institution`）在 `scripts/buffett_signals.py`，32个测试全通过
+  - `precursor_history` 表（每日快照 INSERT OR IGNORE + 90天滚动清理）；`signal_predictions` 新增 `signal_type` / `predicted_outcome` 字段
+  - `save_precursor_cache()` 同步写入 `precursor_history`
+  - `/api/predict/<code>` POST 新增 `signal_type` / `predicted_outcome` 字段
+  - 5个 tab URL → 单页 `/stock/<code>`（旧 URL 301 重定向到 `#section` 锚点）
+  - `stock/detail.html`：sticky 锚点导航 + IntersectionObserver 高亮 + sessionStorage 滚动恢复
+  - §2 市场信号：背离摘要卡（新闻×机构9态矩阵）、信号叉乘情境卡（融券/调研/参与度，A股专属）、每条新闻一致性标签（一致/背离/逆向）
+  - 机构雷达懒加载（IntersectionObserver，进入视口才触发）
+  - `backfill_returns.py` 扩展：同时回填 `actual_return_10d`
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）
