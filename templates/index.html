@@ -639,7 +639,7 @@ function _renderTriggeredCard(item) {
     </div>`;
 
   return `
-  <a class="sr-card ${dirClass}" href="/stock/${item.code}?tab=radar">
+  <a class="sr-card ${dirClass}" href="/stock/${item.code}#market">
     <div class="sr-card-side"></div>
     <div class="sr-card-body">
       <div class="sr-card-top">
@@ -681,7 +681,7 @@ function _renderApproachingCard(item) {
   `).join('');
 
   return `
-  <a class="sr-approaching-card sr-approaching-${topDir}" href="/stock/${item.code}?tab=radar">
+  <a class="sr-approaching-card sr-approaching-${topDir}" href="/stock/${item.code}#market">
     <div class="sr-appr-top">
       ${statusDot}
       <span class="sr-code">${item.code}</span>

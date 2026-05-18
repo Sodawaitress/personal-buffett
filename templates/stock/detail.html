@@ -581,6 +581,65 @@
       <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_news_found }}</p>
       {% endif %}
 
+      {# ── 我的判断（信号预测记录）── #}
+      {% if in_watchlist %}
+      <div class="predict-widget" id="predict-widget">
+        <div class="predict-widget-title">我的判断</div>
+        <div class="predict-widget-sub">基于以上信号，你认为接下来 5~10 天？</div>
+
+        {# Signal type selector — only show relevant options #}
+        <div class="predict-sig-row" id="predict-sig-row">
+          {% if market == "cn" and signal_contexts %}
+            {% set mc = signal_contexts.get('margin', {}) %}
+            {% set sv = signal_contexts.get('survey', {}) %}
+            {% set pc = signal_contexts.get('participation', {}) %}
+            {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
+            <button class="predict-sig-btn" data-stype="margin" onclick="selectSigType(this)">融券信号</button>
+            {% endif %}
+            {% if sv and sv.get('intensity', 'none') != 'none' %}
+            <button class="predict-sig-btn" data-stype="survey" onclick="selectSigType(this)">调研信号</button>
+            {% endif %}
+            {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+            <button class="predict-sig-btn" data-stype="participation" onclick="selectSigType(this)">参与度信号</button>
+            {% endif %}
+          {% endif %}
+          {% if divergence_card %}
+          <button class="predict-sig-btn" data-stype="fund_flow" onclick="selectSigType(this)">资金信号</button>
+          {% endif %}
+          <button class="predict-sig-btn predict-sig-btn-active" data-stype="general" onclick="selectSigType(this)">综合判断</button>
+        </div>
+
+        <div class="predict-outcome-row">
+          <span class="predict-outcome-label">这个信号会</span>
+          <div class="predict-outcome-btns">
+            <button class="predict-outcome-btn" data-outcome="confirms" onclick="selectOutcome(this)">✓ 兑现（方向正确）</button>
+            <button class="predict-outcome-btn" data-outcome="fails" onclick="selectOutcome(this)">✗ 落空（反向运动）</button>
+          </div>
+        </div>
+
+        <div class="predict-dir-row">
+          <span class="predict-dir-label">价格方向</span>
+          <div class="predict-dir-btns">
+            <button class="predict-dir-btn predict-dir-up" data-dir="up" onclick="selectDir(this)">▲ 上涨</button>
+            <button class="predict-dir-btn predict-dir-down" data-dir="down" onclick="selectDir(this)">▼ 下跌</button>
+            <button class="predict-dir-btn predict-dir-unsure" data-dir="unsure" onclick="selectDir(this)">— 不确定</button>
+          </div>
+        </div>
+
+        <div class="predict-note-row">
+          <input type="text" id="predict-note" class="predict-note-input" maxlength="80" placeholder="备注（可选，80字以内）">
+        </div>
+
+        <div class="predict-actions">
+          <button class="btn-ink btn-sm" onclick="submitPrediction('{{ stock.code }}')">记录判断</button>
+          <span id="predict-msg" class="predict-msg"></span>
+        </div>
+
+        {# Past predictions #}
+        <div id="predict-history" class="predict-history"></div>
+      </div>
+      {% endif %}
+
     </div>
   </section>
 
@@ -1145,6 +1204,89 @@ function showLetter() {
   {% endif %}
   new bootstrap.Modal(document.getElementById('letter-modal')).show();
 }
+
+// ── 预测 widget ──
+let _predSigType = 'general';
+let _predOutcome = null;
+let _predDir = null;
+
+function selectSigType(btn) {
+  document.querySelectorAll('.predict-sig-btn').forEach(b => b.classList.remove('predict-sig-btn-active'));
+  btn.classList.add('predict-sig-btn-active');
+  _predSigType = btn.dataset.stype;
+}
+function selectOutcome(btn) {
+  document.querySelectorAll('.predict-outcome-btn').forEach(b => b.classList.remove('predict-outcome-btn-active'));
+  btn.classList.add('predict-outcome-btn-active');
+  _predOutcome = btn.dataset.outcome;
+}
+function selectDir(btn) {
+  document.querySelectorAll('.predict-dir-btn').forEach(b => b.classList.remove('predict-dir-btn-active'));
+  btn.classList.add('predict-dir-btn-active');
+  _predDir = btn.dataset.dir;
+}
+
+async function submitPrediction(code) {
+  if (!_predDir) { document.getElementById('predict-msg').textContent = '请先选择方向'; return; }
+  const note = document.getElementById('predict-note').value.trim();
+  const msg  = document.getElementById('predict-msg');
+  msg.textContent = '提交中…';
+  try {
+    const resp = await fetch(`/api/predict/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ direction: _predDir, note, signal_type: _predSigType, predicted_outcome: _predOutcome }),
+    });
+    const d = await resp.json();
+    if (d.ok) {
+      msg.textContent = '✓ 已记录';
+      msg.style.color = 'var(--green)';
+      document.getElementById('predict-note').value = '';
+      _predDir = null; _predOutcome = null;
+      document.querySelectorAll('.predict-dir-btn,.predict-outcome-btn').forEach(b => b.classList.remove('predict-dir-btn-active','predict-outcome-btn-active'));
+      loadPredictionHistory(code);
+    } else {
+      msg.textContent = d.error || '提交失败';
+      msg.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    msg.textContent = '网络错误';
+    msg.style.color = 'var(--red)';
+  }
+}
+
+async function loadPredictionHistory(code) {
+  const container = document.getElementById('predict-history');
+  if (!container) return;
+  try {
+    const rows = await (await fetch(`/api/predict/${code}`)).json();
+    if (!rows.length) { container.innerHTML = ''; return; }
+    const dirLabel = { up: '▲ 看涨', down: '▼ 看跌', unsure: '— 不确定' };
+    const correctLabel = { 1: '<span style="color:var(--green)">✓ 正确</span>', 0: '<span style="color:var(--red)">✗ 错误</span>' };
+    const sigTypeLabel = { margin:'融券', survey:'调研', participation:'参与度', fund_flow:'资金', insider:'内部人', northbound:'北向', block_trade:'大宗', inst_hold:'机构持仓' };
+    container.innerHTML = '<div class="predict-hist-title">历史判断</div>' +
+      rows.map(r => {
+        const stLbl = (r.signal_type && r.signal_type !== 'general') ? `<span class="predict-hist-type">${sigTypeLabel[r.signal_type] || r.signal_type}</span>` : '';
+        const retHtml = r.actual_return_5d != null
+          ? `<span class="predict-hist-return ${r.actual_return_5d >= 0 ? 'up' : 'down'}">${r.actual_return_5d >= 0 ? '+' : ''}${r.actual_return_5d.toFixed(1)}%</span>`
+          : '<span class="predict-hist-pending">待验证</span>';
+        return `<div class="predict-hist-row">
+          <span class="predict-hist-dir">${dirLabel[r.direction] || r.direction}</span>
+          ${stLbl}
+          <span class="predict-hist-date">${r.created_at.slice(0,10)}</span>
+          ${retHtml}
+          ${r.correct != null ? correctLabel[r.correct] || '' : ''}
+          ${r.note ? `<span class="predict-hist-note">${r.note}</span>` : ''}
+        </div>`;
+      }).join('');
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  {% if in_watchlist %}
+  loadPredictionHistory('{{ stock.code }}');
+  {% endif %}
+});
 
 // ── Anchor nav: scroll restoration + IntersectionObserver highlight ──
 (function() {
