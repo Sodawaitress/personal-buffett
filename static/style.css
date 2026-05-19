@@ -2122,6 +2122,76 @@ footer small {
 .news-cst-contrarian { background: #e8f5e9; color: #2e7d32; }
 .news-cst-consistent { background: #f5f5f5; color: var(--ink-muted); }
 
+/* ── Knowledge card trigger + popup ── */
+.kcard-btn {
+  font-size: 11px;
+  color: var(--ink-muted);
+  background: none;
+  border: 1px solid var(--rule-light);
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: pointer;
+  margin-top: 6px;
+  display: inline-block;
+  line-height: 1.4;
+}
+.kcard-btn:hover { color: var(--ink); border-color: var(--ink-muted); }
+
+.kcard-popup {
+  position: absolute;
+  z-index: 3000;
+  width: 320px;
+  background: #fff;
+  border: 1px solid var(--rule-light);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  padding: 14px 16px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.kcard-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.kcard-name { font-weight: 700; font-size: 14px; color: var(--ink); }
+.kcard-situation {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-2, #f2f0eb);
+  color: var(--ink-2);
+  padding: 1px 7px;
+  border-radius: 9px;
+}
+.kcard-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.kcard-close:hover { color: var(--ink); }
+.kcard-one-liner {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+.kcard-body { color: var(--ink-2); margin-bottom: 6px; }
+.kcard-note {
+  font-size: 11.5px;
+  color: #7a5c00;
+  background: #fffbea;
+  border-left: 3px solid #e6a817;
+  padding: 5px 8px;
+  border-radius: 0 4px 4px 0;
+  margin-top: 6px;
+}
+
 /* ── Prediction widget ── */
 .predict-widget {
   margin-top: 32px;
@@ -2215,3 +2285,54 @@ footer small {
 .predict-hist-return { font-weight: 600; font-variant-numeric: tabular-nums; }
 .predict-hist-pending { color: var(--ink-faint); font-style: italic; }
 .predict-hist-note  { color: var(--ink-muted); font-style: italic; }
+
+/* ── US-38 Catalyst banner ── */
+.catalyst-banner {
+  background: #fffcf0;
+  border: 1px solid #e8d98a;
+  border-radius: 6px;
+  padding: 10px 14px 8px;
+  margin-bottom: 12px;
+}
+.catalyst-banner-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a5c00;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+.catalyst-banner-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.catalyst-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff;
+  border: 1px solid #e8d98a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: border-color .15s;
+}
+.catalyst-item:hover { border-color: #c8a000; }
+.catalyst-item.catalyst-today { border-color: #d9534f; background: #fff5f5; }
+.catalyst-item.catalyst-soon  { border-color: #e67e00; background: #fff8f0; }
+.catalyst-badge {
+  font-size: 10px;
+  font-weight: 600;
+  background: #f5efc8;
+  color: #7a5c00;
+  border-radius: 8px;
+  padding: 1px 5px;
+}
+.catalyst-today .catalyst-badge { background: #fddede; color: #b71c1c; }
+.catalyst-soon  .catalyst-badge { background: #ffe8c8; color: #7a3b00; }
+.catalyst-name  { font-weight: 600; }
+.catalyst-when  { font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.catalyst-summary { font-size: 11px; color: var(--ink-faint); }

@@ -504,6 +504,8 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
     buy_watch = _get_buy_watching(user_id)
 
     sections = []
+    total_stocks = len(holdings) + len(buy_watch)
+    failed_stocks = []
 
     if holdings:
         cards = []
@@ -512,6 +514,7 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
             if score >= PUSH_QUALITY_THRESHOLD:
                 cards.append(_stock_card(c, quotes, news_data))
             else:
+                failed_stocks.append(c)
                 print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
         if cards:
             sections.append("## 📊 今日持仓\n\n" + "\n\n".join(cards))
@@ -523,13 +526,19 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
             if score >= PUSH_QUALITY_THRESHOLD:
                 cards.append(_stock_card(c, quotes, news_data))
             else:
+                failed_stocks.append(c)
                 print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
         if cards:
             sections.append("## ⭐ 建议关注（评级买入）\n\n" + "\n\n".join(cards))
 
     if not sections:
+        # 有自选股但全部质量不达标 → 发告知消息，不静默跳过
+        if total_stocks > 0:
+            return (f"股票日报 {date_str}\n\n"
+                    f"今日 {total_stocks} 只自选股数据获取质量不足（可能是网络超时或 AI 分析失败），"
+                    f"请稍后在网页端查看最新数据。")
         return ""
 
-    header = f"**股票日报 {date_str}**\n持仓 {len(holdings)} 只 · 买入候选 {len(buy_watch)} 只\n"
+    header = f"股票日报 {date_str}\n持仓 {len(holdings)} 只 · 买入候选 {len(buy_watch)} 只\n"
     return header + "\n\n---\n\n".join(sections)
 

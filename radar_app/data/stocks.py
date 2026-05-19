@@ -394,6 +394,41 @@ def get_stock_events(code: str, limit: int = 20) -> list:
         return [dict(r) for r in rows]
 
 
+def get_upcoming_events_for_user(user_id: int, days_ahead: int = 7) -> list:
+    """Return events in the next days_ahead days for a user's watchlist stocks."""
+    from datetime import date, timedelta
+    today = date.today().strftime("%Y-%m-%d")
+    horizon = (date.today() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        rows = c.execute(
+            """
+            SELECT e.code,
+                   COALESCE(s.name_cn, s.name, e.code) AS display_name,
+                   e.event_type, e.event_date, e.summary, e.detail_json
+            FROM stock_events e
+            JOIN user_watchlist w ON w.stock_code = e.code
+            JOIN stocks s ON s.code = e.code
+            WHERE w.user_id = :uid
+              AND w.removed_at IS NULL
+              AND e.event_date >= :today
+              AND e.event_date <= :horizon
+            ORDER BY e.event_date ASC, e.id DESC
+            """,
+            {"uid": user_id, "today": today, "horizon": horizon},
+        ).fetchall()
+    result = []
+    seen = set()
+    for r in rows:
+        d = dict(r)
+        key = (d["code"], d["event_date"], d["summary"])
+        if key in seen:
+            continue
+        seen.add(key)
+        d["days_until"] = (date.fromisoformat(d["event_date"]) - date.today()).days
+        result.append(d)
+    return result
+
+
 def get_stock_meta(code: str) -> dict:
     with get_conn() as c:
         row = c.execute("SELECT * FROM stock_meta WHERE code=:code", {"code": code}).fetchone()

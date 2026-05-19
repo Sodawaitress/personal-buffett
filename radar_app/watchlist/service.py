@@ -7,7 +7,7 @@ from radar_app.legacy.pipeline import classify_stock_code, start_pipeline_job
 from radar_app.shared.market import detect_market
 from radar_app.shared.runtime import CN_TZ
 from radar_app.watchlist.presenter import calc_judgment_growth, calc_performance_stats, present_performance_row, present_watchlist_stock
-from radar_app.data.stocks import get_news_sentiment_map
+from radar_app.data.stocks import get_news_sentiment_map, get_upcoming_events_for_user
 from radar_app.watchlist.query import (
     get_active_notifications,
     get_performance_rows,
@@ -37,6 +37,7 @@ def build_watchlist_context(user_id):
         "has_cn_stocks": any(s.get("market") == "cn" for s in stocks),
         "wl_markets": markets,
         "notifications": get_active_notifications(user_id),
+        "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),
         "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
         "now_date": datetime.now(CN_TZ).strftime("%Y-%m-%d"),
     }

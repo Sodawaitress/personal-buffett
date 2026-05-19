@@ -97,7 +97,7 @@
   - `/api/news/<code>` 返回天数从 3 天修正为 7 天
   - `run_letter_only` 存库时漏存 `trade_block` 字段（已补入 save_analysis 调用）
   - 港股/美股 D/E ratio 误显示为"资产负债率"：标签改为"D/E 比率"，D/E>5 时显示 `⚠` + tooltip；`virtual_annual` dict 同步携带 `debt_ratio_note`
-  - ML Phase 1 特征字段从未填充：`_run_layer2` 的 `save_analysis` 调用补填 `feat_sentiment_avg` / `feat_fund_flow_net` / `feat_pe_vs_hist`（`feat_price_momentum` / `feat_fear_greed` 仍为 NULL，待后续补）
+  - ML Phase 1 特征字段从未填充：`_run_layer2` 的 `save_analysis` 调用补填 `feat_sentiment_avg` / `feat_fund_flow_net` / `feat_pe_vs_hist` / `feat_price_momentum`（5日均涨跌幅，stock_prices 计算）/ `feat_fear_greed`（CNN Fear & Greed，macro 快照读取）
   - CLAUDE.md 市场覆盖表补入澳股（AU）和韩股（KR）
 - **US-66 机构意向综合评分（2026-05-01）**：`compute_intention_score()` 加权评分（7信号×权重，tanh归一化）；`_PHASE_TABLE` 五阶段（聪明钱在大量买入/有机构在悄悄建仓/机构暂无明显动向/机构在陆续减持/聪明钱在加速离场）；`format_institutional_section()` 新增意向总览表 + 每股评分+依据行；`run_institutional_radar()` 接入评分计算
 - **US-67 机构前兆信号（2026-05-01）**：`scripts/precursor_signals.py` 新模块；三类前兆信号（机构调研热度`stock_jgdy_tj_em`/融券余量变化`stock_margin_detail_sse/szse`/机构参与度趋势`stock_comment_detail_zlkp_jgcyd_em`）；接入 `compute_intention_score()` 新增3个权重项（survey 1.5/short_selling 1.0/participation 0.7）；所有10个信号描述全部改为人话（用"公司高管用自己的钱买了"而非"高管增持"）；五一假期API返回null的回退处理
@@ -125,18 +125,18 @@
 
 **⚠️ 部分完成 / 有残留 bug（2026-04-16 已修复项见下方）：**
 - **US-55 数据三层分离**：`/api/refresh-news/<code>` POST 端点存在且有1小时缓存 ✅；`/api/news/<code>` GET 端点已修正为返回7天数据 ✅（原为3天）；stock.html 「更新新闻」按钮已存在 ✅；「分析」与「更新新闻」已分离 ✅
-- **US-56 港股/美股财务补强**：`debt_to_equity` 展示已修——非A股标签改为"D/E比率"，>5时显示 `⚠` + tooltip 说明 ✅；yfinance income_stmt 多年趋势抓取已实现（_fetch_1b_financials 有3年趋势） ✅；LLM prompt 禁 markdown 加粗——**待做**
-- **US-59 推送质量门禁**：`_score_report()` 不存在；`data_quality_score` 字段不存在；推送前无质量检查——**待做**
+- **US-56 港股/美股财务补强**：LLM prompt 禁 markdown 加粗 ✅（2026-05-19，buffett_prompts.py 所有 9 个 system prompt 加禁止规则）
+- **US-59 推送质量门禁**：`_score_report()` + 阈值 40/100 ✅；所有持仓质量不达标时改发告知消息（不静默跳过）✅（2026-05-19）
 - **US-60 买入区间+止损位 UI**：===TRADE=== 解析已实现 ✅；trade_block 已写入 DB（run_pipeline **结果**） ✅；`run_letter_only` 漏存 trade_block 已修复 ✅；stock.html 「操作参数」卡片已存在 ✅；app.py 路由未把 trade_block 单独传模板（analysis dict 里有，stock.html 直接读 `analysis.trade_block` 可正常工作） ✅
-- **ML feat_* 字段从未填充**：`_run_layer2` 的 `save_analysis` 调用已补填 `feat_sentiment_avg` / `feat_fund_flow_net` / `feat_pe_vs_hist` ✅；`feat_price_momentum` 和 `feat_fear_greed` 还是 NULL（需要价格历史和宏观数据，后续再补）
+- **ML feat_* 字段从未填充**：`_run_layer2` 的 `save_analysis` 调用已补填 `feat_sentiment_avg` / `feat_fund_flow_net` / `feat_pe_vs_hist` / `feat_price_momentum`（5日均涨跌幅，stock_prices 计算）/ `feat_fear_greed`（CNN Fear & Greed，macro 快照读取）✅（2026-05-19）
+- **US-38 业绩日历与催化剂追踪（2026-05-19）**：`scripts/catalyst_calendar.py`；`run_catalyst_refresh()` 每日从 AKShare 拉取限售解禁（`stock_restricted_release_detail_em`）和重大公告（`stock_notice_report`），存入 `stock_events`（source='auto_unlock'/'auto_notice'）；`get_upcoming_events_for_user(uid, days_ahead=7)` DB 函数；watchlist.html 顶部黄色催化剂横幅（7天内事件，今天/近期色标）；detail.html 事件 tab 新增 share_unlock/earnings_report/major_announcement/earnings_forecast 类型标签；pipeline `main()` 集成调用
+- **Knowledge card popup 接入（2026-05-19）**：3个信号情境卡（融券/调研/参与度）接入 `/api/knowledge/<slug>`，`_kcard` 原始数值存 presenter.py，`data-params` + `JSON.parse` 模式避免 HTML 引号冲突，`.kcard-btn` + `.kcard-popup` CSS 新增
 
 **数据层待补强：**
 - 财务指标实时拉取：AKShare stock_financial_abstract_ths 拿 ROE/净利率/资产负债率（现在全是 NULL）
 - 机构持仓变动：ak.stock_institute_hold / 大股东增减持公告
 - 估值历史：PE/PB 历史百分位（现在只有即时值，没有历史对比）
 - 北向资金：需收盘后运行 pipeline 才能验证 signals.north_flow 非 NULL（US-58 最后一项 AC）
-- US-59 推送质量门禁（_score_report() 待实现）
-- US-56 LLM 禁 markdown 加粗（system prompt 加指令待做）
 
 ---
 

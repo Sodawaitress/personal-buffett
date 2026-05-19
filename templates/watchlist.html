@@ -36,6 +36,29 @@
   </div>
   {% endif %}
 
+  {# ── US-38 近期催化剂事件横幅 ── #}
+  {% if upcoming_events %}
+  <div class="catalyst-banner">
+    <div class="catalyst-banner-title">近期事件</div>
+    <div class="catalyst-banner-list">
+      {% set ev_type_labels = {
+        'share_unlock':       '限售解禁',
+        'earnings_report':    '财务报告',
+        'major_announcement': '重大事项',
+        'earnings_forecast':  '业绩预告',
+      } %}
+      {% for ev in upcoming_events %}
+      <a href="{{ url_for('stock_page', code=ev.code) }}" class="catalyst-item{% if ev.days_until == 0 %} catalyst-today{% elif ev.days_until <= 2 %} catalyst-soon{% endif %}">
+        <span class="catalyst-badge">{{ ev_type_labels.get(ev.event_type, ev.event_type) }}</span>
+        <span class="catalyst-name">{{ ev.display_name }}</span>
+        <span class="catalyst-when">{% if ev.days_until == 0 %}今天{% elif ev.days_until == 1 %}明天{% else %}{{ ev.days_until }}天后{% endif %}</span>
+        <span class="catalyst-summary">{{ ev.summary[:40] }}{% if ev.summary|length > 40 %}…{% endif %}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   {# ── 顶部工具栏 ── #}
   <div class="wl-toolbar">
     <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>

@@ -426,6 +426,40 @@ def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: flo
     except Exception:
         partic_ctx = {}
 
+    # Raw params for knowledge card popups
+    sv_events_list = survey.get("events") or []
+    sv_specific = any(e.get("is_specific") for e in sv_events_list)
+    sv_n_inst = sv_events_list[0].get("n_inst", 0) if sv_events_list else 0
+    try:
+        _d = sv_events_list[0].get("date", "")[:10] if sv_events_list else ""
+        sv_days_ago = (datetime.now(CN_TZ).date() -
+                       datetime.strptime(_d, "%Y-%m-%d").date()).days if _d else 999
+    except Exception:
+        sv_days_ago = 999
+
+    if margin_ctx:
+        margin_ctx["_kcard"] = {
+            "change_pct": sh_change,
+            "price_change_pct": price_change_pct,
+            "pa_spike": pt_spike,
+            "has_survey": sv_count > 0,
+        }
+    if survey_ctx:
+        survey_ctx["_kcard"] = {
+            "has_specific": sv_specific,
+            "n_inst": sv_n_inst,
+            "days_ago": sv_days_ago,
+            "score": float(survey.get("score") or 0),
+            "event_count": len(sv_events_list),
+        }
+    if partic_ctx:
+        partic_ctx["_kcard"] = {
+            "spike": pt_spike,
+            "price_change_pct": price_change_pct,
+            "short_increasing": sh_change > 0,
+            "trend": pt_trend,
+        }
+
     return {"margin": margin_ctx, "survey": survey_ctx, "participation": partic_ctx}
 
 

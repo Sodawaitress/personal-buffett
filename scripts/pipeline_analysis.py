@@ -413,6 +413,31 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
 
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
     _fund_flow_row = db.get_fund_flow(code) if market == "cn" else {}
+
+    # feat_price_momentum: average daily change_pct over last 5 sessions
+    _feat_price_momentum = None
+    try:
+        from radar_app.data.stocks import get_price_history as _get_ph
+        _ph = _get_ph(code, days=6)
+        _changes = [r.get("change_pct") for r in _ph if r.get("change_pct") is not None]
+        if len(_changes) >= 3:
+            _feat_price_momentum = round(sum(_changes[:5]) / len(_changes[:5]), 4)
+    except Exception:
+        pass
+
+    # feat_fear_greed: CNN Fear & Greed index from daily macro snapshot
+    _feat_fear_greed = None
+    try:
+        from radar_app.data.market import get_market_snapshot as _get_snap
+        _snap = _get_snap()
+        if _snap:
+            _fg = (_snap.get("data") or {}).get("fear_greed") or {}
+            _fg_score = _fg.get("score") if isinstance(_fg, dict) else None
+            if _fg_score is not None:
+                _feat_fear_greed = int(_fg_score)
+    except Exception:
+        pass
+
     db.save_analysis(
         code=code,
         period="daily",
@@ -429,6 +454,8 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
         feat_sentiment_avg=round(news_signals.get("sentiment_avg", 0) or 0, 4),
         feat_fund_flow_net=_fund_flow_row.get("main_net"),
         feat_pe_vs_hist=fundamentals.get("pe_percentile_5y"),
+        feat_price_momentum=_feat_price_momentum,
+        feat_fear_greed=_feat_fear_greed,
     )
 
     if trading_params:

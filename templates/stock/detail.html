@@ -197,6 +197,9 @@
             </span>
           </div>
           <div class="sigctx-body">{{ mc.get('full_desc','') }}</div>
+          {% if mc.get('_kcard') %}
+          <button class="kcard-btn" data-slug="short_selling" data-params="{{ mc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">了解更多</button>
+          {% endif %}
         </div>
         {% endif %}
 
@@ -215,6 +218,9 @@
             {% for m in sv.modifiers[:2] %}<span class="sigctx-mod">{{ m }}</span>{% endfor %}
           </div>
           {% endif %}
+          {% if sv.get('_kcard') %}
+          <button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">了解更多</button>
+          {% endif %}
         </div>
         {% endif %}
 
@@ -228,6 +234,9 @@
             </span>
           </div>
           <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
+          {% if pc.get('_kcard') %}
+          <button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">了解更多</button>
+          {% endif %}
         </div>
         {% endif %}
 
@@ -1038,7 +1047,11 @@
           'delist_warning':           t.ev_delist_warning,
           'delist_final':             t.ev_delist_final,
           'major_shareholder_change': t.ev_major_shareholder,
-          'scheme_risk':              t.ev_scheme_risk
+          'scheme_risk':              t.ev_scheme_risk,
+          'share_unlock':             '限售解禁',
+          'earnings_report':          '财务报告',
+          'major_announcement':       '重大事项',
+          'earnings_forecast':        '业绩预告',
         } %}
         {% for ev in events %}
         <div class="event-item event-type-{{ ev.event_type }}">

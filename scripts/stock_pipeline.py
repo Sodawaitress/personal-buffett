@@ -26,6 +26,7 @@ from scripts.macro_fetch import fetch_all_macro
 from scripts.nz_fetch import fetch_rbnz_news, fetch_nzx_announcements, fetch_nzx_earnings_calendar
 from scripts.stock_fetch import fetch_cn_earnings_calendar
 from scripts.institutional_radar import run_institutional_radar
+from scripts.catalyst_calendar import run_catalyst_refresh
 
 
 # ── 运行抓取 ──────────────────────────────────────────
@@ -281,6 +282,13 @@ def main():
     # 报告（存 md；html 留空，后续可加 markdown→html 转换）
     _db.save_report(date_str, html="", md=report)
     print(f"  ✅ 数据库写入完成")
+
+    print("  📅 催化剂日历...")
+    try:
+        cal_result = run_catalyst_refresh()
+        print(f"  ✅ 催化剂事件：解禁 {cal_result.get('unlock',0)} 条 / 公告 {cal_result.get('notice',0)} 条")
+    except Exception as e:
+        print(f"  ⚠️ 催化剂日历失败（不影响推送）: {e}")
 
     print("\n📨 Step 3/3：推送...")
 
