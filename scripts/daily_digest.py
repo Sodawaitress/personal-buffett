@@ -114,6 +114,20 @@ def _build_snapshot(user_id: int) -> dict:
         except Exception:
             pass
 
+        try:
+            with get_conn() as c:
+                rows = c.execute(
+                    "SELECT title, sentiment, published_at FROM stock_news WHERE code=:code ORDER BY published_at DESC LIMIT 5",
+                    {"code": code}
+                ).fetchall()
+                if rows:
+                    snap["news"] = [
+                        {"title": r["title"], "sentiment": r["sentiment"], "date": str(r["published_at"] or "")[:10]}
+                        for r in rows
+                    ]
+        except Exception:
+            pass
+
         stocks.append(snap)
 
     return {
