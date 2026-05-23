@@ -29,6 +29,8 @@ def get_engine():
             @event.listens_for(_engine, "connect")
             def _set_pragmas(dbapi_conn, _):
                 dbapi_conn.execute("PRAGMA foreign_keys = ON")
+                dbapi_conn.execute("PRAGMA journal_mode = WAL")   # 读写并发，precursor 扫描不阻塞登录
+                dbapi_conn.execute("PRAGMA busy_timeout = 15000") # 等锁最多 15 秒再报错
     return _engine
 
 
