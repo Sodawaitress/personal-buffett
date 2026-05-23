@@ -122,21 +122,20 @@ def backfill(dry_run: bool = False):
 
         # 获取当时入场价（用分析当天最接近的价格快照）
         with db.get_conn() as conn:
-            price_row = conn.execute("""
-                SELECT price FROM stock_prices
-                WHERE code=? AND fetched_at LIKE ?
-                ORDER BY fetched_at ASC LIMIT 1
-            """, (code, f"{analysis_date}%")).fetchone()
+            price_row = conn.execute(
+                "SELECT price FROM stock_prices WHERE code=:code AND fetched_at LIKE :pat "
+                "ORDER BY fetched_at ASC LIMIT 1",
+                {"code": code, "pat": f"{analysis_date}%"},
+            ).fetchone()
 
         entry_price = price_row["price"] if price_row else None
         if not entry_price:
-            # 尝试 -1 day
             with db.get_conn() as conn:
-                price_row = conn.execute("""
-                    SELECT price FROM stock_prices
-                    WHERE code=? AND fetched_at <= ?
-                    ORDER BY fetched_at DESC LIMIT 1
-                """, (code, analysis_date + " 23:59:59")).fetchone()
+                price_row = conn.execute(
+                    "SELECT price FROM stock_prices WHERE code=:code AND fetched_at <= :cutoff "
+                    "ORDER BY fetched_at DESC LIMIT 1",
+                    {"code": code, "cutoff": analysis_date + " 23:59:59"},
+                ).fetchone()
             entry_price = price_row["price"] if price_row else None
 
         if not entry_price:
@@ -171,20 +170,124 @@ def backfill(dry_run: bool = False):
               f"{pct_change:+.1f}% | 回填: {list(updates.keys())}")
 
         if not dry_run:
-            set_clause = ", ".join(f"{k}=?" for k in updates)
-            vals = list(updates.values()) + [record_id]
+            set_clause = ", ".join(f"{k}=:{k}" for k in updates)
+            params = {**updates, "rid": record_id}
             with db.get_conn() as conn:
                 conn.execute(
-                    f"UPDATE analysis_results SET {set_clause} WHERE id=?", vals
+                    f"UPDATE analysis_results SET {set_clause} WHERE id=:rid", params
                 )
         updated += 1
 
     print(f"  ✔ 回填完成：{updated} 条")
 
 
+def backfill_predictions(dry_run: bool = False):
+    """US-75 / US-92 · 回填 signal_predictions 的 actual_return_5d/10d + correct。"""
+    today = datetime.now(CN_TZ)
+    cutoff5  = (today - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff10 = (today - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
+
+    with db.get_conn() as conn:
+        # 5d未回填 或 10d未回填 均需处理
+        rows = conn.execute("""
+            SELECT sp.id, sp.code, sp.direction, sp.created_at,
+                   sp.actual_return_5d, sp.actual_return_10d,
+                   sp.signal_type, sp.predicted_outcome,
+                   s.market
+            FROM signal_predictions sp
+            JOIN stocks s ON s.code = sp.code
+            WHERE (
+              (sp.created_at <= :c5 AND sp.actual_return_5d IS NULL)
+              OR (sp.created_at <= :c10 AND sp.actual_return_10d IS NULL)
+            )
+        """, {"c5": cutoff5, "c10": cutoff10}).fetchall()
+
+    print(f"  📋 signal_predictions 待回填: {len(rows)} 条")
+    price_cache: dict[str, float] = {}
+    updated = 0
+
+    for row in rows:
+        code    = row["code"]
+        market  = row["market"] or "cn"
+        created = row["created_at"][:10]
+
+        # Entry price: price snapshot on creation day
+        with db.get_conn() as conn:
+            pr = conn.execute(
+                "SELECT price FROM stock_prices WHERE code=:code AND fetched_at LIKE :pat "
+                "ORDER BY fetched_at ASC LIMIT 1",
+                {"code": code, "pat": f"{created}%"},
+            ).fetchone()
+        entry_price = pr["price"] if pr else None
+
+        if not entry_price:
+            print(f"    ⚠️ {code} {created} 无入场价，跳过")
+            continue
+
+        if code not in price_cache:
+            current = get_current_price(code, market)
+            if current:
+                price_cache[code] = current
+        current_price = price_cache.get(code)
+
+        if not current_price:
+            print(f"    ⚠️ {code} 无当前价格，跳过")
+            continue
+
+        ret5d = round((current_price - entry_price) / entry_price * 100, 2)
+        direction = row["direction"]
+        if direction == "up":
+            correct = 1 if ret5d > 3 else (0 if ret5d < -3 else None)
+        elif direction == "down":
+            correct = 1 if ret5d < -3 else (0 if ret5d > 3 else None)
+        else:
+            correct = None
+
+        # 10d return: only compute if 10d have elapsed and not yet filled
+        need_10d = row["actual_return_10d"] is None
+        created_dt = datetime.fromisoformat(row["created_at"].replace(" ", "T"))
+        if created_dt.tzinfo is None:
+            from radar_app.shared.runtime import CN_TZ as _tz
+            created_dt = created_dt.replace(tzinfo=_tz)
+        elapsed_days = (today - created_dt).total_seconds() / 86400
+        ret10d = None
+        if need_10d and elapsed_days >= 10:
+            ret10d = ret5d  # reuse current price for now (same snapshot in backfill)
+
+        now_str = today.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"    ✅ {code} {created} | {direction} | "
+              f"¥{entry_price:.2f}→¥{current_price:.2f} | 5d:{ret5d:+.1f}%"
+              f"{' 10d:' + f'{ret10d:+.1f}%' if ret10d is not None else ''} | correct={correct}")
+
+        if not dry_run:
+            need_5d = row["actual_return_5d"] is None
+            updates = {"ts": now_str, "rid": row["id"]}
+            set_clauses = ["resolved_at=:ts"]
+            if need_5d:
+                updates.update({"r5": ret5d, "c": correct})
+                set_clauses += ["actual_return_5d=:r5", "correct=:c"]
+            if ret10d is not None:
+                updates["r10"] = ret10d
+                set_clauses.append("actual_return_10d=:r10")
+            if len(set_clauses) > 1:  # more than just resolved_at
+                with db.get_conn() as conn:
+                    conn.execute(
+                        f"UPDATE signal_predictions SET {', '.join(set_clauses)} WHERE id=:rid",
+                        updates,
+                    )
+        updated += 1
+
+    print(f"  ✔ 预测回填完成：{updated} 条")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="只打印，不写入")
+    parser.add_argument("--predictions-only", action="store_true", help="只回填预测，不回填分析")
     args = parser.parse_args()
-    backfill(dry_run=args.dry_run)
+    if args.predictions_only:
+        backfill_predictions(dry_run=args.dry_run)
+    else:
+        backfill(dry_run=args.dry_run)
+        backfill_predictions(dry_run=args.dry_run)

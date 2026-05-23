@@ -1,0 +1,68 @@
+name: 机构背离分（Institution Divergence Score）
+slug: divergence_score
+one_liner: 量化消息面与机构真实行为的背离程度，识别出货陷阱 vs 真实机会
+
+# 设计来源：2026-05-14 特朗普访华复盘
+# 核心思路：好消息 + 机构行为背离 = 出货；好消息 + 机构行为共振 = 真实机会
+# 分值范围：-6 到 +6
+
+dimensions:
+
+  short_score:
+    name: 融券信号
+    description: 融券余额变化率，做空倾向越强分越低
+    range: [-2, +2]
+    rules:
+      - {condition: "change_pct > +15%",         score: -2, label: "做空大幅加仓"}
+      - {condition: "+5% < change_pct <= +15%",  score: -1, label: "做空小幅加仓"}
+      - {condition: "-5% <= change_pct <= +5%",  score:  0, label: "基本不变"}
+      - {condition: "-15% <= change_pct < -5%",  score: +1, label: "做空小幅撤退"}
+      - {condition: "change_pct < -15%",          score: +2, label: "做空大幅撤退"}
+    data_field: "signals_json.margin_change_pct"
+
+  inst_quality_score:
+    name: 机构持仓质量
+    description: 不只看增减持家数，更看增持方类型（主动 vs 被动ETF）
+    range: [-2, +2]
+    rules:
+      - {condition: "净减持 且 有主动基金/外资撤",   score: -2, label: "主动资金出逃"}
+      - {condition: "净减持 且 全是被动ETF调整",     score: -1, label: "ETF掩护出货"}
+      - {condition: "净持平 或 数据不足",            score:  0, label: "信号不明"}
+      - {condition: "净增持 且 全是被动ETF",         score: +1, label: "被动配置，不算主动看好"}
+      - {condition: "净增持 且 有主动基金/QFII/社保", score: +2, label: "主动资金进场"}
+    data_field: "signals_json.inst_top（需判断机构类型）"
+    etf_keywords: ["ETF", "指数", "联接", "LOF"]   # 名字含这些词视为被动
+
+  survey_consistency_score:
+    name: 调研-做空一致性
+    description: 调研热度高但融券也增 = 矛盾信号（机构调研是为了卖出）
+    range: [-2, +2]
+    rules:
+      - {condition: "调研活跃 且 融券增加",   score: -2, label: "调研-做空矛盾，警惕"}
+      - {condition: "无调研记录",            score:  0, label: "中性"}
+      - {condition: "调研活跃 且 融券不变",   score: +1, label: "正常"}
+      - {condition: "调研活跃 且 融券减少",   score: +2, label: "调研-做空共振看多"}
+    data_field: "precursor_cache.survey + signals_json.margin_change_pct"
+
+interpretation:
+  "-6 ~ -3": {label: "🔴 出货陷阱", action: "机构在利用消息出货，不要追"}
+  "-2 ~  0": {label: "🟡 信号混乱", action: "消息面和机构行为不一致，观望"}
+  "+1 ~ +3": {label: "🟢 行为支持", action: "机构行为与消息共振，可以关注"}
+  "+4 ~ +6": {label: "✅ 强共振",   action: "消息+机构+资金全面共振，真实机会"}
+
+case_validation_2026_05_14:
+  event: 特朗普访华17位CEO
+  results:
+    300750_宁德时代:   {short: +2, inst: -1, survey: 0, total: +1, label: "🟢 唯一正分"}
+    300308_中际旭创:   {short: -2, inst: -1, survey: 0, total: -3, label: "🔴 出货陷阱"}
+    300433_蓝思科技:   {short: -2, inst: -1, survey: -2, total: -5, label: "🔴 最差，调研矛盾"}
+    600111_北方稀土:   {short: -1, inst: -1, survey: 0, total: -2, label: "🟡 ETF掩护"}
+    600893_航发动力:   {short: -2, inst: -1, survey: 0, total: -3, label: "🔴"}
+    601111_中国国航:   {short: -1, inst: 0,  survey: 0, total: -1, label: "🟡"}
+
+implementation_notes:
+  - "machine_readable: 主动/被动机构识别需要维护一个机构类型字典（ETF名单）"
+  - "margin_change_pct: 现在 signals_json 里已有此字段，可直接用"
+  - "survey consistency: 需要 precursor_cache.survey.events 和 margin_change_pct 联动计算"
+  - "建议存入 signals_json.divergence_score（总分）和 signals_json.divergence_breakdown（分项）"
+  - "在机构雷达 tab 显示，最新信号 chip 颜色也可参考此分"

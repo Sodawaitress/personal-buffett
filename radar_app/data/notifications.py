@@ -7,17 +7,20 @@ from radar_app.data.core import get_conn
 
 def check_poor_rating_streak(code: str, user_id: int) -> list:
     with get_conn() as c:
-        row = c.execute("SELECT status FROM user_watchlist WHERE user_id=? AND stock_code=?", (user_id, code)).fetchone()
+        row = c.execute(
+            "SELECT status FROM user_watchlist WHERE user_id=:uid AND stock_code=:code",
+            {"uid": user_id, "code": code},
+        ).fetchone()
         if not row or row["status"] == "holding":
             return []
 
         rows = c.execute(
             """
             SELECT grade FROM analysis_results
-            WHERE code=? AND period='daily' AND grade IS NOT NULL
+            WHERE code=:code AND period='daily' AND grade IS NOT NULL
             ORDER BY id DESC LIMIT 6
-        """,
-            (code,),
+            """,
+            {"code": code},
         ).fetchall()
 
         if len(rows) < 6:
@@ -34,21 +37,19 @@ def create_notification(user_id: int, code: str, grades: list):
         existing = c.execute(
             """
             SELECT id FROM user_notifications
-            WHERE user_id=? AND code=? AND type='poor_rating'
+            WHERE user_id=:uid AND code=:code AND type='poor_rating'
               AND dismissed_at IS NULL
-              AND (snoozed_until IS NULL OR snoozed_until < ?)
-        """,
-            (user_id, code, today),
+              AND (snoozed_until IS NULL OR snoozed_until < :today)
+            """,
+            {"uid": user_id, "code": code, "today": today},
         ).fetchone()
         if existing:
             return
         msg = f"该股票最近6次评级均为 D 级：{', '.join(grades)}"
         c.execute(
-            """
-            INSERT INTO user_notifications(user_id, code, type, message)
-            VALUES (?, ?, 'poor_rating', ?)
-        """,
-            (user_id, code, msg),
+            "INSERT INTO user_notifications(user_id, code, type, message) "
+            "VALUES (:uid, :code, 'poor_rating', :msg)",
+            {"uid": user_id, "code": code, "msg": msg},
         )
 
 
@@ -61,11 +62,11 @@ def get_active_notifications(user_id: int) -> list:
                    s.name AS stock_name
             FROM user_notifications n
             LEFT JOIN stocks s ON s.code = n.code
-            WHERE n.user_id=? AND n.dismissed_at IS NULL
-              AND (n.snoozed_until IS NULL OR n.snoozed_until < ?)
+            WHERE n.user_id=:uid AND n.dismissed_at IS NULL
+              AND (n.snoozed_until IS NULL OR n.snoozed_until < :today)
             ORDER BY n.created_at DESC
-        """,
-            (user_id, today),
+            """,
+            {"uid": user_id, "today": today},
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -73,10 +74,16 @@ def get_active_notifications(user_id: int) -> list:
 def snooze_notification(notif_id: int, user_id: int):
     until = (datetime.now(timezone.utc) + timedelta(days=60)).strftime("%Y-%m-%d")
     with get_conn() as c:
-        c.execute("UPDATE user_notifications SET snoozed_until=? WHERE id=? AND user_id=?", (until, notif_id, user_id))
+        c.execute(
+            "UPDATE user_notifications SET snoozed_until=:until WHERE id=:id AND user_id=:uid",
+            {"until": until, "id": notif_id, "uid": user_id},
+        )
 
 
 def dismiss_notification(notif_id: int, user_id: int):
     now = datetime.now(timezone.utc).isoformat()
     with get_conn() as c:
-        c.execute("UPDATE user_notifications SET dismissed_at=? WHERE id=? AND user_id=?", (now, notif_id, user_id))
+        c.execute(
+            "UPDATE user_notifications SET dismissed_at=:now WHERE id=:id AND user_id=:uid",
+            {"now": now, "id": notif_id, "uid": user_id},
+        )

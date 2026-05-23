@@ -1,0 +1,1234 @@
+/* stock.css — Stock detail page tab styles */
+
+/* ── tabs ── */
+/* ── Sub-page navigation (replaces tab-nav for page-per-tab layout) ── */
+.stock-subnav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--rule);
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.subnav-link {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 10px 16px;
+  margin-bottom: -2px;
+  cursor: pointer;
+  color: var(--ink-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.subnav-link:hover { color: var(--ink); }
+.subnav-link.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+/* ── Stock page body wrapper ── */
+.stock-page-body {
+  min-height: 240px;
+  padding-top: 4px;
+}
+
+/* ── Subnav with hint subtitles ── */
+.subnav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.subnav-label { display: block; }
+.subnav-hint {
+  font-size: 9px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+  line-height: 1;
+  transition: color .15s;
+}
+.subnav-link.active .subnav-hint { color: var(--ink-muted); }
+.subnav-link:hover .subnav-hint  { color: var(--ink-muted); }
+
+/* ── Verdict bar (letter page top) ── */
+.verdict-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 5px solid;
+}
+.verdict-bar.verdict-A, .verdict-bar.verdict-B {
+  background: #f0f9f1;
+  border-left-color: #2e7d32;
+}
+.verdict-bar.verdict-C {
+  background: #fafaf4;
+  border-left-color: #b8952a;
+}
+.verdict-bar.verdict-D, .verdict-bar.verdict-F {
+  background: #fef5f5;
+  border-left-color: #c62828;
+}
+.verdict-grade-big {
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: inherit;
+  flex-shrink: 0;
+}
+.verdict-bar.verdict-A .verdict-grade-big, .verdict-bar.verdict-B .verdict-grade-big { color: #1b5e20; }
+.verdict-bar.verdict-C .verdict-grade-big { color: #856800; }
+.verdict-bar.verdict-D .verdict-grade-big, .verdict-bar.verdict-F .verdict-grade-big { color: #b71c1c; }
+.verdict-body { flex: 1; min-width: 0; }
+.verdict-conclusion {
+  font-family: -apple-system, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.verdict-date {
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+
+/* ── Dimension pills (replaces brief-dims grid) ── */
+.dim-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-light);
+}
+.dim-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--paper);
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+  padding: 7px 12px;
+  min-width: 120px;
+  flex: 1 1 120px;
+}
+.dim-pill-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink-muted);
+}
+.dim-pill-val {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+
+/* ── Resonance hero (signals page top) ── */
+.resonance-hero {
+  padding: 20px 20px 16px;
+  border-radius: 8px;
+  border-left: 6px solid;
+  margin-bottom: 20px;
+  position: relative;
+}
+.resonance-hero.resonance-bullish { border-left-color: #2e7d32; background: #f0f9f1; }
+.resonance-hero.resonance-bearish { border-left-color: #c62828; background: #fef5f5; }
+.resonance-hero.resonance-mixed   { border-left-color: #c8781a; background: #fff8f1; }
+
+.resonance-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.resonance-hero-dir {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+.resonance-hero.resonance-bullish .resonance-hero-dir { color: #1b5e20; }
+.resonance-hero.resonance-bearish .resonance-hero-dir { color: #b71c1c; }
+.resonance-hero.resonance-mixed   .resonance-hero-dir { color: #bf360c; }
+
+.resonance-hero-score {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 4px;
+}
+.rdot-lg {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+}
+.resonance-hero.resonance-bullish .rdot-lg.rdot-on { background: #2e7d32; }
+.resonance-hero.resonance-bearish .rdot-lg.rdot-on { background: #c62828; }
+.resonance-hero.resonance-mixed   .rdot-lg.rdot-on { background: #c8781a; }
+.rdot-lg.rdot-off { background: #d5d0c8; }
+.resonance-hero-score-text {
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-family: -apple-system, sans-serif;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.resonance-hero-combo {
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.resonance-hero-diverg {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #bf360c;
+  font-family: -apple-system, sans-serif;
+}
+
+/* ── Signal column improvements ── */
+.signal-col-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+  border-bottom: 2px solid var(--ink);
+}
+.signal-col-cred {
+  font-size: 9px;
+  color: var(--ink-faint);
+  font-family: -apple-system, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--rule-light);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ── Metric card with verdict tint ── */
+.fund-metric-card.verdict-good { border-bottom: 3px solid #2e7d32; }
+.fund-metric-card.verdict-warn { border-bottom: 3px solid #b8952a; }
+.fund-metric-card.verdict-bad  { border-bottom: 3px solid #c62828; }
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .stock-masthead { grid-template-columns: auto 1fr; }
+  .stock-masthead-right { grid-column: 1 / 3; grid-row: 3; flex-direction: row; align-items: center; justify-content: flex-start; }
+  .resonance-hero-top { flex-direction: column; gap: 8px; }
+  .dim-pills { gap: 6px; }
+  .dim-pill { min-width: 100px; }
+}
+
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--rule);
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 10px 16px;
+  margin-bottom: -2px;
+  cursor: pointer;
+  color: var(--ink-muted);
+  transition: color .15s;
+}
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); }
+.tab-count {
+  font-size: 10px;
+  background: var(--rule-light);
+  padding: 1px 5px;
+  margin-left: 4px;
+}
+
+/* ── brief tab ── */
+.brief-block { padding: 4px 0; }
+.brief-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.brief-conclusion {
+  font-family: -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  flex: 1;
+}
+.brief-date {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-family: -apple-system, sans-serif;
+}
+.brief-reasoning {
+  font-family: Georgia, serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  margin: 0 0 16px;
+}
+.brief-letter-hint { margin-bottom: 20px; }
+
+.brief-dims {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-light);
+}
+.brief-dim {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dim-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink-muted);
+}
+.dim-val {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* ── 操作参数卡片（===TRADE===） ── */
+.trade-block {
+  margin-top: 16px;
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.trade-block-title {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+}
+.trade-rows { padding: 4px 0; }
+.trade-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--rule-light);
+  font-size: 13px;
+}
+.trade-row:last-child { border-bottom: none; }
+.trade-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  min-width: 90px;
+}
+.trade-val {
+  font-family: Georgia, serif;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.analysis-pending-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  font-family: -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--gold);
+}
+.analysis-pending-block .spinner {
+  width: 16px; height: 16px;
+  border-width: 2px;
+}
+
+/* ── history tab ── */
+.history-item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule-light);
+}
+.history-item:last-child { border-bottom: none; }
+.history-current { background: #fffdf5; padding: 16px; margin-bottom: 8px; border: 1px solid var(--gold); }
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.history-conclusion {
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+}
+.history-date {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-family: -apple-system, sans-serif;
+}
+.history-reasoning {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── data tab ── */
+.data-section-title {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+  margin-bottom: 10px;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--rule);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-muted);
+}
+.data-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--rule-light);
+  color: var(--ink-2);
+}
+.data-table .up   { color: var(--red); font-weight: 600; }
+.data-table .down { color: var(--green); font-weight: 600; }
+
+@media (max-width: 768px) {
+  .stock-header { flex-direction: column; gap: 12px; }
+  .stock-header-right { text-align: left; }
+  .brief-dims { grid-template-columns: 1fr 1fr; }
+}
+
+/* ═══════════════════════════════════════════════
+   US-12 批量多选
+   ═══════════════════════════════════════════════ */
+.holding-checkbox {
+  display: none;  /* JS 控制显示 */
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 6px;
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.holding-checkbox input[type=checkbox] {
+  width: 16px; height: 16px;
+  cursor: pointer;
+  accent-color: var(--ink);
+}
+
+.holding-card.card-selected {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.batch-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--ink);
+  color: #fff;
+  gap: 16px;
+}
+
+.batch-count {
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.batch-bar .btn-ink {
+  background: #fff;
+  color: var(--ink);
+}
+.batch-bar .btn-outline-ink {
+  border-color: rgba(255,255,255,.6);
+  color: #fff;
+}
+.batch-bar .btn-outline-ink:hover {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+}
+.batch-bar .btn-text {
+  color: rgba(255,255,255,.7);
+  text-decoration: underline;
+}
+.batch-bar .btn-text:hover { color: #fff; }
+
+/* ── Add card (+ 卡) ── */
+.add-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1.5px dashed var(--rule);
+  background: transparent;
+  transition: border-color .15s, background .15s;
+}
+.add-card:hover { border-color: var(--ink); background: var(--paper-2); }
+.add-card-icon {
+  font-size: 32px;
+  color: var(--ink-faint);
+  transition: color .15s, transform .15s;
+}
+.add-card:hover .add-card-icon { color: var(--ink); transform: scale(1.1); }
+
+/* ═══════════════════════════════════════════════
+   US-18 · 有持仓时的紧凑题头
+   ═══════════════════════════════════════════════ */
+.front-masthead-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 0 16px;
+  border-bottom: 3px double var(--rule);
+  margin-bottom: 28px;
+}
+
+.front-compact-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.front-compact-date {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-muted);
+}
+
+.btn-buffett-hero {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--paper-2);
+  background: var(--ink);
+  border: none;
+  padding: 12px 32px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+.btn-buffett-hero:hover {
+  background: var(--ink-2);
+  transform: translateY(-1px);
+}
+.btn-buffett-hero:active { transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════
+   US-19 · 视觉分层：持仓（主层） vs 新闻（次层）
+   ═══════════════════════════════════════════════ */
+.news-section-wrap {
+  background: #e8e3da;
+  margin: 0 -24px;          /* 延伸到容器边缘 */
+  padding: 28px 24px 40px;
+  border-top: 2px solid var(--rule-light);
+}
+
+/* 新闻区字体降色降号 */
+.news-section-wrap .news-headline {
+  font-size: 13.5px;
+}
+.news-section-wrap .news-byline {
+  color: #888;
+}
+.news-section-wrap .section-label {
+  color: var(--ink-2);
+}
+.news-section-wrap .col-subhead {
+  color: #999;
+}
+
+/* ═══════════════════════════════════════════════
+   US-23 · 价值档案页
+   ═══════════════════════════════════════════════ */
+.fund-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 20px 0 16px;
+}
+.fund-title {
+  font-family: Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.fund-section {
+  margin-bottom: 40px;
+}
+.fund-section-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+}
+.fund-empty {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 13px;
+  padding: 12px 0;
+}
+.fund-accumulating {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.fund-note {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 12px;
+}
+.fund-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+/* ── 评级时间线 ── */
+.rating-timeline { padding: 8px 0; }
+.rating-entry {
+  display: grid;
+  grid-template-columns: 90px 24px 1fr;
+  gap: 0 12px;
+  align-items: start;
+  margin-bottom: 0;
+}
+.rating-date {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-muted);
+  padding-top: 3px;
+  text-align: right;
+}
+.rating-dot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rating-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.rating-dot.grade-dot-a     { background: #2d7a2d; }
+.rating-dot.grade-dot-b-plus { background: #4a9a4a; }
+.rating-dot.grade-dot-b     { background: var(--gold); }
+.rating-dot.grade-dot-b-minus{ background: #b8952a; }
+.rating-dot.grade-dot-c     { background: var(--ink-faint); }
+.rating-dot.grade-dot-d     { background: var(--red); }
+.rating-line {
+  width: 1px;
+  flex-grow: 1;
+  min-height: 28px;
+  background: var(--rule-light);
+  margin: 4px 0;
+}
+.rating-body { padding: 0 0 20px; }
+.rating-conclusion {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-left: 8px;
+}
+.rating-snippet {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ── 财务指标网格 ── */
+.fund-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.fund-metric-card {
+  border: 1px solid var(--rule-light);
+  padding: 12px 14px;
+  background: var(--paper-2);
+}
+.fund-metric-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+.fund-metric-value {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── 资金流图表 ── */
+.fund-chart-wrap {
+  background: var(--paper-2);
+  border: 1px solid var(--rule-light);
+  padding: 16px;
+  margin-top: 12px;
+}
+.ff-summary {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-top: 12px;
+}
+.fund-in  { color: var(--green); }
+.fund-out { color: var(--red); }
+
+/* ── 护城河占位条 ── */
+.fund-moat-grid { margin-top: 12px; }
+.fund-moat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.fund-moat-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink-2);
+  width: 80px;
+  flex-shrink: 0;
+}
+.fund-moat-bar-wrap {
+  flex-grow: 1;
+  height: 8px;
+  background: var(--rule-light);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.fund-moat-bar { height: 100%; border-radius: 2px; }
+.fund-moat-empty { width: 0; background: var(--ink-faint); }
+
+/* ── US-40 技术支撑位 Price Ladder ── */
+.tech-ladder {
+  font-family: -apple-system, sans-serif;
+  font-size: 13px;
+  position: relative;
+}
+.tech-level {
+  display: grid;
+  grid-template-columns: 60px 20px 1fr 90px 70px;
+  align-items: center;
+  gap: 0 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule-light);
+}
+.tech-level:last-child { border-bottom: none; }
+.tech-price-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: right;
+}
+.tech-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  justify-self: center;
+  flex-shrink: 0;
+}
+.tech-dot-above { background: #c62828; }   /* 红：在现价上方 = 压力 */
+.tech-dot-below { background: #2e7d32; }   /* 绿：在现价下方 = 支撑 */
+.tech-label-wrap { display: flex; flex-direction: column; gap: 1px; }
+.tech-label-name { font-weight: 600; color: var(--ink); font-size: 12px; }
+.tech-label-desc { font-size: 11px; color: var(--ink-faint); }
+.tech-bar-wrap {
+  height: 6px;
+  background: var(--rule-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.tech-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s ease;
+}
+.tech-bar-above { background: #ef9a9a; }   /* 淡红：压力 */
+.tech-bar-below { background: #a5d6a7; }   /* 淡绿：支撑 */
+.tech-pct-badge {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.tech-pct-above { color: #c62828; }
+.tech-pct-below { color: #2e7d32; }
+
+/* 现价行 */
+.tech-current-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  margin: 4px 0;
+}
+.tech-current-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--ink);
+  flex-shrink: 0;
+}
+.tech-current-price {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  margin-right: 4px;
+}
+.tech-current-label {
+  font-size: 11px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+/* 无支撑警告 */
+.tech-danger-banner {
+  background: #fdf3f3;
+  border-left: 3px solid #c62828;
+  border-radius: 0 4px 4px 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #c62828;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+.tech-safe-banner {
+  background: #f3fdf4;
+  border-left: 3px solid #2e7d32;
+  border-radius: 0 4px 4px 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #2e7d32;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+/* VWAP 成本块 */
+.tech-vwap-block {
+  margin-top: 16px;
+  background: #f8f5ef;
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.tech-vwap-item { display: flex; flex-direction: column; gap: 3px; }
+.tech-vwap-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-muted); font-weight: 700; }
+.tech-vwap-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.tech-vwap-note { font-size: 12px; }
+.tech-vwap-footnote {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--rule-light);
+  padding-top: 10px;
+  line-height: 1.6;
+}
+
+/* ══════════════════════════════════════════════════
+   US-65 · 差评预警横幅
+   ══════════════════════════════════════════════════ */
+
+.notif-banner {
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  background: #fffbeb;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.notif-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.notif-banner-header:hover { background: #fef3c7; }
+.notif-banner-icon { font-size: 14px; }
+.notif-banner-text { flex: 1; font-size: 13px; color: #92400e; font-weight: 600; }
+.notif-banner-toggle { font-size: 12px; color: #b45309; white-space: nowrap; }
+
+.notif-panel {
+  border-top: 1px solid #fde68a;
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #fde68a;
+}
+.notif-item:last-child { border-bottom: none; padding-bottom: 0; }
+.notif-item-info { flex: 1; }
+.notif-stock-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+.notif-stock-name:hover { text-decoration: underline; }
+.notif-stock-code {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-muted);
+  margin-left: 4px;
+}
+.notif-message { font-size: 12px; color: #92400e; margin-top: 3px; }
+.notif-date { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+.notif-item-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.notif-btn {
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.notif-btn-remove {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.notif-btn-remove:hover { background: #fecaca; }
+.notif-btn-snooze {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
+}
+.notif-btn-snooze:hover { background: #dcfce7; }
+
+/* ══════════════════════════════════════════════════
+   US-63 · 新闻 tab 信号面板
+   ══════════════════════════════════════════════════ */
+
+.signal-panel {
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.signal-panel-title {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+  background: var(--bg-wash, #f8f6f1);
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--rule-light);
+}
+.signal-group {
+  border-bottom: 1px solid var(--rule-light);
+}
+.signal-group:last-child { border-bottom: none; }
+.signal-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold);
+  padding: 8px 14px 4px;
+}
+.signal-items {
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.signal-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.signal-key {
+  min-width: 80px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.signal-val {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.signal-val.muted { color: var(--ink-faint); font-style: italic; }
+.signal-val.up   { color: #c62828; }
+.signal-val.down { color: #2e7d32; }
+
+/* ── inst_top detail rows ──────────────────────────── */
+.signal-item-inst { padding-left: 8px; border-left: 2px solid var(--rule); }
+.inst-name        { min-width: 100px !important; }
+.inst-type-tag    { display: inline-block; padding: 0 5px; border-radius: 8px; font-size: 10px; font-weight: 600; margin-right: 4px; }
+.inst-tag-passive { background: #fff8e1; color: #8d5e00; border: 1px solid #ffe082; }
+.inst-tag-active  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.inst-ratio       { color: var(--ink-faint); font-size: 11px; margin-left: 4px; }
+
+/* ── 机构背离分 inline chip (signal panel) ──────────── */
+.diverg-chip-inline {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.diverg-trap      { background: #fde8e8; color: #c62828; border: 1px solid #ef9a9a; }
+.diverg-mixed     { background: #fff8e1; color: #8d5e00; border: 1px solid #ffe082; }
+.diverg-supported { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.diverg-resonance { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+/* ═══════════════════════════════════════════════════════
+   US-88 · 综合研判卡片 + 三列信号地图
+   ═══════════════════════════════════════════════════════ */
+
+/* 综合研判卡片 */
+.resonance-card {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid var(--rule);
+  background: var(--bg-wash, #f8f6f1);
+  margin-bottom: 14px;
+}
+.resonance-card.resonance-bullish { border-left-color: #2e7d32; background: #f1f8f2; }
+.resonance-card.resonance-bearish { border-left-color: #c62828; background: #fef5f5; }
+.resonance-card.resonance-mixed   { border-left-color: #e65100; background: #fff8f1; }
+
+.resonance-row   { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.resonance-dir-label {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: rgba(0,0,0,.05);
+}
+.resonance-card.resonance-bullish .resonance-dir-label { background: #c8e6c9; color: #1b5e20; }
+.resonance-card.resonance-bearish .resonance-dir-label { background: #ffcdd2; color: #b71c1c; }
+.resonance-card.resonance-mixed   .resonance-dir-label { background: #ffe0b2; color: #bf360c; }
+
+.resonance-score { display: flex; align-items: center; gap: 4px; }
+.rdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.rdot-off { background: #ddd; }
+.resonance-card.resonance-bullish .rdot-on { background: #2e7d32; }
+.resonance-card.resonance-bearish .rdot-on { background: #c62828; }
+.resonance-card.resonance-mixed   .rdot-on { background: #e65100; }
+.resonance-score-text { font-size: 11px; color: var(--ink-muted); margin-left: 2px; }
+
+.resonance-combo  { margin-top: 6px; font-size: 12px; color: var(--ink); font-weight: 500; }
+.resonance-diverg { margin-top: 4px; font-size: 11px; color: #e65100; }
+
+/* 三列信号地图 */
+.signal-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 768px) {
+  .signal-3col { grid-template-columns: 1fr; }
+}
+
+.signal-col {
+  background: #fff;
+  border: 1px solid var(--rule-light, #e8e3d8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.signal-col-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-light, #e8e3d8);
+}
+.signal-col-title { font-size: 11px; font-weight: 700; color: var(--ink); }
+.signal-col-cred  { font-size: 10px; color: var(--ink-faint); }
+
+/* Signal rows */
+.srow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4px 0;
+  border-bottom: 1px solid #f5f4f0;
+  gap: 6px;
+  min-width: 0;
+}
+.srow:last-child { border-bottom: none; }
+.srow-label { font-size: 11px; color: var(--ink-muted); flex-shrink: 0; }
+.srow-val   { font-size: 12px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; word-break: break-word; }
+.srow-val.up   { color: #c62828; }
+.srow-val.down { color: #2e7d32; }
+.srow-val.muted { color: var(--ink-faint); font-style: italic; font-weight: 400; }
+
+.srow-summary { background: #fafaf8; margin: 4px -4px 0; padding: 3px 4px; border-radius: 4px; }
+.srow-empty   { font-size: 11px; color: var(--ink-faint); text-align: center; padding: 14px 0; }
+.srow-tier1   { background: #fff8e1; border-radius: 4px; margin: -2px -4px 4px; padding: 4px; }
+.srow-tag     { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+.srow-tag-bull { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.srow-tag-bear { background: #fde8e8; color: #c62828; border: 1px solid #ef9a9a; }
+.srow-sub  { font-size: 10px; color: var(--ink-muted); font-weight: 400; }
+
+/* ── US-79 · 机构持仓迷你表格 ──────────────────────── */
+.inst-holders-mini { margin-top: 6px; border-top: 1px solid var(--rule-light); padding-top: 4px; }
+.inst-holder-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; font-size: 10px; }
+.inst-holder-type { flex-shrink: 0; padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: 600; }
+.inst-type-passive { background: #e3f2fd; color: #1565c0; }
+.inst-type-active  { background: #e8f5e9; color: #2e7d32; }
+.inst-type-hedge   { background: #fce4ec; color: #ad1457; }
+.inst-type-bank    { background: #fff3e0; color: #e65100; }
+.inst-type-other   { background: #f5f5f5; color: #616161; }
+.inst-holder-name  { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-light); }
+.inst-holder-change { flex-shrink: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.inst-holder-change.up   { color: #c62828; }
+.inst-holder-change.down { color: #2e7d32; }
+
+/* ── 消息-机构背离警告条 ────────────────────────────── */
+.diverg-news-warning {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.diverg-warn-trap  { background: #fff5f5; border: 1px solid #ffcdd2; }
+.diverg-warn-mixed { background: #fffde7; border: 1px solid #fff59d; }
+.diverg-warn-icon  { font-size: 16px; flex-shrink: 0; padding-top: 1px; }
+.diverg-warn-body  { color: var(--ink); }
+.diverg-warn-link  { margin-left: 6px; color: var(--ink-muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
+
+.news-list-divider {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+  padding: 6px 0 12px;
+  border-bottom: 2px solid var(--rule);
+  margin-bottom: 4px;
+}
+
+/* stock title link (US-23 入口) */
+.stock-title-link {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--rule-light);
+}
+.stock-title-link:hover {
+  border-bottom-color: var(--ink);
+  text-decoration: none;
+}
+
+/* ══════════════════════════════════════════════════
+   US-30 · 我的选股页 — 无侧边栏，顶部工具栏
+   ══════════════════════════════════════════════════ */
+
+/* 兼容旧 layout class（保留不报错）*/
+.watchlist-layout {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 主容器 */

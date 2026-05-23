@@ -20,7 +20,7 @@ from scripts.stock_fetch_financials import fetch_cn_advanced, fetch_cn_financial
 from datetime import datetime
 import akshare as ak
 from scripts.config import (
-    WATCHLIST, HK_WATCHLIST, SECTOR_KEYWORDS,
+    SECTOR_KEYWORDS,
     NEWS_PER_STOCK, RAW_OUTPUT, CN_TZ
 )
 
@@ -33,11 +33,11 @@ def _sina_prefix(code: str) -> str:
 def fetch_quotes(cn_stocks: list = None):
     """
     一次请求拉全部自选股行情（新浪财经接口）。
-    cn_stocks: [(name, code), ...] 列表。为 None 时回退到硬编码 WATCHLIST（兼容旧调用）。
+    cn_stocks: [(name, code), ...] 列表。
     """
     print("  📊 拉取行情...")
     if cn_stocks is None:
-        cn_stocks = [(n, c) for n, c, _ in WATCHLIST]
+        cn_stocks = []
     codes    = [c for _, c in cn_stocks]
     name_map = {c: n for n, c in cn_stocks}
     symbols  = ",".join(_sina_prefix(c) for c in codes)
@@ -471,12 +471,11 @@ def fetch_cn_earnings_calendar(codes: list) -> list:
 # ── 主逻辑 ────────────────────────────────────────────
 def _load_cn_stocks_from_db() -> list:
     """
-    从 DB 读取所有用户自选股中市场为 cn 的股票，返回 [(name, code), ...]（去重）。
-    找不到 DB 时回退到 WATCHLIST。
+    从 DB 读取开启了 daily push 的用户的 A 股自选股，返回 [(name, code), ...]（去重）。
     """
     try:
         import db
-        rows = db.get_all_cn_watchlist_stocks()   # [(code, name), ...]
+        rows = db.get_active_watchlist_stocks()   # [(code, name), ...]
         if rows:
             seen = set()
             result = []
@@ -486,8 +485,8 @@ def _load_cn_stocks_from_db() -> list:
                     result.append((name or code, code))
             return result
     except Exception as e:
-        print(f"  ⚠️ 从DB读股票列表失败，回退到 WATCHLIST: {e}")
-    return [(n, c) for n, c, _ in WATCHLIST]
+        print(f"  ⚠️ 从DB读股票列表失败，返回空列表: {e}")
+    return []
 
 
 def main():
@@ -520,11 +519,30 @@ def main():
 
     # 个股新闻 + 公告 + 增减持 + 资金流向
     print("\n  📰 个股动态：")
+    try:
+        import db as _db_check
+        _db_check_ok = True
+    except Exception:
+        _db_check_ok = False
+
     for name, code in cn_stocks:
-        output["news"][code]          = fetch_stock_news(code, name)
+        # 新闻：4小时内已有数据则跳过
+        if _db_check_ok and _db_check.is_data_fresh(code, 'news', max_hours=4.0):
+            print(f"    ⏭️ {name}({code}) 新闻已新鲜，跳过")
+            output["news"][code] = []
+        else:
+            output["news"][code] = fetch_stock_news(code, name)
+
         output["announcements"][code] = fetch_announcements(code, name)
         output["insider"][code]       = fetch_insider_changes(code, name)
-        output["fund_flow"][code]     = fetch_fund_flow(code, name)
+
+        # 资金流：今日已有记录则跳过
+        if _db_check_ok and _db_check.is_data_fresh(code, 'fund_flow'):
+            print(f"    ⏭️ {name}({code}) 资金流今日已有，跳过")
+            output["fund_flow"][code] = {}
+        else:
+            output["fund_flow"][code] = fetch_fund_flow(code, name)
+
         time.sleep(0.5)
 
     # 北向资金

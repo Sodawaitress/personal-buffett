@@ -1,0 +1,177 @@
+{# ── Stock sub-page shared masthead ─────────────────────────────────
+   Variables: stock, price, analysis, meta, news, events,
+   fund_flow, data_freshness, data_freshness_stale, pending_job,
+   in_watchlist, market, currency, active_tab
+#}
+
+  {# ── 面包屑 ── #}
+  <div class="stock-breadcrumb">
+    <a href="{{ url_for('watchlist_page') }}">← {{ t.nav_back_watchlist }}</a>
+    <span class="bc-sep">/</span>
+    <span>{{ stock.name }}</span>
+  </div>
+
+  {# ── 高风险横幅 ── #}
+  {% if meta and (meta.company_type == 'speculative' or meta.market_tier == 'gem') %}
+  <div class="risk-banner">
+    <span class="risk-banner-icon">⚠️</span>
+    <div class="risk-banner-text">
+      <strong>{{ t.gem_risk_title }}</strong>
+      {{ t.gem_risk_body }}
+      {% if meta.company_type == 'speculative' %}{{ t.gem_risk_speculative }}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Masthead ── #}
+  <div class="stock-masthead">
+
+    {# Grade seal — persistent visual anchor #}
+    <div class="stock-masthead-grade">
+      {% if analysis and analysis.grade %}
+      <span class="wax-seal wax-seal-lg grade-{{ analysis.grade | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade }}</span>
+      {% else %}
+      <span class="wax-seal wax-seal-lg grade-c" style="opacity:.25">—</span>
+      {% endif %}
+    </div>
+
+    {# Name + conclusion + tags #}
+    <div class="stock-masthead-body">
+      <div class="stock-masthead-name">
+        {{ stock.name }}
+        {% if meta and meta.st_status %}
+        <span class="st-badge st-badge-{{ meta.st_status | replace('*','star') | lower }}">{{ meta.st_status }}</span>
+        {% endif %}
+        <span class="stock-code-tag" style="font-size:11px;opacity:.5">{{ stock.code }}</span>
+      </div>
+      <div class="stock-masthead-meta">
+        {% if analysis and analysis.conclusion %}
+        <span class="stock-masthead-conclusion">{{ analysis.conclusion }}</span>
+        {% endif %}
+        {% if analysis and analysis.analysis_date %}
+        <span class="stock-masthead-date">{{ analysis.analysis_date }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Price + actions — right #}
+    <div class="stock-masthead-right">
+      <div style="text-align:right">
+        {% if price and price.price %}
+        <div class="stock-price-big">{{ currency }}{{ "%.2f"|format(price.price) }}</div>
+        {% if price.change_pct is not none %}
+        <div class="stock-change-big {{ 'up' if price.change_pct >= 0 else 'down' }}">
+          {{ "%+.2f"|format(price.change_pct) }}%
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="stock-price-big" style="font-size:13px;color:var(--ink-faint)">{{ t.lbl_no_quote }}</div>
+        {% endif %}
+      </div>
+
+      <div class="stock-header-actions" id="stock-header-actions">
+        {% if pending_job %}
+        <div class="analysis-progress" id="progress-{{ pending_job.id }}" style="max-width:160px">
+          <div class="progress-track"><div class="progress-fill" id="pfill-{{ pending_job.id }}"></div></div>
+          <span class="progress-label" id="plabel-{{ pending_job.id }}">{{ t.lbl_analysing }}</span>
+        </div>
+        {% else %}
+        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-ink btn-sm" title="{{ t.js_quant_only_msg }}">{{ t.btn_buffett_check }}</button>
+        <div class="more-wrap" id="more-wrap-{{ stock.code }}">
+          <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('{{ stock.code }}')" title="More">⋯</button>
+          <div class="more-menu" id="more-menu-{{ stock.code }}">
+            <button onclick="triggerNewsRefresh('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">{{ t.btn_refresh_news }}</button>
+            <button onclick="exportBundle('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">📋 导出分析包</button>
+            {% if session.role == 'admin' %}
+            <hr style="margin:4px 0;border-color:var(--rule-light)">
+            <button onclick="triggerFullUpdate('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">{{ t.btn_full_update }}</button>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% if not in_watchlist %}
+        <form method="post" action="{{ url_for('add_stock') }}" style="display:inline">
+          <input type="hidden" name="code" value="{{ stock.code }}">
+          <input type="hidden" name="name" value="{{ stock.name }}">
+          <input type="hidden" name="market" value="{{ stock.market }}">
+          <button type="submit" class="btn-outline-ink btn-sm">{{ t.btn_add_watchlist }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>{# /.stock-masthead #}
+
+  {# ── Stats bar ── #}
+  {% set has_stats = (price and (price.pe_ratio or price.pb_ratio or price.market_cap)) or (fund_flow and fund_flow.main_net is not none) %}
+  {% if has_stats %}
+  <div class="stock-stats-bar">
+    {% if price %}
+      {% if price.pe_ratio %}<span class="stat-item"><span class="stat-label">PE</span> {{ "%.1f"|format(price.pe_ratio) }}x</span>{% endif %}
+      {% if price.pb_ratio %}<span class="stat-item"><span class="stat-label">PB</span> {{ "%.2f"|format(price.pb_ratio) }}x</span>{% endif %}
+      {% if price.market_cap %}<span class="stat-item"><span class="stat-label">{{ t.lbl_market_cap }}</span> {{ "%.0f"|format(price.market_cap / 1e8) }}亿</span>{% endif %}
+    {% endif %}
+    {% if fund_flow and fund_flow.main_net is not none %}
+    <span class="stat-item">
+      <span class="stat-label">{{ t.lbl_main_flow_short }}</span>
+      <span class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">{{ "%+.2f"|format(fund_flow.main_net) }}亿</span>
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ── 数据新鲜度 ── #}
+  {% if data_freshness_stale.price or data_freshness_stale.finance or data_freshness_stale.analysis %}
+  <div class="data-freshness-bar">
+    {{ t.lbl_data_stale_prefix }}
+    {% if data_freshness_stale.price %}<span class="freshness-stale">{{ t.lbl_stale_quote }} {{ data_freshness.price }}</span>{% endif %}
+    {% if data_freshness_stale.finance %}<span class="freshness-stale">{{ t.lbl_stale_finance }} {{ data_freshness.finance }}</span>{% endif %}
+    {% if data_freshness_stale.analysis %}<span class="freshness-stale">{{ t.lbl_stale_analysis }} {{ data_freshness.analysis }}</span>{% endif %}
+    {% if session.role == 'admin' %}
+    <span class="freshness-sep" style="margin-left:auto">
+      <a href="#" onclick="triggerFullUpdate('{{ stock.code }}');return false" style="font-size:11px;color:var(--ink-muted)">{{ t.btn_full_update }}</a>
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <hr class="section-rule" style="margin:0 0 0">
+
+  {% if not single_page %}
+  {# ── Sub-page navigation (legacy tab mode) ── #}
+  <div class="stock-subnav" id="stock-subnav">
+
+    <a href="{{ url_for('stock_letter', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'letter' else '' }}">
+      <span class="subnav-label">{{ t.tab_brief }}</span>
+      <span class="subnav-hint">值不值买？</span>
+    </a>
+
+    <a href="{{ url_for('stock_signals', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'signals' else '' }}">
+      <span class="subnav-label">{{ t.tab_news }}{% if news %}<span class="tab-count">{{ news | length }}</span>{% endif %}</span>
+      <span class="subnav-hint">市场在说什么？</span>
+    </a>
+
+    {% if market == "cn" %}
+    <a href="{{ url_for('stock_radar_page', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'radar' else '' }}">
+      <span class="subnav-label">机构雷达</span>
+      <span class="subnav-hint">聪明钱在动吗？</span>
+    </a>
+    {% endif %}
+
+    <a href="{{ url_for('stock_fundamentals_page', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'fundamentals' else '' }}">
+      <span class="subnav-label">{{ t.tab_archive }}</span>
+      <span class="subnav-hint">基本面数据</span>
+    </a>
+
+    <a href="{{ url_for('stock_events_page', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'events' else '' }}">
+      <span class="subnav-label">{{ t.tab_events }}{% if events %}<span class="tab-count">{{ events | length }}</span>{% endif %}</span>
+      <span class="subnav-hint">重大事件</span>
+    </a>
+
+  </div>
+  {% endif %}

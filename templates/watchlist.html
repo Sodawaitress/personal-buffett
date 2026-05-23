@@ -36,10 +36,33 @@
   </div>
   {% endif %}
 
+  {# ── US-38 近期催化剂事件横幅 ── #}
+  {% if upcoming_events %}
+  <div class="catalyst-banner">
+    <div class="catalyst-banner-title">近期事件</div>
+    <div class="catalyst-banner-list">
+      {% set ev_type_labels = {
+        'share_unlock':       '限售解禁',
+        'earnings_report':    '财务报告',
+        'major_announcement': '重大事项',
+        'earnings_forecast':  '业绩预告',
+      } %}
+      {% for ev in upcoming_events %}
+      <a href="{{ url_for('stock_page', code=ev.code) }}" class="catalyst-item{% if ev.days_until == 0 %} catalyst-today{% elif ev.days_until <= 2 %} catalyst-soon{% endif %}">
+        <span class="catalyst-badge">{{ ev_type_labels.get(ev.event_type, ev.event_type) }}</span>
+        <span class="catalyst-name">{{ ev.display_name }}</span>
+        <span class="catalyst-when">{% if ev.days_until == 0 %}今天{% elif ev.days_until == 1 %}明天{% else %}{{ ev.days_until }}天后{% endif %}</span>
+        <span class="catalyst-summary">{{ ev.summary[:40] }}{% if ev.summary|length > 40 %}…{% endif %}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   {# ── 顶部工具栏 ── #}
   <div class="wl-toolbar">
     <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>
-    <a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>
+    {% if holding or sold %}<a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>{% endif %}
 
     {# 搜索框 #}
     <div class="wl-search-wrap">
@@ -48,16 +71,13 @@
     </div>
 
     <div class="wl-toolbar-controls">
+      {# 机构雷达扫描 #}
+      {% if has_cn_stocks %}
+      <button class="wl-icon-btn" id="precursor-scan-btn" onclick="startPrecursorScan()" title="{{ t.btn_inst_radar_title }}">{{ t.btn_inst_radar }}</button>
+      {% endif %}
+
       {# 视图切换（单按钮） #}
       <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">{{ t.wl_view_toggle }}</button>
-
-      {# 分析（进入选择模式） #}
-      <button class="wl-icon-btn wl-analyze-btn" id="analyze-mode-btn" onclick="toggleSelectMode()">{{ t.wl_analyze_btn }}</button>
-
-      {# 全部重跑（admin only） #}
-      {% if session.role == 'admin' %}
-      <button class="wl-icon-btn" id="rerun-all-btn" onclick="rerunAll()" title="{{ t.wl_rerun_tooltip }}">{{ t.wl_rerun_all }}</button>
-      {% endif %}
 
       {# 添加 #}
       <button class="wl-icon-btn wl-add-btn" onclick="toggleAddPanel()">
@@ -79,12 +99,33 @@
     <button class="wl-sort-pill"        data-sort="date"       onclick="setSortPill(this,'date')">{{ t.wl_sort_date }}</button>
   </div>
 
+  {# ── 筛选栏 ── #}
+  {% if wl_markets | length > 1 %}
+  <div class="wl-filter-bar" id="wl-filter-bar">
+    <span class="wl-sort-label">{{ t.wl_filter_label }}</span>
+    {% for m in wl_markets %}
+    <button class="wl-filter-chip" data-key="market" data-val="{{ m }}" onclick="applyWlFilter('market','{{ m }}',this)">{{ m | upper }}</button>
+    {% endfor %}
+    <span class="wl-filter-sep">|</span>
+    {% for g in ['A+','A','B+','B','B-','C','D'] %}
+    <button class="wl-filter-chip" data-key="grade" data-val="{{ g }}" onclick="applyWlFilter('grade','{{ g }}',this)">{{ g }}</button>
+    {% endfor %}
+    <button class="wl-filter-clear hidden" id="wl-filter-clear" onclick="clearWlFilters()">✕ {{ t.wl_filter_clear }}</button>
+  </div>
+  {% endif %}
+
   {# 添加股票面板 #}
   <div id="add-panel" class="add-panel hidden">
     <div class="search-type-seg" id="wl-search-type-seg">
-      <button type="button" class="seg-btn{% if locale == 'zh' %} active{% endif %}" data-type="cn" onclick="setWlSearchType('cn',this)">{{ t.search_type_cn }}</button>
+      {% if locale == 'zh' %}
+      <button type="button" class="seg-btn active" data-type="cn" onclick="setWlSearchType('cn',this)">{{ t.search_type_cn }}</button>
       <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">{{ t.search_type_fund }}</button>
-      <button type="button" class="seg-btn{% if locale != 'zh' %} active{% endif %}" data-type="intl" onclick="setWlSearchType('intl',this)">{{ t.search_type_intl }}</button>
+      <button type="button" class="seg-btn" data-type="intl" onclick="setWlSearchType('intl',this)">{{ t.search_type_intl }}</button>
+      {% else %}
+      <button type="button" class="seg-btn active" data-type="intl" onclick="setWlSearchType('intl',this)">{{ t.search_type_intl }}</button>
+      <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">{{ t.search_type_fund }}</button>
+      <button type="button" class="seg-btn" data-type="cn" onclick="setWlSearchType('cn',this)">{{ t.search_type_cn }}</button>
+      {% endif %}
     </div>
     <div class="stock-search-wrap">
       <input type="text" id="search-q" class="search-input"
@@ -185,10 +226,15 @@
       <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">{{ t.lbl_no_analysis }}</div>
       {% endif %}
 
-      {% if s.moat_direction or s.roic_latest %}
+      {% if s.moat_direction or s.roic_latest or s.avg_sentiment is not none %}
       <div class="holding-signals">
         {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
         {% if s.roic_latest %}<span class="signal-chip">ROIC {{ "%.1f"|format(s.roic_latest) }}%</span>{% endif %}
+        {% if s.avg_sentiment is not none %}
+        <span class="signal-chip sentiment-chip" title="近7日新闻情绪均值 {{ '%.2f'|format(s.avg_sentiment) }}">
+          {% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %} 新闻
+        </span>
+        {% endif %}
       </div>
       {% endif %}
 
@@ -201,12 +247,13 @@
           <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">{{ t.btn_read_letter }}</button>
           {% endif %}
           {% if s.status != 'sold' %}
-          <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.wl_analyze_btn }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
+          <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.js_quant_only_msg }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
           {% endif %}
-          <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
-                onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
-            <button type="submit" class="btn-text" style="font-size:11px;color:var(--ink-muted)">{{ t.btn_remove }}</button>
-          </form>
+          <button class="btn-text" style="font-size:11px;color:var(--ink-muted)"
+            hx-delete="/api/stock/{{ s.code }}/remove"
+            hx-confirm="{{ t.confirm_remove }}"
+            hx-target="closest .holding-card"
+            hx-swap="outerHTML">{{ t.btn_remove }}</button>
         </div>
       </div>
     </div>
@@ -250,6 +297,7 @@
       <div class="wl-section-header">
         {{ t.wl_section_sold }} <span class="wl-badge">{{ sold | length }}</span>
         <a href="{{ url_for('performance_page') }}" class="wl-section-link">{{ t.wl_view_perf }}</a>
+        {# shown in sold section — always relevant here #}
       </div>
       <div class="holding-grid" id="grid-sold">
         {% for s in sold %}{{ render_card(s) }}{% endfor %}
@@ -299,6 +347,9 @@
           </td>
           <td>
             <span class="wl-list-name">{{ s.name }}</span>
+            {% if s.avg_sentiment is not none %}
+            <span style="font-size:11px;margin-left:3px;vertical-align:middle" title="近7日新闻情绪">{% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %}</span>
+            {% endif %}
             {% if s.pending_job %}
             <span class="spinner" style="width:10px;height:10px;margin-left:6px;vertical-align:middle"></span>
             {% endif %}
@@ -330,15 +381,16 @@
               <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">{{ t.status_sold_short }}</button>
             </div>
             {% if s.status != 'sold' %}
-            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="{{ t.wl_analyze_btn }}">↻</button>
+            <button onclick="triggerAnalysis('{{ s.code }}')" class="wl-op-btn" title="{{ t.js_quant_only_msg }}">↻</button>
             {% endif %}
             {% if s.has_letter %}
             <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="wl-op-btn" title="{{ t.btn_read_letter }}">✉</button>
             {% endif %}
-            <form method="post" action="{{ url_for('remove_stock', code=s.code) }}"
-                  onsubmit="return confirm('{{ t.confirm_remove }}')" style="display:contents">
-              <button type="submit" class="wl-op-btn wl-op-danger">✕</button>
-            </form>
+            <button class="wl-op-btn wl-op-danger"
+              hx-delete="/api/stock/{{ s.code }}/remove"
+              hx-confirm="{{ t.confirm_remove }}"
+              hx-target="closest tr"
+              hx-swap="outerHTML">✕</button>
           </td>
         </tr>
         {% endfor %}
@@ -367,7 +419,6 @@
   <span class="batch-bar-info"><strong id="batch-count">0</strong> {{ t.batch_selected }}</span>
   <button class="batch-bar-btn" id="select-all-btn" onclick="toggleSelectAll()">{{ t.batch_select_all }}</button>
   <button class="batch-bar-btn" onclick="batchAnalyze()">{{ t.batch_analyse_each }}</button>
-  <button class="batch-bar-btn" onclick="batchPortfolio()">{{ t.batch_analyse_portfolio }}</button>
   <button class="batch-bar-btn batch-bar-cancel" onclick="selectNone()">{{ t.batch_cancel }}</button>
 </div>
 
@@ -386,6 +437,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/search-widget.js') }}"></script>
 <script>
 // ── i18n 桥接（Jinja → JS）────────────────────────────
 const T = {
@@ -428,6 +480,13 @@ const T = {
   removeFailed:     "{{ t.remove_failed }}",
   notifExpand:      "{{ t.notif_toggle_expand }}",
   notifCollapse:    "{{ t.notif_toggle_collapse }}",
+  instRadar:        "{{ t.btn_inst_radar }}",
+  instRadarScanning:"{{ t.btn_inst_radar_scanning }}",
+  instRadarStarting:"{{ t.inst_radar_starting }}",
+  instRadarFailStart:"{{ t.inst_radar_failed_start }}",
+  instRadarDone:    "{{ t.inst_radar_done }}",
+  instRadarFailed:  "{{ t.inst_radar_failed }}",
+  unknownError:     "{{ t.error }}",
 };
 // ── 全局状态 ──────────────────────────────────────────
 let _selectMode = false;
@@ -510,6 +569,39 @@ async function _doStatusUpdate(code, status, date, price, bodyOverride) {
     method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
   });
   if (resp.ok) location.reload();
+}
+
+// ── 服务端 WHERE 1=1 筛选 ────────────────────────────────
+let _wlFilters = {};
+
+async function applyWlFilter(key, val, btn) {
+  if (_wlFilters[key] === val) {
+    delete _wlFilters[key];
+    btn.classList.remove('active');
+  } else {
+    document.querySelectorAll(`.wl-filter-chip[data-key="${key}"]`).forEach(b => b.classList.remove('active'));
+    _wlFilters[key] = val;
+    btn.classList.add('active');
+  }
+  const clear = document.getElementById('wl-filter-clear');
+  if (clear) clear.classList.toggle('hidden', Object.keys(_wlFilters).length === 0);
+
+  if (Object.keys(_wlFilters).length === 0) {
+    document.querySelectorAll('.holding-card, .wl-list-row').forEach(el => el.style.display = '');
+    return;
+  }
+  const qs = new URLSearchParams(_wlFilters).toString();
+  const { codes } = await (await fetch('/api/watchlist/filter?' + qs)).json();
+  const allow = new Set(codes);
+  document.querySelectorAll('.holding-card').forEach(el => { el.style.display = allow.has(el.dataset.code) ? '' : 'none'; });
+  document.querySelectorAll('.wl-list-row').forEach(el => { el.style.display = allow.has(el.dataset.code) ? '' : 'none'; });
+}
+
+function clearWlFilters() {
+  _wlFilters = {};
+  document.querySelectorAll('.wl-filter-chip').forEach(b => b.classList.remove('active'));
+  document.getElementById('wl-filter-clear')?.classList.add('hidden');
+  document.querySelectorAll('.holding-card, .wl-list-row').forEach(el => el.style.display = '');
 }
 
 function sortCards(by) {
@@ -619,6 +711,9 @@ function toggleSelectAll() {
   onCheckChange();
 }
 function onCheckChange() {
+  const anyChecked = document.querySelectorAll('.stock-checkbox:checked').length > 0;
+  if (anyChecked && !_selectMode) enterSelectMode();
+  else if (!anyChecked && _selectMode) exitSelectMode();
   document.querySelectorAll('.holding-card').forEach(card => {
     const cb = card.querySelector('.stock-checkbox');
     card.classList.toggle('card-selected', !!(cb && cb.checked));
@@ -828,107 +923,63 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.holding-card[data-job], .wl-list-row[data-job]').forEach(el => {
     if (el.dataset.job) pollJob(el.dataset.job, el.dataset.code);
   });
-  initSearch('search-q','search-dropdown','add-code','add-name','add-market','add-asset-type','add-selected','add-selected-label','btn-add-submit');
+  SearchWidget.bind('search-q', 'search-dropdown',
+    () => _wlSearchType,
+    (code, name, market, assetType) => selectStock(
+      code, name, market, assetType,
+      'add-code','add-name','add-market','add-asset-type',
+      'add-selected','add-selected-label','btn-add-submit','search-q'
+    ),
+    '{{ locale }}'
+  );
 });
 
-function initSearch(inputId, dropId, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId) {
-  const inp = document.getElementById('search-q');
-  const drop = document.getElementById('search-dropdown');
-  if (!inp || !drop) return;
-  let timer, composing = false;
-
-  inp.addEventListener('compositionstart', () => { composing = true; });
-  inp.addEventListener('compositionend', () => {
-    composing = false;
-    clearTimeout(timer);
-    const q = inp.value.trim();
-    if (q.length < 2) { drop.innerHTML = ''; drop.classList.remove('open'); return; }
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 150);
-  });
-
-  inp.addEventListener('input', () => {
-    if (composing) return;
-    clearTimeout(timer);
-    const q = inp.value.trim();
-    if (!q) { drop.innerHTML = ''; drop.classList.remove('open'); return; }
-    if (q.length < 2) return;
-    timer = setTimeout(() => doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp), 500);
-  });
-
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !composing) {
-      e.preventDefault();
-      clearTimeout(timer);
-      const q = inp.value.trim();
-      if (q) doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp);
-    }
-  });
-
-  document.addEventListener('click', e => {
-    if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('open');
-  });
-}
 let _wlSearchType = '{{ "cn" if locale == "zh" else "intl" }}';
 function setWlSearchType(type, btn) {
   _wlSearchType = type;
   document.querySelectorAll('#wl-search-type-seg .seg-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const inp = document.getElementById('search-q');
-  const q = inp ? inp.value.trim() : '';
-  if (q) {
-    const drop = document.getElementById('search-dropdown');
-    doSearch(q, drop, 'add-code', 'add-name', 'add-market', 'add-asset-type', 'add-selected', 'add-selected-label', 'btn-add-submit', inp);
-  } else {
-    inp && inp.focus();
-  }
-}
-
-async function doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp) {
-  drop.innerHTML = `<div class="search-loading"><span class="spinner-sm"></span>${T.searchLoading}</div>`;
-  drop.classList.add('open');
-
-  try {
-    const items = await (await fetch('/api/search?q=' + encodeURIComponent(q) + '&type=' + _wlSearchType)).json();
-
-    if (!inp.value.trim()) return; // user cleared the box
-
-    if (items && items.loading) {
-      drop.innerHTML=`<div class="search-empty"><i class="bi bi-hourglass-split"></i> ${T.searchLoadingCache}</div>`;
-      setTimeout(() => { if (inp.value.trim()) doSearch(q, drop, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inp); }, 1500);
-      return;
-    }
-
-    if (!Array.isArray(items) || !items.length) {
-      drop.innerHTML=`<div class="search-empty">${T.searchNoResults}</div>`; return;
-    }
-    drop.innerHTML = items.map(r => {
-      const at = r.asset_type || '';
-      const atBadge = at && at !== '股票' ? `<span class="asset-type-tag">${at}</span>` : '';
-      const safeName = r.name.replace(/'/g,"\\'");
-      const safeAt = at.replace(/'/g,"\\'");
-      return `<div class="search-item" onclick="selectStock('${r.code}','${safeName}','${r.market}','${safeAt}','${codeId}','${nameId}','${marketId}','${assetTypeId}','${selectedId}','${labelId}','${btnId}','${inp.id}')">
-        <span class="search-item-code">${r.code}</span>
-        <span class="search-item-name">${r.name}</span>
-        ${atBadge}
-        <span class="market-tag">${r.market.toUpperCase()}</span>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    if (!inp.value.trim()) return;
-    drop.innerHTML=`<div class="search-empty">${T.searchError}</div>`;
-  }
+  if (inp && inp.value.trim()) inp.dispatchEvent(new Event('input'));
+  else inp && inp.focus();
 }
 function selectStock(code, name, market, assetType, codeId, nameId, marketId, assetTypeId, selectedId, labelId, btnId, inputId) {
+  document.getElementById('search-dropdown').classList.remove('open');
+  document.getElementById(inputId).value = '';
+
+  // ── 已添加检查 ──────────────────────────────────────
+  const existing = document.querySelector(`.holding-card[data-code="${code}"], .wl-list-row[data-code="${code}"]`);
+  if (existing) {
+    existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    existing.classList.add('wl-already-highlight');
+    setTimeout(() => existing.classList.remove('wl-already-highlight'), 2000);
+    _showAlreadyToast(name, code);
+    return;
+  }
+
   document.getElementById(codeId).value       = code;
   document.getElementById(nameId).value       = name;
   document.getElementById(marketId).value     = market;
   if (assetTypeId) document.getElementById(assetTypeId).value = assetType || '';
-  document.getElementById(inputId).value      = '';
   const atLabel = assetType && assetType !== '股票' ? ` · ${assetType}` : '';
   document.getElementById(labelId).textContent = `${name} (${code}) · ${market.toUpperCase()}${atLabel}`;
   document.getElementById(selectedId).style.display = 'flex';
   document.getElementById(btnId).disabled = false;
-  document.getElementById('search-dropdown').classList.remove('open');
+}
+
+function _showAlreadyToast(name, code) {
+  const existing = document.getElementById('wl-already-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'wl-already-toast';
+  toast.className = 'wl-already-toast';
+  toast.innerHTML = `<span>✓ <strong>${name}</strong>（${code}）已在自选股，已跳转</span>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('wl-toast-show'));
+  setTimeout(() => {
+    toast.classList.remove('wl-toast-show');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
 }
 
 // ── US-65 差评预警 ──────────────────────────────────
@@ -962,6 +1013,75 @@ function _checkNotifBannerEmpty() {
     const banner = document.getElementById('notif-banner');
     if (banner) banner.remove();
   }
+}
+
+// ── 机构雷达扫描 ──────────────────────────────────────────
+let _precursorJobId = null;
+let _precursorTimer = null;
+
+async function startPrecursorScan() {
+  const btn = document.getElementById('precursor-scan-btn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = T.instRadarScanning;
+
+  _showPrecursorToast(T.instRadarStarting, 'info', false);
+
+  try {
+    const res = await fetch('/api/precursor-scan', { method: 'POST' });
+    const data = await res.json();
+    _precursorJobId = data.job_id;
+    _precursorTimer = setInterval(_pollPrecursorJob, 5000);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = T.instRadar;
+    _showPrecursorToast(T.instRadarFailStart, 'error', true);
+  }
+}
+
+async function _pollPrecursorJob() {
+  if (!_precursorJobId) return;
+  try {
+    const res = await fetch(`/api/job/${_precursorJobId}`);
+    const data = await res.json();
+    if (data.status === 'done') {
+      _precursorDone(data);
+    } else if (data.status === 'failed') {
+      _precursorFailed(data.error || '未知错误');
+    }
+  } catch (e) { /* 网络抖动，继续轮询 */ }
+}
+
+function _precursorDone(data) {
+  clearInterval(_precursorTimer);
+  const btn = document.getElementById('precursor-scan-btn');
+  btn.disabled = false;
+  btn.textContent = T.instRadar;
+  _showPrecursorToast(T.instRadarDone, 'success', true);
+}
+
+function _precursorFailed(err) {
+  clearInterval(_precursorTimer);
+  const btn = document.getElementById('precursor-scan-btn');
+  btn.disabled = false;
+  btn.textContent = T.instRadar;
+  _showPrecursorToast(T.instRadarFailed + (err || T.unknownError), 'error', true);
+}
+
+function _showPrecursorToast(msg, type, autoDismiss) {
+  let el = document.getElementById('precursor-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'precursor-toast';
+    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;max-width:340px;padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.5;box-shadow:0 2px 12px rgba(0,0,0,.2);cursor:pointer';
+    el.onclick = () => el.remove();
+    document.body.appendChild(el);
+  }
+  const colors = { info: '#1565c0', success: '#2e7d32', error: '#b71c1c' };
+  el.style.background = colors[type] || colors.info;
+  el.style.color = '#fff';
+  el.textContent = msg;
+  if (autoDismiss) setTimeout(() => el && el.remove(), 8000);
 }
 </script>
 {% endblock %}

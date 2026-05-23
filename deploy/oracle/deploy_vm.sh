@@ -173,7 +173,7 @@ fi
 
 INTERNET_GATEWAY_ID="$(
   oci_raw network internet-gateway list --compartment-id "$COMPARTMENT_ID" --all \
-    --query "data[?\"display-name\"=='${INTERNET_GATEWAY_NAME}'] | [0].id" \
+    --query "data[?\"display-name\"=='${INTERNET_GATEWAY_NAME}' && \"vcn-id\"=='${VCN_ID}'] | [0].id" \
     --raw-output 2>/dev/null || true
 )"
 
@@ -197,7 +197,7 @@ oci_raw network route-table update \
 
 SECURITY_LIST_ID="$(
   oci_raw network security-list list --compartment-id "$COMPARTMENT_ID" --all \
-    --query "data[?\"display-name\"=='${SECURITY_LIST_NAME}'] | [0].id" \
+    --query "data[?\"display-name\"=='${SECURITY_LIST_NAME}' && \"vcn-id\"=='${VCN_ID}'] | [0].id" \
     --raw-output 2>/dev/null || true
 )"
 
@@ -216,7 +216,7 @@ fi
 
 SUBNET_ID="$(
   oci_raw network subnet list --compartment-id "$COMPARTMENT_ID" --all \
-    --query "data[?\"display-name\"=='${SUBNET_NAME}'] | [0].id" \
+    --query "data[?\"display-name\"=='${SUBNET_NAME}' && \"vcn-id\"=='${VCN_ID}'] | [0].id" \
     --raw-output 2>/dev/null || true
 )"
 

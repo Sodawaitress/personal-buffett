@@ -8,8 +8,8 @@ def get_pending_job(code):
     return get_recent_pending_job(code)
 
 
-def list_watchlist_rows(user_id):
-    return db.get_user_watchlist(user_id)
+def list_watchlist_rows(user_id, status=None, market=None, asset_type=None):
+    return db.get_user_watchlist(user_id, status=status, market=market, asset_type=asset_type)
 
 
 def get_watchlist_snapshot(code, market):

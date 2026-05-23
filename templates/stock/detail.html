@@ -1,0 +1,1346 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} — {{ t.brand }}{% endblock %}
+
+{% block content %}
+<div class="stock-page stock-detail-scroll">
+
+  {# ── Masthead (no tab nav in single-page mode) ── #}
+  {% with single_page=True %}
+  {% include 'stock/_head.html' %}
+  {% endwith %}
+
+  {# ── Sticky anchor nav ── #}
+  <nav class="detail-anchor-nav" id="detail-anchor-nav">
+    <a href="#letter" class="anav-link" data-section="letter">
+      {{ t.tab_brief }}<span class="anav-hint">值不值买？</span>
+    </a>
+    <a href="#market" class="anav-link" data-section="market">
+      市场信号<span class="anav-hint">{{ news | length if news else 0 }}条新闻</span>
+    </a>
+    <a href="#fundamentals" class="anav-link" data-section="fundamentals">
+      {{ t.tab_archive }}<span class="anav-hint">基本面</span>
+    </a>
+    <a href="#events" class="anav-link" data-section="events">
+      {{ t.tab_events }}{% if events %}<span class="tab-count">{{ events | length }}</span>{% endif %}<span class="anav-hint">大事记</span>
+    </a>
+  </nav>
+
+  {# ═══════════════════════════════════════════════════════
+     §1  巴菲特信
+     ═══════════════════════════════════════════════════════ #}
+  <section id="letter" class="detail-section">
+    <div class="stock-page-body">
+
+      {% if pending_job %}
+      <div class="analysis-pending-block" id="pending-block" data-job="{{ pending_job.id }}">
+        <div class="analysis-progress" id="progress-tab-{{ pending_job.id }}">
+          <div class="progress-track"><div class="progress-fill" id="pfill-tab-{{ pending_job.id }}"></div></div>
+          <span class="progress-label" id="plabel-tab-{{ pending_job.id }}">{{ t.lbl_analysing }}</span>
+        </div>
+      </div>
+
+      {% elif analysis %}
+
+      {# Verdict bar #}
+      {% set grade_tier = analysis.grade[0] if analysis.grade else 'C' %}
+      <div class="verdict-bar verdict-{{ grade_tier }}">
+        <span class="verdict-grade-big">{{ analysis.grade or '—' }}</span>
+        <div class="verdict-body">
+          <div class="verdict-conclusion">{{ analysis.conclusion }}</div>
+          <div class="verdict-date">{{ analysis.analysis_date }}</div>
+        </div>
+        {% if stock.asset_type not in ('场外基金', 'ETF') %}
+        <div>
+          {% if analysis.letter_html %}
+          <button onclick="showLetter()" class="btn-outline-ink btn-sm" style="white-space:nowrap">{{ t.js_read_letter }}</button>
+          {% else %}
+          <a href="#" id="letter-btn-{{ stock.code }}" onclick="triggerLetterGeneration('{{ stock.code }}');return false" class="btn-outline-ink btn-sm" style="font-size:12px;text-decoration:none;display:inline-block">重新生成信件</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <p class="brief-reasoning">{{ analysis.reasoning }}</p>
+
+      {# Dimension pills #}
+      {% if analysis.framework_used == 'fund_v1' %}
+      {% set dims = [
+        (t.dim_product_quality, analysis.moat),
+        (t.dim_target_quality,  analysis.management),
+        (t.dim_portfolio_fit,   analysis.valuation),
+        (t.dim_execution,       analysis.behavioral),
+      ] %}
+      {% else %}
+      {% set dims = [
+        (t.dim_moat,       analysis.moat),
+        (t.dim_mgmt,       analysis.management),
+        (t.dim_valuation,  analysis.valuation),
+        (t.dim_fund_flow,  analysis.fund_flow_summary),
+        (t.dim_behavioral, analysis.behavioral),
+        (t.dim_macro,      analysis.macro_sensitivity),
+      ] %}
+      {% endif %}
+      {% set has_dims = dims | selectattr(1) | list %}
+      {% if has_dims %}
+      <div class="dim-pills">
+        {% for label, val in has_dims %}
+        <div class="dim-pill">
+          <span class="dim-pill-label">{{ label }}</span>
+          <span class="dim-pill-val">{{ val }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if analysis.framework_used == 'fund_v1' and analysis.quant_score %}
+      <div class="fund-total-score" style="margin-top:12px">{{ t.lbl_total_score }} <strong>{{ analysis.quant_score }}/100</strong></div>
+      {% endif %}
+
+      {# Trade params card #}
+      {% set is_fund = analysis.framework_used == 'fund_v1' %}
+      {% set has_tech  = trading_params and trading_params.entry_1_label and not is_fund %}
+      {% set has_trade = analysis and analysis.trade_block %}
+      {% if has_tech or has_trade %}
+      <div class="trade-block" style="margin-top:20px">
+        <div class="trade-block-title">{{ t.lbl_trade_params }}
+          <span style="font-size:10px;font-weight:400;opacity:.7;margin-left:6px">
+            {{ t.lbl_trade_ma_basis if has_tech else t.lbl_trade_no_tech }}
+          </span>
+        </div>
+        <div class="trade-rows">
+          {% if has_tech %}
+          {% if trading_params.position_label %}
+          <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_position }}</span><span class="trade-val">{{ trading_params.position_label }}</span></div>
+          {% endif %}
+          {% if trading_params.reduce_label %}
+          <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_reduce }}</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
+          {% endif %}
+          <div class="trade-row">
+            <span class="trade-label">{{ t.lbl_trade_resistance1 if trading_params.entry_1_is_resistance else t.lbl_trade_entry1 }}</span>
+            <span class="trade-val">{{ trading_params.entry_1_label }}</span>
+          </div>
+          {% if trading_params.entry_2_label %}
+          <div class="trade-row">
+            <span class="trade-label">{{ t.lbl_trade_resistance2 if trading_params.entry_2_is_resistance else t.lbl_trade_entry2 }}</span>
+            <span class="trade-val">{{ trading_params.entry_2_label }}</span>
+          </div>
+          {% endif %}
+          {% if trading_params.stop_loss_label %}
+          <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_stop_loss }}</span><span class="trade-val">{{ trading_params.stop_loss_label }}</span></div>
+          {% endif %}
+          {% endif %}
+          {% if has_trade %}
+          <script>
+          (function(){
+            var data = {{ analysis.trade_block | tojson }};
+            if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e){} }
+            var rows = document.querySelector('.trade-block .trade-rows');
+            var llmRows = '';
+            if (data['减仓区间'] && !rows.querySelector('[data-key="reduce"]'))
+              llmRows += '<div class="trade-row"><span class="trade-label" data-key="reduce">' + window._t.reduce_zone + '</span><span class="trade-val">' + data['减仓区间'] + '</span></div>';
+            if (data['买入区间1'] && !rows.querySelector('[data-key="entry1"]'))
+              llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry1">' + window._t.buy_zone_1 + '</span><span class="trade-val">' + data['买入区间1'] + '</span></div>';
+            if (data['买入区间2'] && !rows.querySelector('[data-key="entry2"]'))
+              llmRows += '<div class="trade-row"><span class="trade-label" data-key="entry2">' + window._t.buy_zone_2 + '</span><span class="trade-val">' + data['买入区间2'] + '</span></div>';
+            if (data['仓位策略']) llmRows += '<div class="trade-row"><span class="trade-label">' + window._t.position_size + '</span><span class="trade-val">' + data['仓位策略'] + '</span></div>';
+            if (data['关键监控']) llmRows += '<div class="trade-row"><span class="trade-label">' + window._t.key_watch + '</span><span class="trade-val">' + data['关键监控'] + '</span></div>';
+            if (llmRows) document.currentScript.insertAdjacentHTML('beforebegin', llmRows);
+          })();
+          </script>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="empty-state" style="padding:60px 0;text-align:center">
+        <p style="color:var(--ink-muted);margin-bottom:16px">{{ t.lbl_no_analysis_yet }}</p>
+        <button onclick="triggerAnalysis('{{ stock.code }}');" class="btn-ink">{{ t.btn_buffett_check }}</button>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  {# ═══════════════════════════════════════════════════════
+     §2  市场信号  (新闻 × 机构融合)
+     ═══════════════════════════════════════════════════════ #}
+  <section id="market" class="detail-section">
+    <div class="stock-page-body">
+
+      {# ── 新闻×机构背离摘要卡 ── #}
+      {% if divergence_card %}
+      {% set dc = divergence_card %}
+      <div class="diverg-summary-card diverg-card-{{ dc.type }}">
+        <div class="diverg-summary-icon">
+          {% if dc.type == 'danger' %}⚠{% elif dc.type == 'opportunity' %}💡{% elif dc.type == 'consistent' %}✓{% else %}◎{% endif %}
+        </div>
+        <div class="diverg-summary-body">
+          <div class="diverg-summary-headline">{{ dc.headline }}</div>
+          <div class="diverg-summary-note">{{ dc.note }}</div>
+          {% if dc.action %}<div class="diverg-summary-action">{{ dc.action }}</div>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── 机构前兆信号叉乘情境（仅A股）── #}
+      {% if market == "cn" and signal_contexts %}
+      <div class="sigctx-row">
+
+        {% set mc = signal_contexts.get('margin', {}) %}
+        {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
+        <div class="sigctx-card sigctx-{{ mc.get('direction','neutral') }}">
+          <div class="sigctx-head">
+            <span class="sigctx-title">融券动向</span>
+            <span class="sigctx-strength">
+              {% for i in range(3) %}<span class="sdot {% if i < (mc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}
+            </span>
+          </div>
+          <div class="sigctx-body">{{ mc.get('full_desc','') }}</div>
+          {% if mc.get('_kcard') %}
+          <button class="kcard-btn" data-slug="short_selling" data-params="{{ mc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">了解更多</button>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% set sv = signal_contexts.get('survey', {}) %}
+        {% if sv and sv.get('intensity', 'none') != 'none' %}
+        <div class="sigctx-card sigctx-{{ sv.get('direction','neutral') }}">
+          <div class="sigctx-head">
+            <span class="sigctx-title">机构调研</span>
+            <span class="sigctx-strength">
+              {% for i in range(3) %}<span class="sdot {% if i < (sv.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}
+            </span>
+          </div>
+          <div class="sigctx-body">{{ sv.get('full_desc','') }}</div>
+          {% if sv.get('modifiers') %}
+          <div class="sigctx-mods">
+            {% for m in sv.modifiers[:2] %}<span class="sigctx-mod">{{ m }}</span>{% endfor %}
+          </div>
+          {% endif %}
+          {% if sv.get('_kcard') %}
+          <button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">了解更多</button>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% set pc = signal_contexts.get('participation', {}) %}
+        {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+        <div class="sigctx-card sigctx-{{ pc.get('direction','neutral') }}">
+          <div class="sigctx-head">
+            <span class="sigctx-title">机构参与度</span>
+            <span class="sigctx-strength">
+              {% for i in range(3) %}<span class="sdot {% if i < (pc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}
+            </span>
+          </div>
+          <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
+          {% if pc.get('_kcard') %}
+          <button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">了解更多</button>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div>
+      {% endif %}
+
+      {# ── 综合研判 ── #}
+      {% if resonance and resonance.direction != 'unknown' %}
+      <div class="resonance-hero resonance-{{ resonance.direction }}">
+        <div class="resonance-hero-top">
+          <div class="resonance-hero-dir">
+            {% if resonance.direction == 'bullish' %}看多信号
+            {% elif resonance.direction == 'bearish' %}看空信号
+            {% else %}信号分歧{% endif %}
+          </div>
+          <div class="resonance-hero-score">
+            {% for i in range(resonance.max_score) %}<span class="rdot-lg {% if i < resonance.score %}rdot-on{% else %}rdot-off{% endif %}"></span>{% endfor %}
+            <span class="resonance-hero-score-text">{{ resonance.score }}/{{ resonance.max_score }} 独立来源共振</span>
+          </div>
+        </div>
+        {% if resonance.strongest_combo %}
+        <div class="resonance-hero-combo">{{ resonance.strongest_combo }}</div>
+        {% endif %}
+        {% if resonance.divergence_text %}
+        <div class="resonance-hero-diverg">⚠ {{ resonance.divergence_text }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# ── 三列信号地图 ── #}
+      {% set cur_sym = (market_currency or {}).get(market, "$") %}
+      {% set tech = (signals or {}).get("technicals", {}) %}
+      {% set inst_us = (signals or {}).get("inst_us", {}) %}
+      <div class="signal-3col">
+
+        {# 列 A — 内部人视角 #}
+        <div class="signal-col">
+          <div class="signal-col-head">
+            <span class="signal-col-title">内部人视角</span>
+            <span class="signal-col-cred">最可信</span>
+          </div>
+          {% if market == "cn" %}
+            {% if signals and signals.get("inst_top") %}
+              {% for h in signals.inst_top[:6] %}
+              {% set is_passive = (h.name and ("ETF" in h.name or "联接" in h.name or "指数" in h.name or "LOF" in h.name or "沪深300" in h.name or "中证" in h.name)) %}
+              {% if not is_passive %}
+              <div class="srow">
+                <span class="srow-label">{{ h.name[:10] }}{% if h.name|length > 10 %}…{% endif %}</span>
+                <span class="srow-val {{ 'up' if h.change > 0 else ('down' if h.change < 0 else '') }}">
+                  <span class="inst-type-tag inst-tag-active">主动</span>
+                  {{ "%+.2f"|format(h.change) }}% {% if h.change > 0 %}▲{% elif h.change < 0 %}▼{% else %}→{% endif %}
+                </span>
+              </div>
+              {% endif %}
+              {% endfor %}
+            {% endif %}
+            {% if signals and signals.get("inst_increased") is not none %}
+            {% set inc = signals.inst_increased | int %}
+            {% set dec = signals.inst_decreased | int %}
+            <div class="srow srow-summary">
+              <span class="srow-label">机构总体</span>
+              <span class="srow-val {{ 'up' if inc > dec else ('down' if dec > inc else '') }}">↑{{ inc }} / ↓{{ dec }}</span>
+            </div>
+            {% endif %}
+            {% if divergence and divergence.get("breakdown") %}
+            {% set bd = divergence.breakdown %}
+            {% if bd.get("survey_consistency", 0) != 0 %}
+            <div class="srow">
+              <span class="srow-label">调研信号</span>
+              <span class="srow-val {{ 'up' if bd.survey_consistency > 0 else 'down' }}">
+                {% if bd.survey_consistency >= 2 %}调研热+融券减 ▲{% elif bd.survey_consistency == 1 %}调研活跃{% elif bd.survey_consistency == -1 %}调研热融券增{% else %}矛盾信号 ▼{% endif %}
+              </span>
+            </div>
+            {% endif %}
+            {% endif %}
+            {% if not (signals and (signals.get("inst_top") or signals.get("inst_increased") is not none)) %}
+            <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+            {% endif %}
+          {% else %}
+            {% set activist = (signals or {}).get("activist_13d", {}) %}
+            {% set insider  = (signals or {}).get("insider_us", {}) %}
+            {% if activist and activist.get("found") %}
+            <div class="srow srow-tier1">
+              <span class="srow-label">⚡ 维权进场</span>
+              <span class="srow-val up">{{ activist.get("name","")[:20] }} ▲</span>
+            </div>
+            {% endif %}
+            {% if insider and insider.get("cluster_buy") %}
+            <div class="srow-tag srow-tag-bull">多高管同步买入 ⚡</div>
+            {% endif %}
+            {% if insider and insider.get("buyers") %}
+              {% for b in insider.buyers[:3] %}
+              <div class="srow">
+                <span class="srow-label">{{ b.role[:14] if b.role else b.name[:14] }}</span>
+                <span class="srow-val up">${{ "%.0f"|format(b.value / 1000) }}K ▲买入</span>
+              </div>
+              {% endfor %}
+            {% elif not (activist and activist.get("found")) %}
+            <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        {# 列 B — 市场情绪 #}
+        <div class="signal-col">
+          <div class="signal-col-head">
+            <span class="signal-col-title">市场情绪</span>
+            <span class="signal-col-cred">中等可信</span>
+          </div>
+          {% if market == "cn" %}
+            {% if north_bound and north_bound.get("total_net") is not none %}
+            <div class="srow">
+              <span class="srow-label">北向资金</span>
+              <span class="srow-val {{ 'up' if north_bound.total_net >= 0 else 'down' }}">
+                {{ "%+.2f"|format(north_bound.total_net) }}B
+                (沪{{ "%+.1f"|format(north_bound.get("sh_net", 0)) }} 深{{ "%+.1f"|format(north_bound.get("sz_net", 0)) }})
+                {% if north_bound.total_net >= 0 %}▲{% else %}▼{% endif %}
+              </span>
+            </div>
+            {% else %}
+            <div class="srow">
+              <span class="srow-label">北向资金</span>
+              <span class="srow-val muted">{{ t.lbl_data_accumulating }}</span>
+            </div>
+            {% endif %}
+            {% if fund_flow and fund_flow.main_net is not none %}
+            <div class="srow">
+              <span class="srow-label">主力资金</span>
+              <span class="srow-val {{ 'up' if fund_flow.main_net >= 0 else 'down' }}">
+                {{ "%+.2f"|format(fund_flow.main_net) }}亿
+                {% if fund_flow.main_ratio is not none %}({{ "%+.1f"|format(fund_flow.main_ratio) }}%){% endif %}
+                {% if fund_flow.main_net >= 0 %}▲{% else %}▼{% endif %}
+              </span>
+            </div>
+            {% else %}
+            <div class="srow">
+              <span class="srow-label">主力资金</span>
+              <span class="srow-val muted">{{ t.lbl_data_accumulating }}</span>
+            </div>
+            {% endif %}
+            {% if divergence and divergence.get("breakdown") %}
+            {% set sh = divergence.breakdown.get("short", 0) %}
+            <div class="srow">
+              <span class="srow-label">融券方向</span>
+              <span class="srow-val {{ 'up' if sh > 0 else ('down' if sh < 0 else '') }}">
+                {% if sh >= 2 %}做空大幅撤退 ▲{% elif sh == 1 %}做空小幅撤退{% elif sh == 0 %}基本不变{% elif sh == -1 %}做空小幅加仓{% else %}做空大幅加仓 ▼{% endif %}
+              </span>
+            </div>
+            {% endif %}
+          {% else %}
+            {% set short_float = inst_us.get("short_float_pct") %}
+            {% set short_trend = inst_us.get("short_trend_pct") %}
+            {% set analyst_net = inst_us.get("top_analyst_net") %}
+            {% if short_float is not none %}
+            <div class="srow">
+              <span class="srow-label">做空比例</span>
+              <span class="srow-val {{ 'down' if short_float > 15 else '' }}">
+                {{ "%.1f"|format(short_float) }}%
+                {% if short_trend is not none %}
+                <span class="{{ 'up' if short_trend < -10 else ('down' if short_trend > 20 else '') }}">
+                  ({{ "%+.0f"|format(short_trend) }}% {% if short_trend < -10 %}↓空头撤{% elif short_trend > 20 %}↑空头增{% else %}→持平{% endif %})
+                </span>
+                {% endif %}
+              </span>
+            </div>
+            {% endif %}
+            {% if analyst_net is not none %}
+            <div class="srow">
+              <span class="srow-label">投行评级</span>
+              <span class="srow-val {{ 'up' if analyst_net >= 2 else ('down' if analyst_net <= -2 else '') }}">
+                净{{ "%+d"|format(analyst_net) }}次 {% if analyst_net >= 2 %}▲升级{% elif analyst_net <= -2 %}▼降级{% else %}→中性{% endif %}
+              </span>
+            </div>
+            {% endif %}
+            {% set pos = (signals or {}).get("price_position") %}
+            {% if pos is not none %}
+            <div class="srow">
+              <span class="srow-label">52周位置</span>
+              <span class="srow-val {{ 'up' if pos < 30 else ('down' if pos > 80 else '') }}">
+                {{ "%.0f"|format(pos) }}% {{ t.lbl_pos_high if pos > 70 else (t.lbl_pos_low if pos < 30 else t.lbl_pos_mid) }}
+              </span>
+            </div>
+            {% elif (signals or {}).get("week_52_low") %}
+            <div class="srow">
+              <span class="srow-label">{{ t.lbl_52w_range }}</span>
+              <span class="srow-val">{{ cur_sym }}{{ signals.week_52_low }} – {{ cur_sym }}{{ signals.week_52_high }}</span>
+            </div>
+            {% endif %}
+            {% if short_float is none and pos is none and analyst_net is none %}
+            <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        {# 列 C — 结构背景 #}
+        <div class="signal-col">
+          <div class="signal-col-head">
+            <span class="signal-col-title">结构背景</span>
+            <span class="signal-col-cred">背景参考</span>
+          </div>
+          {% if market == "cn" and tech %}
+            {% set pct60  = tech.get("price_vs_ma60") %}
+            {% set pct250 = tech.get("price_vs_ma250") %}
+            {% if tech.get("ma60") and pct60 is not none %}
+            <div class="srow">
+              <span class="srow-label">MA60</span>
+              <span class="srow-val {{ 'up' if pct60 > 0 else 'down' }}">
+                {{ cur_sym }}{{ "%.2f"|format(tech.ma60) }} ({{ "%+.1f"|format(pct60) }}%)
+              </span>
+            </div>
+            {% endif %}
+            {% if tech.get("ma250") and pct250 is not none %}
+            <div class="srow">
+              <span class="srow-label">MA250</span>
+              <span class="srow-val {{ 'up' if pct250 > 0 else 'down' }}">
+                {{ cur_sym }}{{ "%.2f"|format(tech.ma250) }} ({{ "%+.1f"|format(pct250) }}%)
+              </span>
+            </div>
+            {% endif %}
+            {% if tech.get("vwap60") %}
+            <div class="srow">
+              <span class="srow-label">VWAP60</span>
+              <span class="srow-val {{ 'up' if tech.get('price_vs_vwap60', 0) > 0 else 'down' }}">
+                {{ cur_sym }}{{ "%.2f"|format(tech.vwap60) }} ({{ "%+.1f"|format(tech.get("price_vs_vwap60", 0)) }}%)
+              </span>
+            </div>
+            {% endif %}
+            {% if tech.get("vwap120") %}
+            <div class="srow">
+              <span class="srow-label">VWAP120</span>
+              <span class="srow-val {{ 'up' if tech.get('price_vs_vwap120', 0) > 0 else 'down' }}">
+                {{ cur_sym }}{{ "%.2f"|format(tech.vwap120) }} ({{ "%+.1f"|format(tech.get("price_vs_vwap120", 0)) }}%)
+              </span>
+            </div>
+            {% endif %}
+          {% endif %}
+          {% if inst_us and inst_us.get("inst_pct") is not none %}
+          <div class="srow">
+            <span class="srow-label">机构持仓率</span>
+            <span class="srow-val">{{ "%.1f"|format(inst_us.inst_pct * 100 if inst_us.inst_pct < 2 else inst_us.inst_pct) }}%
+              {% if inst_us.get("inst_count") %}<span class="srow-sub">（{{ inst_us.inst_count }}家）</span>{% endif %}
+            </span>
+          </div>
+          {% if inst_us.get("insider_pct") is not none %}
+          <div class="srow">
+            <span class="srow-label">内部人持仓</span>
+            <span class="srow-val">{{ "%.1f"|format(inst_us.insider_pct * 100 if inst_us.insider_pct < 2 else inst_us.insider_pct) }}%</span>
+          </div>
+          {% endif %}
+          {% set anc = inst_us.get("active_net_change") %}
+          {% if anc is not none %}
+          <div class="srow">
+            <span class="srow-label">主动基金</span>
+            <span class="srow-val {{ 'up' if anc > 0 else ('down' if anc < 0 else '') }}">
+              {{ "%+.2f"|format(anc * 100) }}pp {% if anc > 0 %}▲增持{% elif anc < 0 %}▼减持{% else %}→持平{% endif %}
+            </span>
+          </div>
+          {% endif %}
+          {% endif %}
+          {% if news %}
+          {% set pos_ct = news | selectattr("sentiment", "equalto", "positive") | list | length %}
+          {% set neg_ct = news | selectattr("sentiment", "equalto", "negative") | list | length %}
+          {% set neu_ct = news | length - pos_ct - neg_ct %}
+          {% set dominant = "positive" if pos_ct > neg_ct and pos_ct > neu_ct else ("negative" if neg_ct > pos_ct and neg_ct > neu_ct else "neutral") %}
+          <div class="srow">
+            <span class="srow-label">新闻情绪</span>
+            <span class="srow-val {{ 'up' if dominant == 'positive' else ('down' if dominant == 'negative' else '') }}">
+              📈{{ pos_ct }} ➖{{ neu_ct }} 📉{{ neg_ct }}
+            </span>
+          </div>
+          <div class="srow">
+            <span class="srow-label">情绪倾向</span>
+            <span class="srow-val {{ 'up' if dominant == 'positive' else ('down' if dominant == 'negative' else '') }}">
+              {{ t.lbl_sentiment_pos if dominant == "positive" else (t.lbl_sentiment_neg if dominant == "negative" else t.lbl_sentiment_neu) }}
+            </span>
+          </div>
+          {% else %}
+          <div class="srow">
+            <span class="srow-label">新闻情绪</span>
+            <span class="srow-val muted">{{ t.lbl_no_news_signal }}</span>
+          </div>
+          {% endif %}
+          {% if not (market == "cn" and tech) and not (inst_us and inst_us.get("inst_pct") is not none) and not news %}
+          <div class="srow-empty">{{ t.lbl_data_accumulating }}</div>
+          {% endif %}
+        </div>
+
+      </div>{# /.signal-3col #}
+
+      {# ── 消息-机构背离警告 ── #}
+      {% if market == "cn" and divergence and news %}
+        {% set pos_ct2 = news | selectattr("sentiment", "equalto", "positive") | list | length %}
+        {% set neg_ct2 = news | selectattr("sentiment", "equalto", "negative") | list | length %}
+        {% set news_bull = pos_ct2 > neg_ct2 %}
+        {% if news_bull and divergence.total <= -2 %}
+        <div class="diverg-news-warning {{ 'diverg-warn-trap' if divergence.total <= -3 else 'diverg-warn-mixed' }}">
+          <span class="diverg-warn-icon">⚠</span>
+          <span class="diverg-warn-body">
+            <strong>消息面偏正面，但机构行为背离（背离分 {{ ("+" ~ divergence.total) if divergence.total >= 0 else divergence.total }}）</strong>
+            {% if divergence.total <= -3 %} — 符合「消息出货」特征，机构可能正在利用正面消息减仓。
+            {% else %} — 消息与机构方向不完全一致，保持谨慎。
+            {% endif %}
+          </span>
+        </div>
+        {% endif %}
+      {% endif %}
+
+      {# ── 机构雷达（A股，异步加载）── #}
+      {% if market == "cn" %}
+      <div class="detail-subsection-title">机构雷达</div>
+      <div id="intention-root">
+        <div class="intention-loading" id="intention-loading" style="display:flex">
+          <div class="intention-spinner"></div>
+          <span>正在拉取机构信号，稍等片刻…</span>
+          <span style="font-size:11px;color:var(--ink-faint)">（调研热度 + 融券余量 + 机构参与度，约需 15 秒）</span>
+        </div>
+        <div id="intention-content" style="display:none"></div>
+        <div id="intention-empty" style="display:none">
+          <p class="intention-error">加载失败，请刷新重试</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── 新闻列表（带一致性标签）── #}
+      <div class="detail-subsection-title" style="margin-top:24px">{{ t.lbl_latest_news }}</div>
+      {% if news %}
+      {% for n in news %}
+      <div class="news-article">
+        <div class="news-kicker">
+          {{ n.source }}
+          {% if n.sentiment == 'positive' %}<span title="{{ t.lbl_positive }}">📈</span>
+          {% elif n.sentiment == 'negative' %}<span title="{{ t.lbl_negative }}">📉</span>
+          {% elif n.sentiment %}<span title="{{ t.lbl_neutral }}">➖</span>{% endif %}
+          {% if n.get('consistency') == 'divergent' %}
+          <span class="news-consistency news-cst-divergent" title="新闻偏正面，但机构行为看空">⚡ 背离</span>
+          {% elif n.get('consistency') == 'contrarian' %}
+          <span class="news-consistency news-cst-contrarian" title="新闻看空，但机构在逆向布局">🔄 逆向</span>
+          {% elif n.get('consistency') == 'consistent' and n.sentiment in ('positive','negative') %}
+          <span class="news-consistency news-cst-consistent">✓ 一致</span>
+          {% endif %}
+        </div>
+        {% if n.link %}
+        <a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
+        {% else %}
+        <div class="news-headline-plain">{{ n.title }}</div>
+        {% endif %}
+        <div class="news-byline">{{ n.publish_time[:10] if n.publish_time else '' }}</div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_news_found }}</p>
+      {% endif %}
+
+      {# ── 我的判断（信号预测记录）── #}
+      {% if in_watchlist %}
+      <div class="predict-widget" id="predict-widget">
+        <div class="predict-widget-title">我的判断</div>
+        <div class="predict-widget-sub">基于以上信号，你认为接下来 5~10 天？</div>
+
+        {# Signal type selector — only show relevant options #}
+        <div class="predict-sig-row" id="predict-sig-row">
+          {% if market == "cn" and signal_contexts %}
+            {% set mc = signal_contexts.get('margin', {}) %}
+            {% set sv = signal_contexts.get('survey', {}) %}
+            {% set pc = signal_contexts.get('participation', {}) %}
+            {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
+            <button class="predict-sig-btn" data-stype="margin" onclick="selectSigType(this)">融券信号</button>
+            {% endif %}
+            {% if sv and sv.get('intensity', 'none') != 'none' %}
+            <button class="predict-sig-btn" data-stype="survey" onclick="selectSigType(this)">调研信号</button>
+            {% endif %}
+            {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+            <button class="predict-sig-btn" data-stype="participation" onclick="selectSigType(this)">参与度信号</button>
+            {% endif %}
+          {% endif %}
+          {% if divergence_card %}
+          <button class="predict-sig-btn" data-stype="fund_flow" onclick="selectSigType(this)">资金信号</button>
+          {% endif %}
+          <button class="predict-sig-btn predict-sig-btn-active" data-stype="general" onclick="selectSigType(this)">综合判断</button>
+        </div>
+
+        <div class="predict-outcome-row">
+          <span class="predict-outcome-label">这个信号会</span>
+          <div class="predict-outcome-btns">
+            <button class="predict-outcome-btn" data-outcome="confirms" onclick="selectOutcome(this)">✓ 兑现（方向正确）</button>
+            <button class="predict-outcome-btn" data-outcome="fails" onclick="selectOutcome(this)">✗ 落空（反向运动）</button>
+          </div>
+        </div>
+
+        <div class="predict-dir-row">
+          <span class="predict-dir-label">价格方向</span>
+          <div class="predict-dir-btns">
+            <button class="predict-dir-btn predict-dir-up" data-dir="up" onclick="selectDir(this)">▲ 上涨</button>
+            <button class="predict-dir-btn predict-dir-down" data-dir="down" onclick="selectDir(this)">▼ 下跌</button>
+            <button class="predict-dir-btn predict-dir-unsure" data-dir="unsure" onclick="selectDir(this)">— 不确定</button>
+          </div>
+        </div>
+
+        <div class="predict-note-row">
+          <input type="text" id="predict-note" class="predict-note-input" maxlength="80" placeholder="备注（可选，80字以内）">
+        </div>
+
+        <div class="predict-actions">
+          <button class="btn-ink btn-sm" onclick="submitPrediction('{{ stock.code }}')">记录判断</button>
+          <span id="predict-msg" class="predict-msg"></span>
+        </div>
+
+        {# Past predictions #}
+        <div id="predict-history" class="predict-history"></div>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  {# ═══════════════════════════════════════════════════════
+     §3  基本面
+     ═══════════════════════════════════════════════════════ #}
+  <section id="fundamentals" class="detail-section">
+    <div class="stock-page-body">
+
+      {# ── 历史分析 ── #}
+      <div class="archive-section-title">{{ t.lbl_history }}</div>
+      {% if history %}
+      {% for h in history %}
+      <div class="history-item {{ 'history-current' if loop.first else '' }}">
+        <div class="history-header">
+          <span class="wax-seal wax-seal-sm grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
+            {{ h.grade or '—' }}
+          </span>
+          <span class="history-conclusion">{{ h.conclusion }}</span>
+          <span class="history-date">{{ h.analysis_date }}</span>
+        </div>
+        <p class="history-reasoning">{{ (h.reasoning or '')[:300] }}</p>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_history }}</p>
+      {% endif %}
+
+      {# ── 公司概览 ── #}
+      <div class="archive-section-title">{{ t.lbl_company_overview }}</div>
+      {% set sector = signals.get('sector') if signals else none %}
+      {% set framework_lbl = {
+        'mature_value': t.fw_mature_value,
+        'growth_tech':  t.fw_growth_tech,
+        'financial':    t.fw_financial,
+        'cyclical':     t.fw_cyclical,
+        'utility':      t.fw_utility,
+        'speculative':  t.fw_speculative,
+        'etf':          '指数基金 / ETF',
+        'pre_profit':   '成长期（未盈利）',
+        'distressed':   '困境股',
+        'bank_insurance': '银行 / 保险'
+      }.get((meta.company_type if meta else ''), '') %}
+      <div class="stock-info-row" style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 0;font-size:12px;color:var(--ink-muted)">
+        <span><strong>{{ t.lbl_market_label }}</strong> {{ market | upper }}</span>
+        <span><strong>{{ t.lbl_code_label }}</strong> {{ stock.code }}</span>
+        {% if sector %}<span><strong>{{ t.lbl_sector_label }}</strong> {{ sector }}</span>{% endif %}
+        {% if meta and meta.market_tier %}<span><strong>{{ t.lbl_board_label }}</strong> {{ meta.market_tier }}</span>{% endif %}
+        {% if framework_lbl %}<span><strong>{{ t.lbl_type_label }}</strong> {{ framework_lbl }}</span>{% endif %}
+      </div>
+
+      {# ── 基本面指标 ── #}
+      <section class="fund-section">
+        <div class="fund-section-label">{{ t.lbl_fundamentals }}</div>
+        <hr class="section-rule">
+        {% set lat = annual[0] if annual else none %}
+        {% if not lat and signals %}{% set lat = signals %}{% endif %}
+
+        {% set _pe_v = pe_current if pe_current else (price.pe_ratio if price and price.pe_ratio else none) %}
+        {% if _pe_v is not none and _pe_v <= 0 %}{% set pe_vc = 'verdict-bad' %}
+        {% elif _pe_v is not none and _pe_v < 15 %}{% set pe_vc = 'verdict-good' %}
+        {% elif _pe_v is not none and _pe_v > 60 %}{% set pe_vc = 'verdict-bad' %}
+        {% elif _pe_v is not none and _pe_v > 35 %}{% set pe_vc = 'verdict-warn' %}
+        {% else %}{% set pe_vc = '' %}{% endif %}
+        {% set _pb_v = pb_current if pb_current else (price.pb_ratio if price and price.pb_ratio else none) %}
+        {% if _pb_v is not none and _pb_v < 1.5 %}{% set pb_vc = 'verdict-good' %}
+        {% elif _pb_v is not none and _pb_v > 5 %}{% set pb_vc = 'verdict-bad' %}
+        {% elif _pb_v is not none and _pb_v > 3 %}{% set pb_vc = 'verdict-warn' %}
+        {% else %}{% set pb_vc = '' %}{% endif %}
+        {% set _roe_str = lat.roe if lat and lat.roe else '' %}
+        {% if '%' in _roe_str %}
+          {% set _roe_f = _roe_str | replace('%','') | float %}
+          {% if _roe_f >= 15 %}{% set roe_vc = 'verdict-good' %}
+          {% elif _roe_f < 0 %}{% set roe_vc = 'verdict-bad' %}
+          {% elif _roe_f < 8 %}{% set roe_vc = 'verdict-warn' %}
+          {% else %}{% set roe_vc = '' %}{% endif %}
+        {% else %}{% set roe_vc = '' %}{% endif %}
+        {% set _nm_str = lat.net_margin if lat and lat.net_margin else '' %}
+        {% if '%' in _nm_str %}
+          {% set _nm_f = _nm_str | replace('%','') | float %}
+          {% if _nm_f >= 20 %}{% set nm_vc = 'verdict-good' %}
+          {% elif _nm_f < 0 %}{% set nm_vc = 'verdict-bad' %}
+          {% elif _nm_f < 5 %}{% set nm_vc = 'verdict-warn' %}
+          {% else %}{% set nm_vc = '' %}{% endif %}
+        {% else %}{% set nm_vc = '' %}{% endif %}
+        {% set _dr_str = lat.debt_ratio if lat and lat.debt_ratio else '' %}
+        {% if _dr_str and lat and lat.debt_ratio_note %}
+          {% set _dr_f = _dr_str | replace('%','') | float %}
+          {% if _dr_f < 1 %}{% set dr_vc = 'verdict-good' %}
+          {% elif _dr_f > 5 %}{% set dr_vc = 'verdict-bad' %}
+          {% elif _dr_f > 3 %}{% set dr_vc = 'verdict-warn' %}
+          {% else %}{% set dr_vc = '' %}{% endif %}
+        {% elif '%' in _dr_str %}
+          {% set _dr_f = _dr_str | replace('%','') | float %}
+          {% if _dr_f < 40 %}{% set dr_vc = 'verdict-good' %}
+          {% elif _dr_f > 75 %}{% set dr_vc = 'verdict-bad' %}
+          {% elif _dr_f > 60 %}{% set dr_vc = 'verdict-warn' %}
+          {% else %}{% set dr_vc = '' %}{% endif %}
+        {% else %}{% set dr_vc = '' %}{% endif %}
+        {% set _roic_v = signals.get("roic_latest") if signals else none %}
+        {% if _roic_v is not none %}
+          {% set _roic_f = _roic_v | float %}
+          {% if _roic_f >= 15 %}{% set roic_vc = 'verdict-good' %}
+          {% elif _roic_f < 0 %}{% set roic_vc = 'verdict-bad' %}
+          {% elif _roic_f < 6 %}{% set roic_vc = 'verdict-warn' %}
+          {% else %}{% set roic_vc = '' %}{% endif %}
+        {% else %}{% set roic_vc = '' %}{% endif %}
+
+        <div class="fund-metrics-grid">
+          <div class="fund-metric-card {{ pe_vc }}">
+            <div class="fund-metric-label">{{ t.lbl_pe }}</div>
+            <div class="fund-metric-value">
+              {% if pe_current %}{{ "%.1f"|format(pe_current) }}x
+              {% elif price and price.pe_ratio %}{{ "%.1f"|format(price.pe_ratio) }}x
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if pe_percentile_5y is not none %}
+            <div class="fund-metric-note">5Y {{ pe_percentile_5y }}%ile
+              <span style="color:{% if pe_percentile_5y > 70 %}#c62828{% elif pe_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
+                {% if pe_percentile_5y > 70 %}{{ t.lbl_expensive }}{% elif pe_percentile_5y < 30 %}{{ t.lbl_cheap }}{% else %}—{% endif %}
+              </span>
+            </div>
+            {% endif %}
+            {% set _h = metric_hints.get('pe') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+          </div>
+          <div class="fund-metric-card {{ pb_vc }}">
+            <div class="fund-metric-label">{{ t.lbl_pb }}</div>
+            <div class="fund-metric-value">
+              {% if pb_current %}{{ "%.2f"|format(pb_current) }}x
+              {% elif price and price.pb_ratio %}{{ "%.2f"|format(price.pb_ratio) }}x
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if pb_percentile_5y is not none %}
+            <div class="fund-metric-note">5Y {{ pb_percentile_5y }}%ile
+              <span style="color:{% if pb_percentile_5y > 70 %}#c62828{% elif pb_percentile_5y < 30 %}#2e7d32{% else %}var(--ink-muted){% endif %}">
+                {% if pb_percentile_5y > 70 %}{{ t.lbl_expensive }}{% elif pb_percentile_5y < 30 %}{{ t.lbl_cheap }}{% else %}—{% endif %}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="fund-metric-card {{ roe_vc }}">
+            <div class="fund-metric-label">ROE <span style="font-weight:400;font-size:10px">（{{ lat.year if lat else '—' }}）</span></div>
+            <div class="fund-metric-value">
+              {% if lat and lat.roe %}{{ lat.roe }}
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if annual | length >= 2 and lat and lat.roe and annual[1].roe %}
+            <div class="fund-metric-note">
+              {{ annual[1].year }}: {{ annual[1].roe }}
+              {% set cur_v = lat.roe | replace('%','') | float %}
+              {% set prev_v = annual[1].roe | replace('%','') | float %}
+              <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
+            </div>
+            {% endif %}
+            {% set _h = metric_hints.get('roe') if metric_hints else none %}
+            {% if _h %}<div class="fund-metric-note" style="color:{% if _h.level=='good' %}#2e7d32{% elif _h.level=='warn' %}#c62828{% else %}var(--ink-muted){% endif %}">{{ _h.text }}</div>{% endif %}
+          </div>
+          <div class="fund-metric-card {{ nm_vc }}">
+            <div class="fund-metric-label">{{ t.lbl_net_margin }}</div>
+            <div class="fund-metric-value">
+              {% if lat and lat.net_margin %}{{ lat.net_margin }}
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% if annual | length >= 2 and lat and lat.net_margin and annual[1].net_margin %}
+            <div class="fund-metric-note">
+              {{ annual[1].year }}: {{ annual[1].net_margin }}
+              {% set cur_v = lat.net_margin | replace('%','') | float %}
+              {% set prev_v = annual[1].net_margin | replace('%','') | float %}
+              <span style="color:{% if cur_v >= prev_v %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if cur_v >= prev_v else '↓' }}</span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="fund-metric-card {{ dr_vc }}">
+            <div class="fund-metric-label">
+              {% if lat and lat.debt_ratio_note %}D/E{% else %}{{ t.lbl_debt_ratio_cn }}{% endif %}
+            </div>
+            <div class="fund-metric-value">
+              {% if lat and lat.debt_ratio %}
+                {% if lat.debt_ratio_note %}<span title="{{ lat.debt_ratio_note }}">{{ lat.debt_ratio }}</span>
+                {% else %}{{ lat.debt_ratio }}{% endif %}
+              {% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+          </div>
+          <div class="fund-metric-card {{ roic_vc }}">
+            <div class="fund-metric-label">ROIC</div>
+            <div class="fund-metric-value">
+              {% set roic = signals.get("roic_latest") if signals else none %}
+              {% if roic %}{{ roic }}%{% else %}<span class="fund-accumulating">—</span>{% endif %}
+            </div>
+            {% set rt = signals.get("roic_trend",[]) if signals else [] %}
+            {% if rt | length >= 2 %}
+            <div class="fund-metric-note">
+              {{ rt[1].year }}: {{ rt[1].roic }}%
+              <span style="color:{% if rt[0].roic >= rt[1].roic %}#2e7d32{% else %}#c62828{% endif %}">{{ '↑' if rt[0].roic >= rt[1].roic else '↓' }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if annual | length > 1 %}
+        <div style="margin-top:20px;overflow-x:auto">
+          <table style="font-size:12px;font-family:-apple-system,sans-serif;border-collapse:collapse;min-width:480px">
+            <tr style="color:var(--ink-muted);border-bottom:1px solid var(--rule-light)">
+              <th style="text-align:left;padding:4px 8px;font-weight:600">{{ t.lbl_year }}</th>
+              {% for row in annual %}<th style="text-align:right;padding:4px 8px;font-weight:400">{{ row.year }}</th>{% endfor %}
+            </tr>
+            {% for field, label in [("roe","ROE"),("net_margin",t.lbl_net_margin_short),("debt_ratio",t.lbl_debt_ratio_short),("profit_growth",t.lbl_profit_growth)] %}
+            <tr style="border-bottom:1px solid var(--rule-light)">
+              <td style="padding:4px 8px;color:var(--ink-muted)">{{ label }}</td>
+              {% for row in annual %}
+              <td style="text-align:right;padding:4px 8px;font-variant-numeric:tabular-nums">
+                {% if row.get(field) %}{{ row.get(field) }}{% else %}—{% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ── 主力资金历史（仅 A 股）── #}
+      {% if market == "cn" %}
+      <section class="fund-section">
+        <div class="fund-section-label">{{ t.lbl_main_flow_hist }}</div>
+        <hr class="section-rule">
+        {% if ff_hist %}
+        <div class="fund-chart-wrap">
+          <canvas id="ffChart" height="100"></canvas>
+        </div>
+        <div class="ff-summary">
+          {% set total = namespace(v=0) %}
+          {% for f in ff_hist %}{% set total.v = total.v + f.main_net %}{% endfor %}
+          Last {{ ff_hist|length }} sessions net:
+          <strong class="{{ 'fund-in' if total.v >= 0 else 'fund-out' }}">
+            {{ 'In' if total.v >= 0 else 'Out' }} {{ "%.2f"|format(total.v | abs) }}B
+          </strong>
+        </div>
+        {% else %}
+        <div class="fund-empty">{{ t.lbl_fund_flow_empty }}</div>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {# ── 护城河评估 ── #}
+      <section class="fund-section">
+        <div class="fund-section-label">{{ t.lbl_moat_eval }}</div>
+        <hr class="section-rule">
+        {% set latest_a = history[0] if history else none %}
+        {% set moat_dir = signals.get("moat_direction") if signals else none %}
+        {% if latest_a and latest_a.moat %}
+        <p class="fund-text">{{ latest_a.moat }}</p>
+        {% elif moat_dir or (latest_a and latest_a.reasoning) %}
+        {% if moat_dir %}
+        <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;font-weight:600;color:var(--ink)">{{ t.lbl_moat_direction }}</span>
+          <span style="font-size:13px;padding:3px 10px;border-radius:12px;font-weight:600;
+            background:{% if '拓宽' in moat_dir %}#e8f5e9{% elif '收窄' in moat_dir %}#fdecea{% else %}#f5f0e8{% endif %};
+            color:{% if '拓宽' in moat_dir %}#2e7d32{% elif '收窄' in moat_dir %}#c62828{% else %}var(--ink-2){% endif %}">
+            {{ moat_dir }}
+          </span>
+        </div>
+        {% endif %}
+        {% if latest_a and latest_a.reasoning %}
+        <p class="fund-text" style="margin-top:8px">{{ latest_a.reasoning }}</p>
+        {% endif %}
+        {% else %}
+        <p class="fund-note" style="padding:12px 0">{{ t.lbl_moat_pending }}</p>
+        {% endif %}
+      </section>
+
+      {# ── 技术支撑位（A股专属）── #}
+      {% if market == "cn" %}
+      {% set tech2 = signals.get("technicals", {}) if signals else {} %}
+      <section class="fund-section" style="margin-top:32px">
+        <div class="fund-section-label">{{ t.lbl_tech_levels }}</div>
+        <hr class="section-rule">
+        {% if tech2 %}
+        {% set cur = price.price if price else none %}
+        {% set ns = namespace(above=0, total=0) %}
+        {% for key in ["ma20","ma60","ma120","ma250"] %}
+          {% set pct = tech2.get("price_vs_" ~ key) %}
+          {% if tech2.get(key) and pct is not none %}
+            {% set ns.total = ns.total + 1 %}
+            {% if pct < 0 %}{% set ns.above = ns.above + 1 %}{% endif %}
+          {% endif %}
+        {% endfor %}
+        <div class="tech-ladder">
+          {% set above_levels = [] %}
+          {% for key, name, desc in [("ma60","MA60","60-day"),("ma120","MA120","120-day"),("ma250","MA250","250-day"),("ma20","MA20","20-day")] %}
+            {% set val = tech2.get(key) %}
+            {% set pct = tech2.get("price_vs_" ~ key) %}
+            {% if val and pct is not none and pct < 0 %}
+              {% set _ = above_levels.append((val, pct, name, desc)) %}
+            {% endif %}
+          {% endfor %}
+          {% for val, pct, name, desc in above_levels | sort(attribute=0, reverse=True) %}
+          {% set bar_w = [pct|abs / 20 * 100, 100]|min %}
+          <div class="tech-level">
+            <span class="tech-price-val">¥{{ val }}</span>
+            <span class="tech-dot tech-dot-above"></span>
+            <div class="tech-label-wrap"><span class="tech-label-name">{{ name }}</span><span class="tech-label-desc">{{ desc }}</span></div>
+            <div class="tech-bar-wrap"><div class="tech-bar tech-bar-above" style="width:{{ bar_w }}%"></div></div>
+            <span class="tech-pct-badge tech-pct-above">▲ {{ pct|abs|round(1) }}%</span>
+          </div>
+          {% endfor %}
+          {% if cur %}
+          <div class="tech-current-row">
+            <div class="tech-current-dot"></div>
+            <span class="tech-current-price">¥{{ "%.2f"|format(cur) }}</span>
+            <span class="tech-current-label">{{ t.lbl_current_price_label }}</span>
+            {% if ns.above == ns.total and ns.total > 0 %}
+              <span style="font-size:11px;color:#c62828;margin-left:auto;font-weight:600">⚠ All MAs below</span>
+            {% elif ns.above == 0 %}
+              <span style="font-size:11px;color:#2e7d32;margin-left:auto;font-weight:600">✓ All MAs above</span>
+            {% else %}
+              <span style="font-size:11px;color:var(--ink-muted);margin-left:auto">{{ ns.above }} below / {{ ns.total - ns.above }} above</span>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% for key, name, desc in [("ma60","MA60","60-day"),("ma120","MA120","120-day"),("ma250","MA250","250-day"),("ma20","MA20","20-day")] %}
+            {% set val = tech2.get(key) %}
+            {% set pct = tech2.get("price_vs_" ~ key) %}
+            {% if val and pct is not none and pct >= 0 %}
+            {% set bar_w = [pct / 20 * 100, 100]|min %}
+            <div class="tech-level">
+              <span class="tech-price-val">¥{{ val }}</span>
+              <span class="tech-dot tech-dot-below"></span>
+              <div class="tech-label-wrap"><span class="tech-label-name">{{ name }}</span><span class="tech-label-desc">{{ desc }}</span></div>
+              <div class="tech-bar-wrap"><div class="tech-bar tech-bar-below" style="width:{{ bar_w }}%"></div></div>
+              <span class="tech-pct-badge tech-pct-below">▼ {{ pct|round(1) }}%</span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if ns.above == ns.total and ns.total > 0 %}
+        <div class="tech-danger-banner">⚠ Price has broken below all {{ ns.total }} moving average supports.</div>
+        {% elif ns.above == 0 and ns.total > 0 %}
+        <div class="tech-safe-banner">✓ Price is above all moving averages — multi-layer support in place.</div>
+        {% endif %}
+        {% set v60 = tech2.get("vwap60") %}{% set p60 = tech2.get("price_vs_vwap60") %}
+        {% set v120 = tech2.get("vwap120") %}{% set p120 = tech2.get("price_vs_vwap120") %}
+        {% if v60 or v120 %}
+        <div class="tech-vwap-block">
+          {% if v60 %}
+          <div class="tech-vwap-item">
+            <span class="tech-vwap-label">{{ t.lbl_vwap_recent_cost }}</span>
+            <span class="tech-vwap-val">¥{{ v60 }}</span>
+            {% if p60 is not none %}
+            <span class="tech-vwap-note" style="color:{% if p60 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
+              {% if p60 >= 0 %}+{{ p60|round(1) }}% above — recent buyers profitable{% else %}-{{ p60|abs|round(1) }}% below — {% if p60 < -5 %}most recent buyers trapped{% else %}slightly underwater{% endif %}{% endif %}
+            </span>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if v120 %}
+          <div class="tech-vwap-item">
+            <span class="tech-vwap-label">{{ t.lbl_vwap_mid_cost }}</span>
+            <span class="tech-vwap-val">¥{{ v120 }}</span>
+            {% if p120 is not none %}
+            <span class="tech-vwap-note" style="color:{% if p120 >= 0 %}#2e7d32{% else %}#c62828{% endif %}">
+              {% if p120 >= 0 %}+{{ p120|round(1) }}% above — mid-term holders profitable{% else %}-{{ p120|abs|round(1) }}% below — {% if p120 < -5 %}mid-term holders mostly trapped{% else %}mid-term cost slightly high{% endif %}{% endif %}
+            </span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="fund-note">{{ t.lbl_tech_data_pending }}</p>
+        {% endif %}
+      </section>
+      {% endif %}
+
+    </div>
+  </section>
+
+  {# ═══════════════════════════════════════════════════════
+     §4  事件
+     ═══════════════════════════════════════════════════════ #}
+  <section id="events" class="detail-section">
+    <div class="stock-page-body">
+
+      {% if events %}
+      <div class="event-timeline">
+        {% set type_labels = {
+          'st_trigger':               t.ev_st_trigger,
+          'st_lifted':                t.ev_st_lifted,
+          'restructuring_announced':  t.ev_restructuring_announced,
+          'restructuring_vote':       t.ev_restructuring_vote,
+          'restructuring_approved':   t.ev_restructuring_approved,
+          'rights_issue':             t.ev_rights_issue,
+          'bonus_share':              t.ev_bonus_share,
+          'name_change':              t.ev_name_change,
+          'delist_warning':           t.ev_delist_warning,
+          'delist_final':             t.ev_delist_final,
+          'major_shareholder_change': t.ev_major_shareholder,
+          'scheme_risk':              t.ev_scheme_risk,
+          'share_unlock':             '限售解禁',
+          'earnings_report':          '财务报告',
+          'major_announcement':       '重大事项',
+          'earnings_forecast':        '业绩预告',
+        } %}
+        {% for ev in events %}
+        <div class="event-item event-type-{{ ev.event_type }}">
+          <div class="event-meta">
+            <span class="event-date">{{ ev.event_date or t.ev_date_unknown }}</span>
+            <span class="event-type-label">{{ type_labels.get(ev.event_type, ev.event_type) }}</span>
+            <span class="event-source">{{ ev.source }}</span>
+          </div>
+          <div class="event-summary">{{ ev.summary }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-hint">{{ t.lbl_no_events }}</p>
+      {% endif %}
+
+      {% if session.role == 'admin' %}
+      <div class="event-add-form">
+        <h4>{{ t.lbl_add_event }}</h4>
+        <div class="event-form-row">
+          <select id="evType">
+            <option value="restructuring_announced">{{ t.ev_restructuring_announced }}</option>
+            <option value="restructuring_vote">{{ t.ev_restructuring_vote }}</option>
+            <option value="restructuring_approved">{{ t.ev_restructuring_approved }}</option>
+            <option value="st_trigger">{{ t.ev_st_trigger }}</option>
+            <option value="st_lifted">{{ t.ev_st_lifted }}</option>
+            <option value="rights_issue">{{ t.ev_rights_issue }}</option>
+            <option value="bonus_share">{{ t.ev_bonus_share }}</option>
+            <option value="name_change">{{ t.ev_name_change }}</option>
+            <option value="delist_warning">{{ t.ev_delist_warning }}</option>
+            <option value="major_shareholder_change">{{ t.ev_major_shareholder }}</option>
+            <option value="scheme_risk">{{ t.ev_scheme_risk }}</option>
+          </select>
+          <input type="date" id="evDate" placeholder="{{ t.lbl_event_date_placeholder }}">
+        </div>
+        <textarea id="evSummary" rows="2" placeholder="{{ t.lbl_event_summary_placeholder }}"></textarea>
+        <button onclick="submitEvent('{{ stock.code }}')">{{ t.btn_record_event }}</button>
+        <span id="evMsg" style="font-size:12px;margin-left:8px"></span>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  {# ── Remove zone ── #}
+  {% if in_watchlist %}
+  <div class="stock-remove-zone">
+    <form method="post" action="{{ url_for('remove_stock', code=stock.code) }}">
+      <button type="submit" class="btn-remove-stock"
+              onclick="return confirm('{{ t.btn_remove_stock }} {{ stock.name }}?')">{{ t.btn_remove_stock }}</button>
+    </form>
+  </div>
+  {% endif %}
+
+</div>{# /.stock-detail-scroll #}
+
+{# 巴菲特信 Modal #}
+<div id="letter-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content letter-modal-content">
+      <div class="modal-header" style="border-bottom:1px solid var(--rule-light)">
+        <h6 class="modal-title" style="font-family:Georgia,serif">{{ t.letter_modal_for }} {{ stock.name }}</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body letter-body" id="letter-modal-body"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+window._t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  gen_letter:       {{ t.js_gen_letter | tojson }},
+  letter_ready:     {{ t.js_letter_ready | tojson }},
+  generating:       {{ t.js_generating | tojson }},
+  read_letter:      {{ t.js_read_letter | tojson }},
+  letter_ready_lbl: {{ t.js_letter_ready_label | tojson }},
+  reduce_zone:      {{ t.js_reduce_zone | tojson }},
+  buy_zone_1:       {{ t.js_buy_zone_1 | tojson }},
+  buy_zone_2:       {{ t.js_buy_zone_2 | tojson }},
+  position_size:    {{ t.js_position_size | tojson }},
+  key_watch:        {{ t.js_key_watch | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+  full_update_lbl:  {{ t.btn_full_update | tojson }},
+  is_admin:         {{ (session.role == 'admin') | tojson }},
+  in_watchlist:     {{ in_watchlist | tojson }},
+};
+window._stockCode = {{ stock.code | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
+{% if market == "cn" %}
+<script src="{{ url_for('static', filename='js/stock-radar.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Lazy-load radar only when #market section is in view
+  const radarSection = document.getElementById('market');
+  if (!radarSection) return;
+  const obs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      obs.disconnect();
+      if (typeof loadIntentionTab === 'function') loadIntentionTab();
+    }
+  }, { threshold: 0.1 });
+  obs.observe(radarSection);
+});
+</script>
+{% endif %}
+<script>
+// Fund flow chart — lazy-loaded when #fundamentals is visible
+(function() {
+  const canvas = document.getElementById('ffChart');
+  if (!canvas) return;
+  const labels = {{ (ff_hist | map(attribute='date') | list) | tojson if ff_hist else '[]' }};
+  const nets   = {{ (ff_hist | map(attribute='main_net') | list) | tojson if ff_hist else '[]' }};
+  if (!nets.length) return;
+  const colors = nets.map(v => v >= 0 ? 'rgba(45,122,45,0.75)' : 'rgba(192,57,43,0.75)');
+  const buildChart = () => {
+    if (canvas._chartBuilt) return;
+    canvas._chartBuilt = true;
+    new Chart(canvas, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Main Flow (B)', data: nets, backgroundColor: colors, borderWidth: 1 }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? 'In +' : 'Out ') + Math.abs(ctx.raw).toFixed(2) + 'B' } } },
+        scales: {
+          x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
+          y: { ticks: { font: { size: 11 }, color: '#666', callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'B' }, grid: { color: '#e8e4de' } }
+        }
+      }
+    });
+  };
+  const fundSection = document.getElementById('fundamentals');
+  if (fundSection) {
+    new IntersectionObserver(entries => { if (entries[0].isIntersecting) buildChart(); }, { threshold: 0.1 }).observe(fundSection);
+  } else { buildChart(); }
+})();
+
+// ── 巴菲特信 modal ──
+function showLetter() {
+  const body = document.getElementById('letter-modal-body');
+  {% if analysis and analysis.letter_html %}
+  body.innerHTML = `
+    <div class="letter-paper">
+      <div class="letter-location">{{ t.letter_location }} · {{ analysis.analysis_date }}</div>
+      <div class="letter-salutation">{{ t.letter_salutation }}</div>
+      <div class="letter-body-text">{{ analysis.letter_html | replace('\n','<br>') | safe }}</div>
+      <div class="letter-sig">{{ t.letter_sig }}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
+      <div class="letter-grade">
+        <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade or '—' }}</span>
+        <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion }}</span>
+      </div>
+      <div class="letter-footer">{{ t.letter_data_as_of }} {{ analysis.analysis_date }} · {{ t.letter_disclaimer }}</div>
+    </div>`;
+  {% else %}
+  body.textContent = '{{ t.letter_none }}';
+  {% endif %}
+  new bootstrap.Modal(document.getElementById('letter-modal')).show();
+}
+
+// ── 预测 widget ──
+let _predSigType = 'general';
+let _predOutcome = null;
+let _predDir = null;
+
+function selectSigType(btn) {
+  document.querySelectorAll('.predict-sig-btn').forEach(b => b.classList.remove('predict-sig-btn-active'));
+  btn.classList.add('predict-sig-btn-active');
+  _predSigType = btn.dataset.stype;
+}
+function selectOutcome(btn) {
+  document.querySelectorAll('.predict-outcome-btn').forEach(b => b.classList.remove('predict-outcome-btn-active'));
+  btn.classList.add('predict-outcome-btn-active');
+  _predOutcome = btn.dataset.outcome;
+}
+function selectDir(btn) {
+  document.querySelectorAll('.predict-dir-btn').forEach(b => b.classList.remove('predict-dir-btn-active'));
+  btn.classList.add('predict-dir-btn-active');
+  _predDir = btn.dataset.dir;
+}
+
+async function submitPrediction(code) {
+  if (!_predDir) { document.getElementById('predict-msg').textContent = '请先选择方向'; return; }
+  const note = document.getElementById('predict-note').value.trim();
+  const msg  = document.getElementById('predict-msg');
+  msg.textContent = '提交中…';
+  try {
+    const resp = await fetch(`/api/predict/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ direction: _predDir, note, signal_type: _predSigType, predicted_outcome: _predOutcome }),
+    });
+    const d = await resp.json();
+    if (d.ok) {
+      msg.textContent = '✓ 已记录';
+      msg.style.color = 'var(--green)';
+      document.getElementById('predict-note').value = '';
+      _predDir = null; _predOutcome = null;
+      document.querySelectorAll('.predict-dir-btn,.predict-outcome-btn').forEach(b => b.classList.remove('predict-dir-btn-active','predict-outcome-btn-active'));
+      loadPredictionHistory(code);
+    } else {
+      msg.textContent = d.error || '提交失败';
+      msg.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    msg.textContent = '网络错误';
+    msg.style.color = 'var(--red)';
+  }
+}
+
+async function loadPredictionHistory(code) {
+  const container = document.getElementById('predict-history');
+  if (!container) return;
+  try {
+    const rows = await (await fetch(`/api/predict/${code}`)).json();
+    if (!rows.length) { container.innerHTML = ''; return; }
+    const dirLabel = { up: '▲ 看涨', down: '▼ 看跌', unsure: '— 不确定' };
+    const correctLabel = { 1: '<span style="color:var(--green)">✓ 正确</span>', 0: '<span style="color:var(--red)">✗ 错误</span>' };
+    const sigTypeLabel = { margin:'融券', survey:'调研', participation:'参与度', fund_flow:'资金', insider:'内部人', northbound:'北向', block_trade:'大宗', inst_hold:'机构持仓' };
+    container.innerHTML = '<div class="predict-hist-title">历史判断</div>' +
+      rows.map(r => {
+        const stLbl = (r.signal_type && r.signal_type !== 'general') ? `<span class="predict-hist-type">${sigTypeLabel[r.signal_type] || r.signal_type}</span>` : '';
+        const retHtml = r.actual_return_5d != null
+          ? `<span class="predict-hist-return ${r.actual_return_5d >= 0 ? 'up' : 'down'}">${r.actual_return_5d >= 0 ? '+' : ''}${r.actual_return_5d.toFixed(1)}%</span>`
+          : '<span class="predict-hist-pending">待验证</span>';
+        return `<div class="predict-hist-row">
+          <span class="predict-hist-dir">${dirLabel[r.direction] || r.direction}</span>
+          ${stLbl}
+          <span class="predict-hist-date">${r.created_at.slice(0,10)}</span>
+          ${retHtml}
+          ${r.correct != null ? correctLabel[r.correct] || '' : ''}
+          ${r.note ? `<span class="predict-hist-note">${r.note}</span>` : ''}
+        </div>`;
+      }).join('');
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  {% if in_watchlist %}
+  loadPredictionHistory('{{ stock.code }}');
+  {% endif %}
+});
+
+// ── Anchor nav: scroll restoration + IntersectionObserver highlight ──
+(function() {
+  const nav = document.getElementById('detail-anchor-nav');
+  if (!nav) return;
+  const links = nav.querySelectorAll('.anav-link');
+  const sections = Array.from(links).map(l => document.getElementById(l.dataset.section)).filter(Boolean);
+
+  // sessionStorage restore
+  const savedSection = sessionStorage.getItem('detail_section_{{ stock.code }}');
+  const hashSection  = location.hash.replace('#','');
+  const target = hashSection || savedSection;
+  if (target) {
+    const el = document.getElementById(target);
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: 'instant' }), 80);
+  }
+
+  // Save section on leave
+  window.addEventListener('beforeunload', () => {
+    const active = nav.querySelector('.anav-link.active');
+    if (active) sessionStorage.setItem('detail_section_{{ stock.code }}', active.dataset.section);
+  });
+
+  // Highlight via IntersectionObserver
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const link = nav.querySelector(`[data-section="${e.target.id}"]`);
+      if (link) link.classList.toggle('active', e.isIntersecting);
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  sections.forEach(s => obs.observe(s));
+
+  // Smooth scroll on click
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const sec = document.getElementById(link.dataset.section);
+      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+      history.replaceState(null, '', '#' + link.dataset.section);
+    });
+  });
+})();
+</script>
+{% endblock %}

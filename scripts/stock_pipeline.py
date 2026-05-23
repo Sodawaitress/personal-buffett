@@ -25,6 +25,8 @@ from scripts.buffett_analyst import analyze_all
 from scripts.macro_fetch import fetch_all_macro
 from scripts.nz_fetch import fetch_rbnz_news, fetch_nzx_announcements, fetch_nzx_earnings_calendar
 from scripts.stock_fetch import fetch_cn_earnings_calendar
+from scripts.institutional_radar import run_institutional_radar
+from scripts.catalyst_calendar import run_catalyst_refresh
 
 
 # ── 运行抓取 ──────────────────────────────────────────
@@ -108,13 +110,12 @@ def send_serverchan(key: str, title: str, content: str):
 
 def _refresh_user_holdings_layer2(date_str: str):
     """
-    收盘后对所有用户的持仓股跑一次 Layer 2（纯数学，零 LLM）。
-    刷新量化评级 + trading_params 存入 DB，让今日推送用上今天的数据。
+    Post-close refresh: Layer 2 (quant) for all user stocks.
+    CN stocks: Layer 2 only (LLM already ran via analyze_all).
+    Non-CN stocks (NZ/US/HK): full Layer 2 + Layer 3 LLM narrative.
     """
-    from scripts.pipeline import _run_layer2
-    import threading
+    from scripts.pipeline import _run_analysis, _run_layer2
 
-    # 收集所有需要刷新的代码（去重）
     push_users = _db.get_users_with_daily_push()
     codes_to_refresh = set()
     for u in push_users:
@@ -126,19 +127,24 @@ def _refresh_user_holdings_layer2(date_str: str):
     if not codes_to_refresh:
         return
 
-    print(f"  📊 Layer 2 刷新 {len(codes_to_refresh)} 只股票的量化评级...")
+    print(f"  📊 Refreshing {len(codes_to_refresh)} stocks (quant + LLM for non-CN)...")
     refreshed = 0
     for code in sorted(codes_to_refresh):
         stock = _db.get_stock(code)
         market = (stock or {}).get("market", "cn")
         logs = []
         try:
-            _run_layer2(code, market, lambda msg: logs.append(msg))
+            if market == "cn":
+                # CN: quant only — LLM already ran via analyze_all()
+                _run_layer2(code, market, lambda msg: logs.append(msg))
+            else:
+                # Non-CN (NZ, US, HK): full pipeline including LLM narrative
+                _run_analysis(code, market, lambda msg: logs.append(msg))
             refreshed += 1
         except Exception as e:
-            print(f"    ⚠️ {code} Layer 2 失败: {e}")
+            print(f"    ⚠️ {code} ({market}) failed: {e}")
 
-    print(f"  ✅ Layer 2 刷新完成：{refreshed}/{len(codes_to_refresh)} 只")
+    print(f"  ✅ Refresh done: {refreshed}/{len(codes_to_refresh)}")
 
 
 def send_wechat(title: str, content: str):
@@ -209,11 +215,12 @@ def main():
     data["nzx_announcements"] = fetch_nzx_announcements()
     data["nzx_earnings"]      = fetch_nzx_earnings_calendar()
 
+    date_str = data["date"]
+
     if not trading_day:
         # 休息日：只存新闻，不跑 AI 分析，不生成报告，不推送
         print("  ⏭️ 休息日：跳过 AI 分析和报告生成")
         _db.init_db()
-        date_str = data["date"]
         for code, items in data.get("news", {}).items():
             for n in items:
                 _db.upsert_news(code, n["title"], n.get("source",""), n.get("link",""),
@@ -232,7 +239,11 @@ def main():
     # ── 收盘后刷新所有用户持仓的量化评级（Layer 2，零 LLM token）──
     _refresh_user_holdings_layer2(date_str)
 
+    print("\n🏦 Step 2.5/3：机构雷达...")
+    institutional_section = run_institutional_radar(data)
+
     report = generate_report(data, ai_analysis)
+    report = report + "\n\n" + institutional_section
     with open(REPORT_OUTPUT, "w", encoding="utf-8") as f:
         f.write(report)
     print(f"✅ 报告 {len(report)} 字符 → {REPORT_OUTPUT}")
@@ -240,7 +251,6 @@ def main():
     # ── 持久化到 SQLite ────────────────────────────────
     print("  💾 写入数据库...")
     _db.init_db()
-    date_str = data["date"]
 
     # 行情
     for code, q in data.get("quotes", {}).items():
@@ -272,6 +282,13 @@ def main():
     # 报告（存 md；html 留空，后续可加 markdown→html 转换）
     _db.save_report(date_str, html="", md=report)
     print(f"  ✅ 数据库写入完成")
+
+    print("  📅 催化剂日历...")
+    try:
+        cal_result = run_catalyst_refresh()
+        print(f"  ✅ 催化剂事件：解禁 {cal_result.get('unlock',0)} 条 / 公告 {cal_result.get('notice',0)} 条")
+    except Exception as e:
+        print(f"  ⚠️ 催化剂日历失败（不影响推送）: {e}")
 
     print("\n📨 Step 3/3：推送...")
 

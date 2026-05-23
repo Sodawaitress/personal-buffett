@@ -273,8 +273,8 @@ def _run_fund_analysis(code, stock, price, log, user_id=None):
         try:
             with db.get_conn() as c:
                 rows = c.execute(
-                    "SELECT stock_code FROM user_watchlist WHERE user_id=? AND status!='sold'",
-                    (user_id,)
+                    "SELECT stock_code FROM user_watchlist WHERE user_id=:uid AND status!='sold'",
+                    {"uid": user_id},
                 ).fetchall()
                 existing_codes = [r["stock_code"] for r in rows if r["stock_code"] != code]
         except Exception:
@@ -316,7 +316,7 @@ def _run_fund_analysis(code, stock, price, log, user_id=None):
     )
 
 
-def _run_layer2(code, market, log, user_id=None):
+def _run_layer2(code, market, log, user_id=None, locale="zh"):
     from scripts.buffett_analyst import _analyze_news_signals
     from scripts.quantitative_rating import QuantitativeRater
 
@@ -355,8 +355,8 @@ def _run_layer2(code, market, log, user_id=None):
         try:
             with db.get_conn() as c:
                 row = c.execute(
-                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=? AND stock_code=?",
-                    (user_id, code),
+                    "SELECT buy_price, buy_date FROM user_watchlist WHERE user_id=:uid AND stock_code=:code",
+                    {"uid": user_id, "code": code},
                 ).fetchone()
                 if row and row["buy_price"]:
                     entry_price = float(row["buy_price"])
@@ -364,15 +364,35 @@ def _run_layer2(code, market, log, user_id=None):
         except Exception:
             pass
 
-    news_signals = _analyze_news_signals(news)
+    name = (stock or {}).get("name", code)
+    news_signals = _analyze_news_signals(news, company_name=name)
     earnings_flags = _analyze_earnings_quality(_annual)
+
+    # 困境/重整股：注入近5日涨跌幅（催化剂耗尽检测）
+    if company_type == "distressed":
+        try:
+            events_recent = db.get_stock_events(code, limit=20)
+            restructuring_events = [
+                e for e in (events_recent or [])
+                if e.get("event_type") in ("restructuring_announced", "restructuring_vote", "restructuring_approved")
+            ]
+            if restructuring_events and price:
+                cur = price.get("price", 0)
+                chg = price.get("change_pct")
+                # 用当日变化作为近期信号的代理指标（完整5日历史需另建价格表）
+                if cur and chg is not None:
+                    news_signals["recent_gain_pct"] = round(chg, 2)
+                    news_signals["restructuring_event_count"] = len(restructuring_events)
+        except Exception:
+            pass
     data_warnings = _validate_signals(code, fundamentals)
 
+    _key = news_signals.get("key_signals", [])
     news_for_rating = {
-        "high_pos_buyback": 1 if "回购" in news_signals.get("summary", "") else 0,
-        "mid_pos_dividend": 1 if "分红" in news_signals.get("summary", "") else 0,
-        "high_neg_resignation": 1 if "离职" in news_signals.get("summary", "") else 0,
-        "mid_neg_reduction": 1 if "减持" in news_signals.get("summary", "") else 0,
+        "high_pos_buyback":     1 if "回购" in _key else 0,
+        "mid_pos_dividend":     1 if any(k in _key for k in ("分红", "派息")) else 0,
+        "high_neg_resignation": 1 if any(k in _key for k in ("辞职", "离职")) else 0,
+        "mid_neg_reduction":    1 if "减持" in _key else 0,
     }
 
     quant_result = QuantitativeRater().rate_stock(
@@ -383,6 +403,7 @@ def _run_layer2(code, market, log, user_id=None):
         pb_percentile=fundamentals.get("pb_percentile_5y"),
         price_52week_pct=_signals.get("price_position"),
         news_signals=news_for_rating,
+        locale=locale,
     )
     log(f"       量化评级: {quant_result['grade']} {quant_result['score']}/100 · {quant_result['conclusion']}")
 
@@ -392,6 +413,31 @@ def _run_layer2(code, market, log, user_id=None):
 
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
     _fund_flow_row = db.get_fund_flow(code) if market == "cn" else {}
+
+    # feat_price_momentum: average daily change_pct over last 5 sessions
+    _feat_price_momentum = None
+    try:
+        from radar_app.data.stocks import get_price_history as _get_ph
+        _ph = _get_ph(code, days=6)
+        _changes = [r.get("change_pct") for r in _ph if r.get("change_pct") is not None]
+        if len(_changes) >= 3:
+            _feat_price_momentum = round(sum(_changes[:5]) / len(_changes[:5]), 4)
+    except Exception:
+        pass
+
+    # feat_fear_greed: CNN Fear & Greed index from daily macro snapshot
+    _feat_fear_greed = None
+    try:
+        from radar_app.data.market import get_market_snapshot as _get_snap
+        _snap = _get_snap()
+        if _snap:
+            _fg = (_snap.get("data") or {}).get("fear_greed") or {}
+            _fg_score = _fg.get("score") if isinstance(_fg, dict) else None
+            if _fg_score is not None:
+                _feat_fear_greed = int(_fg_score)
+    except Exception:
+        pass
+
     db.save_analysis(
         code=code,
         period="daily",
@@ -408,6 +454,8 @@ def _run_layer2(code, market, log, user_id=None):
         feat_sentiment_avg=round(news_signals.get("sentiment_avg", 0) or 0, 4),
         feat_fund_flow_net=_fund_flow_row.get("main_net"),
         feat_pe_vs_hist=fundamentals.get("pe_percentile_5y"),
+        feat_price_momentum=_feat_price_momentum,
+        feat_fear_greed=_feat_fear_greed,
     )
 
     if trading_params:
@@ -432,14 +480,25 @@ def _run_layer2(code, market, log, user_id=None):
 
 
 def _run_analysis(code, market, log, user_id=None):
+    # Resolve locale once, used by both quantitative rater and LLM narrative
+    _user_locale = "zh"
+    if user_id:
+        try:
+            with db.get_conn() as _c:
+                _urow = _c.execute("SELECT locale FROM users WHERE id=:uid", {"uid": user_id}).fetchone()
+                if _urow:
+                    _user_locale = _urow["locale"] or "zh"
+        except Exception:
+            pass
+
     log("  [4/4] Layer 2 量化评级…")
     try:
-        quant_result, trading_params, ctx = _run_layer2(code, market, log, user_id)
+        quant_result, trading_params, ctx = _run_layer2(code, market, log, user_id, locale=_user_locale)
     except Exception as e:
         log(f"       ⚠️ Layer 2 失败: {e}")
         return
 
-    log("  [4/4] Layer 3 LLM叙事…")
+    log("  [4/4] Layer 3 LLM narrative…")
     try:
         from scripts.buffett_analyst import analyze_stock_v3
 
@@ -460,6 +519,8 @@ def _run_analysis(code, market, log, user_id=None):
             buy_date=ctx["buy_date"],
             data_warnings=ctx["data_warnings"],
             earnings_flags=ctx["earnings_flags"],
+            inst_signals=ctx["signals"].get("inst_us") if market != "cn" else None,
+            locale=_user_locale,
         )
         if result:
             today = datetime.now(CN_TZ).strftime("%Y-%m-%d")

@@ -1,8 +1,35 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date as _date
 
 import db
 
 CN_TZ = timezone(timedelta(hours=8))
+
+# ── US-79/89/90 Institution classification ──────────────────────────────────
+_PASSIVE_INDEX   = ("Vanguard", "BlackRock", "State Street", "Geode", "Schwab Index",
+                    "iShares", "SPDR", "Dimensional Fund", "Northern Trust")
+_INVESTMENT_BANK = ("JPMorgan", "Morgan Stanley", "Goldman Sachs", "Wells Fargo",
+                    "Citibank", "Bank of America", "Merrill Lynch", "UBS", "Barclays")
+_ACTIVE_MANAGER  = ("Fidelity", "T. Rowe Price", "Wellington", "Capital Group",
+                    "Dodge & Cox", "American Funds", "Putnam", "MFS Investment",
+                    "Invesco", "Franklin Templeton")
+_HEDGE_FUND      = ("Renaissance", "Citadel", "Point72", "Two Sigma", "AQR",
+                    "Viking", "Pershing Square", "Third Point", "Elliott",
+                    "Greenlight", "Baupost", "Bridgewater", "Millennium")
+
+# ── US-90 Activist tiers ──────────────────────────────────────────────────────
+_ACTIVIST_T1 = {
+    "Elliott":     "Elliott Management（Paul Singer）",
+    "Starboard":   "Starboard Value（Jeff Smith）",
+    "Third Point": "Third Point（Dan Loeb）",
+    "Trian":       "Trian Fund Management（Nelson Peltz）",
+    "ValueAct":    "ValueAct Capital",
+    "Jana":        "Jana Partners",
+}
+_ACTIVIST_T2 = {
+    "Icahn":           "Carl Icahn",
+    "Pershing Square": "Pershing Square（Bill Ackman）",
+    "Greenlight":      "Greenlight Capital（David Einhorn）",
+}
 
 
 def _fetch_1a_quote(code, market, log):
@@ -161,7 +188,7 @@ def _fetch_1c1_news(code, market, log):
 
                 stock = db.get_stock(code)
                 name_en = (stock or {}).get("name", code)
-                query = _req.utils.quote(f"{name_en} {code} stock news 2026")
+                query = _req.utils.quote(f"{name_en} {code} stock news {datetime.now(CN_TZ).year}")
                 rss_url = f"https://news.google.com/rss/search?q={query}&hl=en&gl=US&ceid=US:en"
                 feed = feedparser.parse(rss_url)
                 added = 0
@@ -400,6 +427,24 @@ def _fetch_signals(code, market, log):
     except Exception as e:
         log(f"       ⚠️ 投行信号获取失败: {e}")
 
+    # 计算机构背离分并存入 signals_json
+    try:
+        from radar_app.data.signal_events import _calc_divergence
+        from radar_app.data.market import get_precursor_cache
+
+        fresh = (db.get_fundamentals(code) or {}).get("signals", {})
+        precursor = get_precursor_cache(code)
+        div = _calc_divergence(precursor, fresh)
+        db.upsert_signals(code, {
+            "divergence_score":     div["total"],
+            "divergence_level":     div["level"],
+            "divergence_action":    div["action"],
+            "divergence_breakdown": div["breakdown"],
+        })
+        log(f"       背离分: {div['total']:+d} ({div['level']})")
+    except Exception as e:
+        log(f"       ⚠️ 背离分计算失败: {e}")
+
 
 def _fetch_1b_financials(code, market, log):
     _fetch_financials(code, market, log)
@@ -435,11 +480,285 @@ def _fetch_north_bound(market, log):
         log(f"       ⚠️ 北向资金获取失败: {e}")
 
 
+def _fetch_us_institutional(code, market, log):
+    """US-79 · Institutional holder snapshot via yfinance (non-CN markets). 48h cache."""
+    from datetime import datetime as _dt2
+
+    # 48h cache: skip if inst_us was fetched within the last 48 hours
+    try:
+        existing_signals = db.get_fundamentals(code).get("signals", {})
+        cached = existing_signals.get("inst_us", {})
+        ts_str = cached.get("_fetched_at")
+        if ts_str:
+            age_h = (_dt2.utcnow() - _dt2.fromisoformat(ts_str)).total_seconds() / 3600
+            if age_h < 48:
+                log(f"  [3.9a/4] 机构持仓缓存有效（{age_h:.0f}h）")
+                return
+    except Exception:
+        pass
+
+    log("  [3.9a/4] 机构持仓（yfinance）…")
+    try:
+        import yfinance as yf
+
+        ticker = yf.Ticker(code)
+        info = ticker.info
+
+        # Major holder percentages
+        inst_pct = inst_count = insider_pct = None
+        try:
+            mh = ticker.major_holders
+            if mh is not None and not mh.empty:
+                mh_dict = {str(idx): float(val) for idx, val in zip(mh.index, mh.iloc[:, 0])}
+                inst_pct    = mh_dict.get("institutionsPercentHeld")
+                insider_pct = mh_dict.get("insidersPercentHeld")
+                inst_count  = int(mh_dict.get("institutionsCount", 0)) or None
+        except Exception:
+            pass
+
+        # Short interest
+        short_float_pct = None
+        sf = info.get("shortPercentOfFloat")
+        if sf is not None:
+            try:
+                short_float_pct = round(float(sf) * 100, 2)
+            except (TypeError, ValueError):
+                pass
+
+        short_now  = info.get("sharesShort")
+        short_prev = info.get("sharesShortPriorMonth")
+        short_trend_pct = None
+        if short_now and short_prev and short_prev > 0:
+            short_trend_pct = round((short_now - short_prev) / short_prev * 100, 2)
+
+        # Classify top holders, compute active-manager net change
+        top_holders   = []
+        active_changes = []
+        try:
+            ih = ticker.institutional_holders
+            if ih is not None and not ih.empty:
+                for _, r in ih.head(15).iterrows():
+                    holder  = str(r.get("Holder", "") or "")
+                    pct_h   = float(r.get("pctHeld", 0) or 0)
+                    pct_chg = float(r.get("pctChange", 0) or 0)
+
+                    htype = "other"
+                    for name in _PASSIVE_INDEX:
+                        if name.lower() in holder.lower():
+                            htype = "passive"; break
+                    if htype == "other":
+                        for name in _INVESTMENT_BANK:
+                            if name.lower() in holder.lower():
+                                htype = "bank"; break
+                    if htype == "other":
+                        for name in _HEDGE_FUND:
+                            if name.lower() in holder.lower():
+                                htype = "hedge"; break
+                    if htype == "other":
+                        for name in _ACTIVE_MANAGER:
+                            if name.lower() in holder.lower():
+                                htype = "active"; break
+
+                    top_holders.append({"name": holder, "type": htype,
+                                        "pct": round(pct_h, 4), "change": round(pct_chg, 4)})
+                    if htype in ("active", "hedge"):
+                        active_changes.append(pct_chg)
+        except Exception:
+            pass
+
+        active_net_change = round(sum(active_changes), 4) if active_changes else None
+
+        # Analyst upgrades/downgrades (last 90 days)
+        top_analyst_net = None
+        try:
+            from datetime import date as _d2, timedelta as _td2
+            ud = ticker.upgrades_downgrades
+            if ud is not None and not ud.empty:
+                cutoff = _d2.today() - _td2(days=90)
+                idx_dates = ud.index.date if hasattr(ud.index, "date") else None
+                recent = ud[idx_dates >= cutoff] if idx_dates is not None else ud.head(30)
+                acts = recent["Action"].str.lower()
+                ups   = int(acts.str.contains(r"\bup\b|upgrade|reit|raise", na=False).sum())
+                downs = int(acts.str.contains(r"\bdown\b|downgrade|lower", na=False).sum())
+                top_analyst_net = ups - downs
+        except Exception:
+            pass
+
+        result = {
+            "inst_pct":          inst_pct,
+            "insider_pct":       insider_pct,
+            "inst_count":        inst_count,
+            "active_net_change": active_net_change,
+            "short_float_pct":   short_float_pct,
+            "short_trend_pct":   short_trend_pct,
+            "short_ratio":       info.get("shortRatio"),
+            "top_analyst_net":   top_analyst_net,
+            "top_holders":       top_holders[:10],
+            "_fetched_at":       _dt2.utcnow().isoformat(timespec="seconds"),
+        }
+        db.upsert_signals(code, {"inst_us": result})
+
+        parts = []
+        if inst_pct:
+            parts.append(f"机构 {inst_pct*100:.1f}%")
+        if short_trend_pct is not None:
+            parts.append(f"空头{'↑' if short_trend_pct > 0 else '↓'}{abs(short_trend_pct):.1f}%")
+        if top_analyst_net is not None:
+            parts.append(f"分析师净{'+' if top_analyst_net >= 0 else ''}{top_analyst_net}")
+        log(f"       {' | '.join(parts) or '无数据'}")
+    except Exception as e:
+        log(f"       ⚠️ 机构持仓失败: {e}")
+
+
+def _fetch_us_insiders(code, market, log):
+    """US-89 · Form 4 C-suite cluster buy detection via yfinance."""
+    log("  [3.9b/4] 内部人交易（Form 4）…")
+    try:
+        import yfinance as yf
+        from datetime import date as _d2, timedelta as _td2
+
+        ticker = yf.Ticker(code)
+        it = ticker.insider_transactions
+        if it is None or it.empty:
+            db.upsert_signals(code, {"insider_us": {"cluster_buy": False, "buy_count": 0}})
+            log("       无内部人交易数据")
+            return
+
+        cutoff = _d2.today() - _td2(days=30)
+        buyers = []
+
+        for _, row in it.iterrows():
+            pos = str(row.get("Position", "") or "")
+            if not any(k in pos.upper() for k in (
+                "OFFICER", "DIRECTOR", "CEO", "CFO", "COO", "CTO",
+                "PRESIDENT", "EVP", "SVP",
+            )):
+                continue
+
+            txn = str(row.get("Transaction", "") or "")
+            txn_lo = txn.lower()
+            # Must be an open-market purchase, not an option exercise
+            if not any(k in txn_lo for k in ("purchase", "acquisition", "buy")):
+                continue
+
+            start_date = row.get("Start Date")
+            if start_date is None:
+                continue
+            try:
+                sd = start_date.date() if hasattr(start_date, "date") else _d2.fromisoformat(str(start_date)[:10])
+                if sd < cutoff:
+                    continue
+            except Exception:
+                continue
+
+            try:
+                value = float(row.get("Value") or 0)
+            except (TypeError, ValueError):
+                value = 0
+            if value < 100_000:
+                continue
+
+            try:
+                shares = int(row.get("Shares") or 0)
+            except (TypeError, ValueError):
+                shares = 0
+
+            buyers.append({
+                "name":   str(row.get("Insider", "")),
+                "role":   pos,
+                "value":  int(value),
+                "shares": shares,
+                "date":   str(sd),
+            })
+
+        total_value = sum(b["value"] for b in buyers)
+        cluster_buy = len(buyers) >= 2 and total_value >= 500_000
+
+        db.upsert_signals(code, {"insider_us": {
+            "cluster_buy":  cluster_buy,
+            "buy_count":    len(buyers),
+            "total_value":  total_value,
+            "buyers":       buyers[:5],
+        }})
+
+        if cluster_buy:
+            log(f"       🔥 集群买入! {len(buyers)}人 合计${total_value/1e6:.1f}M")
+        elif buyers:
+            log(f"       {len(buyers)}笔内部人买入 ${total_value/1e3:.0f}K")
+        else:
+            log("       无显著内部人买入（30天内）")
+    except Exception as e:
+        log(f"       ⚠️ 内部人交易失败: {e}")
+
+
+def _fetch_13d_activist(code, market, log):
+    """US-90 · SEC EDGAR SC 13D activist filing detection (US only)."""
+    if market != "us":
+        return
+    log("  [3.9c/4] 激进投资人 13D 侦测…")
+    try:
+        import requests as _req
+        from datetime import date as _d2, timedelta as _td2
+
+        sym = code.split(".")[0]
+        start = (_d2.today() - _td2(days=90)).isoformat()
+        today = _d2.today().isoformat()
+
+        url = (
+            f"https://efts.sec.gov/LATEST/search-index"
+            f"?q=%22{sym}%22"
+            f"&forms=SC%2013D"
+            f"&dateRange=custom&startdt={start}&enddt={today}"
+        )
+        headers = {"User-Agent": "StockRadarCodex radar@stockradar.example.com"}
+        resp = _req.get(url, headers=headers, timeout=15)
+        resp.raise_for_status()
+        hits = (resp.json().get("hits") or {}).get("hits") or []
+
+        found = None
+        for hit in hits:
+            src = hit.get("_source", {})
+            # entity_name = filer; also check display_names array
+            names_to_check = [str(src.get("entity_name", "") or "")]
+            dn = src.get("display_names") or []
+            names_to_check += [str(n) for n in dn]
+            combined = " ".join(names_to_check)
+
+            tier = full_name = None
+            for key, fname in _ACTIVIST_T1.items():
+                if key.lower() in combined.lower():
+                    tier = "T1"; full_name = fname; break
+            if tier is None:
+                for key, fname in _ACTIVIST_T2.items():
+                    if key.lower() in combined.lower():
+                        tier = "T2"; full_name = fname; break
+
+            if tier:
+                filed = str(src.get("file_date", "") or src.get("period_of_report", ""))[:10]
+                found = {"found": True, "tier": tier, "name": full_name,
+                         "filed_date": filed, "entity": names_to_check[0]}
+                break
+
+        result = found or {"found": False}
+        db.upsert_signals(code, {"activist_13d": result})
+
+        if found:
+            log(f"       🚨 {found['tier']} 激进投资人: {found['name']} ({found['filed_date']})")
+        else:
+            log("       无激进投资人 13D 申报（近90天）")
+    except Exception as e:
+        log(f"       ⚠️ EDGAR 13D 查询失败: {e}")
+
+
 def _fetch_1c2_capital(code, market, log):
     _fetch_north_bound(market, log)
     _fetch_fund_flow(code, market, log)
     if not _is_st(code):
         _fetch_signals(code, market, log)
+    if market in ("us", "hk", "au", "nz", "kr"):
+        _fetch_us_institutional(code, market, log)
+        _fetch_us_insiders(code, market, log)
+        _fetch_13d_activist(code, market, log)
 
 
 def _is_st(code: str) -> bool:

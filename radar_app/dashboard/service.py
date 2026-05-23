@@ -9,6 +9,7 @@ from radar_app.dashboard.presenter import (
     present_intl_news,
     present_portfolio_brief,
 )
+from radar_app.data.stocks import get_news_sentiment_map
 from radar_app.dashboard.query import (
     get_fomc_news_items,
     get_intl_stock_news,
@@ -23,12 +24,15 @@ from radar_app.dashboard.query import (
 from radar_app.shared.runtime import CN_TZ
 
 
-def _build_index_stocks(user_id, locale="en"):
+def _build_index_stocks(user_id):
+    rows = list(list_active_watchlist(user_id))
+    codes = [row.get("stock_code") or row.get("code") for row in rows]
+    sentiment_map = get_news_sentiment_map(codes)
     stocks = []
-    for row in list_active_watchlist(user_id):
+    for row in rows:
         code = row.get("stock_code") or row.get("code")
         market = row.get("market")
-        stocks.append(present_index_stock(row, get_stock_snapshot(code, market), get_pending_job(code), locale))
+        stocks.append(present_index_stock(row, get_stock_snapshot(code, market), get_pending_job(code), sentiment_map.get(code)))
     return stocks
 
 
@@ -48,6 +52,7 @@ def build_dashboard_context(user_id, region, locale="en"):
     intl_news.extend(get_fomc_news_items(limit=2))
     return {
         "stocks": stocks,
+        "has_cn_stocks": any(s.get("market") == "cn" and s.get("status") in ("holding", "watching") for s in stocks),
         "local_stocks": [stock for stock in stocks if stock["market"] == region],
         "intl_stocks": [stock for stock in stocks if stock["market"] != region],
         "local_news": get_local_news("cn" if locale == "zh" else "nz"),

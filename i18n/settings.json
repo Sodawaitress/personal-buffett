@@ -1,0 +1,38 @@
+{
+  "settings_daily_push": {
+    "en": "Daily close alert",
+    "zh": "每日收盘推送"
+  },
+  "settings_daily_push_help": {
+    "en": "Receive a portfolio briefing at market close on trading days.",
+    "zh": "交易日收盘后收到持仓日报 + 建议买入股。"
+  },
+  "settings_general": {
+    "en": "General",
+    "zh": "通用"
+  },
+  "settings_language": {
+    "en": "Language",
+    "zh": "语言"
+  },
+  "settings_push_title": {
+    "en": "WeChat Push",
+    "zh": "微信推送"
+  },
+  "settings_region": {
+    "en": "Home Market",
+    "zh": "所在地区"
+  },
+  "settings_region_help": {
+    "en": "Sets which stocks appear in your Local panel.",
+    "zh": "决定「本地」面板显示哪个市场的股票。"
+  },
+  "settings_saved": {
+    "en": "Saved.",
+    "zh": "设置已保存。"
+  },
+  "settings_title": {
+    "en": "Settings",
+    "zh": "设置"
+  }
+}

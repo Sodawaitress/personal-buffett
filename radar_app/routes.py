@@ -3,6 +3,8 @@
 
 def register_routes(app, bcrypt, oauth):
     from radar_app.admin.routes import register_admin_routes
+    from radar_app.claude.routes import register_claude_routes
+    from radar_app.knowledge.routes import register_knowledge_routes
     from radar_app.auth.routes import register_auth_routes
     from radar_app.dashboard.routes import register_dashboard_routes
     from radar_app.portfolio.routes import register_portfolio_routes
@@ -21,3 +23,5 @@ def register_routes(app, bcrypt, oauth):
     register_watchlist_routes(app)
     register_stock_routes(app)
     register_system_routes(app)
+    register_knowledge_routes(app)
+    register_claude_routes(app)

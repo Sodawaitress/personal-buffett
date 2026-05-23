@@ -8,6 +8,7 @@ __pycache__/
 *.log
 *.bak
 venv/
+.idea/
 notebooks/
 /tmp/stock_raw.json
 /tmp/stock_report.md

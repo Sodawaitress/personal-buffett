@@ -1,0 +1,706 @@
+{
+  "btn_add_watchlist": {
+    "en": "+ Add to watchlist",
+    "zh": "+ 加自选"
+  },
+  "btn_analyse": {
+    "en": "↻",
+    "zh": "↻"
+  },
+  "btn_buffett_check": {
+    "en": "Re-analyse",
+    "zh": "重新分析"
+  },
+  "btn_full_refresh": {
+    "en": "Full refresh",
+    "zh": "全量刷新"
+  },
+  "btn_full_update": {
+    "en": "Full Update",
+    "zh": "全量更新"
+  },
+  "btn_fund_check": {
+    "en": "Re-analyse",
+    "zh": "重新分析"
+  },
+  "btn_gen_letter": {
+    "en": "📄 Generate Letter",
+    "zh": "📄 生成股东信"
+  },
+  "btn_inst_radar": {
+    "en": "Inst. Radar",
+    "zh": "机构雷达"
+  },
+  "btn_inst_radar_scanning": {
+    "en": "Scanning…",
+    "zh": "扫描中…"
+  },
+  "btn_inst_radar_title": {
+    "en": "Scan all A-Share stocks for institutional activity",
+    "zh": "扫描全部 A 股的机构调研 + 参与度，结果推送微信"
+  },
+  "btn_latest_report": {
+    "en": "Latest Report",
+    "zh": "最新报告"
+  },
+  "btn_news": {
+    "en": "News",
+    "zh": "新闻"
+  },
+  "btn_read_letter": {
+    "en": "Read the letter →",
+    "zh": "读信 →"
+  },
+  "btn_record_event": {
+    "en": "Record",
+    "zh": "录入"
+  },
+  "btn_refresh_news": {
+    "en": "Refresh news",
+    "zh": "更新新闻"
+  },
+  "btn_remove_stock": {
+    "en": "Remove from watchlist",
+    "zh": "从自选股移除"
+  },
+  "dim_behavioral": {
+    "en": "Behavioral",
+    "zh": "行为金融"
+  },
+  "dim_execution": {
+    "en": "Execution",
+    "zh": "交易执行"
+  },
+  "dim_fund_flow": {
+    "en": "Fund Flow",
+    "zh": "资金流向"
+  },
+  "dim_macro": {
+    "en": "Macro",
+    "zh": "宏观敏感度"
+  },
+  "dim_mgmt": {
+    "en": "Management",
+    "zh": "管理层"
+  },
+  "dim_moat": {
+    "en": "Moat",
+    "zh": "护城河"
+  },
+  "dim_portfolio_fit": {
+    "en": "Portfolio Fit",
+    "zh": "组合适配"
+  },
+  "dim_product_quality": {
+    "en": "Product Quality",
+    "zh": "产品质量"
+  },
+  "dim_target_quality": {
+    "en": "Target Quality",
+    "zh": "标的质量"
+  },
+  "dim_valuation": {
+    "en": "Valuation",
+    "zh": "估值"
+  },
+  "ev_bonus_share": {
+    "en": "Bonus Share",
+    "zh": "转增股本"
+  },
+  "ev_date_unknown": {
+    "en": "Date unknown",
+    "zh": "日期未知"
+  },
+  "ev_delist_final": {
+    "en": "Delisted",
+    "zh": "退市"
+  },
+  "ev_delist_warning": {
+    "en": "Delist Warning",
+    "zh": "退市警示"
+  },
+  "ev_major_shareholder": {
+    "en": "Major Shareholder Change",
+    "zh": "大股东变动"
+  },
+  "ev_name_change": {
+    "en": "Name Change",
+    "zh": "公司改名"
+  },
+  "ev_restructuring_announced": {
+    "en": "Restructuring Announced",
+    "zh": "重整公告"
+  },
+  "ev_restructuring_approved": {
+    "en": "Restructuring Approved",
+    "zh": "重整批准"
+  },
+  "ev_restructuring_vote": {
+    "en": "Restructuring Vote",
+    "zh": "重整表决"
+  },
+  "ev_rights_issue": {
+    "en": "Rights Issue",
+    "zh": "供股/配股"
+  },
+  "ev_scheme_risk": {
+    "en": "⚠️ Scheme / Pyramid Risk",
+    "zh": "⚠️ 传销/商业盘风险"
+  },
+  "ev_st_lifted": {
+    "en": "ST Lifted",
+    "zh": "ST解除"
+  },
+  "ev_st_trigger": {
+    "en": "ST Triggered",
+    "zh": "ST触发"
+  },
+  "fw_cyclical": {
+    "en": "Cyclical",
+    "zh": "周期资源"
+  },
+  "fw_financial": {
+    "en": "Financial",
+    "zh": "金融保险"
+  },
+  "fw_growth_tech": {
+    "en": "Growth Tech",
+    "zh": "成长科技"
+  },
+  "fw_mature_value": {
+    "en": "Mature Value",
+    "zh": "成熟价值"
+  },
+  "fw_speculative": {
+    "en": "High-Risk Speculative",
+    "zh": "高风险投机"
+  },
+  "fw_utility": {
+    "en": "Utility / Dividend",
+    "zh": "公用事业/分红"
+  },
+  "gem_risk_body": {
+    "en": "This stock is listed on the Hong Kong GEM board, which has lower regulatory standards than the main board. Shell companies, low liquidity, and stocks used for non-standard commercial schemes are common.",
+    "zh": "此股票在香港 GEM 创业板上市，监管门槛低于主板，存在壳股、流动性不足、以及被第三方用于非正常商业计划的风险。"
+  },
+  "gem_risk_speculative": {
+    "en": "Financial data shows current losses or high leverage — treat analysis conclusions with caution.",
+    "zh": "财务数据显示当前存在亏损或高负债，请谨慎对待分析结论。"
+  },
+  "gem_risk_title": {
+    "en": "High-Risk Warning: HK GEM Board",
+    "zh": "高风险警告：港股 GEM 创业板"
+  },
+  "inst_radar_done": {
+    "en": "✅ Scan complete",
+    "zh": "✅ 扫描完成"
+  },
+  "inst_radar_failed": {
+    "en": "❌ Scan failed: ",
+    "zh": "❌ 扫描失败："
+  },
+  "inst_radar_failed_start": {
+    "en": "❌ Failed to start — please retry",
+    "zh": "❌ 启动失败，请重试"
+  },
+  "inst_radar_starting": {
+    "en": "⏳ Scanning all A-Share stocks for institutional signals (~15 min)…",
+    "zh": "⏳ 正在扫描全部 A 股机构信号（约 15 分钟）…"
+  },
+  "institutional_inflow": {
+    "en": "Institutional inflow",
+    "zh": "主力净流入"
+  },
+  "institutional_outflow": {
+    "en": "Institutional outflow",
+    "zh": "主力净流出"
+  },
+  "js_buffett_check": {
+    "en": "Re-analyse",
+    "zh": "重新分析"
+  },
+  "js_buy_zone_1": {
+    "en": "🟢 Buy Zone 1",
+    "zh": "🟢 买入区间1"
+  },
+  "js_buy_zone_2": {
+    "en": "🟢 Buy Zone 2",
+    "zh": "🟢 买入区间2"
+  },
+  "js_full_refresh_menu": {
+    "en": "Full Update",
+    "zh": "全量更新"
+  },
+  "js_full_refresh_msg": {
+    "en": "Analysing (~1-3 min)…",
+    "zh": "巴菲特分析中（约1-3分钟）…"
+  },
+  "js_gen_letter": {
+    "en": "📄 Generate Letter",
+    "zh": "📄 生成股东信"
+  },
+  "js_generating": {
+    "en": "⏳ Generating…",
+    "zh": "⏳ 生成中…"
+  },
+  "js_key_watch": {
+    "en": "👁 Key Indicators",
+    "zh": "👁 关键监控"
+  },
+  "js_letter_ready": {
+    "en": "Letter generated",
+    "zh": "股东信已生成"
+  },
+  "js_letter_ready_label": {
+    "en": "Generated",
+    "zh": "已生成"
+  },
+  "js_position_size": {
+    "en": "⚖️ Position Strategy",
+    "zh": "⚖️ 仓位策略"
+  },
+  "js_quant_only_msg": {
+    "en": "Re-analysing (~30s)…",
+    "zh": "重新分析中（约30秒）…"
+  },
+  "js_read_letter": {
+    "en": "📄 Read Letter",
+    "zh": "📄 读股东信"
+  },
+  "js_reduce_zone": {
+    "en": "🟠 Reduce Zone",
+    "zh": "🟠 减仓区间"
+  },
+  "js_refresh_news_menu": {
+    "en": "Refresh news",
+    "zh": "更新新闻"
+  },
+  "lbl_52w_range": {
+    "en": "52-wk Range",
+    "zh": "52周区间"
+  },
+  "lbl_add_event": {
+    "en": "Record Event",
+    "zh": "录入事件"
+  },
+  "lbl_analysing": {
+    "en": "Buffett is thinking…",
+    "zh": "巴菲特分析中…"
+  },
+  "lbl_articles": {
+    "en": "articles",
+    "zh": "条"
+  },
+  "lbl_board_label": {
+    "en": "Board",
+    "zh": "板块"
+  },
+  "lbl_buy_price": {
+    "en": "Bought at",
+    "zh": "买入"
+  },
+  "lbl_buy_price_placeholder": {
+    "en": "Buy price (optional)",
+    "zh": "价格(选填)"
+  },
+  "lbl_cheap": {
+    "en": "Cheap",
+    "zh": "偏便宜"
+  },
+  "lbl_code_label": {
+    "en": "Code",
+    "zh": "代码"
+  },
+  "lbl_company_overview": {
+    "en": "Company Overview",
+    "zh": "公司概览"
+  },
+  "lbl_confirm_password": {
+    "en": "Confirm password",
+    "zh": "确认密码"
+  },
+  "lbl_cur_position": {
+    "en": "Position",
+    "zh": "当前位置"
+  },
+  "lbl_current_price_label": {
+    "en": "Current",
+    "zh": "现价"
+  },
+  "lbl_data_accumulating": {
+    "en": "Accumulating…",
+    "zh": "数据积累中"
+  },
+  "lbl_data_stale_prefix": {
+    "en": "Data may be outdated:",
+    "zh": "⏰ 数据可能过期："
+  },
+  "lbl_debt_ratio_cn": {
+    "en": "Debt/Assets",
+    "zh": "资产负债率"
+  },
+  "lbl_debt_ratio_short": {
+    "en": "Debt Ratio",
+    "zh": "负债率"
+  },
+  "lbl_dominant_sentiment": {
+    "en": "Overall",
+    "zh": "整体倾向"
+  },
+  "lbl_email": {
+    "en": "Email",
+    "zh": "邮箱"
+  },
+  "lbl_event_date_placeholder": {
+    "en": "Event date",
+    "zh": "事件日期"
+  },
+  "lbl_event_summary_placeholder": {
+    "en": "One-line summary (e.g. restructuring plan accepted by court, creditor deadline 2025-06-30)",
+    "zh": "一句话摘要（例：重整计划草案获法院受理，债权申报截止 2025-06-30）"
+  },
+  "lbl_expensive": {
+    "en": "Expensive",
+    "zh": "偏贵"
+  },
+  "lbl_full_refresh_hint": {
+    "en": "Full refresh (~3 min)",
+    "zh": "全量刷新（约3分钟）"
+  },
+  "lbl_fund_flow_empty": {
+    "en": "No flow data — auto-updated after market close",
+    "zh": "暂无资金流数据 — 收盘后自动更新"
+  },
+  "lbl_fund_signals": {
+    "en": "Fund Flow",
+    "zh": "资金信号"
+  },
+  "lbl_fundamentals": {
+    "en": "Fundamentals",
+    "zh": "基本面指标"
+  },
+  "lbl_hist_reports": {
+    "en": "Historical Reports →",
+    "zh": "历史报告 →"
+  },
+  "lbl_history": {
+    "en": "Analysis History",
+    "zh": "历史分析"
+  },
+  "lbl_inst_holdings": {
+    "en": "Institutional",
+    "zh": "机构持仓"
+  },
+  "lbl_knowledge": {
+    "en": "Knowledge",
+    "zh": "知识专栏"
+  },
+  "lbl_latest_news": {
+    "en": "Latest News",
+    "zh": "最新报道"
+  },
+  "lbl_letter_hint": {
+    "en": "Buffett narrative letter (~30s, requires Groq)",
+    "zh": "巴菲特叙事信件（约30秒，需 Groq）"
+  },
+  "lbl_letter_ready": {
+    "en": "Generated",
+    "zh": "已生成"
+  },
+  "lbl_main_flow_hist": {
+    "en": "Fund Flow History",
+    "zh": "主力资金历史"
+  },
+  "lbl_main_flow_short": {
+    "en": "Main",
+    "zh": "主力"
+  },
+  "lbl_main_flow_signal": {
+    "en": "Main flow",
+    "zh": "主力动向"
+  },
+  "lbl_margin_dir": {
+    "en": "Margin",
+    "zh": "融资方向"
+  },
+  "lbl_market_cap": {
+    "en": "Mkt cap",
+    "zh": "市值"
+  },
+  "lbl_market_label": {
+    "en": "Market",
+    "zh": "市场"
+  },
+  "lbl_moat_direction": {
+    "en": "Direction:",
+    "zh": "方向判断："
+  },
+  "lbl_moat_eval": {
+    "en": "Moat Assessment",
+    "zh": "护城河评估"
+  },
+  "lbl_moat_pending": {
+    "en": "Moat analysis will be generated on the next 'What would Buffett think?' run",
+    "zh": "护城河分析将在下次运行「巴菲特怎么看」后自动生成"
+  },
+  "lbl_negative": {
+    "en": "Negative",
+    "zh": "负面"
+  },
+  "lbl_net_margin": {
+    "en": "Net Margin",
+    "zh": "净利润率"
+  },
+  "lbl_net_margin_short": {
+    "en": "Net Margin",
+    "zh": "净利率"
+  },
+  "lbl_neutral": {
+    "en": "Neutral",
+    "zh": "中性"
+  },
+  "lbl_news_sentiment": {
+    "en": "Sentiment",
+    "zh": "新闻情绪"
+  },
+  "lbl_no_analysis": {
+    "en": "Not yet analysed",
+    "zh": "尚无分析"
+  },
+  "lbl_no_analysis_yet": {
+    "en": "No analysis yet",
+    "zh": "尚无分析结果"
+  },
+  "lbl_no_events": {
+    "en": "No events recorded. Important events like restructuring, rights issues, or name changes can be recorded below.",
+    "zh": "暂无记录事件。如有重整进展、供股、改名等重要事件，可在下方手动录入。"
+  },
+  "lbl_no_history": {
+    "en": "No analysis history",
+    "zh": "暂无历史分析"
+  },
+  "lbl_no_news_found": {
+    "en": "No relevant news found",
+    "zh": "暂无相关新闻"
+  },
+  "lbl_no_news_signal": {
+    "en": "No news",
+    "zh": "暂无新闻"
+  },
+  "lbl_no_quote": {
+    "en": "No quote available",
+    "zh": "暂无报价"
+  },
+  "lbl_north_bound": {
+    "en": "North-bound",
+    "zh": "北向资金"
+  },
+  "lbl_password": {
+    "en": "Password",
+    "zh": "密码"
+  },
+  "lbl_pb": {
+    "en": "P/B Ratio",
+    "zh": "市净率 PB"
+  },
+  "lbl_pe": {
+    "en": "P/E Ratio",
+    "zh": "市盈率 PE"
+  },
+  "lbl_pos_high": {
+    "en": "(High)",
+    "zh": "（偏高）"
+  },
+  "lbl_pos_low": {
+    "en": "(Low)",
+    "zh": "（偏低）"
+  },
+  "lbl_pos_mid": {
+    "en": "(Mid)",
+    "zh": "（中间区域）"
+  },
+  "lbl_positive": {
+    "en": "Positive",
+    "zh": "正面"
+  },
+  "lbl_price_history": {
+    "en": "Price History",
+    "zh": "价格历史"
+  },
+  "lbl_profit_growth": {
+    "en": "Profit Growth",
+    "zh": "利润增长"
+  },
+  "lbl_sector_label": {
+    "en": "Sector",
+    "zh": "行业"
+  },
+  "lbl_sentiment_neg": {
+    "en": "Negative 📉",
+    "zh": "负面为主 📉"
+  },
+  "lbl_sentiment_neu": {
+    "en": "Neutral ➖",
+    "zh": "情绪中性 ➖"
+  },
+  "lbl_sentiment_pos": {
+    "en": "Positive 📈",
+    "zh": "正面为主 📈"
+  },
+  "lbl_signals_title": {
+    "en": "📡 Today's Signals",
+    "zh": "📡 今日信号"
+  },
+  "lbl_stale_analysis": {
+    "en": "Analysis",
+    "zh": "分析"
+  },
+  "lbl_stale_finance": {
+    "en": "Financials",
+    "zh": "财务"
+  },
+  "lbl_stale_quote": {
+    "en": "Quote",
+    "zh": "报价"
+  },
+  "lbl_tech_data_pending": {
+    "en": "Technical data pending — run analysis to populate",
+    "zh": "技术数据尚未生成，重新分析后自动填充"
+  },
+  "lbl_tech_levels": {
+    "en": "Technical Levels & Institutional Cost",
+    "zh": "技术支撑位 & 机构成本参考"
+  },
+  "lbl_tech_signals": {
+    "en": "Technicals",
+    "zh": "技术信号"
+  },
+  "lbl_this_week_n": {
+    "en": "This week",
+    "zh": "本周"
+  },
+  "lbl_total_score": {
+    "en": "Overall Score",
+    "zh": "综合评分"
+  },
+  "lbl_trade_entry1": {
+    "en": "🟢 Buy Zone 1",
+    "zh": "🟢 买入区间1"
+  },
+  "lbl_trade_entry2": {
+    "en": "🟢 Buy Zone 2",
+    "zh": "🟢 买入区间2"
+  },
+  "lbl_trade_ma_basis": {
+    "en": "Based on moving averages",
+    "zh": "价格线基于均线计算"
+  },
+  "lbl_trade_no_tech": {
+    "en": "Buffett guidance only — no technical data",
+    "zh": "仅含巴菲特建议，无技术价格数据"
+  },
+  "lbl_trade_params": {
+    "en": "Trade Parameters",
+    "zh": "操作参数"
+  },
+  "lbl_trade_position": {
+    "en": "📍 Position",
+    "zh": "📍 当前位置"
+  },
+  "lbl_trade_reduce": {
+    "en": "🟠 Reduce Zone",
+    "zh": "🟠 减仓区间"
+  },
+  "lbl_trade_resistance1": {
+    "en": "⚪ Resistance 1",
+    "zh": "⚪ 反弹阻力1"
+  },
+  "lbl_trade_resistance2": {
+    "en": "⚪ Resistance 2",
+    "zh": "⚪ 反弹阻力2"
+  },
+  "lbl_trade_stop_loss": {
+    "en": "🔴 Stop Loss",
+    "zh": "🔴 止损位"
+  },
+  "lbl_type_label": {
+    "en": "Type",
+    "zh": "类型"
+  },
+  "lbl_vwap_mid_cost": {
+    "en": "Mid-term Inst. Cost (120-day VWAP)",
+    "zh": "中期机构成本 (120日 VWAP)"
+  },
+  "lbl_vwap_recent_cost": {
+    "en": "Recent Inst. Cost (60-day VWAP)",
+    "zh": "近期机构成本 (60日 VWAP)"
+  },
+  "lbl_year": {
+    "en": "Year",
+    "zh": "年份"
+  },
+  "letter_data_as_of": {
+    "en": "Data as of",
+    "zh": "数据截至"
+  },
+  "letter_disclaimer": {
+    "en": "This analysis does not constitute investment advice",
+    "zh": "本分析不构成投资建议"
+  },
+  "letter_loading": {
+    "en": "Fetching letter…",
+    "zh": "正在取信…"
+  },
+  "letter_location": {
+    "en": "Omaha, Nebraska",
+    "zh": "奥马哈，内布拉斯加州"
+  },
+  "letter_modal_for": {
+    "en": "A Letter For You — About",
+    "zh": "致你 — 关于"
+  },
+  "letter_modal_title": {
+    "en": "A Letter For You",
+    "zh": "巴菲特来信"
+  },
+  "letter_none": {
+    "en": "No letter available yet",
+    "zh": "暂无分析信件"
+  },
+  "letter_salutation": {
+    "en": "Dear friend,",
+    "zh": "致你，"
+  },
+  "letter_sig": {
+    "en": "Warren Buffett (Personal Edition)",
+    "zh": "沃伦·巴菲特（私人版）"
+  },
+  "letter_title_prefix": {
+    "en": "A Letter For You — About",
+    "zh": "致你 — 关于"
+  },
+  "tab_archive": {
+    "en": "Archive",
+    "zh": "档案"
+  },
+  "tab_brief": {
+    "en": "Today's Brief",
+    "zh": "今日简报"
+  },
+  "tab_events": {
+    "en": "Events",
+    "zh": "事件"
+  },
+  "tab_intl": {
+    "en": "International",
+    "zh": "国际"
+  },
+  "tab_local": {
+    "en": "Local",
+    "zh": "本地"
+  },
+  "tab_news": {
+    "en": "News",
+    "zh": "新闻"
+  }
+}

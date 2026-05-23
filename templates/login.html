@@ -50,6 +50,12 @@
       {{ t.auth_new_here }} <strong>{{ t.auth_create_link }}</strong>
     </a>
 
+    <div class="auth-divider"><span>or</span></div>
+
+    <a href="{{ url_for('demo_login') }}" class="btn-demo-access">
+      <i class="bi bi-play-circle me-2"></i>Try the Demo — no sign-up needed
+    </a>
+
   </div>
 </div>
 {% endblock %}

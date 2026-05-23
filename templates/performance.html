@@ -172,5 +172,75 @@
   </div>
   {% endif %}
 
+  {# ── US-39 · 「你的眼光在变准吗」 ── #}
+  <div class="jg-section">
+    <div class="jg-title">你的眼光在变准吗？</div>
+    <p class="jg-subtitle">只统计你打了买入（A / B+）且记录了买入价的判断</p>
+
+    {% if judgment_growth %}
+    {% set jg = judgment_growth %}
+
+    {# 总览数字 #}
+    <div class="jg-overview">
+      <div class="jg-num-block">
+        <span class="jg-big">{{ jg.total }}</span>
+        <span class="jg-label">有记录的买入判断</span>
+      </div>
+      <div class="jg-num-block">
+        <span class="jg-big jg-success">{{ jg.success }}</span>
+        <span class="jg-label">之后涨了 ✓</span>
+      </div>
+      <div class="jg-num-block">
+        <span class="jg-big jg-learning">{{ jg.learning }}</span>
+        <span class="jg-label">学习时刻</span>
+      </div>
+      {% if jg.neutral %}
+      <div class="jg-num-block">
+        <span class="jg-big jg-neutral">{{ jg.neutral }}</span>
+        <span class="jg-label">还在观察中</span>
+      </div>
+      {% endif %}
+      {% if jg.accuracy is not none %}
+      <div class="jg-num-block jg-acc-block">
+        <span class="jg-big">{{ jg.accuracy }}%</span>
+        <span class="jg-label">判断准确率</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {# 趋势对比 #}
+    {% if jg.trend %}
+    <div class="jg-trend-row">
+      <span class="jg-trend-label">和更早的判断比：</span>
+      <span class="jg-trend-earlier">{{ jg.earlier_acc }}%（更早）</span>
+      <span class="jg-trend-arrow">→</span>
+      <span class="jg-trend-recent">{{ jg.recent_acc }}%（近90天）</span>
+      <span class="jg-trend-badge jg-trend-{{ jg.trend }}">
+        {% if jg.trend == 'improving' %}↑ 在进步{% elif jg.trend == 'declining' %}↓ 留意{% else %}→ 保持稳定{% endif %}
+        {% if jg.trend_pct is not none %}（{{ "%+d"|format(jg.trend_pct) }}pp）{% endif %}
+      </span>
+    </div>
+    {% elif jg.recent_n < 3 and jg.earlier_n < 3 %}
+    <p class="jg-hint">再积累几条带买入价的记录，就能看到你的判断力趋势。</p>
+    {% endif %}
+
+    {# 行业准确率 #}
+    {% if jg.type_accuracy %}
+    <div class="jg-type-section">
+      <span class="jg-type-label">你判断最准的领域：</span>
+      {% for t in jg.type_accuracy %}
+      <span class="jg-type-tag">{{ t.label }} {{ t.accuracy }}%（{{ t.success }}/{{ t.total }}）</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="jg-empty">
+      还没有足够的记录——等你打了几个带买入价的判断，这里会开始追踪你的眼光。
+      <br><span style="font-size:12px;color:var(--ink-faint);margin-top:6px;display:block">在持有中的股票里填入「买入价」和「买入日期」即可开始记录。</span>
+    </div>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}

@@ -1,0 +1,107 @@
+name: 机构调研
+slug: survey_activity
+one_liner: 机构专程来公司做实地调研——他们不会无缘无故花时间，密度高说明在认真考虑买入
+
+# 可用字段：has_specific（是否有专项/现场调研）、n_inst（最近一次机构数量）
+#            days_ago（最近调研距今天数）、score（调研热度分）、event_count（60天内次数）
+
+situations:
+
+  - id: very_strong_signal
+    label: 极强前兆：大量机构专程调研
+    triggers:
+      all:
+        - {field: has_specific, op: "==", value: true}
+        - {field: n_inst,       op: ">=", value: 50}
+        - {field: days_ago,     op: "<=", value: 7}
+    body: |
+      50家以上机构在过去7天内专程来公司做定向调研——
+      这是最强的前兆信号之一。
+      「专项调研」意味着机构专门预约、针对性提问，
+      不是全员开放的业绩说明会。这种级别的关注，
+      通常是买入前的最后一步功课。
+    note: |
+      机构从调研到实际买入有时间差（2-8周），
+      这不代表明天就涨。但信号强度高，值得重点关注。
+      注意：如果同期股价已大幅上涨，可能信息已被定价。
+
+  - id: strong_signal
+    label: 强前兆：专项调研且近期
+    triggers:
+      all:
+        - {field: has_specific, op: "==", value: true}
+        - {field: days_ago,     op: "<=", value: 14}
+    body: |
+      有机构在近14天内专程来公司做定向调研。
+      「专项调研」说明机构是有备而来的——
+      他们事先研究了公司，专门为了解决投资判断中
+      的关键问题而来，含金量远高于业绩说明会。
+    note: |
+      机构数量也很重要：1家调研 vs 20家调研，
+      对市场的潜在影响力差距很大。
+      结合融券和参与度信号，判断是否已有资金提前行动。
+
+  - id: specific_but_old
+    label: 有专项调研，但时间较久
+    triggers:
+      all:
+        - {field: has_specific, op: "==", value: true}
+        - {field: days_ago,     op: ">",  value: 14}
+    body: |
+      有机构专项调研记录，但距今超过14天了。
+      信号有效，但时效性在减弱——
+      调研之后机构可能已经做了决定（买入、观望、或放弃）。
+    note: |
+      如果调研后没有出现明显买入迹象（股价没有异常上涨、
+      机构持仓没有变化），可能机构调研后选择了观望。
+
+  - id: mass_meeting_recent
+    label: 大量机构参加会议（近期）
+    triggers:
+      all:
+        - {field: has_specific, op: "==", value: false}
+        - {field: n_inst,       op: ">=", value: 30}
+        - {field: days_ago,     op: "<=", value: 7}
+    body: |
+      近期有30家以上机构参加公司组织的会议（业绩说明会、
+      投资者关系会议等）。这类会议是全员开放的，
+      含金量低于专项调研，但数量多说明市场关注度高。
+    note: |
+      这类会议通常在业绩发布后举行，参与机构数量主要
+      反映市场对业绩的关注程度，不一定代表买入意向。
+
+  - id: general_meeting
+    label: 有机构参加会议
+    triggers:
+      all:
+        - {field: has_specific, op: "==", value: false}
+        - {field: days_ago,     op: "<=", value: 30}
+    body: |
+      近30天有机构参加公司的会议，但属于全员开放型
+      （业绩说明会、线上问答等），不是专程定向调研。
+      这类活动含金量较低——机构参加不代表在认真考虑买入。
+    note: |
+      区分「专项调研」和「业绩说明会」是关键：
+      前者是机构主动找上门，后者是公司邀请大家来听。
+
+  - id: old_record
+    label: 调研记录较旧
+    triggers:
+      all:
+        - {field: days_ago, op: ">", value: 30}
+    body: |
+      最近的调研记录已超过30天，时效性较低。
+      机构的判断可能已经发生变化，
+      这条记录的参考价值有限。
+    note: 如有近期价格或资金异动，优先参考那些更新鲜的信号。
+
+  - id: no_survey
+    label: 近期无机构调研
+    triggers: null
+    body: |
+      过去60天没有机构调研记录。
+      不代表机构不关注——有些公司本身体量小、
+      流动性低，机构调研频率就是较少。
+    note: |
+      对于中小盘股，缺乏调研记录是常态，不是负面信号。
+      对于大盘蓝筹股，长期没有调研才值得关注。

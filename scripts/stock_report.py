@@ -3,13 +3,13 @@
 from datetime import datetime, timedelta
 
 import db as _db
-from scripts.config import BUFFETT_PROFILES, CN_TZ, NEGATIVE_SIGNALS, NOISE_KEYWORDS, POSITIVE_SIGNALS, WATCHLIST
+from scripts.config import BUFFETT_PROFILES, CN_TZ, NEGATIVE_SIGNALS, NOISE_KEYWORDS, POSITIVE_SIGNALS
 
 def generate_report(data: dict, ai_analysis: dict = None,
                     allowed_codes: set = None) -> str:
     """
     生成 Markdown 报告。
-    allowed_codes: 若指定，只显示该集合内的股票；None = 全部（WATCHLIST）。
+    allowed_codes: 若指定，只显示该集合内的股票；None = 今日有行情或新闻的全部股票。
     """
     date      = data["date"]
     quotes    = data.get("quotes", {})
@@ -78,18 +78,19 @@ def generate_report(data: dict, ai_analysis: dict = None,
         return "neutral"
 
     # ── 有效自选股列表 ─────────────────────────────────
-    # allowed_codes=None → 全部（admin pipeline 默认行为）
-    # allowed_codes=set  → 只显示指定代码（per-user push）
-    if allowed_codes is None:
-        eff_watchlist = WATCHLIST
+    # 优先用 allowed_codes（per-user push），否则从今日数据动态推导
+    if allowed_codes is not None:
+        active_codes = allowed_codes
     else:
-        # 从已抓取数据中重建 (name, code, desc) 元组
-        eff_watchlist = [
-            (quotes.get(c, {}).get("name", c), c, "")
-            for c in allowed_codes
-        ]
-        # 行情表也只显示这些代码
-        sorted_stocks = [q for q in sorted_stocks if q["code"] in allowed_codes]
+        # 今天有新闻 OR 有行情的股票 = 今日有动静的
+        active_codes = set(news.keys()) | set(quotes.keys())
+
+    eff_watchlist = [
+        (quotes.get(c, {}).get("name", c), c, "")
+        for c in sorted(active_codes)
+        if c in quotes or c in news
+    ]
+    sorted_stocks = [q for q in sorted_stocks if q["code"] in active_codes]
 
     stock_sections = []
     for name, code, desc in eff_watchlist:
@@ -118,18 +119,53 @@ def generate_report(data: dict, ai_analysis: dict = None,
             lines.append(f"> ROE：{profile['roe_5y']}  |  关注：{'、'.join(profile.get('watch', []))}")
 
         # 🤖 AI 巴菲特分析
-        if ai_analysis and code in ai_analysis:
-            lines.append(f"> 🤖 **巴菲特分析**：{ai_analysis[code]}")
+        ai_text = (ai_analysis or {}).get(code, "")
+        if ai_text:
+            lines.append(f"> 🤖 **巴菲特分析**：{ai_text}")
 
         lines.append("")  # 空行
 
         # 主力资金流向
         ff = fund_flow.get(code, {})
+        net = ff.get("main_net", 0) if ff else None
         if ff:
-            net = ff.get("main_net", 0)
             ratio = ff.get("main_ratio", 0)
             direction = "📈 净流入" if net >= 0 else "📉 净流出"
             lines.append(f"> 主力资金：{direction} **{abs(net):.2f}亿**（占比{ratio:.1f}%）")
+
+        # 信号分歧检测：AI看多 但机构在流出
+        ai_bullish = any(k in ai_text for k in ["买入", "博弈介入", "适合定投", "适合一次性买入"])
+        ai_bearish = any(k in ai_text for k in ["减仓", "卖出", "坚决回避"])
+        if ai_text and net is not None:
+            if ai_bullish and net < -0.5:
+                lines.append(f"> ⚠️ **信号分歧**：基本面看多，但主力今日净流出 {abs(net):.2f}亿——好消息可能已price in，建议观望等回调")
+
+        # 估值地板检测：大跌 + 历史低估值 → 利空可能已price in
+        current_price = q.get("price")
+        if current_price and ai_text:
+            fund_data  = _db.get_fundamentals(code)
+            price_hist = _db.get_price_history(code, days=90)
+            if price_hist:
+                oldest_price = price_hist[-1].get("price")
+                if oldest_price and oldest_price > 0:
+                    drop_90d = (current_price - oldest_price) / oldest_price * 100
+                    pb_pct   = fund_data.get("pb_percentile_5y")
+                    pe_pct   = fund_data.get("pe_percentile_5y")
+                    oversold = drop_90d < -25
+                    at_floor = (pb_pct is not None and pb_pct < 20) or \
+                               (pe_pct is not None and pe_pct < 20)
+                    if oversold and at_floor:
+                        floor_parts = []
+                        if pb_pct is not None and pb_pct < 20:
+                            floor_parts.append(f"PB处于5年{pb_pct:.0f}%低位")
+                        if pe_pct is not None and pe_pct < 20:
+                            floor_parts.append(f"PE处于5年{pe_pct:.0f}%低位")
+                        label = "⚠️ 减仓信号存疑" if ai_bearish else "🛡️ 安全边际出现"
+                        lines.append(
+                            f"> {label}：近90天跌幅{drop_90d:.1f}%，"
+                            f"{' | '.join(floor_parts)}"
+                            f"——利空可能已price in，建议观望而非割肉"
+                        )
 
         # 大股东增减持
         ins = insider.get(code, [])
@@ -468,6 +504,8 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
     buy_watch = _get_buy_watching(user_id)
 
     sections = []
+    total_stocks = len(holdings) + len(buy_watch)
+    failed_stocks = []
 
     if holdings:
         cards = []
@@ -476,6 +514,7 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
             if score >= PUSH_QUALITY_THRESHOLD:
                 cards.append(_stock_card(c, quotes, news_data))
             else:
+                failed_stocks.append(c)
                 print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
         if cards:
             sections.append("## 📊 今日持仓\n\n" + "\n\n".join(cards))
@@ -487,13 +526,19 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
             if score >= PUSH_QUALITY_THRESHOLD:
                 cards.append(_stock_card(c, quotes, news_data))
             else:
+                failed_stocks.append(c)
                 print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
         if cards:
             sections.append("## ⭐ 建议关注（评级买入）\n\n" + "\n\n".join(cards))
 
     if not sections:
+        # 有自选股但全部质量不达标 → 发告知消息，不静默跳过
+        if total_stocks > 0:
+            return (f"股票日报 {date_str}\n\n"
+                    f"今日 {total_stocks} 只自选股数据获取质量不足（可能是网络超时或 AI 分析失败），"
+                    f"请稍后在网页端查看最新数据。")
         return ""
 
-    header = f"**股票日报 {date_str}**\n持仓 {len(holdings)} 只 · 买入候选 {len(buy_watch)} 只\n"
+    header = f"股票日报 {date_str}\n持仓 {len(holdings)} 只 · 买入候选 {len(buy_watch)} 只\n"
     return header + "\n\n---\n\n".join(sections)
 

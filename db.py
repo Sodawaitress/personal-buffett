@@ -18,8 +18,8 @@ from radar_app.data.users import *  # noqa: F401,F403
 def save_question(user_id, question, answer):
     with get_conn() as c:
         c.execute(
-            "INSERT INTO user_questions (user_id, question, answer) VALUES (?,?,?)",
-            (user_id, question, answer),
+            "INSERT INTO user_questions (user_id, question, answer) VALUES (:uid,:question,:answer)",
+            {"uid": user_id, "question": question, "answer": answer},
         )
 
 def list_questions(limit=200):
@@ -29,17 +29,19 @@ def list_questions(limit=200):
                    u.email, u.display_name
             FROM user_questions q
             LEFT JOIN users u ON u.id = q.user_id
-            ORDER BY q.asked_at DESC LIMIT ?
-        """, (limit,)).fetchall()
+            ORDER BY q.asked_at DESC LIMIT :limit
+        """, {"limit": limit}).fetchall()
         return [dict(r) for r in rows]
 
 def count_recent_questions(hours=24):
+    from datetime import datetime, timedelta, timezone
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
     with get_conn() as c:
-        row = c.execute("""
-            SELECT COUNT(*) FROM user_questions
-            WHERE asked_at > datetime('now', ?)
-        """, (f"-{hours} hours",)).fetchone()
-        return row[0] if row else 0
+        row = c.execute(
+            "SELECT COUNT(*) AS n FROM user_questions WHERE asked_at > :cutoff",
+            {"cutoff": cutoff},
+        ).fetchone()
+        return row["n"] if row else 0
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 
 def start_pipeline_job(user_id, code, market):
-    from pipeline import start_pipeline
+    from scripts.pipeline import start_pipeline
     return start_pipeline(user_id, code, market)
 
 

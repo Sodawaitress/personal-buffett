@@ -1,0 +1,266 @@
+{
+  "analysing": {
+    "en": "Buffett is thinking…",
+    "zh": "巴菲特分析中…"
+  },
+  "analysis_done_refresh": {
+    "en": "✓ Analysis complete · Click to refresh",
+    "zh": "✓ 分析完成 · 点击刷新"
+  },
+  "analysis_failed": {
+    "en": "Analysis failed — please retry",
+    "zh": "分析失败，请重试"
+  },
+  "brand": {
+    "en": "Personal Buffett",
+    "zh": "私人巴菲特"
+  },
+  "demo_banner_text": {
+    "en": "Demo mode — viewing 7 curated stocks, analysis is read-only.",
+    "zh": "演示模式 — 共 7 只精选股票，分析为只读。"
+  },
+  "demo_cta": {
+    "en": "Sign up free →",
+    "zh": "免费注册 →"
+  },
+  "demo_exit": {
+    "en": "Exit demo",
+    "zh": "退出演示"
+  },
+  "btn_add": {
+    "en": "Add",
+    "zh": "添加"
+  },
+  "btn_cancel": {
+    "en": "Cancel",
+    "zh": "取消"
+  },
+  "btn_refresh": {
+    "en": "Buffett’s Take",
+    "zh": "巴菲特看此刻"
+  },
+  "btn_remove": {
+    "en": "Remove",
+    "zh": "删除"
+  },
+  "btn_save": {
+    "en": "Save",
+    "zh": "保存设置"
+  },
+  "btn_save_push": {
+    "en": "Save push settings",
+    "zh": "保存推送设置"
+  },
+  "btn_test_push": {
+    "en": "Send test message",
+    "zh": "发送测试消息验证配置"
+  },
+  "col_change": {
+    "en": "Change",
+    "zh": "涨跌"
+  },
+  "col_grade": {
+    "en": "Grade",
+    "zh": "评级"
+  },
+  "col_market": {
+    "en": "Market",
+    "zh": "市场"
+  },
+  "col_name": {
+    "en": "Name",
+    "zh": "名称"
+  },
+  "col_price": {
+    "en": "Price",
+    "zh": "价格"
+  },
+  "dashboard_title": {
+    "en": "My Watchlist",
+    "zh": "我的自选股"
+  },
+  "done_reloading": {
+    "en": "Done — reloading…",
+    "zh": "完成，刷新中…"
+  },
+  "empty_body": {
+    "en": "Search for a company below and let Buffett size it up.",
+    "zh": "在下方添加第一只股票开始使用。"
+  },
+  "empty_title": {
+    "en": "Your watchlist is empty",
+    "zh": "自选股为空"
+  },
+  "error": {
+    "en": "Something went wrong",
+    "zh": "出错了"
+  },
+  "footer_data": {
+    "en": "Data: Sina Finance · AKShare · Google News",
+    "zh": "数据来源：新浪财经 · AKShare · Google News"
+  },
+  "job_cancelled": {
+    "en": "Cancelled — click ‘↻ Analyse’ to re-run",
+    "zh": "已取消，点「↻ 分析」重新运行"
+  },
+  "loading": {
+    "en": "Buffett is thinking…",
+    "zh": "巴菲特分析中…"
+  },
+  "market_au": {
+    "en": "ASX — Australia",
+    "zh": "澳股（ASX）"
+  },
+  "market_cn": {
+    "en": "A-Share — China",
+    "zh": "A股（中国大陆）"
+  },
+  "market_hk": {
+    "en": "HKEX — Hong Kong",
+    "zh": "港股"
+  },
+  "market_kr": {
+    "en": "KRX — Korea",
+    "zh": "韩股（KRX）"
+  },
+  "market_nz": {
+    "en": "NZX — New Zealand",
+    "zh": "NZX（新西兰）"
+  },
+  "market_us": {
+    "en": "NYSE / NASDAQ — US",
+    "zh": "美股（NYSE / NASDAQ）"
+  },
+  "nav_admin": {
+    "en": "Admin",
+    "zh": "管理"
+  },
+  "nav_askbox": {
+    "en": "Questions",
+    "zh": "提问箱"
+  },
+  "nav_back_watchlist": {
+    "en": "← All stocks",
+    "zh": "← 全部选股"
+  },
+  "nav_dashboard": {
+    "en": "Dashboard",
+    "zh": "仪表盘"
+  },
+  "nav_get_started": {
+    "en": "Get started",
+    "zh": "立即开始"
+  },
+  "nav_intl": {
+    "en": "International",
+    "zh": "国际"
+  },
+  "nav_local": {
+    "en": "Local",
+    "zh": "本地"
+  },
+  "nav_login": {
+    "en": "Log in",
+    "zh": "登录"
+  },
+  "nav_logout": {
+    "en": "Log out",
+    "zh": "退出"
+  },
+  "nav_reports": {
+    "en": "Reports",
+    "zh": "报告"
+  },
+  "nav_settings": {
+    "en": "Settings",
+    "zh": "设置"
+  },
+  "nav_user_mgmt": {
+    "en": "Users",
+    "zh": "用户管理"
+  },
+  "nav_watchlist": {
+    "en": "My Watchlist",
+    "zh": "我的选股"
+  },
+  "no_news": {
+    "en": "No recent news.",
+    "zh": "暂无最近新闻。"
+  },
+  "no_quote": {
+    "en": "No quote yet",
+    "zh": "暂无行情"
+  },
+  "reports_title": {
+    "en": "Historical Reports",
+    "zh": "历史报告"
+  },
+  "search_error": {
+    "en": "Search failed — try again",
+    "zh": "搜索失败"
+  },
+  "search_failed": {
+    "en": "Search failed, please retry",
+    "zh": "搜索失败，请重试"
+  },
+  "search_loading": {
+    "en": "Searching…",
+    "zh": "搜索中…"
+  },
+  "search_loading_cache": {
+    "en": "Searching…",
+    "zh": "搜索中…"
+  },
+  "search_no_results": {
+    "en": "No results",
+    "zh": "没有找到结果"
+  },
+  "search_placeholder": {
+    "en": "Enter ticker or name",
+    "zh": "输入代码或名称"
+  },
+  "search_type_cn": {
+    "en": "A-Share",
+    "zh": "A股"
+  },
+  "search_type_fund": {
+    "en": "Fund",
+    "zh": "基金"
+  },
+  "search_type_intl": {
+    "en": "HK/US/NZ",
+    "zh": "港/美/NZ"
+  },
+  "status_holding": {
+    "en": "Holding",
+    "zh": "持有"
+  },
+  "status_holding_short": {
+    "en": "H",
+    "zh": "持"
+  },
+  "status_sold": {
+    "en": "Sold",
+    "zh": "卖出"
+  },
+  "status_sold_short": {
+    "en": "S",
+    "zh": "卖"
+  },
+  "status_watching": {
+    "en": "Watching",
+    "zh": "观察"
+  },
+  "status_watching_short": {
+    "en": "W",
+    "zh": "观"
+  },
+  "tagline": {
+    "en": "Value investing, made personal.",
+    "zh": "价值投资，化繁为简。"
+  },
+  "volume": {
+    "en": "Volume",
+    "zh": "成交额"
+  }
+}

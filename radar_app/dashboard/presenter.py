@@ -48,7 +48,7 @@ def brief_alert(stock, t):
     return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
 
-def present_index_stock(row, snapshot, pending_job, locale="en"):
+def present_index_stock(row, snapshot, pending_job, avg_sentiment=None):
     analysis = snapshot["analysis"]
     fund_flow = snapshot["fund_flow"]
     market = row.get("market") or detect_market(row.get("stock_code") or row.get("code"))
@@ -66,6 +66,8 @@ def present_index_stock(row, snapshot, pending_job, locale="en"):
         "main_net": fund_flow.get("main_net") if fund_flow else None,
         "pending_job": pending_job,
         "analysis_date": analysis.get("analysis_date", "") if analysis else "",
+        "status": row.get("status", "watching"),
+        "avg_sentiment": avg_sentiment,
     }
     stock["alert_level"], stock["alert_reason"] = index_alert(stock, load_strings(locale))
     return stock

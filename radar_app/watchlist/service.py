@@ -6,7 +6,8 @@ import db
 from radar_app.legacy.pipeline import classify_stock_code, start_pipeline_job
 from radar_app.shared.market import detect_market
 from radar_app.shared.runtime import CN_TZ
-from radar_app.watchlist.presenter import calc_performance_stats, present_performance_row, present_watchlist_stock
+from radar_app.watchlist.presenter import calc_judgment_growth, calc_performance_stats, present_performance_row, present_watchlist_stock
+from radar_app.data.stocks import get_news_sentiment_map, get_upcoming_events_for_user
 from radar_app.watchlist.query import (
     get_active_notifications,
     get_performance_rows,
@@ -17,18 +18,26 @@ from radar_app.watchlist.query import (
 
 
 def build_watchlist_context(user_id):
+    rows = list_watchlist_rows(user_id)
+    codes = [row.get("stock_code") or row.get("code") for row in rows]
+    sentiment_map = get_news_sentiment_map(codes)
+
     stocks = []
-    for row in list_watchlist_rows(user_id):
+    for row in rows:
         code = row.get("stock_code") or row.get("code")
         market = row.get("market") or detect_market(code)
-        stocks.append(present_watchlist_stock(row, get_watchlist_snapshot(code, market)))
+        stocks.append(present_watchlist_stock(row, get_watchlist_snapshot(code, market), sentiment_map.get(code)))
 
+    markets = sorted({s["market"] for s in stocks if s.get("market")})
     return {
         "stocks": stocks,
-        "holding": [stock for stock in stocks if stock["status"] == "holding"],
-        "watching": [stock for stock in stocks if stock["status"] == "watching"],
-        "sold": [stock for stock in stocks if stock["status"] == "sold"],
+        "holding": [s for s in stocks if s["status"] == "holding"],
+        "watching": [s for s in stocks if s["status"] == "watching"],
+        "sold":    [s for s in stocks if s["status"] == "sold"],
+        "has_cn_stocks": any(s.get("market") == "cn" for s in stocks),
+        "wl_markets": markets,
         "notifications": get_active_notifications(user_id),
+        "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),
         "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
         "now_date": datetime.now(CN_TZ).strftime("%Y-%m-%d"),
     }
@@ -88,9 +97,11 @@ def build_performance_context(user_id):
         else:
             sold.append(perf)
 
+    all_rows = holdings + sold
     return {
-        "holdings": holdings,
-        "sold": sold,
-        "stats": calc_performance_stats(holdings + sold),
-        "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+        "holdings":        holdings,
+        "sold":            sold,
+        "stats":           calc_performance_stats(all_rows),
+        "judgment_growth": calc_judgment_growth(all_rows),
+        "now":             datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
     }

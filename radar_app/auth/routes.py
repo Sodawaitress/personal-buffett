@@ -83,3 +83,21 @@ def register_auth_routes(app, bcrypt, oauth):
     def logout():
         session.clear()
         return redirect(url_for("login"))
+
+    @app.route("/demo")
+    def demo_login():
+        """One-click demo access — no registration required."""
+        from radar_app.auth.demo import ensure_demo_user
+        demo_user = ensure_demo_user()
+        session.clear()
+        session["user_id"]      = demo_user["id"]
+        session["display_name"] = "Demo"
+        session["avatar_url"]   = ""
+        session["locale"]       = "en"
+        session["region"]       = "nz"
+        session["role"]         = "member"
+        session["is_demo"]      = True
+        next_code = request.args.get("next")
+        if next_code:
+            return redirect(f"/stock/{next_code}")
+        return redirect(url_for("watchlist_page"))

@@ -15,18 +15,21 @@ from radar_app.shared.auth import admin_required, login_required
 
 
 def register_admin_routes(app):
+    @app.route("/admin")
+    @admin_required
+    def admin_dashboard():
+        users = list_users_with_push()
+        questions_count = db.count_recent_questions(hours=24)
+        return render_template("admin_dashboard.html", users=users, questions_count=questions_count)
+
     @app.route("/admin/users")
-    @login_required
+    @admin_required
     def admin_users():
-        if not admin_required():
-            return "Forbidden", 403
         return render_template("admin_users.html", users=list_users_with_push())
 
     @app.route("/admin/users/<int:target_uid>", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def admin_user_detail(target_uid):
-        if not admin_required():
-            return "Forbidden", 403
 
         context = get_admin_user_context(target_uid)
         if not context:
@@ -96,10 +99,8 @@ def register_admin_routes(app):
         return jsonify({"answer": answer})
 
     @app.route("/admin/questions")
-    @login_required
+    @admin_required
     def admin_questions():
-        if not admin_required():
-            return "Forbidden", 403
         questions = db.list_questions(limit=200)
         recent_n  = db.count_recent_questions(hours=24)
         return render_template("admin_questions.html",

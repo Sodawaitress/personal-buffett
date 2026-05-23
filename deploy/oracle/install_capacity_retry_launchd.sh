@@ -11,6 +11,9 @@ LOG_FILE="$LOG_DIR/oracle-capacity-retry.log"
 ERROR_FILE="$LOG_DIR/oracle-capacity-retry.err.log"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-300}"
 ATTEMPT_SLEEP_SECONDS="${ATTEMPT_SLEEP_SECONDS:-5}"
+INSTANCE_NAME="${INSTANCE_NAME:-sabertooth}"
+OCI_OCPUS="${OCI_OCPUS:-1}"
+OCI_MEMORY_GB="${OCI_MEMORY_GB:-6}"
 
 mkdir -p "$LOG_DIR" "$HOME/Library/LaunchAgents" "$APP_DIR/deploy/oracle"
 cp "$ROOT_DIR/deploy/oracle/retry_capacity.sh" "$APP_DIR/deploy/oracle/retry_capacity.sh"
@@ -46,6 +49,12 @@ cat >"$PLIST_PATH" <<EOF
       <string>2</string>
       <key>SLEEP_SECONDS</key>
       <string>${ATTEMPT_SLEEP_SECONDS}</string>
+      <key>INSTANCE_NAME</key>
+      <string>${INSTANCE_NAME}</string>
+      <key>OCI_OCPUS</key>
+      <string>${OCI_OCPUS}</string>
+      <key>OCI_MEMORY_GB</key>
+      <string>${OCI_MEMORY_GB}</string>
       <key>PATH</key>
       <string>/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
@@ -70,6 +79,7 @@ EOF
 
 launchctl bootout "gui/$(id -u)/${PLIST_ID}" >/dev/null 2>&1 || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST_PATH"
+launchctl kickstart -k "gui/$(id -u)/${PLIST_ID}"
 
 echo "installed: ${PLIST_ID}"
 echo "plist: $PLIST_PATH"
