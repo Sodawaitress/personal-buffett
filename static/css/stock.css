@@ -79,6 +79,16 @@
   background: #fef5f5;
   border-left-color: #c62828;
 }
+.verdict-bar.verdict-incomplete {
+  background: #fffbeb;
+  border-left-color: #d97706;
+  opacity: 0.85;
+}
+.verdict-bar.verdict-incomplete .verdict-grade-big {
+  color: #92400e;
+  opacity: 0.5;
+  text-decoration: line-through;
+}
 .verdict-grade-big {
   font-family: Georgia, serif;
   font-size: 36px;

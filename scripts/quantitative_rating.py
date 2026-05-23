@@ -819,6 +819,14 @@ class QuantitativeRater:
 
         Returns dict with grade, conclusion (always Chinese for DB), components, red_flags, reasoning.
         """
+        # 数据完整度检测：关键字段有多少是实际有值的
+        _key_fields = ["roe", "net_margin", "debt_ratio", "net_profit"]
+        _present = sum(
+            1 for f in _key_fields
+            if annual_data and annual_data[0].get(f) not in (None, "", "0", "0.0", "0%", "0.00%")
+        )
+        data_incomplete = int(_present < 2)  # 4个关键字段中少于2个有值 → 数据不完整
+
         moat_score, moat_details = cls.score_moat(annual_data, locale)
         growth_score, growth_details = cls.score_growth_and_management(annual_data, news_signals, locale)
         safety_score, safety_details = cls.score_safety(annual_data, locale)
@@ -849,6 +857,7 @@ class QuantitativeRater:
             },
             "red_flags": red_flags,
             "reasoning": reasoning,
+            "data_incomplete": data_incomplete,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
         }
 

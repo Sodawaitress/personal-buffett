@@ -450,6 +450,7 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
         valuation=str(quant_result["components"]["valuation"][0]) + "/15",
         quant_score=quant_result["score"],
         quant_components=_json.dumps(quant_result["components"], ensure_ascii=False),
+        data_incomplete=quant_result.get("data_incomplete", 0),
         framework_used="quant",
         feat_sentiment_avg=round(news_signals.get("sentiment_avg", 0) or 0, 4),
         feat_fund_flow_net=_fund_flow_row.get("main_net"),

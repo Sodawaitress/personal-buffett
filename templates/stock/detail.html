@@ -43,10 +43,15 @@
 
       {# Verdict bar #}
       {% set grade_tier = analysis.grade[0] if analysis.grade else 'C' %}
-      <div class="verdict-bar verdict-{{ grade_tier }}">
+      {% set data_incomplete = analysis.data_incomplete %}
+      <div class="verdict-bar verdict-{{ grade_tier }}{% if data_incomplete %} verdict-incomplete{% endif %}">
         <span class="verdict-grade-big">{{ analysis.grade or '—' }}</span>
         <div class="verdict-body">
+          {% if data_incomplete %}
+          <div class="verdict-conclusion" style="color:#b45309">⚠ 财务数据未能完整获取，评级仅供参考</div>
+          {% else %}
           <div class="verdict-conclusion">{{ analysis.conclusion }}</div>
+          {% endif %}
           <div class="verdict-date">{{ analysis.analysis_date }}</div>
         </div>
         {% if stock.asset_type not in ('场外基金', 'ETF') %}
