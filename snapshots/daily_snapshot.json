@@ -1,0 +1,1737 @@
+{
+  "generated_at": "2026-05-23T22:03:59.008203Z",
+  "user_id": 2,
+  "stocks": [
+    {
+      "code": "600031",
+      "name": "三一重工",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-15",
+      "is_new": false,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "19/35：赚钱能力（ROE）: 7/15 分 — 一般赚钱能力——投入100元赚回约10元; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "综合得分 67/100：普通公司，价格也是普通价",
+        "quant_score": 67,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.0,
+        "is_active": true,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 55.0,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 18.96,
+        "change_pct": 0.0
+      }
+    },
+    {
+      "code": "300274",
+      "name": "阳光电源",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-15",
+      "is_new": false,
+      "analysis": {
+        "date": "2026-05-19",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "31/35",
+        "reasoning": "综合得分 71/100：普通公司，价格也是普通价",
+        "quant_score": 71,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 3.34,
+        "is_active": true,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 26,
+          "events": [
+            {
+              "date": "2026-04-27",
+              "n_inst": 5,
+              "method": "电话交流",
+              "is_specific": false
+            },
+            {
+              "date": "2026-03-31",
+              "n_inst": 4,
+              "method": "电话交流",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 94.6,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 164.51,
+        "change_pct": -0.53
+      }
+    },
+    {
+      "code": "601985",
+      "name": "中国核电",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-15",
+      "is_new": false,
+      "analysis": {
+        "date": "2026-05-15",
+        "grade": "C+",
+        "conclusion": "观察",
+        "moat": "24/35：ROE: 3/15 分 - 弱盈利能力（5% < ROE < 10%）; 净利率: 8/10 分 - 很强定价权（净利率 > 15%）",
+        "reasoning": "中国核电的基本面分析显示，该公司的盈利能力较弱，ROE仅为**3/15分**，净利率虽然较强，但整体盈利能力仍然不足。同时，公司的利润增长呈现衰退趋势，**CAGR -6.4%**，这是一个令人担忧的信号。另一方面，公司的安全性较好，负债风险中等，盈利可持续性良好。\n\n从估值角度来看，公司的PE估值略贵，**PE百分位60-80%**，这可能意味着公司的股价已经较高。近期新闻显示，公司的一季报净利",
+        "quant_score": 48,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 0.9,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 23,
+          "events": [
+            {
+              "date": "2026-04-30",
+              "n_inst": 41,
+              "method": "业绩发布会,举办电话+网络业绩交流会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 7.9,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 8.71,
+        "change_pct": -0.34
+      }
+    },
+    {
+      "code": "002318",
+      "name": "久立特材",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-15",
+      "is_new": false,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "29/35：ROE: 10/15 分 - 良好盈利能力（ROE > 15%）; 净利率: 6/10 分 - 中等定价权（净利率 > 10%）",
+        "reasoning": "综合评分 64/100：一般公司，需要观察",
+        "quant_score": 64,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 5.0,
+        "is_active": true,
+        "survey": {
+          "count_30d": 3,
+          "days_since_latest": 10,
+          "events": [
+            {
+              "date": "2026-05-13",
+              "n_inst": 7,
+              "method": "特定对象调研",
+              "is_specific": true
+            },
+            {
+              "date": "2026-05-11",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-05-08",
+              "n_inst": 23,
+              "method": "特定对象调研",
+              "is_specific": true
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 153.2,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 26.4,
+        "change_pct": -0.71
+      }
+    },
+    {
+      "code": "300433",
+      "name": "蓝思科技",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "蓝思科技的当前价格为¥38.63，较前一日上涨了12.92%。从基本面分析来看，公司的护城河数据不足，成长和管理层方面也没有明显的正面信号。安全性方面，数据也存在不足。估值方面，PE估值偏贵，仅PB估值按资产算正常。\n\n从近期新闻来看，虽然有融资客看好个股和杠杆资金净买入超亿元的消息，但这些并不能改变公司基本面的不足。情绪值为0.0，关键信号也没有明显的正面或负面信号。\n\n基于以上，我的判断是：卖",
+        "quant_score": 15,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 5.17,
+        "is_active": true,
+        "survey": {
+          "count_30d": 3,
+          "days_since_latest": 11,
+          "events": [
+            {
+              "date": "2026-05-12",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-15",
+              "n_inst": 118,
+              "method": "电话会议",
+              "is_specific": false
+            },
+            {
+              "date": "2026-03-31",
+              "n_inst": 158,
+              "method": "电话会议",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 54.1,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 38.4,
+        "change_pct": 5.18
+      }
+    },
+    {
+      "code": "000333",
+      "name": "美的集团",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "美的集团的基本面分析显示，该公司的护城河数据不足，成长和管理层评分仅为14/30，安全性数据也缺乏。虽然公司在回购股票，这是一个对股东友好的信号，但整体而言，公司的估值和安全性仍然令人担忧。当前的PE估值和PB估值表明公司的价格并不是特别便宜。\n\n近期新闻显示，美的集团进行了大量的回购，这可能是一个积极的信号，但情绪值仅为0.15，关键信号为否定回购，这表明市场对公司的前景仍然持谨慎态度。\n\n基于",
+        "quant_score": 21,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 2.5,
+        "is_active": true,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 36,
+          "events": [
+            {
+              "date": "2026-04-17",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 42.9,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 80.28,
+        "change_pct": -1.5
+      }
+    },
+    {
+      "code": "600598",
+      "name": "北大荒",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": null,
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.5,
+        "is_active": true,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 53,
+          "events": [
+            {
+              "date": "2026-03-31",
+              "n_inst": 1,
+              "method": "业绩说明会,网络文字互动",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -73.7,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 15.15,
+        "change_pct": -1.05
+      }
+    },
+    {
+      "code": "601919",
+      "name": "中远海控",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35",
+        "reasoning": "综合得分 24/100：高危，建议优先考虑退出",
+        "quant_score": 24,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 3.27,
+        "is_active": true,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 44,
+          "events": [
+            {
+              "date": "2026-04-09",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 52.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 14.61,
+        "change_pct": -0.41
+      }
+    },
+    {
+      "code": "300866",
+      "name": "安克创新",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "25/35：赚钱能力（ROE）: 15/15 分 — 顶级赚钱机器——投入100元就能赚回25元以上，这是很强护城河的标志; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "安克创新（300866）当前的市场表现令人关注，其**ROE达到15/15分，表明其具有顶级的赚钱能力**。然而，其**利润率仅为4/10分，显示出定价权偏弱**。从成长和管理层的角度来看，公司的**利润增速达到10/12分，显示出快速的增长**，同时其**盈利一致性达到8/8分，过去3年持续盈利**。\n\n从安全性方面来看，公司的**借债风险较低，持續盈利能力强**。但从估值角度来看，公司的**P",
+        "quant_score": 65,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 3.81,
+        "is_active": true,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 31,
+          "events": [
+            {
+              "date": "2026-04-22",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-10",
+              "n_inst": 270,
+              "method": "特定对象调研,线上会议等",
+              "is_specific": true
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 31.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 127.89,
+        "change_pct": -1.47
+      }
+    },
+    {
+      "code": "002444",
+      "name": "巨星科技",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "B+",
+        "conclusion": "买入",
+        "moat": "29/35",
+        "reasoning": "综合得分 76/100：不错的公司，价格合理",
+        "quant_score": 76,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 1.16,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 14,
+          "events": [
+            {
+              "date": "2026-05-09",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -13.1,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 32.44,
+        "change_pct": -0.06
+      }
+    },
+    {
+      "code": "300142",
+      "name": "沃森生物",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "C",
+        "conclusion": "减持",
+        "moat": "6/35",
+        "reasoning": "综合得分 38/100：问题较多，持有要控制仓位\n⚠️ 风险：🚨 投入100元赚不到5元（ROE < 5%）——赚钱能力几乎为零",
+        "quant_score": 38,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 5.0,
+        "is_active": true,
+        "survey": {
+          "count_30d": 4,
+          "days_since_latest": 15,
+          "events": [
+            {
+              "date": "2026-05-08",
+              "n_inst": 2,
+              "method": "电话会议",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-21",
+              "n_inst": 4,
+              "method": "特定对象调研,现场交流",
+              "is_specific": true
+            },
+            {
+              "date": "2026-04-10",
+              "n_inst": 1,
+              "method": "业绩说明会,网络平台在线交流",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-01",
+              "n_inst": 2,
+              "method": "特定对象调研,现场参观,现场交流",
+              "is_specific": true
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 49.0,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 13.78,
+        "change_pct": 0.29
+      }
+    },
+    {
+      "code": "603259",
+      "name": "药明康德",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-18",
+        "grade": "A",
+        "conclusion": "买入",
+        "moat": "34/35",
+        "reasoning": "综合得分 88/100：很少见的好机会——公司优秀，价格还便宜",
+        "quant_score": 88,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 0.77,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 15.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 103.98,
+        "change_pct": -0.24
+      }
+    },
+    {
+      "code": "300750",
+      "name": "宁德时代",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-18",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-19",
+        "grade": "B+",
+        "conclusion": "买入",
+        "moat": "36/35",
+        "reasoning": "综合得分 79/100：不错的公司，价格合理",
+        "quant_score": 79,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 0.92,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 38,
+          "events": [
+            {
+              "date": "2026-04-15",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 8.3,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 411.16,
+        "change_pct": -0.11
+      }
+    },
+    {
+      "code": "603338",
+      "name": "浙江鼎力",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-19",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-19",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "28/35",
+        "reasoning": "综合得分 70/100：普通公司，价格也是普通价",
+        "quant_score": 70,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.62,
+        "is_active": true,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 25,
+          "events": [
+            {
+              "date": "2026-04-28",
+              "n_inst": 15,
+              "method": "电话接待",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-17",
+              "n_inst": 20,
+              "method": "电话接待",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -32.5,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 55.69,
+        "change_pct": 1.72
+      }
+    },
+    {
+      "code": "600660",
+      "name": "福耀玻璃",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-19",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-19",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35",
+        "reasoning": "综合得分 18/100：高危，建议优先考虑退出",
+        "quant_score": 18,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.17,
+        "is_active": true,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 57,
+          "events": [
+            {
+              "date": "2026-03-27",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -33.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 55.27,
+        "change_pct": 1.71
+      }
+    },
+    {
+      "code": "601609",
+      "name": "金田股份",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-19",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-19",
+        "grade": "C+",
+        "conclusion": "观察",
+        "moat": "15/35",
+        "reasoning": "综合得分 48/100：有明显风险信号，暂时不适合买入",
+        "quant_score": 48,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 1.98,
+        "is_active": false,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 29,
+          "events": [
+            {
+              "date": "2026-04-24",
+              "n_inst": 36,
+              "method": "公司现场接待,电话接待",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-01",
+              "n_inst": 66,
+              "method": "公司现场接待,电话接待",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 13.87,
+        "change_pct": 4.76
+      }
+    },
+    {
+      "code": "600549",
+      "name": "厦门钨业",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-20",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-21",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "26/35",
+        "reasoning": "综合得分 69/100：普通公司，价格也是普通价",
+        "quant_score": 69,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.04,
+        "is_active": true,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 29,
+          "events": [
+            {
+              "date": "2026-04-24",
+              "n_inst": 232,
+              "method": "特定对象调研,分析师会议,业绩说明会,电话会议",
+              "is_specific": true
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -10.8,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 52.04,
+        "change_pct": 3.75
+      }
+    },
+    {
+      "code": "688008",
+      "name": "澜起科技",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-20",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-21",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "作为一名成长股质量分析师，我对澜起科技的表现感到有些担忧。虽然公司在电子行业中具有一定的竞争力，但其护城河数据不足，这使得我难以评估其长期竞争优势。此外，公司的成长和管理层信号也不够明确，利润数据的缺失也使得我难以对公司的财务表现做出准确的判断。\n\n从估值方面来看，公司的PE和PB估值均较高，这使得我担心公司的估值可能过高。虽然市场资金流入榜中芯国际等69股净流入资金超亿元，但这并不能完全缓解我对",
+        "quant_score": 9,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 5.05,
+        "is_active": true,
+        "survey": {
+          "count_30d": 3,
+          "days_since_latest": 11,
+          "events": [
+            {
+              "date": "2026-05-12",
+              "n_inst": 181,
+              "method": "特定对象调研,业绩说明会,券商策略会,电话会议",
+              "is_specific": true
+            },
+            {
+              "date": "2026-04-27",
+              "n_inst": 426,
+              "method": "特定对象调研,电话会议",
+              "is_specific": true
+            },
+            {
+              "date": "2026-03-31",
+              "n_inst": 249,
+              "method": "特定对象调研,电话会议",
+              "is_specific": true
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 11.5,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 271.83,
+        "change_pct": 3.68
+      }
+    },
+    {
+      "code": "002230",
+      "name": "科大讯飞",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35",
+        "reasoning": "综合得分 18/100：高危，建议优先考虑退出",
+        "quant_score": 18,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 0.88,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 24,
+          "events": [
+            {
+              "date": "2026-04-29",
+              "n_inst": 51,
+              "method": "业绩说明会,现场、价值在线会议及网络直播相结合",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -7.5,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 47.35,
+        "change_pct": 0.32
+      }
+    },
+    {
+      "code": "300476",
+      "name": "胜宏科技",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "25/35",
+        "reasoning": "综合得分 60/100：低于平均的公司，需要继续观察",
+        "quant_score": 60,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 4.98,
+        "is_active": true,
+        "survey": {
+          "count_30d": 5,
+          "days_since_latest": 12,
+          "events": [
+            {
+              "date": "2026-05-11",
+              "n_inst": 169,
+              "method": "现场参观,券商策略会",
+              "is_specific": true
+            },
+            {
+              "date": "2026-05-07",
+              "n_inst": 21,
+              "method": "现场参观",
+              "is_specific": true
+            },
+            {
+              "date": "2026-04-29",
+              "n_inst": 43,
+              "method": "现场参观,电话会议",
+              "is_specific": true
+            },
+            {
+              "date": "2026-04-03",
+              "n_inst": 1,
+              "method": "现场参观",
+              "is_specific": true
+            },
+            {
+              "date": "2026-03-25",
+              "n_inst": 120,
+              "method": "电话会议,券商策略会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -6.1,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 375.5,
+        "change_pct": 13.31
+      }
+    },
+    {
+      "code": "300677",
+      "name": "英科医疗",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "C+",
+        "conclusion": "观察",
+        "moat": "11/35",
+        "reasoning": "综合得分 48/100：有明显风险信号，暂时不适合买入",
+        "quant_score": 48,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 3.5,
+        "is_active": true,
+        "survey": {
+          "count_30d": 3,
+          "days_since_latest": 8,
+          "events": [
+            {
+              "date": "2026-05-15",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-05-13",
+              "n_inst": 138,
+              "method": "电话会议",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-24",
+              "n_inst": 96,
+              "method": "2025年度暨2026年第一季度报告电话会议",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -45.3,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 47.33,
+        "change_pct": -0.78
+      }
+    },
+    {
+      "code": "688700",
+      "name": "东威科技",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "11/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
+        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和稳定增长前景的公司。然而，东威科技的当前表现让我感到担忧。公司的ROE趋势令人担忧，连续三年下滑，这表明公司的盈利能力正在下降。虽然最近有一些反弹，但这并不能完全缓解我的担忧。\n\n此外，公司的估值水平也令人感到惊讶，PE异常高，PB估值数据缺失。这使得我难以对公司的估值进行准确的判断。虽然公司的安全性和持续盈利能力仍然较好，但这些优势并不能完全抵",
+        "quant_score": 34,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.81,
+        "is_active": true,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 9,
+          "events": [
+            {
+              "date": "2026-05-14",
+              "n_inst": 130,
+              "method": "现场调研,其他",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-28",
+              "n_inst": 70,
+              "method": "现场调研,电话会议",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -15.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 80.45,
+        "change_pct": 14.81
+      }
+    },
+    {
+      "code": "689009",
+      "name": "九号公司",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35",
+        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
+        "quant_score": 17,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 0.21,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": -4.3,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 39.68,
+        "change_pct": 0.46
+      }
+    },
+    {
+      "code": "002602",
+      "name": "世纪华通",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "23/35：赚钱能力（ROE）: 13/15 分 — 优秀赚钱能力——投入100元能赚回20元以上; 利润率: 8/10 分 — 很强定价权——卖100元东西，能留下15元以上",
+        "reasoning": "世纪华通的基本面分析显示，公司的赚钱能力（ROE）为13/15分，表明其具有优秀的赚钱能力。同时，公司的利润率为8/10分，说明其拥有很强的定价权。然而，公司的净利润增速362%属极端值，主要是由于上年亏损/极低基数所致，增速数字本身无参考价值。\n\n从估值判断来看，公司的PE估值为7/7分，表明其处于便宜的位置。然而，公司的PB估值为2/5分，说明其按资产算正常。近期新闻显示，公司已退出芜湖项目，",
+        "quant_score": 74,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 3.15,
+        "is_active": true,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 10,
+          "events": [
+            {
+              "date": "2026-05-13",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-05-11",
+              "n_inst": 83,
+              "method": "投资者交流会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 106.5,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 14.41,
+        "change_pct": 0.07
+      }
+    },
+    {
+      "code": "000037",
+      "name": "深南电A",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "C",
+        "conclusion": "减持",
+        "moat": "12/35：赚钱能力（ROE）: 7/15 分 — 一般赚钱能力——投入100元赚回约10元; 利润率: 10/10 分 — 极强定价权——卖100元东西，能留下25元以上的利润",
+        "reasoning": "这家公司的基本面分析显示，虽然其利润率较高，达到25%以上，但其赚钱能力一般，ROE仅为10%左右。同时，公司的利润增速为负，平均每年减少93.8%，这是一个令人担忧的信号。另一方面，公司的安全性较好，几乎不借债，过去三年的盈利能力也较强。\n\n从估值角度来看，公司的PE估值正常，和其历史平均价格差不多，但PB估值较低。近期新闻显示，公司扭亏为盈，但情绪值为0.0，关键信号无。\n\n基于以上，我的判断",
+        "quant_score": 42,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 0.5,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 15,
+          "events": [
+            {
+              "date": "2026-05-08",
+              "n_inst": 1,
+              "method": "业绩说明会,网络文字互动",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 9.89,
+        "change_pct": 2.91
+      }
+    },
+    {
+      "code": "300762",
+      "name": "上海瀚讯",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "上海瀚讯的当前情况让我感到担忧。公司的PE异常高，达到230.5x，这通常是利润骤降或数据错误的迹象。虽然我们改用PB估值，但结果仍然不乐观，表明公司的估值较高。从量化评分来看，公司的护城河数据不足，成长和管理层信号也不够强，安全性数据也缺乏。\n\n近期新闻中，虽然有机构买入评级和业绩说明会的消息，但这些并不能改变公司基本面的弱点。情绪值为0.0，关键信号也没有明显的变化。作为投资者，我们需要关注公",
+        "quant_score": 9,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 1.93,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 8,
+          "events": [
+            {
+              "date": "2026-05-15",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 28.6,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 40.18,
+        "change_pct": 1.46
+      }
+    },
+    {
+      "code": "601869",
+      "name": "长飞光纤",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "C",
+        "conclusion": "减持",
+        "moat": "17/35",
+        "reasoning": "综合得分 35/100：问题较多，持有要控制仓位",
+        "quant_score": 35,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 1.28,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 25.7,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 388.66,
+        "change_pct": 3.42
+      }
+    },
+    {
+      "code": "600487",
+      "name": "亨通光电",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
+        "quant_score": 17,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 1.67,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 8,
+          "events": [
+            {
+              "date": "2026-05-15",
+              "n_inst": 30,
+              "method": "线上及线下交流会,说明会,策略会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -17.7,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 73.05,
+        "change_pct": 4.51
+      }
+    },
+    {
+      "code": "300394",
+      "name": "天孚通信",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "32/35：赚钱能力（ROE）: 15/15 分 — 顶级赚钱机器——投入100元就能赚回25元以上，这是很强护城河的标志; 利润率: 10/10 分 — 极强定价权——卖100元东西，能留下25元以上的利润",
+        "reasoning": "这家公司的估值似乎有些过高，PB达到48.5倍，远远高于行业平均水平。然而，天孚通信的基本面却相当强劲，ROE达到15%，利润率也非常高，表明公司具有很强的定价权和盈利能力。同时，公司的成长性也不错，利润增速高达66.2%，远超行业平均水平。\n\n从安全性方面来看，公司的借债风险非常低，财务状况非常保守，这使得公司具有很强的抗风险能力。然而，公司的估值却有些令人担忧，PE和PB估值都偏高，表明公司的",
+        "quant_score": 71,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 5.93,
+        "is_active": true,
+        "survey": {
+          "count_30d": 4,
+          "days_since_latest": 9,
+          "events": [
+            {
+              "date": "2026-05-14",
+              "n_inst": 12,
+              "method": "现场参观",
+              "is_specific": true
+            },
+            {
+              "date": "2026-04-29",
+              "n_inst": 11,
+              "method": "特定对象调研",
+              "is_specific": true
+            },
+            {
+              "date": "2026-04-22",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-21",
+              "n_inst": 36,
+              "method": "特定对象调研",
+              "is_specific": true
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": 62.9,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 372.5,
+        "change_pct": 10.47
+      }
+    },
+    {
+      "code": "000729",
+      "name": "燕京啤酒",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "15/35：赚钱能力（ROE）: 7/15 分 — 一般赚钱能力——投入100元赚回约10元; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
+        "reasoning": "燕京啤酒的基本面分析显示，公司的赚钱能力一般，ROE为7/15分，表明投入100元只能赚回约10元。利润率中等，卖100元东西只能留约10元。公司的成长性较好，利润增速高达61.3%，明显超行业。但是，利润质量存疑，净利润增速大幅超过营收，高度疑似含一次性收益。\n\n公司的安全性较好，借债风险几乎为零，抗风险能力强。持续盈利能力也较好，过去3年都在盈利。但是，估值方面，PE估值便宜，但PB估值略贵。",
+        "quant_score": 65,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 1.27,
+        "is_active": false,
+        "survey": {
+          "count_30d": 2,
+          "days_since_latest": 8,
+          "events": [
+            {
+              "date": "2026-05-15",
+              "n_inst": 34,
+              "method": "策略会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-05-08",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -5.3,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 12.12,
+        "change_pct": -2.49
+      }
+    },
+    {
+      "code": "001238",
+      "name": "浙江正特",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "-3/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 2/10 分 — 定价权很弱——卖100元东西，利润还不到5元",
+        "reasoning": "这家公司的基本面令人担忧。从数字来看，ROE几乎为零，仅0/15分，说明其赚钱能力极弱。同时，利润率也很低，仅2/10分，表明其定价权很弱。虽然其利润增速较高，但考虑到其基本面的弱点，这种增长是否可持续仍然存疑。另外，公司的估值也不低，PE和PB估值均不具备优势。\n\n从新闻来看，股东户数的下降可能是公司基本面恶化的信号。情绪值为0.0，关键信号也没有任何积极的迹象。综上所述，这家公司的基本面和估值",
+        "quant_score": 34,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 1.58,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 15,
+          "events": [
+            {
+              "date": "2026-05-08",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 44.98,
+        "change_pct": 0.27
+      }
+    },
+    {
+      "code": "688213",
+      "name": "思特威",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35",
+        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
+        "quant_score": 17,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.67,
+        "is_active": true,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": -17.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 115.07,
+        "change_pct": 5.74
+      }
+    },
+    {
+      "code": "300308",
+      "name": "中际旭创",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "这家公司的估值似乎过高，PB达到32.5x，远远高于行业平均水平。从基本面分析来看，公司的护城河数据不足，成长和管理层评分也不理想。安全性和估值评分均为0，表明公司存在较大的风险。\n\n从数字来看，公司的PE估值偏贵，PB估值也按资产算贵。这些数据表明公司的估值已经过高，投资者需要谨慎。近期新闻中，公司的股价波动较大，且没有明显的正面信号。\n\n基于以上，我的判断是：卖出。因为公司的估值过高，基本面数",
+        "quant_score": 12,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 3.84,
+        "is_active": true,
+        "survey": {
+          "count_30d": 4,
+          "days_since_latest": 8,
+          "events": [
+            {
+              "date": "2026-05-15",
+              "n_inst": 1,
+              "method": "投资者网上集体接待日",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-24",
+              "n_inst": 1,
+              "method": "业绩说明会",
+              "is_specific": false
+            },
+            {
+              "date": "2026-04-16",
+              "n_inst": 162,
+              "method": "电话会议",
+              "is_specific": false
+            },
+            {
+              "date": "2026-03-30",
+              "n_inst": 153,
+              "method": "电话会议",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -8.8,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 1037.98,
+        "change_pct": 4.49
+      }
+    },
+    {
+      "code": "688398",
+      "name": "赛特新材",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35",
+        "reasoning": "综合得分 9/100：高危，建议优先考虑退出",
+        "quant_score": 9,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 0.2,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": -0.0,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 33.04,
+        "change_pct": 0.85
+      }
+    },
+    {
+      "code": "000009",
+      "name": "中国宝安",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "0/35：护城河数据不足",
+        "reasoning": "中国宝安的当前状况令人担忧。净利润同比下降89.64%，这表明公司的盈利能力正在迅速恶化。同时，公司的PE估值异常高，达到385.4倍，这通常是利润骤降或数据错误的迹象。虽然PB估值看起来较为合理，但考虑到公司的盈利能力下降和高估值，投资者需要谨慎。\n\n从基本面分析来看，公司的护城河数据不足，成长和管理层信号也不明显。安全性数据也存在不足，公司的债务和现金流情况不明朗。估值方面，虽然PB估值较为合",
+        "quant_score": 15,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 2.0,
+        "is_active": true,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 190.3,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 7.76,
+        "change_pct": 0.13
+      }
+    },
+    {
+      "code": "600150",
+      "name": "中国船舶",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "8/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "中国船舶的表现令人关注，净利润增速86%远超营收增速14%，这可能意味着存在一次性收益的影响。从基本面分析来看，公司的赚钱能力（ROE）偏弱，仅为3/15分，表明投入100元只能赚回5-10元。同时，利润率也偏低，仅为4/10分，说明公司的定价权较弱。\n\n从估值角度来看，公司的PE估值略便宜，PB估值也按资产算略便宜。然而，公司的成长性和管理层表现较好，利润增速高速增长，过去3年持续盈利。\n\n基于",
+        "quant_score": 55,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 0.91,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": -18.2,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 38.4,
+        "change_pct": 0.0
+      }
+    },
+    {
+      "code": "000528",
+      "name": "柳    工",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "12/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 2/10 分 — 定价权很弱——卖100元东西，利润还不到5元",
+        "reasoning": "柳工的基本面分析显示，公司的赚钱能力偏弱，ROE仅为3/15分，表明投入100元只能赚回5-10元。同时，利润率也很低，卖100元东西，利润还不到5元。然而，公司的成长性较好，利润增速高达36.2%，明显超行业。安全性方面，公司的借债风险适度，但需要关注。\n\n估值方面，公司的PE估值略便宜，PB估值也便宜。近期新闻显示，公司的净利润同比较去年同期下降7.78%，但控股子公司承担了中国天眼项目索网系",
+        "quant_score": 60,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 1.07,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 26,
+          "events": [
+            {
+              "date": "2026-04-27",
+              "n_inst": 53,
+              "method": "业绩说明会",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -10.4,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 9.16,
+        "change_pct": 0.77
+      }
+    },
+    {
+      "code": "601886",
+      "name": "江河集团",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": true,
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "C",
+        "conclusion": "减持",
+        "moat": "7/35",
+        "reasoning": "综合得分 36/100：问题较多，持有要控制仓位",
+        "quant_score": 36,
+        "data_incomplete": 0
+      },
+      "precursor": {
+        "cache_age_hours": 0.0,
+        "score": 2.0,
+        "is_active": true,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 59.3,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 8.89,
+        "change_pct": -2.2
+      }
+    }
+  ]
+}
