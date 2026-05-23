@@ -10,6 +10,7 @@ try:
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import gc
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from datetime import datetime
@@ -110,9 +111,6 @@ def run_precursor_scan(codes: list[str] | None = None) -> dict:
     # 3. 逐股拉融券+参与度，立即存库，每股最多等 30s
     active_count = 0
     for i, code in enumerate(codes):
-        if i > 0 and i % 10 == 0:
-            time.sleep(1)
-
         sv = surveys.get(code, {"score": 0, "desc": "近期无机构调研", "events": []})
         price_chg = price_changes.get(code, 0.0)
 
@@ -124,7 +122,6 @@ def run_precursor_scan(codes: list[str] | None = None) -> dict:
 
         score, is_active = _compute_score(sv, short, part)
 
-        # 把当日涨跌幅存入 participation dict，供展示时对照用
         if isinstance(part, dict):
             part = {**part, "price_change_pct": price_chg}
 
@@ -135,6 +132,11 @@ def run_precursor_scan(codes: list[str] | None = None) -> dict:
             save_precursor_cache(code, sv, short, part, score, is_active)
         except Exception as e:
             print(f"  precursor_scan: 存储 {code} 失败 — {e}")
+
+        # 每只结束后主动释放内存，避免 512MB 机器 OOM
+        del short, part
+        gc.collect()
+        time.sleep(2)  # 给 OS 回收内存的时间，顺带限速
 
     elapsed = time.time() - start
     print(f"  precursor_scan: 完成 {len(codes)} 只，活跃 {active_count} 只，耗时 {elapsed:.0f}s")
