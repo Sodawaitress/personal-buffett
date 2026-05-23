@@ -1,5 +1,8 @@
 """Settings, reports, and utility routes extracted from the legacy app module."""
 
+import os
+import threading
+
 from flask import current_app, flash, jsonify, redirect, render_template, request, session, url_for
 
 from radar_app.shared.auth import login_required
@@ -56,6 +59,32 @@ def register_system_routes(app):
         except TimeoutError:
             flash("Timed out (5 min).", "danger")
         return redirect(url_for("index"))
+
+    @app.route("/api/trigger-scan", methods=["POST"])
+    def trigger_scan():
+        """GitHub Actions cron 调用此端点触发每日前兆扫描 + 快照提交。"""
+        auth = request.headers.get("Authorization", "")
+        token = auth.replace("Bearer ", "").strip()
+        expected = os.environ.get("SCAN_TOKEN", "")
+        if not expected or token != expected:
+            return jsonify({"error": "unauthorized"}), 401
+
+        def _run():
+            try:
+                from scripts.precursor_scan import run_precursor_scan
+                result = run_precursor_scan()
+                current_app.logger.info("[trigger-scan] precursor done: %s", result)
+            except Exception as e:
+                current_app.logger.warning("[trigger-scan] precursor failed: %s", e)
+            try:
+                from scripts.daily_digest import run_daily_digest
+                run_daily_digest()
+                current_app.logger.info("[trigger-scan] daily digest done")
+            except Exception as e:
+                current_app.logger.warning("[trigger-scan] digest failed: %s", e)
+
+        threading.Thread(target=_run, daemon=True, name="gh-scan-trigger").start()
+        return jsonify({"status": "started"}), 202
 
     @app.route("/set-locale", methods=["POST"])
     def set_locale():
