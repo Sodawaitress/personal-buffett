@@ -10,10 +10,11 @@
 
 ```
 网站地址: https://personal-buffett.fly.dev
-API 端点: /api/claude-summary?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU&user_id=2
-Server酱 Key: SCT333151TD7CBhTlIUVmcP8DwTASclXFK
+数据端点: GET  https://personal-buffett.fly.dev/api/claude-summary?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU&user_id=2
+日志写入: POST https://personal-buffett.fly.dev/api/improvement-log  (token 放 query param)
+日志读取: GET  https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU
+Server酱: SCT333151TD7CBhTlIUVmcP8DwTASclXFK
 妈妈的 user_id: 2
-改进日志: /Volumes/ZY/StockRadarCodex/PBC/knowledge/improvement_log.md
 ```
 
 ---
@@ -30,10 +31,18 @@ Server酱 Key: SCT333151TD7CBhTlIUVmcP8DwTASclXFK
 
 **第二层：机构时机**
 聪明钱在做什么？方向和速度如何？
-- 机构调研：现场参观 > 特定对象 > 电话会 > 业绩说明会
+- 机构调研质量排序：现场参观★★★★★ > 特定对象调研★★★★ > 电话会★★★ > 业绩说明会★★
 - 资金信号：主力净流入/流出趋势
 - 融券变化：大幅增加 = 机构在做空；大幅减少 = 空头平仓
 - 这一层决定："现在是不是进场的时间"，是时机。
+
+**读懂调研信号的关键原则：**
+- 「业绩说明会」且之后无跟进 → 机构只是例行参加，不算看好，不能算信号
+- 「现场参观」或「实地调研」 → 机构主动跑到工厂，是真正的认可行为，权重最高
+- 「特定对象调研」 → 机构专门约的，不是公开活动，说明有针对性的调研意图
+- 单次家数大（≥50家）但只有1次 → 数量炸裂但缺乏持续性，需要特别说明不要过度解读
+- 多次调研 + 时间间隔短（30天内3次以上）→ 这是最强信号，机构在持续验证建仓逻辑
+- 调研后股价未动 → 机构可能还在建仓，价格还没反映，是抢跑机会
 
 **第三层：大众情绪**
 新闻在说什么？散户知道多少？
@@ -127,7 +136,7 @@ curl -X POST "https://sctapi.ftqq.com/SCT333151TD7CBhTlIUVmcP8DwTASclXFK.send" \
 
 ### Step 1：读取改进日志，找上次的预言
 
-打开 `/Volumes/ZY/StockRadarCodex/PBC/knowledge/improvement_log.md`，找最近一次写的"今日预言"部分。
+GET `https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU&limit=5`，找最近一条 entry_type=prediction_result 的记录。
 
 ### Step 2：验证预言
 
@@ -144,28 +153,30 @@ curl -X POST "https://sctapi.ftqq.com/SCT333151TD7CBhTlIUVmcP8DwTASclXFK.send" \
 - 行业背景缺失（用通用框架评重资产行业）→ 建议哪类公司用专属框架
 - 数据时效问题 → 建议触发重跑的条件
 
-### Step 4：写入改进日志（追加）
+### Step 4：写入改进日志
 
-写入 `/Volumes/ZY/StockRadarCodex/PBC/knowledge/improvement_log.md`：
+POST 到 `https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU`
 
-```markdown
-## {日期} · 验证 · {上次预言的股票}
+验证记录：
+```json
+{
+  "entry_date": "YYYY-MM-DD",
+  "stock_name": "股票名",
+  "stock_code": "代码",
+  "entry_type": "prediction_result",
+  "content": "上次预言: ...\n实际走势: ...\n判断准确度: 方向对/错，原因..."
+}
+```
 
-**上次预言**: {上次写的预期}
-**实际走势**: {今天价格，涨跌幅，发生了什么}
-**判断准确度**: 方向对/错，原因分析
-
----
-
-## {日期} · 对比 · {今日深度对比股票} ({代码})
-
-**Claude判断**: {评级} — {一句话理由}
-**网站当前**: {评级} — {网站理由摘要}
-**差异分析**: {具体说明}
-**改进建议**:
-1. {可操作改进点}
-
----
+对比记录：
+```json
+{
+  "entry_date": "YYYY-MM-DD",
+  "stock_name": "股票名",
+  "stock_code": "代码",
+  "entry_type": "comparison",
+  "content": "Claude判断: B — ...\n网站当前: D — ...\n差异: ...\n改进建议: ..."
+}
 ```
 
 ---

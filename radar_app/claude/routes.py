@@ -10,6 +10,8 @@ from datetime import date, datetime, timedelta
 
 from flask import jsonify, request
 
+from sqlalchemy import text
+
 from radar_app.data.analysis import get_latest_analysis
 from radar_app.data.core import get_conn
 from radar_app.data.market import get_precursor_cache
@@ -177,7 +179,69 @@ def _build_stock_snapshot(wl_row: dict, added_cutoff: date) -> dict:
     return snap
 
 
+def _ensure_log_table():
+    with get_conn() as c:
+        c.execute(text("""
+            CREATE TABLE IF NOT EXISTS claude_improvement_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                logged_at TEXT NOT NULL,
+                entry_date TEXT NOT NULL,
+                stock_name TEXT,
+                stock_code TEXT,
+                entry_type TEXT,
+                content TEXT NOT NULL
+            )
+        """))
+
+
 def register_claude_routes(app):
+
+    @app.route("/api/improvement-log", methods=["POST"])
+    def improvement_log_write():
+        """
+        POST /api/improvement-log
+        Body: {entry_date, stock_name, stock_code, entry_type, content}
+        Claude Routine 用来存储每日改进日志（云端无法写本地文件）。
+        """
+        if not _token_ok():
+            return jsonify({"error": "unauthorized"}), 401
+
+        data = request.get_json(silent=True) or {}
+        content = (data.get("content") or "").strip()
+        if not content:
+            return jsonify({"error": "content required"}), 400
+
+        _ensure_log_table()
+        with get_conn() as c:
+            c.execute(
+                text("""INSERT INTO claude_improvement_log
+                   (logged_at, entry_date, stock_name, stock_code, entry_type, content)
+                   VALUES (:logged_at, :entry_date, :stock_name, :stock_code, :entry_type, :content)"""),
+                {
+                    "logged_at": datetime.utcnow().isoformat() + "Z",
+                    "entry_date": data.get("entry_date", date.today().isoformat()),
+                    "stock_name": data.get("stock_name", ""),
+                    "stock_code": data.get("stock_code", ""),
+                    "entry_type": data.get("entry_type", "comparison"),
+                    "content": content,
+                },
+            )
+        return jsonify({"ok": True})
+
+    @app.route("/api/improvement-log", methods=["GET"])
+    def improvement_log_read():
+        """GET /api/improvement-log?token=XXX&limit=20 — 查看最近的改进日志"""
+        if not _token_ok():
+            return jsonify({"error": "unauthorized"}), 401
+
+        limit = min(int(request.args.get("limit", 20)), 100)
+        _ensure_log_table()
+        with get_conn() as c:
+            rows = c.execute(
+                text("SELECT * FROM claude_improvement_log ORDER BY id DESC LIMIT :limit"),
+                {"limit": limit},
+            ).fetchall()
+        return jsonify({"entries": [dict(r) for r in rows]})
 
     @app.route("/api/claude-summary")
     def claude_summary():
