@@ -124,16 +124,21 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 数据来源：东方财富+机构调研 | 仅供参考 | 不构成投资建议
 ```
 
-### Step 5：写入分析日志
+### Step 5：写入分析日志 + 触发微信推送
 
-将今日五选分析写入 `knowledge/improvement_log.md`，用 GitHub API 直接提交到 main 分支：
+全部用 GitHub API 直接写 main 分支（不要用 `git commit`，Routine 的本地 git 只推私有分支）。
 
+**5a：写改进日志**
 1. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/knowledge/improvement_log.md` 读取当前内容和 SHA
-2. 把当前内容 base64 decode，追加今日分析，重新 base64 encode
-3. PUT 同一地址，payload 包含 `{"message": "chore: routine log {日期}", "content": "<新base64>", "sha": "<旧sha>", "branch": "main"}`
+2. 把当前内容 base64 decode，追加今日五选分析，重新 base64 encode
+3. PUT 同一地址，payload: `{"message": "chore: routine log {日期}", "content": "<新base64>", "sha": "<旧sha>", "branch": "main"}`
 
-**不要用 `git commit`**，Routine 的本地 git 只能推到私有分支，改进日志必须在 main 上才能被 `/daily` 读到。
-微信推送由 Fly.io 每日自动完成，Routine 专注于深度分析和改进日志。
+**5b：写微信推送文件（触发 GitHub Actions 自动发送 Server酱）**
+1. 把 Step 4 生成的完整推送文本（纯文本格式，第一行是标题如"【今日五选】2026-05-24"）base64 encode
+2. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/output/daily_push.txt` 获取 SHA（文件可能不存在，不存在就不带 sha）
+3. PUT 同一地址，payload: `{"message": "chore: daily push {日期}", "content": "<base64>", "branch": "main"}`（如有旧 sha 就带上）
+
+文件写入 main 后，GitHub Actions（`.github/workflows/wechat-push.yml`）会自动检测并把内容发给 Server酱，妈妈就收到微信了。
 
 ---
 
