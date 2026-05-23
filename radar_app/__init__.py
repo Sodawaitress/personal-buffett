@@ -23,12 +23,28 @@ _scheduler_started = False
 _scheduler_lock = threading.Lock()
 
 
+def _seconds_until_next_run(hour: int = 16, minute: int = 30) -> float:
+    """计算距离下一个北京时间 HH:MM 还有多少秒。"""
+    from datetime import datetime, timedelta, timezone
+    cn_tz = timezone(timedelta(hours=8))
+    now = datetime.now(cn_tz)
+    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if now >= target:
+        target += timedelta(days=1)
+    secs = (target - now).total_seconds()
+    logger.info("[precursor_scheduler] 下次运行：北京时间 %02d:%02d，还有 %.0f 分钟",
+                hour, minute, secs / 60)
+    return secs
+
+
 def _precursor_scheduler_loop():
     """
-    后台守护线程：启动后等 5 分钟让 gunicorn 完全 ready，
-    然后每 24 小时跑一次 run_precursor_scan()。
+    后台守护线程：每天北京时间 16:30 精确触发。
+    A股 15:00 收盘，数据源约 16:00 更新完毕，16:30 扫描拿到最新数据，
+    17:30 Routine 跑时快照已就绪。
     """
-    time.sleep(300)  # 5 分钟冷启动缓冲
+    # 先等到下一个 16:30，避免启动时立刻跑
+    time.sleep(_seconds_until_next_run(16, 30))
     while True:
         try:
             logger.info("[precursor_scheduler] 开始每日前兆信号扫描…")
@@ -39,12 +55,14 @@ def _precursor_scheduler_loop():
             logger.warning("[precursor_scheduler] 扫描失败（不影响服务）: %s", e)
 
         try:
-            logger.info("[precursor_scheduler] 开始每日摘要（GitHub快照 + 微信推送）…")
+            logger.info("[precursor_scheduler] 开始每日摘要（GitHub快照）…")
             from scripts.daily_digest import run_daily_digest
             run_daily_digest()
         except Exception as e:
             logger.warning("[precursor_scheduler] 每日摘要失败（不影响服务）: %s", e)
-        time.sleep(86400)  # 24 小时后再跑
+
+        # 睡到明天 16:30
+        time.sleep(_seconds_until_next_run(16, 30))
 
 
 def _start_precursor_scheduler():
