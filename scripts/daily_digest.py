@@ -1,6 +1,6 @@
 """
 每日摘要模块：precursor scan 结束后调用。
-1. 从 DB 拿妈妈（user_id=2）的自选股完整快照（含价格/评级/前兆信号/新闻）
+1. 从 DB 汇总所有用户自选股（去重），构建完整快照（含价格/评级/前兆信号/新闻）
 2. 把完整快照 JSON commit 到 GitHub repo，供 Claude Routine 读取
 推送由 Claude Routine 生成内容 → GitHub Actions 发 Server酱。
 """
@@ -17,23 +17,35 @@ logger = logging.getLogger(__name__)
 
 GITHUB_REPO = "Sodawaitress/personal-buffett"
 SNAPSHOT_PATH = "snapshots/daily_snapshot.json"
-MOM_USER_ID = 2
 
 
 # ─────────────────────────────────────────────────────────────────
-# 快照构建（复用 /api/claude-summary 的逻辑，直接从 DB 读）
+# 快照构建：汇总所有用户的不重复股票
 # ─────────────────────────────────────────────────────────────────
 
-def _build_snapshot(user_id: int) -> dict:
-    """构建用户自选股完整快照。"""
+def _get_all_watchlist_rows() -> list:
+    """从 DB 拿所有用户自选股，按 stock_code 去重（保留最早添加的那条）。"""
+    from radar_app.data.core import get_conn
+    with get_conn() as c:
+        rows = c.execute("""
+            SELECT stock_code, market, name_cn, status, buy_price, added_at,
+                   GROUP_CONCAT(user_id) AS watched_by
+            FROM user_watchlist
+            GROUP BY stock_code
+            ORDER BY MIN(added_at)
+        """).fetchall()
+    return [dict(r) for r in rows] if rows else []
+
+
+def _build_snapshot() -> dict:
+    """构建全平台自选股完整快照（所有用户去重合并）。"""
     from radar_app.data.analysis import get_latest_analysis
     from radar_app.data.core import get_conn
     from radar_app.data.market import get_precursor_cache
-    from radar_app.data.stocks import get_user_watchlist
     from radar_app.shared.market import detect_market
 
     added_cutoff = date.today() - timedelta(days=7)
-    wl = get_user_watchlist(user_id)
+    wl = _get_all_watchlist_rows()
     if not wl:
         return {}
 
@@ -50,6 +62,7 @@ def _build_snapshot(user_id: int) -> dict:
             "status": row.get("status", "watching"),
             "entry_price": row.get("buy_price"),
             "added_at": added_at, "is_new": is_new,
+            "watched_by": str(row.get("watched_by") or ""),
         }
 
         ana = get_latest_analysis(code)
@@ -131,7 +144,7 @@ def _build_snapshot(user_id: int) -> dict:
 
     return {
         "generated_at": datetime.utcnow().isoformat() + "Z",
-        "user_id": user_id,
+        "scope": "all_users",
         "stocks": stocks,
     }
 
@@ -193,9 +206,9 @@ def run_daily_digest():
     logger.info("[daily_digest] 开始每日快照生成…")
 
     try:
-        snapshot = _build_snapshot(MOM_USER_ID)
+        snapshot = _build_snapshot()
         if not snapshot:
-            logger.warning("[daily_digest] user_id=%d 无自选股，跳过", MOM_USER_ID)
+            logger.warning("[daily_digest] 无自选股数据，跳过")
             return
 
         _commit_snapshot_to_github(snapshot)
