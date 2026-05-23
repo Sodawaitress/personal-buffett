@@ -1,9 +1,8 @@
 """
 每日摘要模块：precursor scan 结束后调用。
-1. 从 DB 拿妈妈（user_id=2）的自选股完整快照
-2. 用 Groq 选出 3-5 只信号最强的，生成简报
-3. 推送 Server酱（微信）
-4. 把完整快照 JSON commit 到 GitHub repo，供 Claude Routine 读取
+1. 从 DB 拿妈妈（user_id=2）的自选股完整快照（含价格/评级/前兆信号/新闻）
+2. 把完整快照 JSON commit 到 GitHub repo，供 Claude Routine 读取
+推送由 Claude Routine 生成内容 → GitHub Actions 发 Server酱。
 """
 
 import base64
@@ -137,107 +136,6 @@ def _build_snapshot(user_id: int) -> dict:
     }
 
 
-# ─────────────────────────────────────────────────────────────────
-# WeChat 推送（Groq 生成简报）
-# ─────────────────────────────────────────────────────────────────
-
-def _pick_top_stocks(stocks: list, n: int = 5) -> list:
-    """按信号强度选出最值得推送的 n 只股票。"""
-    scored = []
-    for s in stocks:
-        if s.get("market") != "cn":
-            continue
-        prec = s.get("precursor") or {}
-        ana = s.get("analysis") or {}
-        grade = (ana.get("grade") or "")[:1]
-        if grade in ("D", "E", "F") and not prec.get("is_active"):
-            continue
-
-        score = 0
-        # 信号分
-        score += (prec.get("score") or 0) * 2
-        # 今日异动
-        chg = (s.get("price") or {}).get("change_pct") or 0
-        score += abs(chg) * 0.5
-        # 是新股
-        if s.get("is_new"):
-            score += 3
-        # 评级质量
-        score += {"A": 4, "B": 2, "C": 0}.get(grade, 0)
-
-        scored.append((score, s))
-
-    scored.sort(key=lambda x: -x[0])
-    return [s for _, s in scored[:n]]
-
-
-def _groq_digest(top_stocks: list, today_str: str) -> str:
-    """用 Groq 生成今日简报文本。"""
-    try:
-        from groq import Groq
-        client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
-
-        lines = []
-        for s in top_stocks:
-            ana = s.get("analysis") or {}
-            prec = s.get("precursor") or {}
-            price_info = s.get("price") or {}
-            chg = price_info.get("change_pct")
-            chg_str = f" {chg:+.1f}%" if chg is not None else ""
-            survey = prec.get("survey") or {}
-            lines.append(
-                f"- {s['name']}({s['code']}) 评级:{ana.get('grade','?')} "
-                f"量化:{ana.get('quant_score','?')}/100 "
-                f"今日:{chg_str} "
-                f"30天调研:{survey.get('count_30d',0)}次 "
-                f"前兆信号:{prec.get('score',0):.1f} "
-                f"结论:{(ana.get('reasoning') or '')[:80]}"
-            )
-
-        prompt = f"""今天是{today_str}，以下是自选股中信号最强的几只股票数据：
-
-{chr(10).join(lines)}
-
-请用妈妈能看懂的语言，写一段每日推送。要求：
-1. 纯文本，不用markdown符号
-2. 每只股票2-3句：公司做什么 + 今天信号说明什么 + 操作建议
-3. 结尾一句总结今日市场氛围
-4. 全文不超过600字"""
-
-        resp = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
-            timeout=60,
-        )
-        return resp.choices[0].message.content.strip()
-    except Exception as e:
-        logger.warning("[daily_digest] Groq 生成失败: %s", e)
-        # 降级：纯规则文本
-        lines = []
-        for s in top_stocks:
-            ana = s.get("analysis") or {}
-            chg = (s.get("price") or {}).get("change_pct")
-            chg_str = f" {chg:+.1f}%" if chg is not None else ""
-            lines.append(f"◆ {s['name']} ({s['code']}){chg_str} — 评级{ana.get('grade','?')}: {(ana.get('reasoning') or '')[:80]}")
-        return "\n\n".join(lines)
-
-
-def _send_wechat(title: str, content: str):
-    key = os.environ.get("SERVERCHAN_KEY", "")
-    if not key:
-        logger.warning("[daily_digest] SERVERCHAN_KEY 未配置，跳过微信推送")
-        return
-    try:
-        r = requests.post(
-            f"https://sctapi.ftqq.com/{key}.send",
-            json={"title": title, "desp": content},
-            timeout=15,
-        )
-        logger.info("[daily_digest] 微信推送: %s", r.json())
-    except Exception as e:
-        logger.warning("[daily_digest] 微信推送失败: %s", e)
-
 
 # ─────────────────────────────────────────────────────────────────
 # GitHub commit
@@ -291,9 +189,8 @@ def _commit_snapshot_to_github(snapshot: dict):
 # ─────────────────────────────────────────────────────────────────
 
 def run_daily_digest():
-    """precursor_scheduler 扫描完成后调用。"""
-    today_str = date.today().strftime("%Y年%m月%d日")
-    logger.info("[daily_digest] 开始每日摘要…")
+    """precursor_scheduler 扫描完成后调用。只生成快照并提交到 GitHub，推送由 Claude Routine + GitHub Actions 负责。"""
+    logger.info("[daily_digest] 开始每日快照生成…")
 
     try:
         snapshot = _build_snapshot(MOM_USER_ID)
@@ -301,20 +198,8 @@ def run_daily_digest():
             logger.warning("[daily_digest] user_id=%d 无自选股，跳过", MOM_USER_ID)
             return
 
-        # 1. 提交快照到 GitHub（供 Claude Routine 读取）
         _commit_snapshot_to_github(snapshot)
-
-        # 2. 选出今日重点股票
-        top = _pick_top_stocks(snapshot.get("stocks", []))
-        if not top:
-            logger.info("[daily_digest] 今日无信号股票，跳过微信推送")
-            return
-
-        # 3. 生成文本 + 推送微信
-        body = _groq_digest(top, today_str)
-        title = f"每日五选 {today_str}"
-        _send_wechat(title, body)
-        logger.info("[daily_digest] 完成，推送了 %d 只股票", len(top))
+        logger.info("[daily_digest] 快照已提交 GitHub，共 %d 只股票", len(snapshot.get("stocks", [])))
 
     except Exception as e:
         logger.warning("[daily_digest] run_daily_digest 异常: %s", e, exc_info=True)
