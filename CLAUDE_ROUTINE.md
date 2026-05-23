@@ -126,7 +126,13 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 ### Step 5：写入分析日志
 
-将今日五选分析写入 `knowledge/improvement_log.md`（追加到文件末尾），然后 git commit 保存。
+将今日五选分析写入 `knowledge/improvement_log.md`，用 GitHub API 直接提交到 main 分支：
+
+1. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/knowledge/improvement_log.md` 读取当前内容和 SHA
+2. 把当前内容 base64 decode，追加今日分析，重新 base64 encode
+3. PUT 同一地址，payload 包含 `{"message": "chore: routine log {日期}", "content": "<新base64>", "sha": "<旧sha>", "branch": "main"}`
+
+**不要用 `git commit`**，Routine 的本地 git 只能推到私有分支，改进日志必须在 main 上才能被 `/daily` 读到。
 微信推送由 Fly.io 每日自动完成，Routine 专注于深度分析和改进日志。
 
 ---
@@ -173,7 +179,7 @@ Claude判断: {评级} — {理由}
 ---
 ```
 
-写完后 git commit 到 repo（message: `chore: routine log {日期}`）。
+写完后同样用 GitHub API PUT 到 main 分支（message: `chore: routine log {日期}`），不用 git commit。
 
 ---
 
