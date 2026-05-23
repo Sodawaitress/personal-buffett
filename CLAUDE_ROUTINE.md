@@ -9,12 +9,12 @@
 ## 配置
 
 ```
-网站地址: https://personal-buffett.fly.dev
-数据端点: GET  https://personal-buffett.fly.dev/api/claude-summary?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU&user_id=2
-日志写入: POST https://personal-buffett.fly.dev/api/improvement-log  (token 放 query param)
-日志读取: GET  https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU
-Server酱: SCT333151TD7CBhTlIUVmcP8DwTASclXFK
-妈妈的 user_id: 2
+数据快照 (GitHub raw，可直接 fetch):
+  https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/daily_snapshot.json
+
+改进日志: knowledge/improvement_log.md（编辑文件后 git commit 保存到 repo）
+GitHub repo: Sodawaitress/personal-buffett（已连接，可读写）
+微信推送: 由 Fly.io 每日自动完成，Routine 不负责推送
 ```
 
 ---
@@ -61,11 +61,13 @@ Server酱: SCT333151TD7CBhTlIUVmcP8DwTASclXFK
 
 ## Run 1 · 今日五选
 
-### Step 1：拉取数据
+### Step 1：读取今日快照
 
+从 GitHub repo 读取 Fly.io 服务器每日提交的快照文件：
 ```
-GET https://personal-buffett.fly.dev/api/claude-summary?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU&user_id=2
+https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/daily_snapshot.json
 ```
+（数据由 Fly.io precursor scanner 完成后自动 commit，包含完整的价格/评级/前兆信号/新闻）
 
 ### Step 2：判断是否交易日
 
@@ -122,13 +124,10 @@ GET https://personal-buffett.fly.dev/api/claude-summary?token=k69ajOff279kV7Q31Y
 数据来源：东方财富+机构调研 | 仅供参考 | 不构成投资建议
 ```
 
-### Step 5：发送 Server酱
+### Step 5：写入分析日志
 
-```bash
-curl -X POST "https://sctapi.ftqq.com/SCT333151TD7CBhTlIUVmcP8DwTASclXFK.send" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "今日五选 {日期}", "desp": "{内容}"}'
-```
+将今日五选分析写入 `knowledge/improvement_log.md`（追加到文件末尾），然后 git commit 保存。
+微信推送由 Fly.io 每日自动完成，Routine 专注于深度分析和改进日志。
 
 ---
 
@@ -136,7 +135,7 @@ curl -X POST "https://sctapi.ftqq.com/SCT333151TD7CBhTlIUVmcP8DwTASclXFK.send" \
 
 ### Step 1：读取改进日志，找上次的预言
 
-GET `https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU&limit=5`，找最近一条 entry_type=prediction_result 的记录。
+读取 repo 中的 `knowledge/improvement_log.md`，找最近一次写的"今日预言"部分。
 
 ### Step 2：验证预言
 
@@ -155,29 +154,26 @@ GET `https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q3
 
 ### Step 4：写入改进日志
 
-POST 到 `https://personal-buffett.fly.dev/api/improvement-log?token=k69ajOff279kV7Q31Yg6OhZi1hJfwnv0nQa4N6u3AtU`
+追加到 `knowledge/improvement_log.md`，格式：
 
-验证记录：
-```json
-{
-  "entry_date": "YYYY-MM-DD",
-  "stock_name": "股票名",
-  "stock_code": "代码",
-  "entry_type": "prediction_result",
-  "content": "上次预言: ...\n实际走势: ...\n判断准确度: 方向对/错，原因..."
-}
+```markdown
+## {日期} · 验证 · {股票名}
+上次预言: ...
+实际走势: ...
+判断准确度: 方向对/错，原因...
+
+---
+
+## {日期} · 对比 · {股票名} ({代码})
+Claude判断: {评级} — {理由}
+网站当前: {评级} — {理由}
+差异分析: ...
+改进建议: ...
+
+---
 ```
 
-对比记录：
-```json
-{
-  "entry_date": "YYYY-MM-DD",
-  "stock_name": "股票名",
-  "stock_code": "代码",
-  "entry_type": "comparison",
-  "content": "Claude判断: B — ...\n网站当前: D — ...\n差异: ...\n改进建议: ..."
-}
-```
+写完后 git commit 到 repo（message: `chore: routine log {日期}`）。
 
 ---
 

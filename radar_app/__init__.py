@@ -37,6 +37,13 @@ def _precursor_scheduler_loop():
             logger.info("[precursor_scheduler] 完成: %s", result)
         except Exception as e:
             logger.warning("[precursor_scheduler] 扫描失败（不影响服务）: %s", e)
+
+        try:
+            logger.info("[precursor_scheduler] 开始每日摘要（GitHub快照 + 微信推送）…")
+            from scripts.daily_digest import run_daily_digest
+            run_daily_digest()
+        except Exception as e:
+            logger.warning("[precursor_scheduler] 每日摘要失败（不影响服务）: %s", e)
         time.sleep(86400)  # 24 小时后再跑
 
 
