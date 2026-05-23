@@ -461,6 +461,7 @@ def _migrate():
         ("analysis_results", "framework_used", "TEXT"),
         ("analysis_results", "quant_score", "INTEGER"),
         ("analysis_results", "quant_components", "TEXT"),
+        ("analysis_results", "data_incomplete", "INTEGER DEFAULT 0"),
         ("stocks", "asset_type", "TEXT DEFAULT '股票'"),
         ("user_watchlist",    "removed_at",        "TIMESTAMP"),
         ("signal_predictions", "signal_type",       "TEXT"),
