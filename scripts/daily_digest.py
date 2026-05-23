@@ -198,6 +198,73 @@ def _commit_snapshot_to_github(snapshot: dict):
 
 
 # ─────────────────────────────────────────────────────────────────
+# 预言存库（读 GitHub → INSERT signal_predictions → 清空文件）
+# ─────────────────────────────────────────────────────────────────
+
+PREDICTIONS_PATH = "output/predictions_pending.json"
+
+def _ingest_predictions_from_github():
+    """读取 Routine 写的预言 JSON，存入 signal_predictions，然后清空文件。"""
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if not token:
+        return
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{PREDICTIONS_PATH}"
+
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code != 200:
+            return
+        data = r.json()
+        sha = data.get("sha")
+        content = json.loads(base64.b64decode(data["content"]).decode("utf-8"))
+        if not content:
+            return
+    except Exception as e:
+        logger.warning("[daily_digest] 读取预言文件失败: %s", e)
+        return
+
+    # 存入 DB
+    try:
+        from radar_app.data.core import get_conn
+        with get_conn() as c:
+            for p in content:
+                code = p.get("code", "")
+                if not code:
+                    continue
+                c.execute("""
+                    INSERT INTO signal_predictions
+                        (code, direction, note, signal_snapshot, created_at)
+                    VALUES (:code, :direction, :note, :snapshot, :created_at)
+                """, {
+                    "code": code,
+                    "direction": p.get("direction", ""),
+                    "note": p.get("key_signal", ""),
+                    "snapshot": json.dumps({
+                        "name": p.get("name"),
+                        "price_at_prediction": p.get("price_at_prediction"),
+                        "horizon_days": p.get("horizon_days", 10),
+                        "key_signal": p.get("key_signal"),
+                    }, ensure_ascii=False),
+                    "created_at": p.get("date", date.today().isoformat()),
+                })
+        logger.info("[daily_digest] 存入 %d 条预言", len(content))
+    except Exception as e:
+        logger.warning("[daily_digest] 预言存库失败: %s", e)
+        return
+
+    # 清空文件（写空数组），避免重复存入
+    try:
+        empty = base64.b64encode(b"[]").decode()
+        requests.put(url, headers=headers, json={
+            "message": f"chore: ingest predictions {date.today().isoformat()}",
+            "content": empty, "sha": sha, "branch": "main",
+        }, timeout=10)
+    except Exception as e:
+        logger.warning("[daily_digest] 清空预言文件失败: %s", e)
+
+
+# ─────────────────────────────────────────────────────────────────
 # 主入口
 # ─────────────────────────────────────────────────────────────────
 
@@ -213,6 +280,8 @@ def run_daily_digest():
 
         _commit_snapshot_to_github(snapshot)
         logger.info("[daily_digest] 快照已提交 GitHub，共 %d 只股票", len(snapshot.get("stocks", [])))
+
+        _ingest_predictions_from_github()
 
     except Exception as e:
         logger.warning("[daily_digest] run_daily_digest 异常: %s", e, exc_info=True)

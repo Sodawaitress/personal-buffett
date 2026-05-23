@@ -124,7 +124,9 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 数据来源：东方财富+机构调研 | 仅供参考 | 不构成投资建议
 ```
 
-### Step 5：写入分析日志 + 触发微信推送
+### Step 5：写入分析日志 + 触发微信推送 + 保存结构化预言
+
+全部用 GitHub API 直接写 main 分支（不要用 `git commit`）。
 
 全部用 GitHub API 直接写 main 分支（不要用 `git commit`，Routine 的本地 git 只推私有分支）。
 
@@ -139,6 +141,29 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 3. PUT 同一地址，payload: `{"message": "chore: daily push {日期}", "content": "<base64>", "branch": "main"}`（如有旧 sha 就带上）
 
 文件写入 main 后，GitHub Actions（`.github/workflows/wechat-push.yml`）会自动检测并把内容发给 Server酱，妈妈就收到微信了。
+
+**5c：写结构化预言（训练数据闭环）**
+
+把今日预言写成 JSON，PUT 到 `output/predictions_pending.json`（Fly.io 下次跑时会读取并存入数据库，`backfill_returns.py` 10天后自动回填实际涨跌，形成训练样本）。
+
+格式：
+```json
+[
+  {
+    "date": "{今日日期 YYYY-MM-DD}",
+    "code": "{股票代码}",
+    "name": "{股票名}",
+    "direction": "up" 或 "down" 或 "sideways",
+    "horizon_days": 10,
+    "key_signal": "{触发预言的核心信号，一句话}",
+    "price_at_prediction": {今日收盘价，从快照 price.current 取}
+  }
+]
+```
+
+操作：
+1. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/output/predictions_pending.json` 获取 SHA（不存在则不带 sha）
+2. PUT 同一地址，写入今日预言 JSON 数组，message: `"chore: predictions {日期}"`
 
 ---
 
