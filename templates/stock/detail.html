@@ -44,10 +44,14 @@
       {# Verdict bar #}
       {% set grade_tier = analysis.grade[0] if analysis.grade else 'C' %}
       {% set data_incomplete = analysis.data_incomplete %}
+      {% set prec_score = (precursor.score or 0) | float %}
+      {% set data_mislead = data_incomplete and prec_score > 3 %}
       <div class="verdict-bar verdict-{{ grade_tier }}{% if data_incomplete %} verdict-incomplete{% endif %}">
-        <span class="verdict-grade-big">{{ analysis.grade or '—' }}</span>
+        <span class="verdict-grade-big">{{ '?' if data_mislead else (analysis.grade or '—') }}</span>
         <div class="verdict-body">
-          {% if data_incomplete %}
+          {% if data_mislead %}
+          <div class="verdict-conclusion" style="color:#b45309;font-weight:600">⚠ 机构信号活跃（前兆分 {{ '%.1f'|format(prec_score) }}），但财务数据缺失，自动评级无效——请看机构雷达</div>
+          {% elif data_incomplete %}
           <div class="verdict-conclusion" style="color:#b45309">⚠ 财务数据未能完整获取，评级仅供参考</div>
           {% else %}
           <div class="verdict-conclusion">{{ analysis.conclusion }}</div>
@@ -1213,7 +1217,7 @@ function showLetter() {
       <div class="letter-sig">{{ t.letter_sig }}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
       <div class="letter-grade">
         <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade or '—' }}</span>
-        <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion }}</span>
+        <span style="margin-left:8px;font-size:13px">{{ '⚠ 财务数据缺失，评级无效' if data_mislead else analysis.conclusion }}</span>
       </div>
       <div class="letter-footer">{{ t.letter_data_as_of }} {{ analysis.analysis_date }} · {{ t.letter_disclaimer }}</div>
     </div>`;
