@@ -1,0 +1,36 @@
+name: Daily Cron
+
+on:
+  schedule:
+    # 08:00 UTC = 16:00 CST，A股收盘后一小时，周一至周五
+    - cron: '0 8 * * 1-5'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
+
+    steps:
+      - name: Trigger daily pipeline
+        # Runs full analysis for all watchlist stocks + sends push notifications
+        run: |
+          HTTP=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
+            -X POST "${APP_URL}/api/trigger-pipeline" \
+            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}" \
+            -H "Content-Type: application/json")
+          echo "pipeline → HTTP $HTTP"
+          cat /tmp/pipeline.json
+          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
+
+      - name: Trigger precursor scan (A-share signals)
+        # Fetches fresh precursor signals (survey / margin / participation)
+        run: |
+          HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
+            -X POST "${APP_URL}/api/trigger-scan" \
+            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}" \
+            -H "Content-Type: application/json")
+          echo "scan → HTTP $HTTP"
+          cat /tmp/scan.json
+          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]

@@ -60,6 +60,26 @@ def register_system_routes(app):
             flash("Timed out (5 min).", "danger")
         return redirect(url_for("index"))
 
+    @app.route("/api/trigger-pipeline", methods=["POST"])
+    def trigger_pipeline():
+        """GitHub Actions cron: run full daily pipeline for all watched stocks + push notifications."""
+        auth = request.headers.get("Authorization", "")
+        token = auth.replace("Bearer ", "").strip()
+        expected = os.environ.get("SCAN_TOKEN", "")
+        if not expected or token != expected:
+            return jsonify({"error": "unauthorized"}), 401
+
+        def _run():
+            try:
+                from scripts.stock_pipeline import main as run_pipeline
+                run_pipeline()
+                current_app.logger.info("[trigger-pipeline] done")
+            except Exception as e:
+                current_app.logger.warning("[trigger-pipeline] failed: %s", e)
+
+        threading.Thread(target=_run, daemon=True, name="gh-pipeline-trigger").start()
+        return jsonify({"status": "started"}), 202
+
     @app.route("/api/trigger-scan", methods=["POST"])
     def trigger_scan():
         """GitHub Actions cron 调用此端点触发每日前兆扫描 + 快照提交。"""

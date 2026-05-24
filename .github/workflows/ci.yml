@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Smoke test (app imports cleanly)
+        run: python3 -c "import app; print('OK')"
+
+      - name: Run tests
+        run: |
+          if [ -d tests ] && ls tests/test_*.py 1>/dev/null 2>&1; then
+            python3 -m pytest tests/ -v --tb=short
+          else
+            echo "No tests found — skipping"
+          fi
