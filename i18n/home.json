@@ -194,5 +194,21 @@
   "sr_title": {
     "en": "Latest Signals",
     "zh": "最新信号"
+  },
+  "alert_warn_grade": {
+    "en": "Grade {grade} — review recommended",
+    "zh": "评级 {grade}，建议关注"
+  },
+  "alert_warn_outflow": {
+    "en": "Main capital outflow {net:.1f}亿",
+    "zh": "主力净流出 {net:.1f}亿"
+  },
+  "alert_warn_conclusion": {
+    "en": "Signal: {conclusion}",
+    "zh": "信号：{conclusion}"
+  },
+  "alert_ok_fallback": {
+    "en": "No alerts",
+    "zh": "暂无异常"
   }
 }
