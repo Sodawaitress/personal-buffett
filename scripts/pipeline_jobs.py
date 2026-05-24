@@ -71,9 +71,13 @@ def _data_age_minutes(code: str, step: str) -> float:
                 return 0 if (row and row["date"] == today_cn) else float("inf")
             if step in ("fundamentals", "advanced", "technicals", "signals"):
                 row = c.execute(
-                    "SELECT updated_at FROM stock_fundamentals WHERE code=:code", {"code": code}
+                    "SELECT updated_at, annual_json FROM stock_fundamentals WHERE code=:code", {"code": code}
                 ).fetchone()
                 if not row or not row["updated_at"]:
+                    return float("inf")
+                # Treat empty annual data as always stale so next run retries the fetch
+                annual = (row["annual_json"] or "").strip()
+                if annual in ("", "[]", "null"):
                     return float("inf")
                 try:
                     dt = datetime.fromisoformat(row["updated_at"])

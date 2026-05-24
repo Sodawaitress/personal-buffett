@@ -1,9 +1,69 @@
 """A-share financial and signal fetchers extracted from stock_fetch."""
 
+import math
 import time
 from datetime import datetime
 
 import akshare as ak
+
+def _fetch_cn_financials_em(pure: str) -> list:
+    """
+    东方财富备用财务摘要（stock_financial_analysis_indicator）。
+    主要用于海外部署时同花顺 THS 被封的情况。
+    返回格式与 THS 路径相同：list of dict，最新年在前。
+    """
+    try:
+        start = str(datetime.now().year - 7)
+        df = ak.stock_financial_analysis_indicator(symbol=pure, start_year=start)
+        if df is None or df.empty:
+            return []
+        df['日期'] = df['日期'].astype(str)
+        # 只保留年报（12-31 结尾）
+        df_yr = df[df['日期'].str.endswith('12-31')].sort_values('日期', ascending=False).reset_index(drop=True)
+        if df_yr.empty:
+            return []
+        def _safe_str(v):
+            """Convert pandas value to clean string; NaN/None → empty string."""
+            if v is None:
+                return ""
+            try:
+                f = float(v)
+                if math.isnan(f) or math.isinf(f):
+                    return ""
+                return str(v)
+            except (ValueError, TypeError):
+                return str(v) if v else ""
+
+        rows = []
+        for _, row in df_yr.head(6).iterrows():
+            # Derive net_profit (亿) from ROA × total_assets
+            try:
+                roa = float(row.get('总资产净利润率(%)', 0) or 0)
+                ta  = float(row.get('总资产(元)', 0) or 0)
+                if ta and not math.isnan(roa) and not math.isnan(ta):
+                    net_profit_yi = str(round(roa / 100 * ta / 1e8, 2))
+                else:
+                    net_profit_yi = ""
+            except Exception:
+                net_profit_yi = ""
+            rows.append({
+                "year":          row['日期'],
+                "roe":           _safe_str(row.get('净资产收益率(%)')),
+                "net_margin":    _safe_str(row.get('销售净利率(%)')),
+                "gross_margin":  _safe_str(row.get('销售毛利率(%)')),
+                "debt_ratio":    _safe_str(row.get('资产负债率(%)')),
+                "profit_growth": _safe_str(row.get('净利润增长率(%)')),
+                "revenue":       "",
+                "net_profit":    net_profit_yi,
+                "eps":           _safe_str(row.get('摊薄每股收益(元)')),
+                "ocf_per_share": _safe_str(row.get('每股经营性现金流(元)')),
+                "bvps":          _safe_str(row.get('每股净资产_调整前(元)')),
+            })
+        return rows
+    except Exception as e:
+        print(f"    ⚠️ {pure} 东方财富财务备源: {e}")
+        return []
+
 
 def fetch_cn_financials(code: str) -> dict:
     """
@@ -14,15 +74,15 @@ def fetch_cn_financials(code: str) -> dict:
       - pe_current / pe_percentile_5y：当前PE + 5年历史百分位
       - pb_current / pb_percentile_5y：当前PB + 5年历史百分位
 
-    数据源：同花顺年报 + 百度估值历史
+    主数据源：同花顺年报（国内）；备用：东方财富（海外部署）
     """
     result = {}
     pure = code.split(".")[0]
 
     # 1. 年报财务摘要（ROE/净利率/负债率/EPS/OCF）
+    rows = []
     try:
         df = ak.stock_financial_abstract_ths(symbol=pure, indicator='按年度')
-        rows = []
         for _, row in df.tail(6).iloc[::-1].iterrows():  # 最新6年，倒序
             year  = str(row.get("报告期", ""))
             if not year or year in ("False", "nan"):
@@ -40,13 +100,19 @@ def fetch_cn_financials(code: str) -> dict:
                 "ocf_per_share":str(row.get("每股经营现金流", "")),
                 "bvps":         str(row.get("每股净资产", "")),
             })
-        result["annual"] = rows
-        if rows:
-            latest = rows[0]
-            print(f"    📊 {code} 财务: ROE={latest['roe']} 净利率={latest['net_margin']} 负债率={latest['debt_ratio']}")
     except Exception as e:
-        print(f"    ⚠️ {code} 财务摘要: {e}")
-        result["annual"] = []
+        print(f"    ⚠️ {code} 财务摘要(THS): {e} → 尝试东方财富备源")
+
+    # 东方财富备源：THS 在海外失败时（返回空或抛异常）
+    if not rows:
+        rows = _fetch_cn_financials_em(pure)
+        if rows:
+            print(f"    ✅ {code} 东方财富备源成功，{len(rows)} 年数据")
+
+    result["annual"] = rows
+    if rows:
+        latest = rows[0]
+        print(f"    📊 {code} 财务: ROE={latest['roe']} 净利率={latest['net_margin']} 负债率={latest['debt_ratio']}")
 
     time.sleep(0.5)
 
