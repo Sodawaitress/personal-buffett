@@ -48,7 +48,7 @@ def brief_alert(stock, t):
     return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
 
-def present_index_stock(row, snapshot, pending_job, avg_sentiment=None):
+def present_index_stock(row, snapshot, pending_job, avg_sentiment=None, locale="en"):
     analysis = snapshot["analysis"]
     fund_flow = snapshot["fund_flow"]
     market = row.get("market") or detect_market(row.get("stock_code") or row.get("code"))
