@@ -45,7 +45,7 @@ def _build_brief_stocks(user_id, locale="en"):
 
 
 def build_dashboard_context(user_id, region, locale="en"):
-    stocks = _build_index_stocks(user_id, locale)
+    stocks = _build_index_stocks(user_id)
     market = get_market_snapshot()
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
     intl_news = get_intl_stock_news(stocks)
