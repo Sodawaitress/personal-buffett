@@ -77,6 +77,12 @@ def register_stock_routes(app):
     def api_news(code):
         return jsonify(db.get_news(code, days=7))
 
+    @app.route('/api/analyst/<code>')
+    @login_required
+    def api_analyst(code):
+        data = db.get_analyst_consensus(code.upper())
+        return jsonify(data or {})
+
     @app.route('/api/letter/<code>')
     @login_required
     def api_letter(code):

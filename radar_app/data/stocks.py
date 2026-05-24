@@ -186,6 +186,9 @@ def get_user_watching(user_id):
         return [r["stock_code"] for r in rows]
 
 
+_WATCHLIST_UPDATABLE = {"status", "buy_price", "buy_date", "sell_price", "sell_date"}
+
+
 def set_stock_status(user_id, code, status, buy_price=None, buy_date=None, sell_price=None, sell_date=None):
     fields = {"status": status}
     if status == "holding":
@@ -198,6 +201,9 @@ def set_stock_status(user_id, code, status, buy_price=None, buy_date=None, sell_
             fields["sell_price"] = sell_price
         if sell_date:
             fields["sell_date"] = sell_date
+    unknown = set(fields) - _WATCHLIST_UPDATABLE
+    if unknown:
+        raise ValueError(f"set_stock_status: unexpected fields {unknown}")
     set_clause = ", ".join(f"{k}=:{k}" for k in fields)
     params = {**fields, "user_id": user_id, "code": code}
     with get_conn() as c:
@@ -257,6 +263,86 @@ def get_price_history(code, days=30):
                 {"code": code, "days": days},
             )
         ]
+
+
+def get_price_52week(code):
+    """Return {high, low} over the last 365 price rows."""
+    with get_conn() as c:
+        row = c.execute(
+            """SELECT MAX(price) AS high, MIN(price) AS low
+               FROM (SELECT price FROM stock_prices WHERE code=:code
+                     ORDER BY fetched_at DESC LIMIT 365)""",
+            {"code": code},
+        ).fetchone()
+        if not row:
+            return {}
+        return {"high": row["high"], "low": row["low"]}
+
+
+def get_watchlist_entry(user_id, code):
+    """Return the single watchlist row for user+code (with buy_price, buy_date, status)."""
+    with get_conn() as c:
+        row = c.execute(
+            """SELECT w.*, s.name, s.market, s.currency
+               FROM user_watchlist w
+               JOIN stocks s ON s.code = w.stock_code
+               WHERE w.user_id=:uid AND w.stock_code=:code AND w.removed_at IS NULL
+               ORDER BY w.id DESC LIMIT 1""",
+            {"uid": user_id, "code": code},
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def save_analyst_consensus(code, data: dict):
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO analyst_consensus(code, fetched_at, data_json)
+               VALUES(:code, datetime('now'), :data)
+               ON CONFLICT(code) DO UPDATE SET fetched_at=excluded.fetched_at, data_json=excluded.data_json""",
+            {"code": code, "data": json.dumps(data, ensure_ascii=False)},
+        )
+
+
+def get_analyst_consensus(code):
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT fetched_at, data_json FROM analyst_consensus WHERE code=:code",
+            {"code": code},
+        ).fetchone()
+        if not row:
+            return None
+        try:
+            d = json.loads(row["data_json"])
+            d["fetched_at"] = row["fetched_at"]
+            return d
+        except Exception:
+            return None
+
+
+def save_industry_signal(industry_key: str, data: dict):
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO industry_signals(industry_key, fetched_at, signal_json)
+               VALUES(:k, datetime('now'), :data)
+               ON CONFLICT(industry_key) DO UPDATE SET fetched_at=excluded.fetched_at, signal_json=excluded.signal_json""",
+            {"k": industry_key, "data": json.dumps(data, ensure_ascii=False)},
+        )
+
+
+def get_industry_signal(industry_key: str):
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT fetched_at, signal_json FROM industry_signals WHERE industry_key=:k",
+            {"k": industry_key},
+        ).fetchone()
+        if not row:
+            return None
+        try:
+            d = json.loads(row["signal_json"])
+            d["fetched_at"] = row["fetched_at"]
+            return d
+        except Exception:
+            return None
 
 
 def upsert_fund_flow(code, date, main_net, main_ratio):

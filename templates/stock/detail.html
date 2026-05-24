@@ -168,6 +168,64 @@
       </div>
       {% endif %}
 
+      {# ── US-93: Position Insight Card (holding only) ── #}
+      {% if position_insight %}
+      {% set pi = position_insight %}
+      <div class="pos-insight-card" style="margin-top:20px">
+        <div class="pos-insight-header">
+          <span class="pos-insight-title">{{ t.pos_insight_title }}</span>
+          {% if pi.float_pnl_pct is not none %}
+          <span class="pos-insight-pnl {% if pi.float_pnl_pct >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">
+            {{ '%+.2f'|format(pi.float_pnl_pct) }}%
+          </span>
+          {% endif %}
+        </div>
+        <div class="pos-insight-stats">
+          <div class="pi-stat">
+            <span class="pi-stat-label">{{ t.pos_insight_buy_label }}</span>
+            <span class="pi-stat-val">{{ currency }}{{ pi.buy_price }}</span>
+          </div>
+          <div class="pi-stat">
+            <span class="pi-stat-label">{{ t.lbl_cur_position }}</span>
+            <span class="pi-stat-val">{{ currency }}{{ pi.current_price }}</span>
+          </div>
+          {% if pi.days_held is not none %}
+          <div class="pi-stat">
+            <span class="pi-stat-label">{{ t.pos_insight_days_held }}</span>
+            <span class="pi-stat-val">{{ pi.days_held }}d</span>
+          </div>
+          {% endif %}
+          {% if pi.annualized is not none %}
+          <div class="pi-stat">
+            <span class="pi-stat-label">{{ t.pos_insight_annualized }}</span>
+            <span class="pi-stat-val {% if pi.annualized >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">{{ '%+.1f'|format(pi.annualized) }}%</span>
+          </div>
+          {% endif %}
+        </div>
+        {% if pi.w52_high and pi.w52_low and pi.buy_pct_52w is not none %}
+        <div class="pi-range-wrap">
+          <div class="pi-range-bar">
+            {# buy marker #}
+            <div class="pi-marker pi-marker-buy" style="left:{{ [0, [100, pi.buy_pct_52w]|min]|max }}%"
+                 title="{{ t.pos_insight_buy_label }}: {{ currency }}{{ pi.buy_price }}">▲</div>
+            {# current price marker #}
+            <div class="pi-marker pi-marker-cur" style="left:{{ [0, [100, pi.current_pct_52w]|min]|max }}%"
+                 title="{{ t.lbl_cur_position }}: {{ currency }}{{ pi.current_price }}">●</div>
+          </div>
+          <div class="pi-range-labels">
+            <span>{{ currency }}{{ pi.w52_low }} <small>{{ t.pos_insight_52w_low }}</small></span>
+            <span>{{ currency }}{{ pi.w52_high }} <small>{{ t.pos_insight_52w_high }}</small></span>
+          </div>
+          {% if pi.buy_pct_52w is not none %}
+          <div class="pi-range-note">
+            {{ t.pos_insight_range_note.replace('{pct}', '%.0f'|format(pi.buy_pct_52w)) }}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
     </div>
   </section>
 
@@ -188,6 +246,55 @@
           <div class="diverg-summary-headline">{{ dc.headline }}</div>
           <div class="diverg-summary-note">{{ dc.note }}</div>
           {% if dc.action %}<div class="diverg-summary-action">{{ dc.action }}</div>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── US-94: Analyst EPS Consensus card (A-share only) ── #}
+      {% if market == "cn" %}
+      {% set ac = analyst_consensus %}
+      <div class="analyst-card">
+        <div class="analyst-card-title">{{ t.analyst_title }}</div>
+        {% if ac and ac.get('forecasts') %}
+        <div class="analyst-meta">
+          {{ t.analyst_institutions.replace('{n}', ac.institution_count | string) }}
+        </div>
+        <div class="analyst-forecasts">
+          {% for f in ac.forecasts %}
+          <div class="af-row">
+            <span class="af-year">{{ f.year }}</span>
+            <span class="af-eps">{{ t.analyst_eps_avg }}: <strong>{{ f.eps_avg }}</strong></span>
+            <span class="af-range">{{ t.analyst_eps_range }}: {{ f.eps_min }}–{{ f.eps_max }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="analyst-no-coverage">{{ t.analyst_no_coverage }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# ── US-95: Industry Signal card (CN only, if data available) ── #}
+      {% if market == "cn" and industry_signal %}
+      {% set isig = industry_signal %}
+      <div class="industry-signal-card industry-signal-{{ isig.get('signal','neutral') | lower | replace('顺风','tailwind') | replace('逆风','headwind') | replace('中性','neutral') }}">
+        <div class="industry-signal-header">
+          <span class="industry-signal-label">{{ isig.get('label', '') }}</span>
+          <span class="industry-signal-badge industry-signal-badge-{{ isig.get('signal','') }}">
+            {% if isig.get('signal') == '顺风' %}{{ t.industry_signal_tailwind }}
+            {% elif isig.get('signal') == '逆风' %}{{ t.industry_signal_headwind }}
+            {% else %}{{ t.industry_signal_neutral }}{% endif %}
+          </span>
+        </div>
+        <div class="industry-signal-desc">{{ isig.get('description', '') }}</div>
+        {% if isig.get('cycle_tag') %}
+        <div class="industry-signal-cycle-tag">{{ isig.cycle_tag }}</div>
+        {% endif %}
+        <div class="industry-signal-meta">
+          {{ t.industry_signal_30d }}：
+          <span class="industry-signal-change {% if isig.get('change_30d', 0) >= 0 %}up{% else %}down{% endif %}">
+            {{ '%+.1f'|format(isig.get('change_30d', 0)) }}%
+          </span>
         </div>
       </div>
       {% endif %}

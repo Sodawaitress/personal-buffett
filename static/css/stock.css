@@ -1241,4 +1241,212 @@
   margin: 0 auto;
 }
 
+/* ── US-93: Position Insight Card ── */
+.pos-insight-card {
+  border: 1px solid var(--rule-light);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.pos-insight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0f4ff;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--rule-light);
+}
+.pos-insight-title {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.pos-insight-pnl {
+  font-family: Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+.pnl-pos { color: #16a34a; }
+.pnl-neg { color: #dc2626; }
+.pos-insight-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--rule-light);
+}
+.pi-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px;
+  border-right: 1px solid var(--rule-light);
+  min-width: 90px;
+}
+.pi-stat:last-child { border-right: none; }
+.pi-stat-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+.pi-stat-val {
+  font-family: Georgia, serif;
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.pi-range-wrap {
+  padding: 12px 14px 10px;
+}
+.pi-range-bar {
+  position: relative;
+  height: 6px;
+  background: var(--rule-light);
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+.pi-marker {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1;
+  top: -4px;
+}
+.pi-marker-buy {
+  color: #1d4ed8;
+  top: 6px;
+  font-size: 9px;
+}
+.pi-marker-cur {
+  color: var(--ink);
+  top: -5px;
+  font-size: 11px;
+}
+.pi-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+.pi-range-labels small { font-size: 10px; }
+.pi-range-note {
+  margin-top: 6px;
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* ── US-94: Analyst EPS Consensus card ── */
+.analyst-card {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: var(--paper);
+}
+.analyst-card-title {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.analyst-meta {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-bottom: 10px;
+}
+.analyst-forecasts { display: flex; flex-direction: column; gap: 6px; }
+.af-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink);
+}
+.af-year {
+  font-weight: 700;
+  color: var(--ink-muted);
+  min-width: 40px;
+}
+.af-eps strong { color: var(--ink); }
+.af-range { color: var(--ink-muted); }
+.analyst-no-coverage {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* ── US-95: Industry Signal card ── */
+.industry-signal-card {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--ink-muted);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: var(--paper);
+}
+.industry-signal-card.industry-signal-tailwind { border-left-color: #16a34a; }
+.industry-signal-card.industry-signal-headwind { border-left-color: #dc2626; }
+.industry-signal-card.industry-signal-neutral   { border-left-color: #6b7280; }
+.industry-signal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.industry-signal-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.industry-signal-badge {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #374151;
+}
+.industry-signal-badge-顺风 { background: #dcfce7; color: #15803d; }
+.industry-signal-badge-逆风 { background: #fee2e2; color: #b91c1c; }
+.industry-signal-desc {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.industry-signal-cycle-tag {
+  display: inline-block;
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-radius: 4px;
+  padding: 1px 7px;
+  margin-bottom: 6px;
+}
+.industry-signal-meta {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+.industry-signal-change.up   { color: #16a34a; font-weight: 700; }
+.industry-signal-change.down { color: #dc2626; font-weight: 700; }
+
 /* 主容器 */

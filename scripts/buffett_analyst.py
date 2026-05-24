@@ -10,6 +10,7 @@ except ImportError:
 
 bootstrap_paths()
 
+import html as _html
 import time
 from datetime import datetime, timezone, timedelta
 from scripts.buffett_groq import _call_groq
@@ -33,6 +34,12 @@ from scripts.buffett_context import (
 )
 from scripts.buffett_utils import parse_dim, parse_trade_block, split_dims_output, strip_trade_block
 from scripts.config import BUFFETT_PROFILES
+
+
+def _safe_letter(text: str) -> str:
+    """Escape HTML special chars so LLM output is safe for | safe rendering.
+    The template replaces \\n with <br>, which still works after escaping."""
+    return _html.escape(text or "", quote=False)
 
 
 def analyze_stock(name: str, code: str, news: list, fund_flow: dict, quote: dict) -> str:
@@ -418,7 +425,7 @@ def analyze_stock_v2(code: str, name: str, market: str,
         "conclusion":       conclusion,
         "grade":            grade,
         "reasoning":        letter_text[:200],
-        "letter_html":      letter_text,
+        "letter_html":      _safe_letter(letter_text),
         "raw_output":       raw,
         "framework_used":   framework_name,
         "trade_block":      trade_block,
@@ -615,7 +622,7 @@ Write a 150–250 word analysis letter.
         "conclusion":        conclusion,
         "grade":             grade,
         "reasoning":         letter_text[:200],
-        "letter_html":       letter_text,
+        "letter_html":       _safe_letter(letter_text),
         "raw_output":        raw,
         "framework_used":    framework_name,
         "trade_block":       trade_block,

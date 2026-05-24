@@ -1,6 +1,6 @@
 """Stock detail presentation helpers."""
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from radar_app.data.market import get_precursor_cache
 from radar_app.data.signal_events import _calc_divergence, _SIGNALS_MAX_AGE_H
@@ -475,6 +475,59 @@ def _label_news(news: list, inst_dir: str) -> list:
     return result
 
 
+def _build_position_insight(watchlist_entry, price_52w, current_price):
+    """Compute holding position stats for US-93 card. Returns None if not applicable."""
+    if not watchlist_entry:
+        return None
+    if watchlist_entry.get("status") != "holding":
+        return None
+    buy_price = watchlist_entry.get("buy_price")
+    buy_date_str = watchlist_entry.get("buy_date")
+    if not buy_price or not current_price:
+        return None
+
+    try:
+        buy = float(buy_price)
+        cur = float(current_price)
+        if buy <= 0 or cur <= 0:
+            return None
+    except (TypeError, ValueError):
+        return None
+
+    float_pnl_pct = round((cur / buy - 1) * 100, 2)
+
+    days_held = None
+    annualized = None
+    if buy_date_str:
+        try:
+            buy_dt = date.fromisoformat(str(buy_date_str)[:10])
+            days_held = (date.today() - buy_dt).days
+            if days_held > 0:
+                annualized = round(((cur / buy) ** (365.0 / days_held) - 1) * 100, 1)
+        except (ValueError, TypeError):
+            pass
+
+    w52_high = price_52w.get("high") if price_52w else None
+    w52_low  = price_52w.get("low")  if price_52w else None
+    buy_pct_52w = None
+    current_pct_52w = None
+    if w52_high and w52_low and w52_high > w52_low:
+        buy_pct_52w     = round((buy - w52_low) / (w52_high - w52_low) * 100, 1)
+        current_pct_52w = round((cur  - w52_low) / (w52_high - w52_low) * 100, 1)
+
+    return {
+        "buy_price":        round(buy, 2),
+        "current_price":    round(cur, 2),
+        "float_pnl_pct":    float_pnl_pct,
+        "days_held":        days_held,
+        "annualized":       annualized,
+        "w52_high":         round(w52_high, 2) if w52_high else None,
+        "w52_low":          round(w52_low, 2)  if w52_low  else None,
+        "buy_pct_52w":      buy_pct_52w,
+        "current_pct_52w":  current_pct_52w,
+    }
+
+
 def present_stock_page(bundle):
     fund = bundle["fund"]
     signals = fund.get("signals", {}) if fund else {}
@@ -499,6 +552,13 @@ def present_stock_page(bundle):
     precursor = get_precursor_cache(bundle["code"]) if market == "cn" else {}
     signal_contexts = _build_signal_contexts(precursor, signals, price_change) if market == "cn" else {}
     news_labeled = _label_news(bundle["news"], inst_dir)
+
+    current_price_val = (bundle["price"] or {}).get("price") if bundle["price"] else None
+    position_insight = _build_position_insight(
+        bundle.get("watchlist_entry"),
+        bundle.get("price_52w", {}),
+        current_price_val,
+    )
 
     return {
         "stock": bundle["stock"],
@@ -541,6 +601,12 @@ def present_stock_page(bundle):
         "signal_contexts": signal_contexts,
         "precursor": precursor,
         "market_currency": MARKET_CURRENCY,
+        # US-93
+        "position_insight": position_insight,
+        # US-94
+        "analyst_consensus": bundle.get("analyst_consensus"),
+        # US-95
+        "industry_signal": bundle.get("industry_signal"),
     }
 
 

@@ -449,6 +449,28 @@ _SCHEMA_SQL = """
             UNIQUE(code, snapshot_date)
         );
         CREATE INDEX IF NOT EXISTS idx_precursor_history_code ON precursor_history(code, snapshot_date);
+
+        CREATE TABLE IF NOT EXISTS analyst_consensus (
+            code       TEXT PRIMARY KEY,
+            fetched_at TEXT DEFAULT (datetime('now')),
+            data_json  TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS industry_signals (
+            industry_key TEXT PRIMARY KEY,
+            fetched_at   TEXT DEFAULT (datetime('now')),
+            signal_json  TEXT
+        );
+
+        -- Performance indices on high-frequency query columns
+        CREATE INDEX IF NOT EXISTS idx_stock_prices_code_time
+            ON stock_prices(code, fetched_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_stock_news_code_date
+            ON stock_news(code, fetched_date DESC);
+        CREATE INDEX IF NOT EXISTS idx_pipeline_jobs_code
+            ON pipeline_jobs(code, started_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_watchlist_user_status
+            ON user_watchlist(user_id, removed_at, status);
 """
 
 

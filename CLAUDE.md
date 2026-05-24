@@ -123,6 +123,10 @@
   - §2 市场信号：背离摘要卡（新闻×机构9态矩阵）、信号叉乘情境卡（融券/调研/参与度，A股专属）、每条新闻一致性标签（一致/背离/逆向）
   - 机构雷达懒加载（IntersectionObserver，进入视口才触发）
   - `backfill_returns.py` 扩展：同时回填 `actual_return_10d`
+- **D评级修复（2026-05-25）**：THS海外封锁→所有A股 annual_json=[] 缓存锁死→全部D；修复：`_fetch_cn_financials_em()` 东方财富备源；`pipeline_jobs.py` 空 annual_json 视为永远过期；生产数据批量回填
+- **US-93 持仓透视卡（2026-05-25）**：`_build_position_insight()` in presenter.py；`get_price_52week` + `get_watchlist_entry` in data/stocks.py；detail.html §1 卡片（买入价/浮盈亏/持有天数/年化收益率/52周区间进度条）；stock.css `.pos-insight-*` 样式
+- **US-94 分析师共识卡（2026-05-25）**：`analyst_consensus` 表；`scripts/fetch_analyst_consensus.py`（stock_profit_forecast_ths，机构数+EPS预测）；`/api/analyst/<code>` 端点；detail.html §2 卡片；48h pipeline 缓存；bug fix: `db.get/save_analyst_consensus` 不存在→改用 `radar_app.data.stocks` 直接导入
+- **US-95 行业信号卡（2026-05-25）**：`industry_signals` 表；`scripts/industry_signals.py`（stock_board_industry_hist_em 30日涨跌，cycle_commodity 额外拉 macro_china_pmi_yearly 连续扩张月数）；pipeline 1b 层集成；detail.html §2 顺风/逆风/中性卡片；24h 缓存；graceful fallback
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）

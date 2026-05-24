@@ -4225,3 +4225,80 @@ CREATE TABLE IF NOT EXISTS precursor_history (
 - CSS 布局系统重写（新增必要样式类即可）
 - 历史信号准确率统计页面（数据先积累）
 
+---
+
+### US-93 · 持仓透视卡：买在哪里、现在在哪里
+
+**As a** 持仓用户（status=holding）
+**I want to** 在股票详情页一眼看到我的买入成本相对当前价格和历史区间的位置
+**So that** 我不需要自己算，直接知道"我买贵了还是买便宜了"，焦虑有个数字依据
+
+#### Acceptance Criteria
+
+- [x] 仅对 `status=holding` 且 `buy_price` 非空的用户显示此卡
+- [x] 显示：买入价、当前价、浮盈亏%、持有天数、年化收益率
+- [x] 52周区间进度条：低点──[买入价]──[现价]──高点，四个点都标出
+- [x] 买入价位置用文字说明："你在52周区间的下X%位置买入"
+- [x] 年化收益率公式：`((current/buy)^(365/days_held) - 1) * 100`
+- [x] 数据来源：`user_watchlist`（buy_price/buy_date）+ `stock_prices`（最新价）+ `stock_prices`（52周高低，取最近365天MAX/MIN）
+- [x] 纯前端计算，零 LLM
+
+#### 不做
+- 仓位金额（不强制用户填股数）
+- 多个买入记录的加权平均（第一版只取单次买入价）
+
+---
+
+### US-94 · 分析师共识卡：机构目标价一览
+
+**As a** 用户
+**I want to** 看到券商/机构对这只股票的评级数量和目标价均值
+**So that** 我知道"专业机构怎么看"，有个锚点，而不是只看巴菲特信的主观判断
+
+#### 数据来源
+AKShare `stock_analyst_forecast_em`（东方财富分析师预期），A股专属。
+
+#### Acceptance Criteria
+
+- [x] 新建 DB 表 `analyst_consensus`：`code, fetched_at, data_json`（EPS预测 via stock_profit_forecast_ths）
+- [x] Pipeline Layer1c 新增子步骤拉取分析师数据，写入 `analyst_consensus`，48h 缓存
+- [x] 新增 `/api/analyst/<code>` GET 端点，返回最新一条
+- [x] 详情页「§ 市场信号」区域新增分析师共识卡（仅 A股，非 A股不显示）
+- [x] 显示：机构数量 + EPS预测均值/区间（注：stock_analyst_forecast_em不可用，改用stock_profit_forecast_ths）
+- [x] 若无数据（新股/小盘无覆盖）显示"暂无机构覆盖"而非空白
+- [x] 纯数据展示，零 LLM
+
+#### 不做
+- 港股/美股（数据源不同，后续再加）
+- 历史评级变化趋势图
+
+---
+
+### US-95 · 行业信号卡：周期位置和行业温度
+
+**As a** 用户
+**I want to** 在股票详情页看到所在行业当前的景气度（不是该公司自己的，是整个行业的）
+**So that** 我能判断"公司基本面好"之外，行业大环境是顺风还是逆风，做出更准确的持仓决策
+
+#### 路由规则（按 company_type）
+
+| company_type | 行业信号来源 | 核心指标 |
+|---|---|---|
+| `cycle_commodity` | AKShare 工程机械月度数据 | 挖机内销同比增速、是否量价齐涨 |
+| `growth_tech` | AKShare 行业板块指数（光伏/半导体） | 板块近30日涨跌、PE分位 |
+| `bank_insurance` | AKShare 银行业指数 | 板块近30日涨跌 |
+| 其他 | 板块指数通用 | 板块近30日涨跌 |
+
+#### Acceptance Criteria
+
+- [x] 新建 `industry_signals` 表：`industry_key, fetched_at, signal_json`，24h 缓存
+- [x] `scripts/industry_signals.py`：按 industry_key 拉对应 AKShare 数据，输出结构化 dict
+- [x] cycle_commodity 专属：用制造业PMI计算连续扩张/收缩月数，≥3个月标「上行周期确认」，≤-2标「下行压力」
+- [x] 详情页「§ 市场信号」区域新增行业信号卡，按 `stock_meta.company_type` 路由渲染
+- [x] 文字规则生成（顺风/逆风/中性 + 30日涨跌描述），**零 LLM**
+- [x] 无行业数据时不显示该卡（graceful fallback）
+
+#### 不做
+- 用 LLM 生成行业解读文字
+- 所有行业全覆盖（第一版只做 cycle_commodity + growth_tech）
+

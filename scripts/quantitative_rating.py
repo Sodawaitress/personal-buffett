@@ -309,10 +309,14 @@ _T: Dict[str, Dict[str, str]] = {
 
 
 def _pct(value, default=0.0) -> float:
-    """安全地把 '15.3%' 或 15.3 (float/int) 都转成 float。"""
-    v = value if value is not None else default
+    """安全地把 '15.3%' 或 15.3 (float/int) 都转成 float。
+    None 和空字符串返回 default；其他无法解析的值也返回 default。
+    注意：真实的 0 值（如 '0.0'、'0%'）返回 0.0，不视为缺失。
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return float(default)
     try:
-        return float(str(v).replace("%", "").strip())
+        return float(str(value).replace("%", "").strip())
     except (ValueError, TypeError):
         return float(default)
 
@@ -819,11 +823,11 @@ class QuantitativeRater:
 
         Returns dict with grade, conclusion (always Chinese for DB), components, red_flags, reasoning.
         """
-        # 数据完整度检测：关键字段有多少是实际有值的
+        # 数据完整度检测：关键字段有多少是实际有值的（只把 None/空字符串视为缺失，0 是合法值）
         _key_fields = ["roe", "net_margin", "debt_ratio", "net_profit"]
         _present = sum(
             1 for f in _key_fields
-            if annual_data and annual_data[0].get(f) not in (None, "", "0", "0.0", "0%", "0.00%")
+            if annual_data and annual_data[0].get(f) not in (None, "")
         )
         data_incomplete = int(_present < 2)  # 4个关键字段中少于2个有值 → 数据不完整
 

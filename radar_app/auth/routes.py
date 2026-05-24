@@ -1,6 +1,7 @@
 """Authentication helpers and routes extracted from the legacy app module."""
 
 import os
+import re
 
 from flask import flash, redirect, render_template, request, session, url_for
 
@@ -97,7 +98,7 @@ def register_auth_routes(app, bcrypt, oauth):
         session["region"]       = "nz"
         session["role"]         = "member"
         session["is_demo"]      = True
-        next_code = request.args.get("next")
-        if next_code:
+        next_code = request.args.get("next", "")
+        if next_code and re.match(r'^[\w.\-]+$', next_code):
             return redirect(f"/stock/{next_code}")
         return redirect(url_for("watchlist_page"))

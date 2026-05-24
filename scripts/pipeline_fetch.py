@@ -1,6 +1,12 @@
 from datetime import datetime, timezone, timedelta, date as _date
 
 import db
+from radar_app.data.stocks import (
+    get_analyst_consensus,
+    save_analyst_consensus,
+    get_industry_signal,
+    save_industry_signal,
+)
 
 CN_TZ = timezone(timedelta(hours=8))
 
@@ -450,6 +456,80 @@ def _fetch_1b_financials(code, market, log):
     _fetch_financials(code, market, log)
     if not _is_st(code):
         _fetch_advanced(code, market, log)
+    if market == "cn":
+        _fetch_analyst_consensus(code, log)
+        _fetch_industry_signal_for_stock(code, market, log)
+
+
+def _fetch_analyst_consensus(code, log):
+    """Fetch analyst EPS consensus (THS, 48h cache). A-share only."""
+    existing = get_analyst_consensus(code)
+    if existing:
+        fetched = existing.get("fetched_at", "")
+        try:
+            dt = datetime.fromisoformat(str(fetched).replace(" ", "T"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+            if age_h < 48:
+                log(f"       分析师共识缓存有效（{age_h:.0f}h前）")
+                return
+        except Exception:
+            pass
+    try:
+        from scripts.fetch_analyst_consensus import fetch_analyst_consensus as _fetch_ac
+        data = _fetch_ac(code)
+        if data:
+            save_analyst_consensus(code, data)
+            cnt = data.get("institution_count", 0)
+            forecasts = data.get("forecasts", [])
+            eps_info = f"EPS{forecasts[0]['year']}均={forecasts[0]['eps_avg']}" if forecasts else "无预测"
+            log(f"       👥 {cnt}家机构 {eps_info}")
+        else:
+            log("       ⚠️ 分析师共识：无数据")
+    except Exception as e:
+        log(f"       ⚠️ 分析师共识失败: {e}")
+
+
+def _fetch_industry_signal_for_stock(code, market, log):
+    """Fetch industry signal (24h cache) based on company_type from stock_meta."""
+    if market != "cn":
+        return
+    try:
+        meta = db.get_stock_meta(code) or {}
+        company_type = meta.get("company_type")
+        if not company_type:
+            return
+        from scripts.industry_signals import get_industry_key, fetch_industry_signal, fetch_cycle_commodity_signal
+        industry_key = get_industry_key(company_type)
+        if not industry_key:
+            return
+        existing = get_industry_signal(industry_key)
+        if existing:
+            fetched = existing.get("fetched_at", "")
+            try:
+                dt = datetime.fromisoformat(str(fetched).replace(" ", "T"))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+                if age_h < 24:
+                    log(f"       行业信号缓存有效（{age_h:.0f}h前，{company_type}）")
+                    return
+            except Exception:
+                pass
+        if company_type == "cycle_commodity":
+            data = fetch_cycle_commodity_signal()
+        else:
+            data = fetch_industry_signal(company_type)
+        if data:
+            save_industry_signal(industry_key, data)
+            change = data.get("change_30d", 0)
+            signal = data.get("signal", "")
+            log(f"       🏭 行业信号 {data.get('label','')} {change:+.1f}% ({signal})")
+        else:
+            log(f"       ⚠️ 行业信号：{company_type} 无数据")
+    except Exception as e:
+        log(f"       ⚠️ 行业信号失败: {e}")
 
 
 def _fetch_north_bound(market, log):

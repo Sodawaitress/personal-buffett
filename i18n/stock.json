@@ -702,5 +702,85 @@
   "tab_news": {
     "en": "News",
     "zh": "新闻"
+  },
+  "pos_insight_title": {
+    "en": "My Position",
+    "zh": "持仓透视"
+  },
+  "pos_insight_pnl": {
+    "en": "Unrealized P&L",
+    "zh": "浮盈亏"
+  },
+  "pos_insight_days_held": {
+    "en": "Days held",
+    "zh": "持有天数"
+  },
+  "pos_insight_annualized": {
+    "en": "Annualized return",
+    "zh": "年化收益率"
+  },
+  "pos_insight_52w_low": {
+    "en": "52-wk low",
+    "zh": "52周低"
+  },
+  "pos_insight_52w_high": {
+    "en": "52-wk high",
+    "zh": "52周高"
+  },
+  "pos_insight_buy_label": {
+    "en": "My buy",
+    "zh": "我的买入"
+  },
+  "pos_insight_range_note": {
+    "en": "Bought at {pct}% of 52-week range",
+    "zh": "你在52周区间的{pct}%位置买入"
+  },
+  "analyst_title": {
+    "en": "Analyst EPS Consensus",
+    "zh": "分析师盈利预测"
+  },
+  "analyst_institutions": {
+    "en": "{n} institutions",
+    "zh": "{n}家机构预测"
+  },
+  "analyst_eps_avg": {
+    "en": "EPS avg",
+    "zh": "EPS均值"
+  },
+  "analyst_eps_range": {
+    "en": "Range",
+    "zh": "区间"
+  },
+  "analyst_no_coverage": {
+    "en": "No analyst coverage",
+    "zh": "暂无机构覆盖"
+  },
+  "industry_signal_title": {
+    "en": "Industry Conditions",
+    "zh": "行业景气度"
+  },
+  "industry_signal_tailwind": {
+    "en": "Tailwind",
+    "zh": "顺风"
+  },
+  "industry_signal_headwind": {
+    "en": "Headwind",
+    "zh": "逆风"
+  },
+  "industry_signal_neutral": {
+    "en": "Neutral",
+    "zh": "中性"
+  },
+  "industry_signal_30d": {
+    "en": "30-day sector return",
+    "zh": "板块近30日涨跌"
+  },
+  "industry_signal_cycle_up": {
+    "en": "Uptrend confirmed",
+    "zh": "上行周期确认"
+  },
+  "industry_signal_cycle_down": {
+    "en": "Downward pressure",
+    "zh": "下行压力"
   }
 }

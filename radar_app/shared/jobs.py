@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 import db
 
 
-def get_recent_pending_job(code, minutes=15):
+def get_recent_pending_job(code, minutes=30):
     cutoff = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
     with db.get_conn() as conn:
         row = conn.execute(

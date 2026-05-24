@@ -45,6 +45,18 @@ def _run_with_timeout(fn, args, label: str, log, timeout: int = T_BASIC):
             log(f"  ⚠️ {label} 失败: {e}")
 
 
+def _is_cn_trading_day(date_cn: str) -> bool:
+    """True if date_cn (YYYY-MM-DD) is a weekday (Mon–Fri).
+    Skips public holiday detection — false positives on holidays are acceptable
+    (we'll re-fetch and get yesterday's data, which is harmless)."""
+    try:
+        from datetime import date
+        d = date.fromisoformat(date_cn)
+        return d.weekday() < 5  # 0=Mon … 4=Fri
+    except Exception:
+        return True
+
+
 def _data_age_minutes(code: str, step: str) -> float:
     now_utc = datetime.now(timezone.utc)
     today_cn = datetime.now(CN_TZ).strftime("%Y-%m-%d")
@@ -62,13 +74,23 @@ def _data_age_minutes(code: str, step: str) -> float:
                     "SELECT COUNT(*) AS n FROM stock_news WHERE code=:code AND fetched_date=:today",
                     {"code": code, "today": today_cn},
                 ).fetchone()["n"]
-                return 0 if count >= 3 else float("inf")
+                if count >= 3:
+                    return 0
+                # Non-trading days rarely have breaking news; treat yesterday's data as fresh
+                if not _is_cn_trading_day(today_cn):
+                    return 0
+                return float("inf")
             if step == "fund_flow":
                 row = c.execute(
                     "SELECT date FROM stock_fund_flow WHERE code=:code ORDER BY date DESC LIMIT 1",
                     {"code": code},
                 ).fetchone()
-                return 0 if (row and row["date"] == today_cn) else float("inf")
+                if row and row["date"] == today_cn:
+                    return 0
+                # No fund flow on weekends/holidays — last trading day's data is fine
+                if not _is_cn_trading_day(today_cn):
+                    return 0
+                return float("inf")
             if step in ("fundamentals", "advanced", "technicals", "signals"):
                 row = c.execute(
                     "SELECT updated_at, annual_json FROM stock_fundamentals WHERE code=:code", {"code": code}
@@ -134,7 +156,7 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
         _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, T_AI)
 
         log("✅ 完成")
-        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="done", log="\n".join(logs))
 
         if user_id:
             try:
@@ -145,7 +167,7 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
             except Exception as _ne:
                 log(f"  ⚠️ 差评预警检查失败: {_ne}")
     except Exception as e:
-        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs))
 
 
 def start_pipeline(user_id: int, code: str, market: str) -> int:
@@ -179,10 +201,10 @@ def run_quant_only(job_id: int, code: str, market: str, user_id: int = None):
 
         _run_with_timeout(_run_layer2, [code, market, log, user_id], "Layer2量化", log, T_AI)
         log("✅ 完成")
-        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="done", log="\n".join(logs))
     except Exception as e:
         log(f"⚠️ {e}")
-        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs))
 
 
 def start_quant_only(user_id: int, code: str, market: str) -> int:
@@ -318,10 +340,10 @@ def run_letter_only(job_id: int, code: str, market: str, user_id: int = None):
                 log("       ⚠️ Layer 3 无输出（Groq 限速或超时）")
 
         _run_with_timeout(_do_letter, [], "股东信生成", log, T_AI)
-        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="done", log="\n".join(logs))
     except Exception as e:
         log(f"⚠️ {e}")
-        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs))
 
 
 def start_letter_only(user_id: int, code: str, market: str) -> int:
@@ -353,9 +375,9 @@ def run_news_update(job_id: int, code: str, market: str, user_id: int = None):
         log("  重新计算量化评级（应用新新闻）…")
         _run_with_timeout(_run_layer2, [code, market, log, user_id], "Layer2量化", log, T_AI)
         log("✅ 新闻更新完成")
-        db.update_job(job_id, status="done", log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="done", log="\n".join(logs))
     except Exception as e:
-        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs)[-500:])
+        db.update_job(job_id, status="failed", error=str(e), log="\n".join(logs))
 
 
 def start_news_update(user_id: int, code: str, market: str) -> int:
