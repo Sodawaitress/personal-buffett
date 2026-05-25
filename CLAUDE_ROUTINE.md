@@ -126,25 +126,20 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 ### Step 5：写入分析日志 + 触发微信推送 + 保存结构化预言
 
-全部用 GitHub API 直接写 main 分支（不要用 `git commit`）。
-
-全部用 GitHub API 直接写 main 分支（不要用 `git commit`，Routine 的本地 git 只推私有分支）。
+用 Read/Write 工具直接编辑本地文件，最后一次性 git commit + push 到 main。
 
 **5a：写改进日志**
-1. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/knowledge/improvement_log.md` 读取当前内容和 SHA
-2. 把当前内容 base64 decode，追加今日五选分析，重新 base64 encode
-3. PUT 同一地址，payload: `{"message": "chore: routine log {日期}", "content": "<新base64>", "sha": "<旧sha>", "branch": "main"}`
+1. 用 Read 工具读取 `knowledge/improvement_log.md` 当前内容
+2. 在末尾追加今日五选分析，用 Write 工具写回（保留原有全部内容）
 
 **5b：写微信推送文件（触发 GitHub Actions 自动发送 Server酱）**
-1. 把 Step 4 生成的完整推送文本（纯文本格式，第一行是标题如"【今日五选】2026-05-24"）base64 encode
-2. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/output/daily_push.txt` 获取 SHA（文件可能不存在，不存在就不带 sha）
-3. PUT 同一地址，payload: `{"message": "chore: daily push {日期}", "content": "<base64>", "branch": "main"}`（如有旧 sha 就带上）
+1. 用 Write 工具把 Step 4 生成的完整推送文本写入 `output/daily_push.txt`（第一行是标题，如"【今日五选】2026-05-24"）
 
-文件写入 main 后，GitHub Actions（`.github/workflows/wechat-push.yml`）会自动检测并把内容发给 Server酱，妈妈就收到微信了。
+文件推到 main 后，GitHub Actions（`.github/workflows/wechat-push.yml`）会自动检测并把内容发给 Server酱，妈妈就收到微信了。
 
 **5c：写结构化预言（训练数据闭环）**
 
-把今日预言写成 JSON，PUT 到 `output/predictions_pending.json`（Fly.io 下次跑时会读取并存入数据库，`backfill_returns.py` 10天后自动回填实际涨跌，形成训练样本）。
+把今日预言写成 JSON，用 Write 工具写入 `output/predictions_pending.json`（Fly.io 下次跑时会读取并存入数据库，`backfill_returns.py` 10天后自动回填实际涨跌，形成训练样本）。
 
 格式：
 ```json
@@ -161,9 +156,12 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 ]
 ```
 
-操作：
-1. GET `https://api.github.com/repos/Sodawaitress/personal-buffett/contents/output/predictions_pending.json` 获取 SHA（不存在则不带 sha）
-2. PUT 同一地址，写入今日预言 JSON 数组，message: `"chore: predictions {日期}"`
+**5d：提交并推到 main**
+```bash
+git add knowledge/improvement_log.md output/daily_push.txt output/predictions_pending.json
+git commit -m "chore: routine log {日期}"
+git push origin HEAD:main
+```
 
 ---
 
@@ -209,7 +207,12 @@ Claude判断: {评级} — {理由}
 ---
 ```
 
-写完后同样用 GitHub API PUT 到 main 分支（message: `chore: routine log {日期}`），不用 git commit。
+写完后同样用 Write 工具写回 `knowledge/improvement_log.md`，然后：
+```bash
+git add knowledge/improvement_log.md
+git commit -m "chore: routine log {日期}"
+git push origin HEAD:main
+```
 
 ---
 
