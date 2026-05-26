@@ -67,14 +67,18 @@ def _build_snapshot() -> dict:
 
         ana = get_latest_analysis(code)
         if ana:
+            moat = ana.get("moat", "")
+            q = ana.get("quant_score")
+            is_incomplete = "0/35" in moat or (q is not None and q < 15)
             snap["analysis"] = {
                 "date": ana.get("analysis_date", ""),
                 "grade": ana.get("grade", ""),
                 "conclusion": ana.get("conclusion", ""),
-                "moat": ana.get("moat", ""),
+                "moat": moat,
                 "reasoning": (ana.get("reasoning") or "")[:300],
-                "quant_score": ana.get("quant_score"),
+                "quant_score": q,
                 "data_incomplete": ana.get("data_incomplete", 0),
+                "data_quality": "incomplete" if is_incomplete else "ok",
             }
         else:
             snap["analysis"] = None

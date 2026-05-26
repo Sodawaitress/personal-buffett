@@ -36,6 +36,12 @@ GitHub repo: Sodawaitress/personal-buffett（已连接，可读写）
 - 融券变化：大幅增加 = 机构在做空；大幅减少 = 空头平仓
 - 这一层决定："现在是不是进场的时间"，是时机。
 
+**融券背离强制提示规则（无例外）：**
+当 precursor.short_selling.change_pct 绝对值 > 80% 时，必须在 [机构] 行或「今天的判断」中明确写出（不能只留在数据里不进正文）：
+- change_pct > +80%：「⚠ 融券余量大增 {N}%，有资金在押注下跌或对冲，多空分歧加大」
+- change_pct < -80%：「空头大幅减少 {N}%，做空压力消退，空头认输或平仓」
+基本面再好，资金面的极端背离也必须写进正文。
+
 **读懂调研信号的关键原则：**
 - 「业绩说明会」且之后无跟进 → 机构只是例行参加，不算看好，不能算信号
 - 「现场参观」或「实地调研」 → 机构主动跑到工厂，是真正的认可行为，权重最高
@@ -69,9 +75,13 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 ```
 （数据由 Fly.io precursor scanner 完成后自动 commit，包含完整的价格/评级/前兆信号/新闻）
 
-### Step 2：判断是否交易日
+### Step 2：判断是否交易日 + 快照新鲜度门控
 
-若所有股票 price.change_pct 都为 null，说明今天非交易日，只发简短提示，不做分析。
+**交易日判断：** 若所有股票 price.change_pct 都为 null，说明今天非交易日，只发简短提示，不做分析。
+
+**快照新鲜度门控（重要）：** 检查快照顶层 `generated_at` 字段与当前时间的差距。
+- 若差距 > 36 小时：在推送顶部加一行 `⚠️ 数据为 {generated_at日期} 快照（服务器今日未刷新）`，正常做三层分析，但 **Step 5c 跳过**，不写入 predictions_pending.json，避免用陈旧价格污染训练样本。在改进日志里也注明"快照未刷新，本次跳过预言写入"。
+- 若差距 ≤ 36 小时：正常执行全部步骤。
 
 ### Step 3：Claude 自主选出今日五只
 
@@ -85,9 +95,16 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 5. 新闻情绪与机构方向相反（背离信号）= 值得特别说明
 
 **主动回避：**
-- 数据明显缺失（如 moat = "0/35：护城河数据不足"）但没有独立判断依据
-- 连续 D/E 评级 + 无任何正面信号
+- analysis.data_quality == "incomplete" 且 precursor 信号弱（score < 3 或无前兆数据）→ 完全回避
+- 连续 D/E 评级 + data_quality 正常 + 无任何正面信号 → 回避
 - 重复：昨天已经讲过且无新进展
+
+**数据缺失但机构活跃的特殊规则（重要，禁止违反）：**
+当 analysis.data_quality == "incomplete"（moat 含 "0/35" 或 quant_score < 15）且 precursor.score ≥ 3 时：
+- 网站评级（D/E）不可信，**禁止**在推送中直接引用网站评级结论（如"网站评级D，建议卖出"）
+- 在 [公司底] 层写：「⚠️ 财务数据未完整拉取，网站评级不可信，以下仅据机构信号独立判断」
+- 重点分析放在机构层（第二层），凭调研密度/方向做判断
+- 若机构信号足够强，可纳入五选，但必须在「今天的判断」里显式说明"忽略网站评级"
 
 **五选的多样性要求：**
 - 不要五只都是同一行业（如全选AI算力）
