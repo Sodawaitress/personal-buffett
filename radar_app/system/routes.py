@@ -1,10 +1,12 @@
 """Settings, reports, and utility routes extracted from the legacy app module."""
 
 import os
+import sqlite3
 import threading
 
 from flask import current_app, flash, jsonify, redirect, render_template, request, session, url_for
 
+from radar_app.data.jobs import create_job, update_job
 from radar_app.shared.auth import login_required
 from radar_app.shared.i18n import clear_i18n_cache
 from radar_app.system.service import (
@@ -60,51 +62,91 @@ def register_system_routes(app):
             flash("Timed out (5 min).", "danger")
         return redirect(url_for("index"))
 
-    @app.route("/api/trigger-pipeline", methods=["POST"])
-    def trigger_pipeline():
-        """GitHub Actions cron: run full daily pipeline for all watched stocks + push notifications."""
+    def _check_scan_token():
         auth = request.headers.get("Authorization", "")
         token = auth.replace("Bearer ", "").strip()
         expected = os.environ.get("SCAN_TOKEN", "")
-        if not expected or token != expected:
+        return expected and token == expected
+
+    @app.route("/api/trigger-pipeline", methods=["POST"])
+    def trigger_pipeline():
+        """GitHub Actions cron: run full daily pipeline for all watched stocks + push notifications."""
+        if not _check_scan_token():
             return jsonify({"error": "unauthorized"}), 401
 
+        job_id = create_job(None, "daily_pipeline", "cron_pipeline")
+        app_ctx = current_app._get_current_object()
+
         def _run():
+            update_job(job_id, "running")
             try:
                 from scripts.stock_pipeline import main as run_pipeline
                 run_pipeline()
-                current_app.logger.info("[trigger-pipeline] done")
+                update_job(job_id, "done")
+                app_ctx.logger.info("[trigger-pipeline] job %s done", job_id)
             except Exception as e:
-                current_app.logger.warning("[trigger-pipeline] failed: %s", e)
+                update_job(job_id, "failed", error=str(e))
+                app_ctx.logger.warning("[trigger-pipeline] job %s failed: %s", job_id, e)
 
-        threading.Thread(target=_run, daemon=True, name="gh-pipeline-trigger").start()
-        return jsonify({"status": "started"}), 202
+        threading.Thread(target=_run, daemon=False, name="gh-pipeline-trigger").start()
+        return jsonify({"status": "started", "job_id": job_id}), 202
 
     @app.route("/api/trigger-scan", methods=["POST"])
     def trigger_scan():
         """GitHub Actions cron 调用此端点触发每日前兆扫描 + 快照提交。"""
-        auth = request.headers.get("Authorization", "")
-        token = auth.replace("Bearer ", "").strip()
-        expected = os.environ.get("SCAN_TOKEN", "")
-        if not expected or token != expected:
+        if not _check_scan_token():
             return jsonify({"error": "unauthorized"}), 401
 
+        job_id = create_job(None, "precursor_scan", "cron_scan")
+        app_ctx = current_app._get_current_object()
+
         def _run():
+            update_job(job_id, "running")
+            errors = []
             try:
                 from scripts.precursor_scan import run_precursor_scan
                 result = run_precursor_scan()
-                current_app.logger.info("[trigger-scan] precursor done: %s", result)
+                app_ctx.logger.info("[trigger-scan] precursor done: %s", result)
             except Exception as e:
-                current_app.logger.warning("[trigger-scan] precursor failed: %s", e)
+                errors.append(f"precursor: {e}")
+                app_ctx.logger.warning("[trigger-scan] precursor failed: %s", e)
             try:
                 from scripts.daily_digest import run_daily_digest
                 run_daily_digest()
-                current_app.logger.info("[trigger-scan] daily digest done")
+                app_ctx.logger.info("[trigger-scan] daily digest done")
             except Exception as e:
-                current_app.logger.warning("[trigger-scan] digest failed: %s", e)
+                errors.append(f"digest: {e}")
+                app_ctx.logger.warning("[trigger-scan] digest failed: %s", e)
+            if errors:
+                update_job(job_id, "failed", error="; ".join(errors))
+            else:
+                update_job(job_id, "done")
 
-        threading.Thread(target=_run, daemon=True, name="gh-scan-trigger").start()
-        return jsonify({"status": "started"}), 202
+        threading.Thread(target=_run, daemon=False, name="gh-scan-trigger").start()
+        return jsonify({"status": "started", "job_id": job_id}), 202
+
+    @app.route("/api/trigger-backup", methods=["POST"])
+    def trigger_backup():
+        """Create a point-in-time SQLite backup at /data/radar.db.bak (called by GHA weekly)."""
+        if not _check_scan_token():
+            return jsonify({"error": "unauthorized"}), 401
+
+        db_path = os.environ.get("DATABASE_URL", "").replace("sqlite:////", "/")
+        if not db_path:
+            db_path = "/data/radar.db"
+        bak_path = db_path + ".bak"
+        try:
+            src = sqlite3.connect(db_path)
+            dst = sqlite3.connect(bak_path)
+            src.backup(dst)
+            dst.close()
+            src.close()
+            size_kb = os.path.getsize(bak_path) // 1024
+            current_app.logger.info("[backup] wrote %s (%d KB)", bak_path, size_kb)
+            return jsonify({"ok": True, "path": bak_path, "size_kb": size_kb})
+        except Exception as e:
+            current_app.logger.error("[backup] failed: %s", e)
+            return jsonify({"ok": False, "error": str(e)}), 500
 
     @app.route("/set-locale", methods=["POST"])
     def set_locale():

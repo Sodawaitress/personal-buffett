@@ -4,7 +4,7 @@ on:
   schedule:
     # 08:00 UTC = 16:00 CST，A股收盘后一小时，周一至周五
     - cron: '0 8 * * 1-5'
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   trigger:
@@ -14,7 +14,6 @@ jobs:
 
     steps:
       - name: Trigger daily pipeline
-        # Runs full analysis for all watchlist stocks + sends push notifications
         run: |
           HTTP=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
             -X POST "${APP_URL}/api/trigger-pipeline" \
@@ -25,7 +24,6 @@ jobs:
           [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
 
       - name: Trigger precursor scan (A-share signals)
-        # Fetches fresh precursor signals (survey / margin / participation)
         run: |
           HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
             -X POST "${APP_URL}/api/trigger-scan" \
@@ -34,3 +32,36 @@ jobs:
           echo "scan → HTTP $HTTP"
           cat /tmp/scan.json
           [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
+
+  backup:
+    runs-on: ubuntu-latest
+    # runs every Friday (day-of-week 5)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 8 * * 5'))
+    needs: trigger
+    env:
+      APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
+
+    steps:
+      - name: Create remote backup
+        run: |
+          HTTP=$(curl -s -o /tmp/backup.json -w "%{http_code}" \
+            -X POST "${APP_URL}/api/trigger-backup" \
+            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
+          echo "backup → HTTP $HTTP"
+          cat /tmp/backup.json
+          [ "$HTTP" = "200" ]
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Download backup from Fly volume
+        run: flyctl sftp get /data/radar.db.bak ./radar_backup.db --app personal-buffett
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radar-db-backup-${{ github.run_id }}
+          path: radar_backup.db
+          retention-days: 90
