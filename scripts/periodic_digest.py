@@ -204,8 +204,11 @@ def save_to_bear(title: str, content: str, period: str):
            + "title=" + urllib.parse.quote(title)
            + "&text="  + urllib.parse.quote(content)
            + "&tags="  + urllib.parse.quote(tags))
-    subprocess.run(["open", url])
-    print(f"📓 Bear: {title}")
+    try:
+        subprocess.run(["open", url])
+        print(f"📓 Bear: {title}")
+    except (FileNotFoundError, OSError):
+        pass  # macOS-only feature; skip on Linux
 
 
 def main():
