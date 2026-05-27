@@ -28,11 +28,13 @@ def _get_all_watchlist_rows() -> list:
     from radar_app.data.core import get_conn
     with get_conn() as c:
         rows = c.execute("""
-            SELECT stock_code, market, name_cn, status, buy_price, added_at,
-                   GROUP_CONCAT(user_id) AS watched_by
-            FROM user_watchlist
-            GROUP BY stock_code
-            ORDER BY MIN(added_at)
+            SELECT w.stock_code, s.market, s.name_cn, w.status, w.buy_price, w.added_at,
+                   GROUP_CONCAT(w.user_id) AS watched_by
+            FROM user_watchlist w
+            LEFT JOIN stocks s ON s.code = w.stock_code
+            WHERE w.removed_at IS NULL
+            GROUP BY w.stock_code
+            ORDER BY MIN(w.added_at)
         """).fetchall()
     return [dict(r) for r in rows] if rows else []
 
