@@ -79,9 +79,13 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 **交易日判断：** 若所有股票 price.change_pct 都为 null，说明今天非交易日，只发简短提示，不做分析。
 
-**快照新鲜度门控（重要）：** 检查快照顶层 `generated_at` 字段与当前时间的差距。
-- 若差距 > 36 小时：在推送顶部加一行 `⚠️ 数据为 {generated_at日期} 快照（服务器今日未刷新）`，正常做三层分析，但 **Step 5c 跳过**，不写入 predictions_pending.json，避免用陈旧价格污染训练样本。在改进日志里也注明"快照未刷新，本次跳过预言写入"。
-- 若差距 ≤ 36 小时：正常执行全部步骤。
+**快照新鲜度门控（重要）：** 检查快照顶层 `generated_at` 字段，两个条件任一触发即视为陈旧：
+- 条件 A：`generated_at` 与当前时间差距 > 36 小时
+- 条件 B：`generated_at` 的 UTC 日期不是今天（即快照是昨天或更早生成的）
+
+触发时：在推送顶部加一行 `⚠️ 数据为 {generated_at日期} 快照（服务器今日未刷新）`，正常做三层分析，但 **Step 5c 跳过**，不写入 predictions_pending.json，避免用陈旧价格污染训练样本。在改进日志里也注明"快照未刷新，本次跳过预言写入"。
+
+两个条件均不满足时：正常执行全部步骤。
 
 ### Step 3：Claude 自主选出今日五只
 

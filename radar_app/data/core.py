@@ -164,6 +164,7 @@ _SCHEMA_SQL = """
             sell_date   TEXT,
             sell_price  REAL,
             entry_grade TEXT,
+            removed_at  TIMESTAMP,
             UNIQUE(user_id, stock_code)
         );
 
