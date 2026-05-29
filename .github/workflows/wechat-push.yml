@@ -1,0 +1,28 @@
+name: WeChat Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'output/daily_push.txt'
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Send via Server酱
+        run: |
+          CONTENT=$(cat output/daily_push.txt)
+          TITLE=$(head -1 output/daily_push.txt)
+          BODY=$(tail -n +2 output/daily_push.txt)
+
+          HTTP=$(curl -s -o /tmp/sc_resp.json -w "%{http_code}" \
+            -X POST "https://sctapi.ftqq.com/${{ secrets.SERVERCHAN_KEY }}.send" \
+            --data-urlencode "title=${TITLE}" \
+            --data-urlencode "desp=${BODY}")
+
+          echo "Server酱 → HTTP $HTTP"
+          cat /tmp/sc_resp.json
+          [ "$HTTP" = "200" ]
