@@ -79,9 +79,9 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 **交易日判断：** 若所有股票 price.change_pct 都为 null，说明今天非交易日，只发简短提示，不做分析。
 
-**快照新鲜度门控（重要）：** 检查快照顶层 `generated_at` 字段，两个条件任一触发即视为陈旧：
-- 条件 A：`generated_at` 与当前时间差距 > 36 小时
-- 条件 B：`generated_at` 的 UTC 日期不是今天（即快照是昨天或更早生成的）
+**快照新鲜度门控（重要）：** 检查快照顶层 `generated_at` 字段，满足以下任一条件即视为陈旧：
+- `generated_at` 与当前时间差距 > 20 小时（扫描周期约 2h + GHA 延迟最多 4h + 安全余量，超过 20h 说明服务器今日未刷新）
+- 或 `generated_at` 与上次 Routine 已处理的快照内容完全相同（byte-identical，数据无新进展）
 
 触发时：在推送顶部加一行 `⚠️ 数据为 {generated_at日期} 快照（服务器今日未刷新）`，正常做三层分析，但 **Step 5c 跳过**，不写入 predictions_pending.json，避免用陈旧价格污染训练样本。在改进日志里也注明"快照未刷新，本次跳过预言写入"。
 
