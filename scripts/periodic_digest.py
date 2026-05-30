@@ -167,8 +167,6 @@ def send_discord_chunks(content: str):
         print("  ⚠️ Discord 未配置，跳过")
         return
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode    = ssl.CERT_NONE
     url     = f"https://discord.com/api/v10/channels/{DISCORD_CHANNEL_ID}/messages"
     headers = {"Authorization": f"Bot {DISCORD_BOT_TOKEN}",
                "Content-Type": "application/json",

@@ -12,7 +12,30 @@ from radar_app.dashboard.service import build_brief_context, build_dashboard_con
 from radar_app.shared.startup import ensure_db_ready
 
 CN_TZ = timezone(timedelta(hours=8))
-_home_refresh_state = {"running": False, "started_at": None, "step": ""}
+
+
+def _refresh_state() -> dict:
+    """Query pipeline_jobs for a recent home_refresh run — works across gunicorn workers."""
+    try:
+        with get_conn() as c:
+            row = c.execute(
+                """SELECT status, log, started_at FROM pipeline_jobs
+                   WHERE job_type='home_refresh'
+                   ORDER BY id DESC LIMIT 1"""
+            ).fetchone()
+        if row and row["status"] == "running":
+            started = row["started_at"] or ""
+            # treat stale locks (>15 min) as done
+            try:
+                age = (datetime.now(CN_TZ) - datetime.fromisoformat(started).replace(tzinfo=CN_TZ)).total_seconds()
+                if age > 900:
+                    return {"running": False, "step": "done"}
+            except Exception:
+                pass
+            return {"running": True, "step": row["log"] or ""}
+    except Exception:
+        pass
+    return {"running": False, "step": "done"}
 
 
 def _precursor_age_hours(user_id: int) -> float:
@@ -59,33 +82,49 @@ def register_dashboard_routes(app):
     def api_home_refresh():
         """快速拉取价格 + 资金流向。若前兆数据 >20h 则同时触发前兆扫描。"""
         import subprocess, os
-        if _home_refresh_state["running"]:
-            return jsonify({"status": "running", "step": _home_refresh_state["step"]})
+        state = _refresh_state()
+        if state["running"]:
+            return jsonify({"status": "running", "step": state["step"]})
 
         user_id = session["user_id"]
         precursor_stale = _precursor_age_hours(user_id) > 20
 
         def _run():
-            _home_refresh_state["running"] = True
-            _home_refresh_state["started_at"] = datetime.now(CN_TZ).isoformat()
             root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            started = datetime.now(CN_TZ).isoformat()
             try:
-                # 快速数据：用现有的价格/资金流 pipeline
-                _home_refresh_state["step"] = "price"
-                subprocess.run(
-                    ["python3", "scripts/fetch_home_fast.py"],
-                    cwd=root, capture_output=True, timeout=120
-                )
-                # 前兆数据（如果过期）
-                if precursor_stale:
-                    _home_refresh_state["step"] = "precursor"
-                    subprocess.run(
-                        ["python3", "scripts/precursor_signals.py"],
-                        cwd=root, capture_output=True, timeout=600
+                with get_conn() as c:
+                    c.execute(
+                        "INSERT INTO pipeline_jobs (job_type, status, log, started_at) VALUES ('home_refresh','running','price',:ts)",
+                        {"ts": started}
                     )
+                    job_id = c.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
+            except Exception:
+                job_id = None
+
+            def _update(step):
+                if job_id:
+                    try:
+                        with get_conn() as c:
+                            c.execute("UPDATE pipeline_jobs SET log=:s WHERE id=:id", {"s": step, "id": job_id})
+                    except Exception:
+                        pass
+
+            try:
+                subprocess.run(["python3", "scripts/fetch_home_fast.py"], cwd=root, capture_output=True, timeout=120)
+                if precursor_stale:
+                    _update("precursor")
+                    subprocess.run(["python3", "scripts/precursor_signals.py"], cwd=root, capture_output=True, timeout=600)
             finally:
-                _home_refresh_state["running"] = False
-                _home_refresh_state["step"] = "done"
+                if job_id:
+                    try:
+                        with get_conn() as c:
+                            c.execute(
+                                "UPDATE pipeline_jobs SET status='done', log='done', finished_at=:ts WHERE id=:id",
+                                {"ts": datetime.now(CN_TZ).isoformat(), "id": job_id}
+                            )
+                    except Exception:
+                        pass
 
         threading.Thread(target=_run, daemon=True).start()
         return jsonify({"status": "started", "precursor_stale": precursor_stale})
@@ -94,6 +133,7 @@ def register_dashboard_routes(app):
     @login_required
     def api_home_refresh_status():
         user_id = session["user_id"]
+        state = _refresh_state()
         age_h = _precursor_age_hours(user_id)
         if age_h < 6:
             precursor_label = "今日"
@@ -102,8 +142,8 @@ def register_dashboard_routes(app):
         else:
             precursor_label = f"{int(age_h / 24)}天前"
         return jsonify({
-            "running":         _home_refresh_state["running"],
-            "step":            _home_refresh_state["step"],
+            "running":         state["running"],
+            "step":            state["step"],
             "precursor_age_h": round(age_h, 1),
             "precursor_label": precursor_label,
         })

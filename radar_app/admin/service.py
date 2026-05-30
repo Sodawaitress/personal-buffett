@@ -45,8 +45,6 @@ def send_admin_push_test(target_uid):
 
     try:
         ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
         payload = json.dumps(
             {
                 "title": "股票雷达 · 推送测试",

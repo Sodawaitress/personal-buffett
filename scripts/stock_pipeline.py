@@ -41,8 +41,6 @@ def run_fetch():
 # ── 生成报告 ──────────────────────────────────────────
 def send_discord_chunks(content: str):
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode    = ssl.CERT_NONE
     url     = f"https://discord.com/api/v10/channels/{DISCORD_CHANNEL_ID}/messages"
     headers = {
         "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
@@ -83,8 +81,6 @@ def send_serverchan(key: str, title: str, content: str):
         print("  ⚠️ Server酱 key 为空，跳过")
         return
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode    = ssl.CERT_NONE
     # Server酱 desp 限 64KB，按 4000 字切块顺序发送
     chunks = [content[i:i+4000] for i in range(0, len(content), 4000)] or [""]
     for i, chunk in enumerate(chunks):
@@ -150,8 +146,6 @@ def _refresh_user_holdings_layer2(date_str: str):
 def send_wechat(title: str, content: str):
     """通过 Server酱 推送到微信"""
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode    = ssl.CERT_NONE
     url     = f"https://sctapi.ftqq.com/{SERVERCHAN_KEY}.send"
     payload = json.dumps({"title": title, "desp": content}).encode()
     req = urllib.request.Request(

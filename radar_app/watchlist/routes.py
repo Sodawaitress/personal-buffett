@@ -26,8 +26,6 @@ from radar_app.watchlist.service import (
 def _send_serverchan(key: str, title: str, content: str):
     try:
         ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
         payload = json.dumps({"title": title, "desp": content}).encode()
         req = urllib.request.Request(
             f"https://sctapi.ftqq.com/{key}.send",

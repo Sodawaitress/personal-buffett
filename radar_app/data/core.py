@@ -502,6 +502,13 @@ def _migrate():
         except Exception:
             pass
 
+    # Drop legacy table left over from pre-2026-04-13 code cleanup
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS historical_cases"))
+    except Exception:
+        pass
+
     fund_keywords = ["ETF联接", "ETF", "指数", "LOF", "联接A", "联接C", "联接E"]
     try:
         with engine.begin() as conn:
