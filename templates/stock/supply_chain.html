@@ -154,8 +154,10 @@
 
     const tickerChip = lnk.supplier_ticker
       ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>` : '';
+    const safeName = lnk.supplier_name.replace(/'/g, "\\'");
     const addBtn = lnk.supplier_ticker
-      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${lnk.supplier_name.replace(/'/g,"\\'")}',this)" title="加入自选股">+ 自选股</button>` : '';
+      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${safeName}',this)" title="加入自选股">+ 自选股</button>`
+      : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="搜索后添加">搜索添加</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
     return `

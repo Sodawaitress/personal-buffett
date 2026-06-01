@@ -795,20 +795,33 @@ def _score_cn_chokepoint(ratio: float | None) -> int:
 
 
 def _lookup_cn_ticker(name: str) -> str | None:
-    """搜索供应商是否为A股上市公司，返回股票代码。"""
+    """搜索供应商是否为A股上市公司，返回股票代码。优先用本地 JSON，无网络依赖。"""
     if not name:
         return None
+    name = name.strip().replace(" ", "")
     try:
-        import akshare as ak
-        # 用AKShare搜索A股（模糊匹配公司名）
-        df = ak.stock_zh_a_spot_em()
-        matched = df[df["名称"].str.contains(name[:4], na=False)]
-        if not matched.empty:
-            return matched.iloc[0]["代码"]
+        import json, os, re
+        _path = os.path.join(os.path.dirname(__file__), "../data/cn_stocks.json")
+        stocks = json.load(open(_path))
+        # 精确匹配
+        for code, sname in stocks:
+            if sname.replace(" ", "") == name:
+                return code
+        # 包含匹配
+        for code, sname in stocks:
+            s = sname.replace(" ", "")
+            if name in s or s in name:
+                return code
+        # 去掉常见后缀再匹配（处理改名、旧名）
+        root = re.sub(r'(股份|集团|控股|科技|新能源|能源|实业|有限公司|公司)$', '', name)
+        if root and root != name:
+            for code, sname in stocks:
+                s = sname.replace(" ", "")
+                if root in s:
+                    return code
     except Exception:
         pass
-    # Fallback: yfinance
-    return _lookup_ticker(name)
+    return None
 
 
 def run_cn_supply_chain_scan(code: str, company_name: str = "") -> dict:
