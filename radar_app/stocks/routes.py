@@ -49,33 +49,61 @@ def register_stock_routes(app):
         if not context:
             flash('Stock not found. Add it to your watchlist first.', 'warning')
             return redirect(url_for('index'))
-        return render_template('stock/detail.html', **context)
-
-    # Legacy tab URLs → redirect to single-scroll page with anchor
-    @app.route('/stock/<path:code>/letter')
-    @login_required
-    def stock_letter(code):
-        return redirect(url_for('stock_page', code=code.upper()) + '#letter', 301)
+        return render_template('stock/letter.html', **context)
 
     @app.route('/stock/<path:code>/signals')
     @login_required
     def stock_signals(code):
-        return redirect(url_for('stock_page', code=code.upper()) + '#market', 301)
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found.', 'warning')
+            return redirect(url_for('index'))
+        return render_template('stock/signals.html', **context)
 
-    @app.route('/stock/<path:code>/fundamentals')
+    @app.route('/stock/<path:code>/archive')
     @login_required
-    def stock_fundamentals_page(code):
-        return redirect(url_for('stock_page', code=code.upper()) + '#fundamentals', 301)
+    def stock_archive(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found.', 'warning')
+            return redirect(url_for('index'))
+        return render_template('stock/archive.html', **context)
+
+    @app.route('/stock/<path:code>/supply-chain')
+    @login_required
+    def stock_supply_chain_page(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found.', 'warning')
+            return redirect(url_for('index'))
+        if context.get('market') not in ('us', 'cn'):
+            return redirect(url_for('stock_page', code=code.upper()))
+        return render_template('stock/supply_chain.html', **context)
 
     @app.route('/stock/<path:code>/events')
     @login_required
     def stock_events_page(code):
-        return redirect(url_for('stock_page', code=code.upper()) + '#events', 301)
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found.', 'warning')
+            return redirect(url_for('index'))
+        return render_template('stock/events.html', **context)
+
+    # Legacy redirects
+    @app.route('/stock/<path:code>/letter')
+    @login_required
+    def stock_letter(code):
+        return redirect(url_for('stock_page', code=code.upper()), 301)
+
+    @app.route('/stock/<path:code>/fundamentals')
+    @login_required
+    def stock_fundamentals_page(code):
+        return redirect(url_for('stock_archive', code=code.upper()), 301)
 
     @app.route('/stock/<path:code>/radar')
     @login_required
     def stock_radar_page(code):
-        return redirect(url_for('stock_page', code=code.upper()) + '#market', 301)
+        return redirect(url_for('stock_signals', code=code.upper()), 301)
 
     @app.route('/api/news/<code>')
     @login_required

@@ -1,0 +1,24 @@
+<script>
+window._t = {
+  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
+  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
+  gen_letter:       {{ t.js_gen_letter | tojson }},
+  letter_ready:     {{ t.js_letter_ready | tojson }},
+  generating:       {{ t.js_generating | tojson }},
+  read_letter:      {{ t.js_read_letter | tojson }},
+  letter_ready_lbl: {{ t.js_letter_ready_label | tojson }},
+  reduce_zone:      {{ t.js_reduce_zone | tojson }},
+  buy_zone_1:       {{ t.js_buy_zone_1 | tojson }},
+  buy_zone_2:       {{ t.js_buy_zone_2 | tojson }},
+  position_size:    {{ t.js_position_size | tojson }},
+  key_watch:        {{ t.js_key_watch | tojson }},
+  buffett_check:    {{ t.js_buffett_check | tojson }},
+  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
+  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
+  full_update_lbl:  {{ t.btn_full_update | tojson }},
+  is_admin:         {{ (session.role == 'admin') | tojson }},
+  in_watchlist:     {{ in_watchlist | tojson }},
+};
+window._stockCode = {{ stock.code | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
