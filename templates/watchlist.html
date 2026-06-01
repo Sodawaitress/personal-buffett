@@ -932,6 +932,17 @@ document.addEventListener('DOMContentLoaded', () => {
     ),
     '{{ locale }}'
   );
+
+  // Auto-fill search from ?q= (e.g. from supply chain "搜索添加" link)
+  const _autoQ = new URLSearchParams(location.search).get('q');
+  if (_autoQ) {
+    const inp = document.getElementById('search-q');
+    if (inp) {
+      inp.value = _autoQ;
+      inp.focus();
+      inp.dispatchEvent(new Event('input'));
+    }
+  }
 });
 
 let _wlSearchType = '{{ "cn" if locale == "zh" else "intl" }}';
