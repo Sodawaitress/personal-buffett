@@ -782,5 +782,445 @@
   "industry_signal_cycle_down": {
     "en": "Downward pressure",
     "zh": "下行压力"
+  },
+  "hint_brief": {
+    "en": "Worth buying?",
+    "zh": "值不值买？"
+  },
+  "tab_market": {
+    "en": "Market Signals",
+    "zh": "市场信号"
+  },
+  "hint_market_news": {
+    "en": " news",
+    "zh": "条新闻"
+  },
+  "hint_archive": {
+    "en": "Fundamentals",
+    "zh": "基本面"
+  },
+  "hint_events": {
+    "en": "Events log",
+    "zh": "大事记"
+  },
+  "verdict_mislead_prefix": {
+    "en": "⚠ Institutional signals active (precursor score ",
+    "zh": "⚠ 机构信号活跃（前兆分 "
+  },
+  "verdict_mislead_suffix": {
+    "en": "), financial data missing — auto-rating invalid. See Inst. Radar.",
+    "zh": "），但财务数据缺失，自动评级无效——请看机构雷达"
+  },
+  "verdict_incomplete": {
+    "en": "⚠ Financial data incomplete — rating may be unreliable",
+    "zh": "⚠ 财务数据未能完整获取，评级仅供参考"
+  },
+  "btn_regen_letter": {
+    "en": "Regenerate Letter",
+    "zh": "重新生成信件"
+  },
+  "sigctx_margin_title": {
+    "en": "Short Selling",
+    "zh": "融券动向"
+  },
+  "sigctx_survey_title": {
+    "en": "Institutional Survey",
+    "zh": "机构调研"
+  },
+  "sigctx_participation_title": {
+    "en": "Inst. Participation",
+    "zh": "机构参与度"
+  },
+  "kcard_learn_more": {
+    "en": "Learn more",
+    "zh": "了解更多"
+  },
+  "resonance_bullish": {
+    "en": "Bullish Signals",
+    "zh": "看多信号"
+  },
+  "resonance_bearish": {
+    "en": "Bearish Signals",
+    "zh": "看空信号"
+  },
+  "resonance_mixed": {
+    "en": "Mixed Signals",
+    "zh": "信号分歧"
+  },
+  "resonance_sources": {
+    "en": "independent signals converging",
+    "zh": "独立来源共振"
+  },
+  "col_insider_title": {
+    "en": "Insider View",
+    "zh": "内部人视角"
+  },
+  "col_most_reliable": {
+    "en": "Most Reliable",
+    "zh": "最可信"
+  },
+  "inst_tag_active": {
+    "en": "Active",
+    "zh": "主动"
+  },
+  "srow_inst_overall": {
+    "en": "Inst. Overall",
+    "zh": "机构总体"
+  },
+  "srow_survey_signal": {
+    "en": "Survey Signal",
+    "zh": "调研信号"
+  },
+  "survey_hot_short_fall": {
+    "en": "Survey hot + short ↓ ▲",
+    "zh": "调研热+融券减 ▲"
+  },
+  "survey_active": {
+    "en": "Survey active",
+    "zh": "调研活跃"
+  },
+  "survey_hot_short_rise": {
+    "en": "Survey hot, shorts rising",
+    "zh": "调研热融券增"
+  },
+  "survey_conflicted": {
+    "en": "Mixed signals ▼",
+    "zh": "矛盾信号 ▼"
+  },
+  "srow_activist": {
+    "en": "⚡ Activist Entry",
+    "zh": "⚡ 维权进场"
+  },
+  "srow_cluster_buy": {
+    "en": "Multiple insiders buying ⚡",
+    "zh": "多高管同步买入 ⚡"
+  },
+  "srow_insider_buy": {
+    "en": "▲ buy",
+    "zh": "▲买入"
+  },
+  "col_sentiment_title": {
+    "en": "Market Sentiment",
+    "zh": "市场情绪"
+  },
+  "col_medium_reliable": {
+    "en": "Moderate Reliability",
+    "zh": "中等可信"
+  },
+  "srow_north_bound": {
+    "en": "Northbound Flow",
+    "zh": "北向资金"
+  },
+  "north_sh_label": {
+    "en": "SH",
+    "zh": "沪"
+  },
+  "north_sz_label": {
+    "en": "SZ",
+    "zh": "深"
+  },
+  "srow_main_flow": {
+    "en": "Main Flow",
+    "zh": "主力资金"
+  },
+  "unit_billion_cn": {
+    "en": " B",
+    "zh": "亿"
+  },
+  "srow_short_dir": {
+    "en": "Short Direction",
+    "zh": "融券方向"
+  },
+  "short_major_retreat": {
+    "en": "Major short retreat ▲",
+    "zh": "做空大幅撤退 ▲"
+  },
+  "short_minor_retreat": {
+    "en": "Minor short retreat",
+    "zh": "做空小幅撤退"
+  },
+  "short_unchanged": {
+    "en": "Mostly flat",
+    "zh": "基本不变"
+  },
+  "short_minor_add": {
+    "en": "Minor short added",
+    "zh": "做空小幅加仓"
+  },
+  "short_major_add": {
+    "en": "Major short added ▼",
+    "zh": "做空大幅加仓 ▼"
+  },
+  "srow_short_ratio": {
+    "en": "Short Ratio",
+    "zh": "做空比例"
+  },
+  "short_trend_retreat": {
+    "en": "↓ covering",
+    "zh": "↓空头撤"
+  },
+  "short_trend_add": {
+    "en": "↑ building",
+    "zh": "↑空头增"
+  },
+  "short_trend_flat": {
+    "en": "→ flat",
+    "zh": "→持平"
+  },
+  "srow_analyst_rating": {
+    "en": "Analyst Ratings",
+    "zh": "投行评级"
+  },
+  "analyst_net_prefix": {
+    "en": "net ",
+    "zh": "净"
+  },
+  "analyst_upgrade": {
+    "en": "▲ upgrade",
+    "zh": "▲升级"
+  },
+  "analyst_downgrade": {
+    "en": "▼ downgrade",
+    "zh": "▼降级"
+  },
+  "analyst_neutral_dir": {
+    "en": "→ neutral",
+    "zh": "→中性"
+  },
+  "srow_52w_position": {
+    "en": "52-wk Position",
+    "zh": "52周位置"
+  },
+  "col_structure_title": {
+    "en": "Structural Context",
+    "zh": "结构背景"
+  },
+  "col_background_ref": {
+    "en": "Background Reference",
+    "zh": "背景参考"
+  },
+  "srow_inst_ownership": {
+    "en": "Inst. Ownership",
+    "zh": "机构持仓率"
+  },
+  "unit_firms": {
+    "en": " firms",
+    "zh": "家"
+  },
+  "srow_insider_ownership": {
+    "en": "Insider Ownership",
+    "zh": "内部人持仓"
+  },
+  "srow_active_funds": {
+    "en": "Active Funds",
+    "zh": "主动基金"
+  },
+  "fund_added": {
+    "en": "▲ added",
+    "zh": "▲增持"
+  },
+  "fund_reduced": {
+    "en": "▼ reduced",
+    "zh": "▼减持"
+  },
+  "fund_flat": {
+    "en": "→ flat",
+    "zh": "→持平"
+  },
+  "srow_news_sentiment": {
+    "en": "News Sentiment",
+    "zh": "新闻情绪"
+  },
+  "srow_sentiment_bias": {
+    "en": "Sentiment Bias",
+    "zh": "情绪倾向"
+  },
+  "diverg_warn_intro": {
+    "en": "News positive, institutional behavior diverges (score ",
+    "zh": "消息面偏正面，但机构行为背离（背离分 "
+  },
+  "diverg_warn_trap": {
+    "en": "Typical \"news-driven exit\" — institutions may be selling into positive news.",
+    "zh": "符合「消息出货」特征，机构可能正在利用正面消息减仓。"
+  },
+  "diverg_warn_mixed": {
+    "en": "News and institutional direction not fully aligned. Stay cautious.",
+    "zh": "消息与机构方向不完全一致，保持谨慎。"
+  },
+  "inst_radar_section_title": {
+    "en": "Institutional Radar",
+    "zh": "机构雷达"
+  },
+  "inst_radar_loading_text": {
+    "en": "Fetching institutional signals…",
+    "zh": "正在拉取机构信号，稍等片刻…"
+  },
+  "inst_radar_loading_detail": {
+    "en": "Survey + short selling + participation, ~15 sec",
+    "zh": "调研热度 + 融券余量 + 机构参与度，约需 15 秒"
+  },
+  "inst_radar_load_error": {
+    "en": "Failed to load — please refresh",
+    "zh": "加载失败，请刷新重试"
+  },
+  "news_cst_divergent": {
+    "en": "⚡ Divergent",
+    "zh": "⚡ 背离"
+  },
+  "news_cst_contrarian": {
+    "en": "🔄 Contrarian",
+    "zh": "🔄 逆向"
+  },
+  "news_cst_consistent": {
+    "en": "✓ Consistent",
+    "zh": "✓ 一致"
+  },
+  "news_cst_divergent_title": {
+    "en": "News positive, but institutions are bearish",
+    "zh": "新闻偏正面，但机构行为看空"
+  },
+  "news_cst_contrarian_title": {
+    "en": "News bearish, but institutions positioned contrarily",
+    "zh": "新闻看空，但机构在逆向布局"
+  },
+  "predict_title": {
+    "en": "My Prediction",
+    "zh": "我的判断"
+  },
+  "predict_subtitle": {
+    "en": "Based on the signals above, what do you expect over the next 5–10 days?",
+    "zh": "基于以上信号，你认为接下来 5~10 天？"
+  },
+  "predict_margin": {
+    "en": "Short Selling Signal",
+    "zh": "融券信号"
+  },
+  "predict_survey": {
+    "en": "Survey Signal",
+    "zh": "调研信号"
+  },
+  "predict_participation": {
+    "en": "Participation Signal",
+    "zh": "参与度信号"
+  },
+  "predict_fund_flow": {
+    "en": "Fund Flow Signal",
+    "zh": "资金信号"
+  },
+  "predict_general": {
+    "en": "Overall View",
+    "zh": "综合判断"
+  },
+  "predict_outcome_label": {
+    "en": "This signal will",
+    "zh": "这个信号会"
+  },
+  "predict_confirms": {
+    "en": "✓ Confirm (correct direction)",
+    "zh": "✓ 兑现（方向正确）"
+  },
+  "predict_fails": {
+    "en": "✗ Fail (opposite move)",
+    "zh": "✗ 落空（反向运动）"
+  },
+  "predict_dir_label": {
+    "en": "Price Direction",
+    "zh": "价格方向"
+  },
+  "predict_up": {
+    "en": "▲ Up",
+    "zh": "▲ 上涨"
+  },
+  "predict_down": {
+    "en": "▼ Down",
+    "zh": "▼ 下跌"
+  },
+  "predict_unsure": {
+    "en": "— Unsure",
+    "zh": "— 不确定"
+  },
+  "predict_note_placeholder": {
+    "en": "Note (optional, 80 chars max)",
+    "zh": "备注（可选，80字以内）"
+  },
+  "predict_submit": {
+    "en": "Record",
+    "zh": "记录判断"
+  },
+  "fw_etf": {
+    "en": "Index Fund / ETF",
+    "zh": "指数基金 / ETF"
+  },
+  "fw_pre_profit": {
+    "en": "Pre-profit Growth",
+    "zh": "成长期（未盈利）"
+  },
+  "fw_distressed": {
+    "en": "Distressed",
+    "zh": "困境股"
+  },
+  "fw_bank_insurance": {
+    "en": "Bank / Insurance",
+    "zh": "银行 / 保险"
+  },
+  "lbl_supply_chain": {
+    "en": "Supply Chain",
+    "zh": "上游供应链"
+  },
+  "sc_source_cn": {
+    "en": "Source: CNINFO Annual Report",
+    "zh": "来源: CNINFO 年报"
+  },
+  "sc_source_us": {
+    "en": "Source: SEC 10-K",
+    "zh": "来源: SEC 10-K"
+  },
+  "sc_empty_title": {
+    "en": "Supply Chain Dependency Analysis",
+    "zh": "供应链依赖分析"
+  },
+  "sc_empty_desc_cn": {
+    "en": "Parsing CNINFO annual reports to extract top-5 supplier concentration and related-party purchase dependencies.",
+    "zh": "解析 CNINFO 年报，提取前五名供应商集中度及关联方采购依赖。"
+  },
+  "sc_empty_desc_us": {
+    "en": "Scanning SEC 10-K Risk Factors to identify sole-source and single-supplier dependencies.",
+    "zh": "扫描 SEC 10-K Risk Factors，识别独家来源、单一供应商等关键依赖。"
+  },
+  "sc_start_btn": {
+    "en": "Analyse",
+    "zh": "开始溯源"
+  },
+  "sc_step_cn_0": {
+    "en": "Locate Annual Report PDF",
+    "zh": "查找年报 PDF"
+  },
+  "sc_step_cn_1": {
+    "en": "Parse Supplier Section",
+    "zh": "解析供应商章节"
+  },
+  "sc_step_cn_2": {
+    "en": "AI Extract Data",
+    "zh": "AI 提取结构化数据"
+  },
+  "sc_step_us_0": {
+    "en": "Locate 10-K on EDGAR",
+    "zh": "EDGAR 定位 10-K"
+  },
+  "sc_step_us_1": {
+    "en": "Extract Risk Factors",
+    "zh": "提取 Risk Factors"
+  },
+  "sc_step_us_2": {
+    "en": "AI Analyse Dependencies",
+    "zh": "AI 分析供应商依赖"
+  },
+  "sc_rescan_btn": {
+    "en": "Re-analyse",
+    "zh": "重新溯源"
+  },
+  "lbl_data_mislead_short": {
+    "en": "⚠ Financial data missing — rating invalid",
+    "zh": "⚠ 财务数据缺失，评级无效"
   }
 }

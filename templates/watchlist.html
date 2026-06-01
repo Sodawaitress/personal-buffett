@@ -10,7 +10,7 @@
     <div class="notif-banner-header" onclick="toggleNotifPanel()">
       <span class="notif-banner-icon">⚠️</span>
       <span class="notif-banner-text">
-        {{ notifications | length }} 只股票已连续 6 次评为 D 级，建议审视是否继续跟踪
+        {{ notifications | length }}{{ t.notif_banner_text }}
       </span>
       <span class="notif-banner-toggle" id="notif-toggle">{{ t.notif_toggle_expand }}</span>
     </div>
@@ -22,7 +22,7 @@
             {{ n.stock_name or n.code }} <span class="notif-stock-code">{{ n.code }}</span>
           </a>
           <div class="notif-message">{{ n.message }}</div>
-          <div class="notif-date">首次提醒：{{ n.created_at[:10] }}</div>
+          <div class="notif-date">{{ t.notif_first_alert }}{{ n.created_at[:10] }}</div>
         </div>
         <div class="notif-item-actions">
           <button class="notif-btn notif-btn-remove"
@@ -39,19 +39,19 @@
   {# ── US-38 近期催化剂事件横幅 ── #}
   {% if upcoming_events %}
   <div class="catalyst-banner">
-    <div class="catalyst-banner-title">近期事件</div>
+    <div class="catalyst-banner-title">{{ t.catalyst_title }}</div>
     <div class="catalyst-banner-list">
       {% set ev_type_labels = {
-        'share_unlock':       '限售解禁',
-        'earnings_report':    '财务报告',
-        'major_announcement': '重大事项',
-        'earnings_forecast':  '业绩预告',
+        'share_unlock':       t.catalyst_share_unlock,
+        'earnings_report':    t.catalyst_earnings_report,
+        'major_announcement': t.catalyst_major_announcement,
+        'earnings_forecast':  t.catalyst_earnings_forecast,
       } %}
       {% for ev in upcoming_events %}
       <a href="{{ url_for('stock_page', code=ev.code) }}" class="catalyst-item{% if ev.days_until == 0 %} catalyst-today{% elif ev.days_until <= 2 %} catalyst-soon{% endif %}">
         <span class="catalyst-badge">{{ ev_type_labels.get(ev.event_type, ev.event_type) }}</span>
         <span class="catalyst-name">{{ ev.display_name }}</span>
-        <span class="catalyst-when">{% if ev.days_until == 0 %}今天{% elif ev.days_until == 1 %}明天{% else %}{{ ev.days_until }}天后{% endif %}</span>
+        <span class="catalyst-when">{% if ev.days_until == 0 %}{{ t.catalyst_today }}{% elif ev.days_until == 1 %}{{ t.catalyst_tomorrow }}{% else %}{{ ev.days_until }}{{ t.catalyst_days_later }}{% endif %}</span>
         <span class="catalyst-summary">{{ ev.summary[:40] }}{% if ev.summary|length > 40 %}…{% endif %}</span>
       </a>
       {% endfor %}
@@ -231,8 +231,8 @@
         {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
         {% if s.roic_latest %}<span class="signal-chip">ROIC {{ "%.1f"|format(s.roic_latest) }}%</span>{% endif %}
         {% if s.avg_sentiment is not none %}
-        <span class="signal-chip sentiment-chip" title="近7日新闻情绪均值 {{ '%.2f'|format(s.avg_sentiment) }}">
-          {% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %} 新闻
+        <span class="signal-chip sentiment-chip" title="{{ t.sentiment_avg_tooltip }} {{ '%.2f'|format(s.avg_sentiment) }}">
+          {% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %} {{ t.news_chip_label }}
         </span>
         {% endif %}
       </div>
@@ -348,7 +348,7 @@
           <td>
             <span class="wl-list-name">{{ s.name }}</span>
             {% if s.avg_sentiment is not none %}
-            <span style="font-size:11px;margin-left:3px;vertical-align:middle" title="近7日新闻情绪">{% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %}</span>
+            <span style="font-size:11px;margin-left:3px;vertical-align:middle" title="{{ t.sentiment_title }}">{% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %}</span>
             {% endif %}
             {% if s.pending_job %}
             <span class="spinner" style="width:10px;height:10px;margin-left:6px;vertical-align:middle"></span>

@@ -212,5 +212,57 @@
   "wl_view_toggle": {
     "en": "List",
     "zh": "列表"
+  },
+  "notif_banner_text": {
+    "en": " stocks rated D for 6 consecutive times. Review recommended.",
+    "zh": " 只股票已连续 6 次评为 D 级，建议审视是否继续跟踪"
+  },
+  "notif_first_alert": {
+    "en": "First alert: ",
+    "zh": "首次提醒："
+  },
+  "catalyst_title": {
+    "en": "Upcoming Events",
+    "zh": "近期事件"
+  },
+  "catalyst_share_unlock": {
+    "en": "Share Unlock",
+    "zh": "限售解禁"
+  },
+  "catalyst_earnings_report": {
+    "en": "Earnings Report",
+    "zh": "财务报告"
+  },
+  "catalyst_major_announcement": {
+    "en": "Major Announcement",
+    "zh": "重大事项"
+  },
+  "catalyst_earnings_forecast": {
+    "en": "Earnings Forecast",
+    "zh": "业绩预告"
+  },
+  "catalyst_today": {
+    "en": "Today",
+    "zh": "今天"
+  },
+  "catalyst_tomorrow": {
+    "en": "Tomorrow",
+    "zh": "明天"
+  },
+  "catalyst_days_later": {
+    "en": " days",
+    "zh": "天后"
+  },
+  "news_chip_label": {
+    "en": "News",
+    "zh": "新闻"
+  },
+  "sentiment_avg_tooltip": {
+    "en": "7-day avg news sentiment",
+    "zh": "近7日新闻情绪均值"
+  },
+  "sentiment_title": {
+    "en": "7-day news sentiment",
+    "zh": "近7日新闻情绪"
   }
 }

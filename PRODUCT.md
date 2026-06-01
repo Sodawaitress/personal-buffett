@@ -4437,6 +4437,33 @@ yfinance 查询是否上市公司（name → ticker 匹配）
 
 #### 不做（第一版）
 - Tier-2 溯源（供应商的供应商）
+
+---
+
+### US-98 · i18n 补全：三大主模板双语化
+
+**As a** Da-young（英文用户）  
+**I want to** 在所有页面看到英文界面  
+**So that** 我能正常使用产品，而不是看一堆看不懂的中文
+
+**背景：** `index.html`、`watchlist.html`、`stock/detail.html` 共 3566 行，含 440 处硬编码中文字符串，`t['key']` 调用为 0。i18n 基础设施完整（context processor 注入 `t`、JSON key 文件 300+ 条），只差把模板里的中文换成 `{{ t['key'] }}`。
+
+**分三批实现（按复杂度从低到高）：**
+
+**批次 A — index.html**（74 处，746 行）  
+**批次 B — watchlist.html**（98 处，1087 行）  
+**批次 C — stock/detail.html**（268 处，1733 行）
+
+**Acceptance Criteria:**
+- [ ] 切换为 `locale=en` 后，三个页面所有可见文字显示英文
+- [ ] 切换为 `locale=zh` 后，所有文字显示中文（与当前一致）
+- [ ] 新增 key 同步写入 `i18n/zh.json` 和 `i18n/en.json`
+- [ ] 不改变任何功能逻辑，只替换字符串
+- [ ] 现有已翻译模板（auth、admin、settings）不受影响
+
+**不做：**
+- JS 内的字符串（动态生成的 toast/alert 等，下一版处理）
+- 注释里的中文（不影响 Da-young）
 - A股年报中文版解析
 - 自动批量扫描所有自选股（按需手动触发）
 - 供应商财务数据抓取（只做发现，不做分析）
