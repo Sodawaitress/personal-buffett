@@ -16,5 +16,23 @@
     "horizon_days": 10,
     "key_signal": "融券余量大增126.9%与股价持续背离、且分歧较05-27（+101.9%）进一步扩大，方向待融券拐点确认",
     "price_at_prediction": 186.51
+  },
+  {
+    "date": "2026-06-02",
+    "code": "000680",
+    "name": "山推股份",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "前兆3.3+融券-28.8%空头减少双向确认，基建/工程机械板块跟涨，今日+4.65%价格确认启动",
+    "price_at_prediction": 11.26
+  },
+  {
+    "date": "2026-06-02",
+    "code": "002318",
+    "name": "久立特材",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "融券-81.1%空头大撤退（超80%强制信号），B级底合格，3次调研频次，大众无感知的抢跑窗口",
+    "price_at_prediction": 23.59
   }
 ]
