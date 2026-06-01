@@ -1231,6 +1231,14 @@
     "en": "Re-analyse",
     "zh": "重新溯源"
   },
+  "sc_search_listed": {
+    "en": "Search listed entity",
+    "zh": "搜索上市主体"
+  },
+  "sc_search_listed_hint": {
+    "en": "May not be found if company is not publicly listed",
+    "zh": "若该公司未上市可能搜不到"
+  },
   "lbl_data_mislead_short": {
     "en": "⚠ Financial data missing — rating invalid",
     "zh": "⚠ 财务数据缺失，评级无效"

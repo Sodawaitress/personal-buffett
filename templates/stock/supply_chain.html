@@ -96,11 +96,13 @@
   };
 
   function scoreColor(s) {
+    if (s === 50) return '#9ca3af';   // 无数据默认值，不渲染成红/绿
     if (s >= 80) return '#b91c1c';
     if (s >= 60) return '#d97706';
     return '#15803d';
   }
   function scoreLabel(s) {
+    if (s === 50) return '—';         // 无数据
     if (s >= 85) return '极高';
     if (s >= 70) return '高';
     if (s >= 55) return '中';
@@ -157,12 +159,12 @@
     const safeName = lnk.supplier_name.replace(/'/g, "\\'");
     const addBtn = lnk.supplier_ticker
       ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${safeName}',this)" title="加入自选股">+ 自选股</button>`
-      : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="若该公司未上市可能搜不到">搜索上市主体</a>`;
+      : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="{{ t.sc_search_listed_hint }}">{{ t.sc_search_listed }}</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
     return `
       <div class="sc-card${isT2?' sc-card-t2':''}">
-        <div class="sc-card-left" style="background:${isT2 ? '#9ca3af' : color}"></div>
+        <div class="sc-card-left" style="background:${isT2 ? 'transparent' : color}"></div>
         <div class="sc-card-body">
           <div class="sc-card-row1">
             <span class="sc-name${isT2?' sc-name-t2':''}">${lnk.supplier_name}</span>
@@ -171,12 +173,9 @@
           ${pathBadge}
           <div class="sc-card-row2">
             <span class="sc-dep-chip" style="background:${depColor}1a;color:${depColor};border-color:${depColor}40">${depLabel}</span>
-            <span class="sc-risk-badge" style="color:${isT2?'#6b7280':color}">风险 <strong>${sc}</strong>
-              <em class="sc-risk-level">${scoreLabel(sc)}</em></span>
+            ${sc !== 50 ? `<span class="sc-risk-badge" style="color:${color}">风险 <strong>${sc}</strong> <em class="sc-risk-level">${scoreLabel(sc)}</em></span>` : ''}
           </div>
-          <div class="sc-bar-track">
-            <div class="sc-bar-fill" style="width:${sc}%;background:${isT2?'#9ca3af':color}"></div>
-          </div>
+          ${sc !== 50 ? `<div class="sc-bar-track"><div class="sc-bar-fill" style="width:${sc}%;background:${color}"></div></div>` : ''}
           ${lnk.evidence_quote ? `<blockquote class="sc-evidence">${lnk.evidence_quote}</blockquote>` : ''}
         </div>
       </div>`;
