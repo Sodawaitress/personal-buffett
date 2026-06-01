@@ -138,39 +138,38 @@
   <hr class="section-rule" style="margin:0 0 0">
 
   {% if not single_page %}
-  {# ── Sub-page navigation (legacy tab mode) ── #}
   <div class="stock-subnav" id="stock-subnav">
 
-    <a href="{{ url_for('stock_letter', code=stock.code) }}"
+    <a href="{{ url_for('stock_page', code=stock.code) }}"
        class="subnav-link {{ 'active' if active_tab == 'letter' else '' }}">
       <span class="subnav-label">{{ t.tab_brief }}</span>
-      <span class="subnav-hint">值不值买？</span>
+      <span class="subnav-hint">{{ t.hint_brief }}</span>
     </a>
 
     <a href="{{ url_for('stock_signals', code=stock.code) }}"
        class="subnav-link {{ 'active' if active_tab == 'signals' else '' }}">
-      <span class="subnav-label">{{ t.tab_news }}{% if news %}<span class="tab-count">{{ news | length }}</span>{% endif %}</span>
-      <span class="subnav-hint">市场在说什么？</span>
+      <span class="subnav-label">{{ t.tab_market }}{% if news %}<span class="tab-count">{{ news | length }}</span>{% endif %}</span>
+      <span class="subnav-hint">{{ t.hint_market_news }}</span>
     </a>
 
-    {% if market == "cn" %}
-    <a href="{{ url_for('stock_radar_page', code=stock.code) }}"
-       class="subnav-link {{ 'active' if active_tab == 'radar' else '' }}">
-      <span class="subnav-label">机构雷达</span>
-      <span class="subnav-hint">聪明钱在动吗？</span>
+    {% if market in ("us", "cn") %}
+    <a href="{{ url_for('stock_supply_chain_page', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'supply_chain' else '' }}">
+      <span class="subnav-label">{{ t.tab_supply_chain }}</span>
+      <span class="subnav-hint">{{ t.hint_supply_chain }}</span>
     </a>
     {% endif %}
 
-    <a href="{{ url_for('stock_fundamentals_page', code=stock.code) }}"
-       class="subnav-link {{ 'active' if active_tab == 'fundamentals' else '' }}">
+    <a href="{{ url_for('stock_archive', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'archive' else '' }}">
       <span class="subnav-label">{{ t.tab_archive }}</span>
-      <span class="subnav-hint">基本面数据</span>
+      <span class="subnav-hint">{{ t.hint_archive }}</span>
     </a>
 
     <a href="{{ url_for('stock_events_page', code=stock.code) }}"
        class="subnav-link {{ 'active' if active_tab == 'events' else '' }}">
       <span class="subnav-label">{{ t.tab_events }}{% if events %}<span class="tab-count">{{ events | length }}</span>{% endif %}</span>
-      <span class="subnav-hint">重大事件</span>
+      <span class="subnav-hint">{{ t.hint_events }}</span>
     </a>
 
   </div>

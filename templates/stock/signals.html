@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}{{ stock.name }} — {{ t.tab_news }} — {{ t.brand }}{% endblock %}
+{% block title %}{{ stock.name }} — {{ t.tab_market }} — {{ t.brand }}{% endblock %}
+{% set active_tab = 'signals' %}
 
 {% block content %}
 <div class="stock-page">
@@ -362,21 +363,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-window._t = {
-  full_refresh_msg: {{ t.js_full_refresh_msg | tojson }},
-  quant_only_msg:   {{ t.js_quant_only_msg | tojson }},
-  gen_letter:       {{ t.js_gen_letter | tojson }},
-  letter_ready:     {{ t.js_letter_ready | tojson }},
-  generating:       {{ t.js_generating | tojson }},
-  read_letter:      {{ t.js_read_letter | tojson }},
-  letter_ready_lbl: {{ t.js_letter_ready_label | tojson }},
-  buffett_check:    {{ t.js_buffett_check | tojson }},
-  refresh_news:     {{ t.js_refresh_news_menu | tojson }},
-  full_refresh:     {{ t.js_full_refresh_menu | tojson }},
-  full_update_lbl:  {{ t.btn_full_update | tojson }},
-  is_admin:         {{ (session.role == 'admin') | tojson }},
-};
-</script>
-<script src="{{ url_for('static', filename='js/stock-common.js') }}"></script>
+{% include 'stock/_stock_scripts.html' %}
 {% endblock %}
