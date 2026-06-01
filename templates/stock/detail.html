@@ -1174,12 +1174,16 @@
               <span class="sc-step" id="scs-1">{{ t.sc_step_cn_1 }}</span>
               <span class="sc-step-sep">→</span>
               <span class="sc-step" id="scs-2">{{ t.sc_step_cn_2 }}</span>
+              <span class="sc-step-sep">→</span>
+              <span class="sc-step" id="scs-3">{{ t.sc_step_hop2 }}</span>
               {% else %}
               <span class="sc-step" id="scs-0">{{ t.sc_step_us_0 }}</span>
               <span class="sc-step-sep">→</span>
               <span class="sc-step" id="scs-1">{{ t.sc_step_us_1 }}</span>
               <span class="sc-step-sep">→</span>
               <span class="sc-step" id="scs-2">{{ t.sc_step_us_2 }}</span>
+              <span class="sc-step-sep">→</span>
+              <span class="sc-step" id="scs-3">{{ t.sc_step_hop2 }}</span>
               {% endif %}
             </div>
           </div>
@@ -1418,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function animateSteps() {
     let step = 0;
     clearInterval(_stepTimer);
-    for (let i = 0; i < 3; i++) { const el = $(`scs-${i}`); if (el) el.className = 'sc-step'; }
+    for (let i = 0; i < 4; i++) { const el = $(`scs-${i}`); if (el) el.className = 'sc-step'; }
     _stepTimer = setInterval(() => {
       if (step > 0) { const prev = $(`scs-${step-1}`); if (prev) prev.className = 'sc-step sc-step-done'; }
       const cur = $(`scs-${step}`); if (cur) cur.className = 'sc-step sc-step-active';
@@ -1574,7 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
               if (data.links && data.links.length) {
                 clearInterval(poll); clearInterval(_stepTimer);
-                for(let i=0;i<3;i++){const el=$(`scs-${i}`);if(el)el.className='sc-step sc-step-done';}
+                for(let i=0;i<4;i++){const el=$(`scs-${i}`);if(el)el.className='sc-step sc-step-done';}
                 renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
                 if (rescanBtn) rescanBtn.disabled = false;
               } else if (tries >= 20) {

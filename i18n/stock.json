@@ -1215,6 +1215,10 @@
     "en": "AI Analyse Dependencies",
     "zh": "AI 分析供应商依赖"
   },
+  "sc_step_hop2": {
+    "en": "Trace Tier-2 Upstream",
+    "zh": "追溯上游 Tier-2"
+  },
   "sc_rescan_btn": {
     "en": "Re-analyse",
     "zh": "重新溯源"

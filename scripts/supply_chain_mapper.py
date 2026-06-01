@@ -440,8 +440,7 @@ def get_supply_chain_links(ticker: str) -> list[dict]:
 def _get_tier1_links_for_hop2(sup_ticker: str, sup_name: str) -> list[dict]:
     """
     Tier-2 用：取 sup_ticker 自身已缓存的 Tier-1 供应商。
-    如无缓存则实时扫描（仅 SEC 路径，不扫 CN）。
-    返回原始 supply_chain_links 行列表（不含多跳字段）。
+    6位纯数字 ticker → A股 CNINFO 路径；其余 → SEC 路径。
     """
     cached = get_supply_chain_links(sup_ticker)
     if cached:
@@ -449,7 +448,10 @@ def _get_tier1_links_for_hop2(sup_ticker: str, sup_name: str) -> list[dict]:
         return [r for r in cached if r.get("hop_depth", 1) == 1]
 
     print(f"    [supply_chain] Tier-2 扫描: {sup_ticker}")
-    result = run_supply_chain_scan(sup_ticker, sup_name)
+    if sup_ticker.isdigit() and len(sup_ticker) == 6:
+        result = run_cn_supply_chain_scan(sup_ticker, sup_name)
+    else:
+        result = run_supply_chain_scan(sup_ticker, sup_name)
     return result.get("links", [])
 
 
@@ -475,37 +477,39 @@ def is_cache_fresh(ticker: str) -> bool:
 
 # ── US-101 多跳 BOM 溯源 ──────────────────────────────────────────────────────
 
-_MAX_T1_FOR_HOP2 = 5  # 最多追踪几个 Tier-1 做 Hop-2（避免扫描时间爆炸）
+_MAX_T1_FOR_HOP2_US = 5  # 美股：最多追踪 5 个 Tier-1（SEC HTTP 较快）
+_MAX_T1_FOR_HOP2_CN = 3  # A股：最多追踪 3 个 Tier-1（PDF 下载慢）
 
 
 def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_depth: int = 2) -> dict:
     """
-    多跳 BOM 溯源。
-    - Hop 1：调用现有 run_supply_chain_scan_auto（美股/A股均支持）
-    - Hop 2：对 Tier-1 中有 ticker 的公共公司，获取它们的供应商（仅美股）
-    A股不做 Hop-2（CNINFO PDF 路径不适合连续批量扫描）。
+    多跳 BOM 溯源（美股 + A股均支持）。
+    - Hop 1：run_supply_chain_scan_auto（SEC 10-K / CNINFO PDF）
+    - Hop 2：对有 ticker 的 Tier-1 获取其上游供应商
+      美股：走 SEC 路径；A股供应商（6位数字）：走 CNINFO 路径
     """
     ticker = ticker.upper().split(".")[0]
     now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    max_t1 = _MAX_T1_FOR_HOP2_CN if market == "cn" else _MAX_T1_FOR_HOP2_US
 
     # ── Hop 1 ─────────────────────────────────────────────────────────────────
     r1 = run_supply_chain_scan_auto(ticker, market, company_name)
     tier1_links = r1.get("links", [])
 
-    # Tag Tier-1 rows
     for lnk in tier1_links:
         lnk["hop_depth"]     = 1
         lnk["upstream_path"] = json.dumps([ticker])
         lnk["tier1_code"]    = None
 
-    if not tier1_links or max_depth < 2 or market == "cn":
+    if not tier1_links or max_depth < 2:
         return r1
 
     # ── Hop 2 ─────────────────────────────────────────────────────────────────
-    # Pick Tier-1 suppliers that have a ticker (public companies), best-score first
-    t1_with_ticker = [
-        lnk for lnk in tier1_links if lnk.get("supplier_ticker")
-    ][:_MAX_T1_FOR_HOP2]
+    t1_with_ticker = [l for l in tier1_links if l.get("supplier_ticker")][:max_t1]
+
+    # 预建 Tier-1 名称集合，避免循环内重复计算
+    t1_names   = {l["supplier_name"] for l in tier1_links}
+    t1_tickers = {(l.get("supplier_ticker") or "").upper() for l in tier1_links}
 
     tier2_all: list[dict] = []
     for t1 in t1_with_ticker:
@@ -518,12 +522,11 @@ def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_dept
             continue
 
         for lnk in t2_raw:
-            # Skip if it's the same company (circular reference)
-            if (lnk.get("supplier_ticker") or "").upper() == ticker:
+            # 跳过循环引用 + 已是 Tier-1 的节点
+            sup2_ticker = (lnk.get("supplier_ticker") or "").upper()
+            if sup2_ticker == ticker or sup2_ticker in t1_tickers:
                 continue
-            # Skip if it's already a Tier-1 of the original target
-            t1_tickers = {l.get("supplier_ticker","").upper() for l in tier1_links if l.get("supplier_ticker")}
-            if lnk.get("supplier_name") in {l["supplier_name"] for l in tier1_links}:
+            if lnk.get("supplier_name") in t1_names:
                 continue
 
             tier2_all.append({
@@ -534,7 +537,7 @@ def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_dept
                 "chokepoint_score": lnk.get("chokepoint_score", 40),
                 "evidence_quote":   lnk.get("evidence_quote", ""),
                 "scanned_at":       now,
-                "source":           lnk.get("source", "sec_10k"),
+                "source":           lnk.get("source", "cninfo_annual" if market == "cn" else "sec_10k"),
                 "hop_depth":        2,
                 "upstream_path":    json.dumps([ticker, sup_ticker]),
                 "tier1_code":       sup_ticker,
