@@ -936,11 +936,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-fill search from ?q= (e.g. from supply chain "搜索添加" link)
   const _autoQ = new URLSearchParams(location.search).get('q');
   if (_autoQ) {
+    const panel = document.getElementById('add-panel');
+    if (panel) panel.classList.remove('hidden');
     const inp = document.getElementById('search-q');
     if (inp) {
       inp.value = _autoQ;
+      inp.scrollIntoView({behavior: 'smooth', block: 'center'});
       inp.focus();
-      inp.dispatchEvent(new Event('input'));
+      setTimeout(() => inp.dispatchEvent(new Event('input', {bubbles: true})), 150);
     }
   }
 });

@@ -812,9 +812,9 @@ def _lookup_cn_ticker(name: str) -> str | None:
             s = sname.replace(" ", "")
             if name in s or s in name:
                 return code
-        # 去掉常见后缀再匹配（处理改名、旧名）
+        # 去掉常见后缀再匹配（处理改名、旧名），root 至少 3 字避免过度匹配
         root = re.sub(r'(股份|集团|控股|科技|新能源|能源|实业|有限公司|公司)$', '', name)
-        if root and root != name:
+        if root and root != name and len(root) >= 3:
             for code, sname in stocks:
                 s = sname.replace(" ", "")
                 if root in s:
