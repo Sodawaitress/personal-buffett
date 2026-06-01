@@ -506,6 +506,10 @@ def _migrate():
         ("user_watchlist",    "removed_at",        "TIMESTAMP"),
         ("signal_predictions", "signal_type",       "TEXT"),
         ("signal_predictions", "predicted_outcome", "TEXT"),
+        # US-101 多跳 BOM 溯源
+        ("supply_chain_links", "hop_depth",      "INTEGER DEFAULT 1"),
+        ("supply_chain_links", "upstream_path",  "TEXT"),
+        ("supply_chain_links", "tier1_code",     "TEXT"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

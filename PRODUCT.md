@@ -4504,3 +4504,52 @@ yfinance 查询是否上市公司（name → ticker 匹配）
 - 不做 API 版本前缀（`/api/v1/`）——现在加前缀反而是包袱，等真正需要 breaking change 再说
 - 不做 rate limiting（内部工具，不是公开 API）
 
+---
+
+## US-101 多跳 BOM 供应链溯源
+
+**背景：** 现有实现只做单跳——直接从目标公司 10-K / 年报提取 Tier-1 供应商。
+Serenity 方法论的核心洞察是：真正的瓶颈往往不在 Tier-1，而在更上游。
+NVIDIA 不直接买 ASML，但 TSMC 买，所以 ASML 是 NVIDIA 整个供应链的隐性瓶颈，而大多数投资者看不到这一层。
+
+**目标：** 扫描时自动继续往上溯——对每个有 ticker 的 Tier-1 供应商，拉取它们自己的 10-K，把它们的关键供应商标记为 Tier-2，附上完整路径（如 `NVDA → TSMC → ASML`）。
+
+### Scope
+
+1. **DB migration** — `supply_chain_links` 新增 3 列：
+   - `hop_depth INTEGER DEFAULT 1`（1=直接供应商，2=供应商的供应商）
+   - `upstream_path TEXT`（JSON 数组，如 `["NVDA","TSMC"]`）
+   - `tier1_code TEXT`（Tier-2 行的 Tier-1 父节点 ticker）
+
+2. **`run_multihop_scan(ticker, market, company_name, max_depth=2)`** — 包装现有逻辑：
+   - Hop 1：现有 `run_supply_chain_scan_auto` 逻辑（不变）
+   - Hop 2：对每个有 supplier_ticker 的 Tier-1，检查是否已缓存；新鲜则复用，否则重新扫描
+   - 结果全部写入 `supply_chain_links`，按 downstream_code = 原始目标
+
+3. **`get_supply_chain_tree(ticker)`** — 返回树结构：
+   ```json
+   {
+     "tier1": [{ ...link, hop_depth:1 }],
+     "tier2_by_t1": { "TSMC": [{ ...link, hop_depth:2 }] }
+   }
+   ```
+
+4. **`/api/supply-chain/<code>`** — 响应追加 `tree` 字段
+
+5. **前端 `renderLinks`** — 按树渲染：Tier-1 正常卡片 + Tier-2 缩进显示 + 路径徽章（`NVDA → TSMC → ASML`）；Tier-2 卡片样式更轻（灰色左条，小字体）
+
+### Acceptance Criteria
+
+- [ ] DB migration 向上兼容（旧行 hop_depth 默认为 1）
+- [ ] 扫描一只美股时，`supply_chain_links` 中出现 `hop_depth=2` 的行
+- [ ] Tier-2 行的 `upstream_path` 正确记录路径
+- [ ] Tier-2 扫描复用缓存（如果 Tier-1 supplier 已被独立扫描过）
+- [ ] 前端正确展示树形结构，Tier-2 有缩进 + 路径标签
+- [ ] 扫描 A股时不做 Hop-2（CNINFO PDF 路径不适合连续扫描多个供应商）
+- [ ] 最多追踪 5 个有 ticker 的 Tier-1（避免扫描时间过长）
+
+**不做：**
+- Hop-3 及更深（指数级增长，信噪比迅速下降）
+- A股 Hop-2（API 限制 + PDF 解析时间）
+- 实时进度推送（轮询已够用）
+

@@ -1428,88 +1428,115 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── 渲染结果 ──
-  function renderLinks(links, scannedAt) {
+  function _scCard(lnk, isT2) {
+    const sc       = lnk.chokepoint_score;
+    const color    = scoreColor(sc);
+    const depColor = DEP_COLORS[lnk.dependency_type] || '#6b7280';
+    const depLabel = DEP_LABELS[lnk.dependency_type] || '采购依赖';
+    const isAggregate = lnk.supplier_name.includes('合计') || lnk.supplier_name.includes('前五名供应商');
+
+    if (isAggregate) {
+      const pct = (lnk.evidence_quote||'').match(/(\d+\.?\d*)%/)?.[1];
+      return `
+        <div class="sc-card sc-card-aggregate${isT2?' sc-card-t2':''}">
+          <div class="sc-agg-label">采购集中度</div>
+          <div class="sc-agg-value">${pct ? pct + '%' : '—'}</div>
+          <div class="sc-agg-bar-wrap"><div class="sc-agg-bar-fill" style="width:${Math.min(pct||0,100)}%"></div></div>
+          <div class="sc-agg-quote">${lnk.evidence_quote||''}</div>
+        </div>`;
+    }
+
+    // Path badge for Tier-2
+    let pathBadge = '';
+    if (isT2 && lnk.upstream_path) {
+      try {
+        const parts = JSON.parse(lnk.upstream_path);
+        pathBadge = `<span class="sc-path-badge">${parts.join(' → ')} → ${lnk.supplier_name.slice(0,10)}</span>`;
+      } catch(e) {}
+    }
+
+    const tickerChip = lnk.supplier_ticker
+      ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>` : '';
+    const addBtn = lnk.supplier_ticker
+      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}',this)" title="加入自选股">+ 自选股</button>` : '';
+    const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
+
+    return `
+      <div class="sc-card${isT2?' sc-card-t2':''}">
+        <div class="sc-card-left" style="background:${isT2 ? '#9ca3af' : color}"></div>
+        <div class="sc-card-body">
+          <div class="sc-card-row1">
+            <span class="sc-name${isT2?' sc-name-t2':''}">${lnk.supplier_name}</span>
+            ${hopBadge}${tickerChip}${addBtn}
+          </div>
+          ${pathBadge}
+          <div class="sc-card-row2">
+            <span class="sc-dep-chip" style="background:${depColor}1a;color:${depColor};border-color:${depColor}40">${depLabel}</span>
+            <span class="sc-risk-badge" style="color:${isT2?'#6b7280':color}">风险 <strong>${sc}</strong>
+              <em class="sc-risk-level">${scoreLabel(sc)}</em></span>
+          </div>
+          <div class="sc-bar-track">
+            <div class="sc-bar-fill" style="width:${sc}%;background:${isT2?'#9ca3af':color}"></div>
+          </div>
+          ${lnk.evidence_quote ? `<blockquote class="sc-evidence">${lnk.evidence_quote}</blockquote>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderLinks(links, scannedAt, tree) {
     if (!links || !links.length) {
       showState('empty');
-      // 用 fund-note 替换说明文字
       const desc = document.querySelector('.sc-empty-desc');
       if (desc) desc.textContent = '扫描完成，未检测到可量化的供应商集中依赖。';
       return;
     }
 
-    // 汇总条
+    const tier1 = (tree && tree.tier1) ? tree.tier1 : links.filter(l => (l.hop_depth||1) === 1);
+    const t2map = (tree && tree.tier2_by_t1) ? tree.tier2_by_t1 : {};
+    const hasT2 = Object.keys(t2map).some(k => t2map[k].length > 0);
+
+    // Summary bar
     const topRisk = Math.max(...links.map(l => l.chokepoint_score));
     const topName = links.find(l => l.chokepoint_score === topRisk)?.supplier_name || '';
+    const t1count = tier1.length;
+    const t2count = Object.values(t2map).reduce((s, arr) => s + arr.length, 0);
     const summaryEl = $('sc-summary-bar');
     if (summaryEl) {
+      const t2label = t2count ? ` · <span style="color:#6b7280">+${t2count} Tier-2 隐性依赖</span>` : '';
       summaryEl.innerHTML = `
-        <span class="sc-sum-count">${links.length} 项依赖</span>
+        <span class="sc-sum-count">${t1count} 直接依赖${t2label}</span>
         <span class="sc-sum-sep">·</span>
         <span class="sc-sum-top">最高风险 <strong style="color:${scoreColor(topRisk)}">${topName.slice(0,12)}${topName.length>12?'…':''}</strong>
           <span class="sc-sum-score" style="background:${scoreColor(topRisk)}">${topRisk}</span></span>`;
     }
 
-    // 日期
     const dateEl = $('sc-scan-date');
     if (dateEl && scannedAt) dateEl.textContent = `上次扫描: ${scannedAt.slice(0,10)}`;
 
-    // 卡片列表
     const contentEl = $('sc-content');
     if (!contentEl) return;
 
     let html = '';
-    links.forEach(lnk => {
-      const sc    = lnk.chokepoint_score;
-      const color = scoreColor(sc);
-      const depColor = DEP_COLORS[lnk.dependency_type] || '#6b7280';
-      const depLabel = DEP_LABELS[lnk.dependency_type] || '采购依赖';
-      const isAggregate = lnk.supplier_name.includes('合计') || lnk.supplier_name.includes('前五名供应商');
-
-      const tickerChip = lnk.supplier_ticker
-        ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>`
-        : '';
-      const addBtn = lnk.supplier_ticker
-        ? `<button class="sc-watchlist-btn"
-              onclick="scAddWatch('${lnk.supplier_ticker}', this)"
-              title="加入自选股">+ 自选股</button>`
-        : '';
-
-      if (isAggregate) {
-        // 汇总条目——蓝色信息卡
-        const pct = lnk.evidence_quote.match(/(\d+\.?\d*)%/)?.[1];
-        html += `
-          <div class="sc-card sc-card-aggregate">
-            <div class="sc-agg-label">采购集中度</div>
-            <div class="sc-agg-value">${pct ? pct + '%' : '—'}</div>
-            <div class="sc-agg-bar-wrap">
-              <div class="sc-agg-bar-fill" style="width:${Math.min(pct||0,100)}%"></div>
-            </div>
-            <div class="sc-agg-quote">${lnk.evidence_quote}</div>
-          </div>`;
-      } else {
-        // 具名供应商卡
-        html += `
-          <div class="sc-card">
-            <div class="sc-card-left" style="background:${color}"></div>
-            <div class="sc-card-body">
-              <div class="sc-card-row1">
-                <span class="sc-name">${lnk.supplier_name}</span>
-                ${tickerChip}
-                ${addBtn}
-              </div>
-              <div class="sc-card-row2">
-                <span class="sc-dep-chip" style="background:${depColor}1a;color:${depColor};border-color:${depColor}40">${depLabel}</span>
-                <span class="sc-risk-badge" style="color:${color}">风险 <strong>${sc}</strong>
-                  <em class="sc-risk-level">${scoreLabel(sc)}</em></span>
-              </div>
-              <div class="sc-bar-track">
-                <div class="sc-bar-fill" style="width:${sc}%;background:${color}"></div>
-              </div>
-              ${lnk.evidence_quote ? `<blockquote class="sc-evidence">${lnk.evidence_quote}</blockquote>` : ''}
-            </div>
-          </div>`;
+    // Render Tier-1 + their Tier-2 children inline
+    tier1.forEach(t1lnk => {
+      html += _scCard(t1lnk, false);
+      const t1tick = t1lnk.supplier_ticker;
+      if (t1tick && t2map[t1tick] && t2map[t1tick].length) {
+        html += `<div class="sc-t2-group">`;
+        t2map[t1tick].forEach(t2lnk => { html += _scCard(t2lnk, true); });
+        html += `</div>`;
       }
     });
+    // Tier-2 rows whose tier1_code isn't matched (edge case)
+    const usedT1 = new Set(tier1.map(l => l.supplier_ticker).filter(Boolean));
+    Object.entries(t2map).forEach(([t1code, rows]) => {
+      if (!usedT1.has(t1code) && rows.length) {
+        html += `<div class="sc-t2-group">`;
+        rows.forEach(lnk => { html += _scCard(lnk, true); });
+        html += `</div>`;
+      }
+    });
+
     contentEl.innerHTML = html;
     showState('results');
   }
@@ -1547,9 +1574,8 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
               if (data.links && data.links.length) {
                 clearInterval(poll); clearInterval(_stepTimer);
-                // Mark all steps done
                 for(let i=0;i<3;i++){const el=$(`scs-${i}`);if(el)el.className='sc-step sc-step-done';}
-                renderLinks(data.links, data.links[0]?.scanned_at);
+                renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
                 if (rescanBtn) rescanBtn.disabled = false;
               } else if (tries >= 20) {
                 clearInterval(poll); clearInterval(_stepTimer);
@@ -1573,7 +1599,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(r => r.json())
     .then(data => {
       if (data.links && data.links.length) {
-        renderLinks(data.links, data.links[0]?.scanned_at);
+        renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
       }
     })
     .catch(() => {});

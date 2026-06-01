@@ -1762,4 +1762,36 @@
 }
 .sc-rescan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ── Tier-2 多跳节点 ── */
+.sc-t2-group {
+  margin-left: 24px;
+  border-left: 2px solid #e5e7eb;
+  padding-left: 8px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+.sc-card-t2 {
+  opacity: 0.88;
+  margin-top: 4px;
+}
+.sc-card-t2 .sc-card-left { background: #9ca3af !important; }
+.sc-name-t2 { font-size: 13px; }
+.sc-hop-badge {
+  font-size: 10px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.sc-path-badge {
+  display: block;
+  font-size: 10px;
+  color: #9ca3af;
+  margin: 2px 0 4px;
+  font-family: monospace;
+}
+
 /* 主容器 */

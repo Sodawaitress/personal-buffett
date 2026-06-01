@@ -295,24 +295,33 @@ def _score_chokepoint(dep: dict) -> int:
 
 # ── 公共公司 ticker 查找 ──────────────────────────────────────────────────────
 
+_REJECT_TYPES   = {"ETF", "MUTUALFUND", "CURRENCY", "FUTURE", "INDEX"}
+_REJECT_SUFFIXES = (".SA", ".HK", ".SZ", ".SS", ".L", ".T", ".PA", ".DE", ".AX")
+
+
 def _lookup_ticker(name: str) -> str | None:
     """
-    用 yfinance 搜索供应商名称，返回 ticker（若是上市公司）。
-    最多尝试 3 个结果。
+    用 yfinance 搜索供应商名称，返回主要交易所 ticker（美股/台股优先）。
+    排除 ADR 非主要市场（.SA / .HK 等）、ETF、基金。
+    最多尝试 5 个结果，取第一个通过过滤的。
     """
     if not name:
         return None
     try:
         import yfinance as yf
-        results = yf.Search(name, max_results=3)
-        quotes = results.quotes
-        if quotes:
-            q = quotes[0]
-            ticker = q.get("symbol") or q.get("ticker")
-            # Reject obvious mismatches (ETFs etc.)
+        results = yf.Search(name, max_results=5)
+        for q in (results.quotes or []):
+            ticker    = q.get("symbol") or q.get("ticker") or ""
             type_hint = (q.get("typeDisp") or q.get("quoteType") or "").upper()
-            if ticker and type_hint not in ("ETF", "MUTUALFUND", "CURRENCY", "FUTURE"):
-                return ticker
+            exchange  = (q.get("exchange") or q.get("exchDisp") or "").upper()
+            if not ticker:
+                continue
+            if type_hint in _REJECT_TYPES:
+                continue
+            # Reject non-primary market suffixes (ADRs on .SA, .HK, etc.)
+            if any(ticker.upper().endswith(s) for s in _REJECT_SUFFIXES):
+                continue
+            return ticker
     except Exception:
         pass
     return None
@@ -380,10 +389,10 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
 
 
 def _save_links(downstream_code: str, links: list[dict]) -> None:
-    """DELETE + INSERT 替换（每次全量更新）。"""
+    """DELETE Tier-1 + INSERT — Tier-2 rows are NOT deleted here (handled by _save_multihop)."""
     with get_conn() as c:
         c.execute(
-            "DELETE FROM supply_chain_links WHERE downstream_code = :code",
+            "DELETE FROM supply_chain_links WHERE downstream_code=:code AND (hop_depth IS NULL OR hop_depth=1)",
             {"code": downstream_code},
         )
         for lnk in links:
@@ -392,36 +401,60 @@ def _save_links(downstream_code: str, links: list[dict]) -> None:
                 INSERT INTO supply_chain_links
                   (downstream_code, supplier_name, supplier_ticker,
                    dependency_type, chokepoint_score, evidence_quote,
-                   scanned_at, source)
+                   scanned_at, source, hop_depth, upstream_path, tier1_code)
                 VALUES
                   (:downstream_code, :supplier_name, :supplier_ticker,
                    :dependency_type, :chokepoint_score, :evidence_quote,
-                   :scanned_at, :source)
+                   :scanned_at, :source,
+                   :hop_depth, :upstream_path, :tier1_code)
                 """,
-                lnk,
+                {
+                    **lnk,
+                    "hop_depth":     lnk.get("hop_depth", 1),
+                    "upstream_path": lnk.get("upstream_path"),
+                    "tier1_code":    lnk.get("tier1_code"),
+                },
             )
-    print(f"    [supply_chain] 写入 {len(links)} 条 supply_chain_links")
+    print(f"    [supply_chain] 写入 {len(links)} 条 supply_chain_links (hop={links[0].get('hop_depth',1) if links else '-'})")
 
 
 def get_supply_chain_links(ticker: str) -> list[dict]:
-    """读取已缓存的供应链链接，按 chokepoint_score 降序。"""
+    """读取该 ticker 的所有供应链链接（含多跳），按 hop_depth ASC, score DESC。"""
     ticker = ticker.upper().split(".")[0]
     with get_conn() as c:
         rows = c.execute(
             """
             SELECT supplier_name, supplier_ticker, dependency_type,
-                   chokepoint_score, evidence_quote, scanned_at, source
+                   chokepoint_score, evidence_quote, scanned_at, source,
+                   COALESCE(hop_depth, 1) AS hop_depth,
+                   upstream_path, tier1_code
             FROM   supply_chain_links
             WHERE  downstream_code = :code
-            ORDER BY chokepoint_score DESC
+            ORDER BY COALESCE(hop_depth,1) ASC, chokepoint_score DESC
             """,
             {"code": ticker},
         ).fetchall()
     return [dict(r) for r in rows]
 
 
+def _get_tier1_links_for_hop2(sup_ticker: str, sup_name: str) -> list[dict]:
+    """
+    Tier-2 用：取 sup_ticker 自身已缓存的 Tier-1 供应商。
+    如无缓存则实时扫描（仅 SEC 路径，不扫 CN）。
+    返回原始 supply_chain_links 行列表（不含多跳字段）。
+    """
+    cached = get_supply_chain_links(sup_ticker)
+    if cached:
+        print(f"    [supply_chain] Tier-2 复用缓存: {sup_ticker} ({len(cached)} 条)")
+        return [r for r in cached if r.get("hop_depth", 1) == 1]
+
+    print(f"    [supply_chain] Tier-2 扫描: {sup_ticker}")
+    result = run_supply_chain_scan(sup_ticker, sup_name)
+    return result.get("links", [])
+
+
 def is_cache_fresh(ticker: str) -> bool:
-    """检查最近一次扫描是否在 CACHE_TTL_DAYS 以内。"""
+    """检查最近一次扫描（任意 hop）是否在 CACHE_TTL_DAYS 以内。"""
     ticker = ticker.upper().split(".")[0]
     with get_conn() as c:
         row = c.execute(
@@ -435,10 +468,123 @@ def is_cache_fresh(ticker: str) -> bool:
         scanned = datetime.fromisoformat(row["scanned_at"])
         if scanned.tzinfo is None:
             scanned = scanned.replace(tzinfo=timezone.utc)
-        age = datetime.now(timezone.utc) - scanned
-        return age.days < CACHE_TTL_DAYS
+        return (datetime.now(timezone.utc) - scanned).days < CACHE_TTL_DAYS
     except Exception:
         return False
+
+
+# ── US-101 多跳 BOM 溯源 ──────────────────────────────────────────────────────
+
+_MAX_T1_FOR_HOP2 = 5  # 最多追踪几个 Tier-1 做 Hop-2（避免扫描时间爆炸）
+
+
+def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_depth: int = 2) -> dict:
+    """
+    多跳 BOM 溯源。
+    - Hop 1：调用现有 run_supply_chain_scan_auto（美股/A股均支持）
+    - Hop 2：对 Tier-1 中有 ticker 的公共公司，获取它们的供应商（仅美股）
+    A股不做 Hop-2（CNINFO PDF 路径不适合连续批量扫描）。
+    """
+    ticker = ticker.upper().split(".")[0]
+    now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
+    # ── Hop 1 ─────────────────────────────────────────────────────────────────
+    r1 = run_supply_chain_scan_auto(ticker, market, company_name)
+    tier1_links = r1.get("links", [])
+
+    # Tag Tier-1 rows
+    for lnk in tier1_links:
+        lnk["hop_depth"]     = 1
+        lnk["upstream_path"] = json.dumps([ticker])
+        lnk["tier1_code"]    = None
+
+    if not tier1_links or max_depth < 2 or market == "cn":
+        return r1
+
+    # ── Hop 2 ─────────────────────────────────────────────────────────────────
+    # Pick Tier-1 suppliers that have a ticker (public companies), best-score first
+    t1_with_ticker = [
+        lnk for lnk in tier1_links if lnk.get("supplier_ticker")
+    ][:_MAX_T1_FOR_HOP2]
+
+    tier2_all: list[dict] = []
+    for t1 in t1_with_ticker:
+        sup_ticker = t1["supplier_ticker"]
+        sup_name   = t1["supplier_name"]
+        try:
+            t2_raw = _get_tier1_links_for_hop2(sup_ticker, sup_name)
+        except Exception as e:
+            print(f"    [supply_chain] Hop-2 failed for {sup_ticker}: {e}")
+            continue
+
+        for lnk in t2_raw:
+            # Skip if it's the same company (circular reference)
+            if (lnk.get("supplier_ticker") or "").upper() == ticker:
+                continue
+            # Skip if it's already a Tier-1 of the original target
+            t1_tickers = {l.get("supplier_ticker","").upper() for l in tier1_links if l.get("supplier_ticker")}
+            if lnk.get("supplier_name") in {l["supplier_name"] for l in tier1_links}:
+                continue
+
+            tier2_all.append({
+                "downstream_code":  ticker,
+                "supplier_name":    lnk["supplier_name"],
+                "supplier_ticker":  lnk.get("supplier_ticker"),
+                "dependency_type":  lnk.get("dependency_type", "other"),
+                "chokepoint_score": lnk.get("chokepoint_score", 40),
+                "evidence_quote":   lnk.get("evidence_quote", ""),
+                "scanned_at":       now,
+                "source":           lnk.get("source", "sec_10k"),
+                "hop_depth":        2,
+                "upstream_path":    json.dumps([ticker, sup_ticker]),
+                "tier1_code":       sup_ticker,
+            })
+
+    if tier2_all:
+        # DELETE old Tier-2 rows, then insert new
+        with get_conn() as c:
+            c.execute(
+                "DELETE FROM supply_chain_links WHERE downstream_code=:code AND hop_depth=2",
+                {"code": ticker},
+            )
+            for lnk in tier2_all:
+                c.execute(
+                    """
+                    INSERT INTO supply_chain_links
+                      (downstream_code, supplier_name, supplier_ticker,
+                       dependency_type, chokepoint_score, evidence_quote,
+                       scanned_at, source, hop_depth, upstream_path, tier1_code)
+                    VALUES
+                      (:downstream_code, :supplier_name, :supplier_ticker,
+                       :dependency_type, :chokepoint_score, :evidence_quote,
+                       :scanned_at, :source, :hop_depth, :upstream_path, :tier1_code)
+                    """,
+                    lnk,
+                )
+        print(f"    [supply_chain] 写入 {len(tier2_all)} 条 Tier-2 links for {ticker}")
+
+    all_links = tier1_links + tier2_all
+    return {"ok": True, "links": all_links, "error": None}
+
+
+def get_supply_chain_tree(ticker: str) -> dict:
+    """
+    返回树结构，供前端分层渲染。
+    {
+      "tier1": [ {...link} ],
+      "tier2_by_t1": { "TSMC": [ {...link} ], ... }
+    }
+    """
+    all_links = get_supply_chain_links(ticker)
+    tier1 = [l for l in all_links if l.get("hop_depth", 1) == 1]
+    tier2 = [l for l in all_links if l.get("hop_depth", 1) == 2]
+
+    tier2_by_t1: dict[str, list] = {}
+    for lnk in tier2:
+        t1 = lnk.get("tier1_code") or "unknown"
+        tier2_by_t1.setdefault(t1, []).append(lnk)
+
+    return {"tier1": tier1, "tier2_by_t1": tier2_by_t1}
 
 
 # ══════════════════════════════════════════════════════════════════════════════

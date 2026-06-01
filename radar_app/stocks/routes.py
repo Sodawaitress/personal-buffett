@@ -402,43 +402,34 @@ def register_stock_routes(app):
     @app.route('/api/supply-chain/scan/<path:code>', methods=['POST'])
     @login_required
     def api_supply_chain_scan(code):
-        """触发 SEC 10-K 供应链扫描（仅美股，异步 job）。"""
+        """触发多跳 BOM 供应链扫描（美股 Hop-1+2，A股 Hop-1）。"""
         if (blocked := _demo_block()): return blocked
-
+        import threading as _threading
         ticker = code.upper().split('.')[0]
-
-        # Get company name for better LLM context
-        try:
-            stock_row = db.get_stock(ticker)
-            company_name = (stock_row or {}).get('name', ticker)
-        except Exception:
-            company_name = ticker
-
-        # Run synchronously but in a thread so HTTP doesn't time out
-        import threading
-
-        market = (db.get_stock(ticker) or {}).get("market", "us")
+        stock_row = db.get_stock(ticker) or {}
+        company_name = stock_row.get('name', ticker)
+        market = stock_row.get("market", "us")
 
         def _run():
             try:
-                from scripts.supply_chain_mapper import run_supply_chain_scan_auto
-                run_supply_chain_scan_auto(ticker, market, company_name)
+                from scripts.supply_chain_mapper import run_multihop_scan
+                run_multihop_scan(ticker, market, company_name)
             except Exception as e:
                 print(f"[supply_chain] scan thread error: {e}")
 
-        t = threading.Thread(target=_run, daemon=True)
-        t.start()
+        _threading.Thread(target=_run, daemon=True).start()
         return jsonify({'ok': True, 'status': 'scanning', 'code': ticker})
 
     @app.route('/api/supply-chain/<path:code>', methods=['GET'])
     @login_required
     def api_supply_chain_get(code):
-        """返回缓存的供应链链接列表。"""
+        """返回缓存的供应链链接（含多跳树结构）。"""
         ticker = code.upper().split('.')[0]
         try:
-            from scripts.supply_chain_mapper import get_supply_chain_links, is_cache_fresh
+            from scripts.supply_chain_mapper import get_supply_chain_links, get_supply_chain_tree, is_cache_fresh
             links = get_supply_chain_links(ticker)
+            tree  = get_supply_chain_tree(ticker)
             fresh = is_cache_fresh(ticker)
         except Exception as e:
-            return jsonify({'error': str(e), 'links': [], 'fresh': False})
-        return jsonify({'links': links, 'fresh': fresh, 'count': len(links)})
+            return jsonify({'error': str(e), 'links': [], 'tree': {}, 'fresh': False})
+        return jsonify({'links': links, 'tree': tree, 'fresh': fresh, 'count': len(links)})
