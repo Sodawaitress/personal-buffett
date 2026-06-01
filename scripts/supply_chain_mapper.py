@@ -621,6 +621,54 @@ _SYSTEM_CN_SC = (
 )
 
 
+_SYSTEM_CN_SC_LLM = (
+    "你是供应链风险分析师，专注A股上市公司。"
+    "根据你的训练数据，列出该公司已知的主要上游供应商。"
+    "返回合法 JSON 列表，每个对象含：\n"
+    "supplier_name（供应商名称），purchase_ratio（已知采购占比%，无则null），"
+    "evidence_quote（你的依据，≤80字，注明\"基于公开信息\"），is_listed（是否A股/港股/美股上市，true/false）。\n"
+    "最多6条，只列你有信心的条目。不要返回任何JSON之外的文字。"
+)
+
+
+def _cn_llm_fallback_scan(code: str, company_name: str, now: str) -> list:
+    """当 CNINFO 不可达时，用 Groq 训练数据作 A股供应链 fallback。"""
+    user_msg = (
+        f"公司：{company_name}（A股代码：{code}）\n\n"
+        "请根据你已知的公开信息，列出该公司主要上游供应商。"
+    )
+    raw = _call_groq(_SYSTEM_CN_SC_LLM, user_msg, max_tokens=600)
+    m = re.search(r'\[.*\]', raw or "", re.DOTALL)
+    if not m:
+        return []
+    try:
+        suppliers = json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return []
+    links = []
+    for s in suppliers:
+        name = (s.get("supplier_name") or "").strip()
+        if not name:
+            continue
+        ratio = s.get("purchase_ratio")
+        try:
+            ratio = float(ratio) if ratio is not None else None
+        except (TypeError, ValueError):
+            ratio = None
+        links.append({
+            "downstream_code":  code,
+            "supplier_name":    name,
+            "supplier_ticker":  None,
+            "dependency_type":  "concentration_risk" if (ratio and ratio >= 30) else "other",
+            "chokepoint_score": _score_cn_chokepoint(ratio),
+            "evidence_quote":   (s.get("evidence_quote") or "基于公开信息")[:80],
+            "scanned_at":       now,
+            "source":           "llm_knowledge",
+        })
+    print(f"    [supply_chain_cn] LLM fallback 提取到 {len(links)} 个供应商")
+    return links
+
+
 def _get_cn_annual_report_pdf_url(code: str) -> str | None:
     """
     通过 AKShare CNINFO 接口获取最新年报的 PDF 下载 URL。
@@ -761,16 +809,21 @@ def _lookup_cn_ticker(name: str) -> str | None:
 
 def run_cn_supply_chain_scan(code: str, company_name: str = "") -> dict:
     """
-    A股供应链扫描全流程：CNINFO 年报 PDF → LLM → 写库。
+    A股供应链扫描：优先 CNINFO 年报 PDF → LLM；CNINFO 不可达时降级为纯 LLM 知识。
     code: 6位A股代码（如 '600519'）
     """
     code = code.zfill(6)
     print(f"[supply_chain_cn] 开始扫描 A股 {code}")
+    now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 1. 获取年报 PDF URL
+    # 1. 获取年报 PDF URL（CNINFO，可能因海外 DNS 不可达而失败）
     pdf_url = _get_cn_annual_report_pdf_url(code)
     if not pdf_url:
-        return {"ok": False, "links": [], "error": "未找到年报 PDF"}
+        print(f"    [supply_chain_cn] CNINFO 不可达，降级为 LLM 知识扫描")
+        links = _cn_llm_fallback_scan(code, company_name, now)
+        if links:
+            _save_links(code, links)
+        return {"ok": bool(links), "links": links, "error": None if links else "LLM 未返回数据"}
 
     print(f"    [supply_chain_cn] 年报 PDF: {pdf_url}")
 
