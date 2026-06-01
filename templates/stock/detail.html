@@ -20,6 +20,11 @@
     <a href="#fundamentals" class="anav-link" data-section="fundamentals">
       {{ t.tab_archive }}<span class="anav-hint">{{ t.hint_archive }}</span>
     </a>
+    {% if market in ("us", "cn") %}
+    <a href="#supply-chain" class="anav-link" data-section="supply-chain">
+      {{ t.tab_supply_chain }}<span class="anav-hint">{{ t.hint_supply_chain }}</span>
+    </a>
+    {% endif %}
     <a href="#events" class="anav-link" data-section="events">
       {{ t.tab_events }}{% if events %}<span class="tab-count">{{ events | length }}</span>{% endif %}<span class="anav-hint">{{ t.hint_events }}</span>
     </a>
@@ -1140,70 +1145,74 @@
       </section>
       {% endif %}
 
-      {# ── US-97 上游供应链（美股 + A股） ── #}
-      {% if market in ("us", "cn") %}
-      <section class="fund-section sc-section" id="supply-chain-section" style="margin-top:32px">
-        <div class="sc-section-head">
-          <span class="fund-section-label">{{ t.lbl_supply_chain }}</span>
-          <span class="sc-source-pill">
-            {% if market == "cn" %}{{ t.sc_source_cn }}{% else %}{{ t.sc_source_us }}{% endif %}
-          </span>
-        </div>
-        <hr class="section-rule" style="margin-bottom:16px">
-
-        {# ── 空态 ── #}
-        <div id="sc-empty-state" class="sc-empty-state">
-          <div class="sc-empty-icon">⬡</div>
-          <div class="sc-empty-title">{{ t.sc_empty_title }}</div>
-          <div class="sc-empty-desc">
-            {% if market == "cn" %}{{ t.sc_empty_desc_cn }}{% else %}{{ t.sc_empty_desc_us }}{% endif %}
-          </div>
-          <button class="sc-start-btn" id="sc-scan-btn" onclick="scScan('{{ stock.code }}', '{{ market }}')">
-            {{ t.sc_start_btn }}
-          </button>
-        </div>
-
-        {# ── 加载态 ── #}
-        <div id="sc-loading-state" style="display:none">
-          <div class="sc-loading-wrap">
-            <div class="sc-loading-spinner"></div>
-            <div class="sc-loading-steps" id="sc-loading-steps">
-              {% if market == "cn" %}
-              <span class="sc-step" id="scs-0">{{ t.sc_step_cn_0 }}</span>
-              <span class="sc-step-sep">→</span>
-              <span class="sc-step" id="scs-1">{{ t.sc_step_cn_1 }}</span>
-              <span class="sc-step-sep">→</span>
-              <span class="sc-step" id="scs-2">{{ t.sc_step_cn_2 }}</span>
-              <span class="sc-step-sep">→</span>
-              <span class="sc-step" id="scs-3">{{ t.sc_step_hop2 }}</span>
-              {% else %}
-              <span class="sc-step" id="scs-0">{{ t.sc_step_us_0 }}</span>
-              <span class="sc-step-sep">→</span>
-              <span class="sc-step" id="scs-1">{{ t.sc_step_us_1 }}</span>
-              <span class="sc-step-sep">→</span>
-              <span class="sc-step" id="scs-2">{{ t.sc_step_us_2 }}</span>
-              <span class="sc-step-sep">→</span>
-              <span class="sc-step" id="scs-3">{{ t.sc_step_hop2 }}</span>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-
-        {# ── 结果态 ── #}
-        <div id="sc-results" style="display:none">
-          <div class="sc-summary-bar" id="sc-summary-bar"></div>
-          <div id="sc-content" class="sc-list"></div>
-          <div class="sc-footer">
-            <span id="sc-scan-date" class="sc-footer-date"></span>
-            <button class="sc-rescan-btn" id="sc-rescan-btn"
-                    onclick="scScan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
-          </div>
-        </div>
-      </section>
-      {% endif %}
-
     </div>
   </section>
+
+  {# ═══════════════════════════════════════════════════════
+     §5  供应链
+     ═══════════════════════════════════════════════════════ #}
+  {% if market in ("us", "cn") %}
+  <section id="supply-chain" class="detail-section">
+    <div class="stock-page-body">
+      <div class="sc-section-head">
+        <span class="fund-section-label">{{ t.lbl_supply_chain }}</span>
+        <span class="sc-source-pill">
+          {% if market == "cn" %}{{ t.sc_source_cn }}{% else %}{{ t.sc_source_us }}{% endif %}
+        </span>
+      </div>
+      <hr class="section-rule" style="margin-bottom:16px">
+
+      {# ── 空态 ── #}
+      <div id="sc-empty-state" class="sc-empty-state">
+        <div class="sc-empty-icon">⬡</div>
+        <div class="sc-empty-title">{{ t.sc_empty_title }}</div>
+        <div class="sc-empty-desc">
+          {% if market == "cn" %}{{ t.sc_empty_desc_cn }}{% else %}{{ t.sc_empty_desc_us }}{% endif %}
+        </div>
+        <button class="sc-start-btn" id="sc-scan-btn" onclick="scScan('{{ stock.code }}', '{{ market }}')">
+          {{ t.sc_start_btn }}
+        </button>
+      </div>
+
+      {# ── 加载态 ── #}
+      <div id="sc-loading-state" style="display:none">
+        <div class="sc-loading-wrap">
+          <div class="sc-loading-spinner"></div>
+          <div class="sc-loading-steps" id="sc-loading-steps">
+            {% if market == "cn" %}
+            <span class="sc-step" id="scs-0">{{ t.sc_step_cn_0 }}</span>
+            <span class="sc-step-sep">→</span>
+            <span class="sc-step" id="scs-1">{{ t.sc_step_cn_1 }}</span>
+            <span class="sc-step-sep">→</span>
+            <span class="sc-step" id="scs-2">{{ t.sc_step_cn_2 }}</span>
+            <span class="sc-step-sep">→</span>
+            <span class="sc-step" id="scs-3">{{ t.sc_step_hop2 }}</span>
+            {% else %}
+            <span class="sc-step" id="scs-0">{{ t.sc_step_us_0 }}</span>
+            <span class="sc-step-sep">→</span>
+            <span class="sc-step" id="scs-1">{{ t.sc_step_us_1 }}</span>
+            <span class="sc-step-sep">→</span>
+            <span class="sc-step" id="scs-2">{{ t.sc_step_us_2 }}</span>
+            <span class="sc-step-sep">→</span>
+            <span class="sc-step" id="scs-3">{{ t.sc_step_hop2 }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# ── 结果态 ── #}
+      <div id="sc-results" style="display:none">
+        <div class="sc-summary-bar" id="sc-summary-bar"></div>
+        <div id="sc-content" class="sc-list"></div>
+        <div class="sc-footer">
+          <span id="sc-scan-date" class="sc-footer-date"></span>
+          <button class="sc-rescan-btn" id="sc-rescan-btn"
+                  onclick="scScan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   {# ═══════════════════════════════════════════════════════
      §4  事件

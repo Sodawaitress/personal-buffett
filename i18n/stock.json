@@ -803,6 +803,14 @@
     "en": "Events log",
     "zh": "大事记"
   },
+  "tab_supply_chain": {
+    "en": "Supply Chain",
+    "zh": "供应链"
+  },
+  "hint_supply_chain": {
+    "en": "BOM trace",
+    "zh": "上游溯源"
+  },
   "verdict_mislead_prefix": {
     "en": "⚠ Institutional signals active (precursor score ",
     "zh": "⚠ 机构信号活跃（前兆分 "
