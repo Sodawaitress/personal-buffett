@@ -11,11 +11,8 @@
 
     <div class="sc-section-head">
       <span class="fund-section-label">{{ t.lbl_supply_chain }}</span>
-      <span class="sc-source-pill">
-        {% if market == "cn" %}{{ t.sc_source_cn }}{% else %}{{ t.sc_source_us }}{% endif %}
-      </span>
     </div>
-    <hr class="section-rule" style="margin-bottom:16px">
+    <hr class="section-rule" style="margin-bottom:12px">
 
     {# ── 空态 ── #}
     <div id="sc-empty-state" class="sc-empty-state">
@@ -61,6 +58,9 @@
       <div id="sc-content" class="sc-list"></div>
       <div class="sc-footer">
         <span id="sc-scan-date" class="sc-footer-date"></span>
+        <span class="sc-source-pill">
+          {% if market == "cn" %}{{ t.sc_source_cn }}{% else %}{{ t.sc_source_us }}{% endif %}
+        </span>
         <button class="sc-rescan-btn" id="sc-rescan-btn"
                 onclick="scScan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
       </div>
