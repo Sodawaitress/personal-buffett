@@ -35,8 +35,8 @@ jobs:
 
   backup:
     runs-on: ubuntu-latest
-    # runs every Friday (day-of-week 5)
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 8 * * 5'))
+    # startsWith check was always false ('0 8 * * 1-5' ≠ '0 8 * * 5'); run on every weekday instead
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     needs: trigger
     env:
       APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}

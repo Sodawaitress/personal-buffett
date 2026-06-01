@@ -163,7 +163,11 @@ def _build_snapshot() -> dict:
 def _commit_snapshot_to_github(snapshot: dict):
     token = os.environ.get("GITHUB_TOKEN", "")
     if not token:
-        logger.warning("[daily_digest] GITHUB_TOKEN 未配置，跳过 GitHub 快照提交")
+        logger.error(
+            "[daily_digest] GITHUB_TOKEN 未配置 — 快照将无法提交到 GitHub，"
+            "Claude Routine 会读到陈旧快照。"
+            "在 Fly.io 设置: flyctl secrets set GITHUB_TOKEN=<PAT>"
+        )
         return
 
     content_bytes = json.dumps(snapshot, ensure_ascii=False, indent=2).encode("utf-8")
@@ -198,7 +202,11 @@ def _commit_snapshot_to_github(snapshot: dict):
         if r.status_code in (200, 201):
             logger.info("[daily_digest] GitHub 快照已提交: %s", today)
         else:
-            logger.warning("[daily_digest] GitHub commit 失败: %s %s", r.status_code, r.text[:200])
+            logger.error(
+                "[daily_digest] GitHub commit 失败: HTTP %s — 快照未更新。"
+                "401=token过期，403=权限不足，422=SHA冲突。响应: %s",
+                r.status_code, r.text[:300]
+            )
     except Exception as e:
         logger.warning("[daily_digest] GitHub commit 异常: %s", e)
 

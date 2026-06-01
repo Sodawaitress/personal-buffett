@@ -82,11 +82,18 @@ def register_system_routes(app):
             try:
                 from scripts.stock_pipeline import main as run_pipeline
                 run_pipeline()
-                update_job(job_id, "done")
                 app_ctx.logger.info("[trigger-pipeline] job %s done", job_id)
             except Exception as e:
                 update_job(job_id, "failed", error=str(e))
                 app_ctx.logger.warning("[trigger-pipeline] job %s failed: %s", job_id, e)
+                return
+            try:
+                from scripts.backfill_returns import backfill_predictions
+                backfill_predictions()
+                app_ctx.logger.info("[trigger-pipeline] backfill_predictions done")
+            except Exception as e:
+                app_ctx.logger.warning("[trigger-pipeline] backfill_predictions failed: %s", e)
+            update_job(job_id, "done")
 
         threading.Thread(target=_run, daemon=False, name="gh-pipeline-trigger").start()
         return jsonify({"status": "started", "job_id": job_id}), 202
