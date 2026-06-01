@@ -202,7 +202,7 @@ COPYFILE_DISABLE=1 flyctl deploy --remote-only
 **已知坑**：
 - `/Volumes/` 路径下的 macOS `._*` 元数据文件会导致 depot builder 报 `failed to xattr: operation not permitted`，`.dockerignore` 里的 `._*` 规则来不及生效，必须先手动删除
 - `COPYFILE_DISABLE=1` 防止 macOS 在传输过程中重新生成 `._*`
-- 部署完成后 fly 可能报 "not listening on 0.0.0.0:8080"——这是时序问题，gunicorn 启动需要几秒（seed_demo.py 先跑），等健康检查通过就正常了
+- 部署完成后 fly 可能报 "not listening on 0.0.0.0:8080"——这是时序问题，gunicorn 启动需要 3 秒（seed_demo.py 先跑），但 proxy 1 秒就来探测。fly.toml 已加 `grace_period = "20s"` 修复，日志里这条 error 只是一次性的，不影响实际可用性（`/healthz` 200 即正常）
 
 **验证部署**：
 
