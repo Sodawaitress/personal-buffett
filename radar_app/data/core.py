@@ -463,6 +463,21 @@ _SCHEMA_SQL = """
             signal_json  TEXT
         );
 
+        -- US-97 自动供应链溯源
+        CREATE TABLE IF NOT EXISTS supply_chain_links (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            downstream_code  TEXT NOT NULL,
+            supplier_name    TEXT NOT NULL,
+            supplier_ticker  TEXT,
+            dependency_type  TEXT,
+            chokepoint_score INTEGER DEFAULT 0,
+            evidence_quote   TEXT,
+            scanned_at       TEXT DEFAULT (datetime('now')),
+            source           TEXT DEFAULT 'sec_10k'
+        );
+        CREATE INDEX IF NOT EXISTS idx_supply_chain_links_code
+            ON supply_chain_links(downstream_code, chokepoint_score DESC);
+
         -- Performance indices on high-frequency query columns
         CREATE INDEX IF NOT EXISTS idx_stock_prices_code_time
             ON stock_prices(code, fetched_at DESC);

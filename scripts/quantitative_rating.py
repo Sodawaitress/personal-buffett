@@ -540,10 +540,17 @@ class QuantitativeRater:
         profit_list = []
         for year_data in annual_data:
             try:
-                np_str = year_data.get("net_profit", "0")
-                if isinstance(np_str, str):
-                    np_str = np_str.replace("亿", "").replace("万", "")
-                profit_list.append(float(np_str))
+                np_raw = year_data.get("net_profit", "0")
+                if isinstance(np_raw, str):
+                    if "亿" in np_raw:
+                        val = float(np_raw.replace("亿", "").strip()) * 10000
+                    elif "万" in np_raw:
+                        val = float(np_raw.replace("万", "").strip())
+                    else:
+                        val = float(np_raw.strip()) if np_raw.strip() else 0.0
+                else:
+                    val = float(np_raw)
+                profit_list.append(val)
             except Exception:
                 pass
 
@@ -627,10 +634,17 @@ class QuantitativeRater:
         profit_list = []
         for year_data in annual_data:
             try:
-                np_str = year_data.get("net_profit", "0")
-                if isinstance(np_str, str):
-                    np_str = np_str.replace("亿", "").replace("万", "")
-                profit_list.append(float(np_str))
+                np_raw = year_data.get("net_profit", "0")
+                if isinstance(np_raw, str):
+                    if "亿" in np_raw:
+                        val = float(np_raw.replace("亿", "").strip()) * 10000
+                    elif "万" in np_raw:
+                        val = float(np_raw.replace("万", "").strip())
+                    else:
+                        val = float(np_raw.strip()) if np_raw.strip() else 0.0
+                else:
+                    val = float(np_raw)
+                profit_list.append(val)
             except Exception:
                 pass
 
@@ -790,10 +804,17 @@ class QuantitativeRater:
         profit_list = []
         for year_data in annual_data[:3]:
             try:
-                np_str = year_data.get("net_profit", "0")
-                if isinstance(np_str, str):
-                    np_str = np_str.replace("亿", "").replace("万", "")
-                profit_list.append(float(np_str))
+                np_raw = year_data.get("net_profit", "0")
+                if isinstance(np_raw, str):
+                    if "亿" in np_raw:
+                        val = float(np_raw.replace("亿", "").strip()) * 10000
+                    elif "万" in np_raw:
+                        val = float(np_raw.replace("万", "").strip())
+                    else:
+                        val = float(np_raw.strip()) if np_raw.strip() else 0.0
+                else:
+                    val = float(np_raw)
+                profit_list.append(val)
             except Exception:
                 pass
 

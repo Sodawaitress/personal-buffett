@@ -502,6 +502,11 @@ def _run_analysis(code, market, log, user_id=None):
     log("  [4/4] Layer 3 LLM narrative…")
     try:
         from scripts.buffett_analyst import analyze_stock_v3
+        from scripts.buffett_context import build_serenity_context
+
+        serenity_ctx = build_serenity_context(code, locale=_user_locale)
+        if serenity_ctx:
+            log("       注入 Serenity 供应链论文")
 
         result = analyze_stock_v3(
             code=code,
@@ -522,6 +527,7 @@ def _run_analysis(code, market, log, user_id=None):
             earnings_flags=ctx["earnings_flags"],
             inst_signals=ctx["signals"].get("inst_us") if market != "cn" else None,
             locale=_user_locale,
+            serenity_context=serenity_ctx,
         )
         if result:
             today = datetime.now(CN_TZ).strftime("%Y-%m-%d")

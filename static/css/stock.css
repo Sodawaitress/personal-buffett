@@ -1449,4 +1449,317 @@
 .industry-signal-change.up   { color: #16a34a; font-weight: 700; }
 .industry-signal-change.down { color: #dc2626; font-weight: 700; }
 
+/* ── US-97 供应链模块（三态：空/加载/结果） ── */
+
+/* 头部 */
+.sc-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.sc-source-pill {
+  font-size: 11px;
+  color: var(--ink-muted, #888);
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+/* 空态 */
+.sc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 32px;
+  text-align: center;
+}
+.sc-empty-icon {
+  font-size: 36px;
+  color: #d1d5db;
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -2px;
+}
+.sc-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #1a1a1a);
+  margin-bottom: 6px;
+}
+.sc-empty-desc {
+  font-size: 12px;
+  color: var(--ink-muted, #888);
+  line-height: 1.6;
+  max-width: 320px;
+  margin-bottom: 20px;
+}
+.sc-start-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent, #1a5276);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sc-start-btn:hover { opacity: 0.85; }
+.sc-start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 加载态 */
+.sc-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 24px;
+  gap: 20px;
+}
+.sc-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--accent, #1a5276);
+  border-radius: 50%;
+  animation: sc-spin 0.8s linear infinite;
+}
+@keyframes sc-spin { to { transform: rotate(360deg); } }
+
+.sc-loading-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.sc-step {
+  font-size: 11px;
+  color: #9ca3af;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.25s;
+}
+.sc-step-active {
+  color: var(--accent, #1a5276);
+  background: #eff6ff;
+  font-weight: 600;
+}
+.sc-step-done {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+.sc-step-sep {
+  font-size: 11px;
+  color: #d1d5db;
+}
+
+/* 结果头部汇总栏 */
+.sc-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-muted, #888);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.sc-sum-count {
+  font-weight: 600;
+  color: var(--ink, #1a1a1a);
+}
+.sc-sum-sep { color: #d1d5db; }
+.sc-sum-top { color: var(--ink-muted, #888); }
+.sc-sum-score {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  vertical-align: middle;
+  margin-left: 3px;
+}
+
+/* 供应商列表 */
+.sc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 聚合卡（采购集中度） */
+.sc-card-aggregate {
+  flex-direction: column;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #eff6ff;
+  padding: 12px 14px;
+}
+.sc-agg-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+.sc-agg-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1d4ed8;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.sc-agg-bar-wrap {
+  height: 5px;
+  background: #bfdbfe;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.sc-agg-bar-fill {
+  height: 5px;
+  border-radius: 3px;
+  background: #3b82f6;
+  transition: width 0.5s ease;
+}
+.sc-agg-quote {
+  font-size: 11px;
+  color: #3b82f6;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* 具名供应商卡 */
+.sc-card {
+  display: flex;
+  border: 1px solid var(--rule-color, #e8e4de);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.sc-card-left {
+  width: 4px;
+  flex-shrink: 0;
+}
+.sc-card-body {
+  padding: 10px 12px;
+  flex: 1;
+  min-width: 0;
+}
+.sc-card-row1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.sc-card-row2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.sc-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #1a1a1a);
+}
+.sc-ticker-chip {
+  font-size: 10px;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+.sc-watchlist-btn {
+  font-size: 10px;
+  color: var(--accent, #1a5276);
+  background: transparent;
+  border: 1px solid var(--accent, #1a5276);
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sc-watchlist-btn:hover {
+  background: var(--accent, #1a5276);
+  color: #fff;
+}
+.sc-dep-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.sc-risk-badge {
+  font-size: 11px;
+  color: var(--ink-muted, #888);
+}
+.sc-risk-level {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 3px;
+}
+.sc-bar-track {
+  height: 4px;
+  background: #f3f4f6;
+  border-radius: 2px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.sc-bar-fill {
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.sc-evidence {
+  font-size: 11px;
+  color: var(--ink-muted, #888);
+  font-style: italic;
+  line-height: 1.45;
+  border-left: 2px solid #e5e7eb;
+  margin: 0;
+  padding: 3px 8px;
+  word-break: break-word;
+}
+
+/* 结果底部 */
+.sc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-color, #e8e4de);
+}
+.sc-footer-date {
+  font-size: 11px;
+  color: var(--ink-muted, #888);
+}
+.sc-rescan-btn {
+  font-size: 11px;
+  color: var(--ink-muted, #888);
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sc-rescan-btn:hover {
+  border-color: var(--accent, #1a5276);
+  color: var(--accent, #1a5276);
+}
+.sc-rescan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* 主容器 */

@@ -4302,3 +4302,142 @@ AKShare `stock_analyst_forecast_em`（东方财富分析师预期），A股专�
 - 用 LLM 生成行业解读文字
 - 所有行业全覆盖（第一版只做 cycle_commodity + growth_tech）
 
+---
+
+### US-96 · Serenity 供应链瓶颈框架集成
+
+**As a** 用户
+**I want to** 当我分析美股/欧股半导体/光子学/内存类股票时，巴菲特信能自动注入供应链瓶颈视角
+**So that** 分析不再停留在"PE估值合理"，而是能回答"这家公司是不是供应链里唯一的那颗螺丝钉"
+
+#### 背景
+
+Serenity（@aleabitoreddit）的分析框架与巴菲特框架正交互补：
+- 巴菲特问：护城河稳不稳、管理层可信、现在贵不贵（自上而下）
+- Serenity 问：谁控制了供应链里唯一的瓶颈、ATM稀释有多严重、客户集中度是否致命（自下而上）
+
+两者结合后，对半导体/CPO/内存股票的分析质量会从"PE合理"升级到"唯一商用DFB激光供应商，设计赢已锁定三家超大规模"。
+
+#### 实现方案
+
+**1. `scripts/serenity_theses.py`（新文件）**
+
+静态知识库，存储已整理的 Serenity 论文摘要：
+```python
+SERENITY_THESES = {
+    "SIVE": {
+        "conviction": "S",
+        "supply_chain_role": "chokepoint",
+        "thesis": "CPO超级周期中唯一商用DFB/CW激光供应商...",
+        ...
+    },
+    ...
+}
+```
+
+覆盖股票（首批）：SIVE、AXTI、MU、NBIS、LITE、COHR、AAOI、LPTH、RKLB
+
+**2. `SYSTEM_SUPPLY_CHAIN` prompt（`buffett_prompts.py` 新增）**
+
+新增 `supply_chain` 框架 prompt，融合14条 Serenity 原理：
+- 瓶颈垄断检验（多跳BOM：谁控制上游原料/设备/IP）
+- 设计赢锁定证据（已拿到哪些Tier-1的设计赢）
+- ATM 稀释红旗（主动配股稀释是结构性顶部信号）
+- 客户集中度（Mag-7集中度 > 50% = 风险）
+- 融资质量（战略方/可转债 > ATM > 普通配股）
+- 结合标准巴菲特估值逻辑
+
+**3. `buffett_context.py` 新增 `build_serenity_context(code)`**
+
+从 `SERENITY_THESES` 查找论文，格式化为 prompt 可消费的文字块。
+
+**4. `classifier.py` 新增 `supply_chain` company_type 检测**
+
+检测规则：
+- market in (us, hk, au, kr, nz) + code 在 `SERENITY_THESES` 中 → `supply_chain`
+- 或 sector 关键词匹配（semiconductor/photonics/memory）→ `supply_chain`
+
+**5. `FRAMEWORK_MAP` 新增路由**
+
+```python
+"supply_chain": ("supply_chain", SYSTEM_SUPPLY_CHAIN)
+```
+
+**6. `buffett_analyst.py` 的 `analyze_stock_v3` 注入**
+
+`_run_analysis` 在调用 `analyze_stock_v3` 前，如果有 serenity context，拼入 user prompt。
+
+#### Acceptance Criteria
+
+- [ ] `scripts/serenity_theses.py` 包含 ≥8 只股票的论文摘要，字段：conviction/supply_chain_role/thesis/key_customers/catalysts/fail_conditions/atm_risk
+- [ ] 对 SERENITY_THESES 中的股票（如 MU/SIVE），分析信会同时覆盖：供应链地位 + 巴菲特估值 + ATM风险
+- [ ] `FRAMEWORK_MAP` 新增 `supply_chain` 框架，中英文各一个 system prompt
+- [ ] classifier 能正确检测 supply_chain 类型（代码在论文库中，或 sector=semiconductor）
+- [ ] 对非 supply_chain 类股票无影响（A股正常走原有框架）
+- [ ] `buffett_prompts.py` 禁止 markdown 加粗规则同样适用于新 prompt
+
+#### 不做
+- 自动从 X/Twitter 实时爬取 Serenity 推文（第一版静态知识库）
+- 覆盖 Serenity 论文里的所有30+只股票（先做8只高确定性的）
+- 前端新增专用 UI（沿用现有详情页的 framework_used 紫色标签，显示"supply_chain"）
+
+---
+
+### US-97 · 自动供应链溯源引擎
+
+**As a** 用户
+**I want to** 在任意美股详情页点击"溯源上游"，系统自动从 SEC 10-K 里挖掘该公司对哪些供应商存在单一依赖，并把可投资的上游瓶颈标的排序展示
+**So that** 我不需要靠人工整理，就能发现下一个 AXTI / SIVE 这样的上游垄断机会
+
+#### 技术路径
+
+```
+用户点击「溯源上游」（美股 only）
+    ↓
+SEC EDGAR API 拉取最新 10-K（CIK 映射 → submissions → 文档 URL）
+    ↓
+提取 Risk Factors 章节（正则定位 ITEM 1A）
+    ↓
+Groq LLM 提取所有供应商依赖段落（结构化 JSON）
+    ↓
+每个供应商：keyword 打分（sole/single/no alternative → chokepoint_score）
+    ↓
+yfinance 查询是否上市公司（name → ticker 匹配）
+    ↓
+结果写入 supply_chain_links 表（24h 缓存）
+    ↓
+前端展示排序列表 + 「加入自选股」按钮
+```
+
+#### 量化 chokepoint_score（0–100）
+
+| 10-K 关键词 | 得分 |
+|---|---|
+| "sole source" / "sole supplier" | 90–100 |
+| "single source" / "single supplier" / "only supplier" | 75–89 |
+| "limited alternatives" / "no alternative" / "difficult to replace" | 60–74 |
+| "qualified" + "limited number" | 45–59 |
+| "significant supplier" / "key supplier" | 30–44 |
+| "important supplier" / "primary supplier" | 15–29 |
+
+替换周期加权：提到 "12–24 months to qualify" → 分数 +10；提到 "years" → +15
+
+#### Acceptance Criteria
+
+- [ ] 新表 `supply_chain_links`：`downstream_code, supplier_name, supplier_ticker, dependency_type, chokepoint_score, evidence_quote, scanned_at, source`
+- [ ] `scripts/supply_chain_mapper.py`：`run_supply_chain_scan(ticker)` 完整流程，返回排序后的 candidates 列表
+- [ ] SEC EDGAR 拉取成功率：NVDA/AAPL/AMD/MU 四只测试股均能拿到 Risk Factors 文本
+- [ ] Groq 提取至少找到 3 个供应商依赖（这些公司 10-K 里大量披露）
+- [ ] `/api/supply-chain/scan/<code>` POST — 触发异步扫描，返回 job_id
+- [ ] `/api/supply-chain/<code>` GET — 返回缓存结果（24h）
+- [ ] 详情页「§ 基本面」Tab 底部新增「上游供应链」折叠区块（仅美股显示）
+- [ ] 每个候选供应商卡片：名称 + chokepoint 得分条 + 依据引用（10-K 原文前80字）+ 「加入自选股」按钮
+- [ ] 未上市公司（无 ticker）也显示，但「加入自选股」按钮灰色不可点
+- [ ] A股/港股等非美股市场：不显示该区块（graceful hide）
+
+#### 不做（第一版）
+- Tier-2 溯源（供应商的供应商）
+- A股年报中文版解析
+- 自动批量扫描所有自选股（按需手动触发）
+- 供应商财务数据抓取（只做发现，不做分析）
+

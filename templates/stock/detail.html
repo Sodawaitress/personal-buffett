@@ -1140,6 +1140,68 @@
       </section>
       {% endif %}
 
+      {# ── US-97 上游供应链（美股 + A股） ── #}
+      {% if market in ("us", "cn") %}
+      <section class="fund-section sc-section" id="supply-chain-section" style="margin-top:32px">
+        <div class="sc-section-head">
+          <span class="fund-section-label">{{ t.get('lbl_supply_chain', '上游供应链') }}</span>
+          <span class="sc-source-pill">
+            {% if market == "cn" %}来源: CNINFO 年报{% else %}来源: SEC 10-K{% endif %}
+          </span>
+        </div>
+        <hr class="section-rule" style="margin-bottom:16px">
+
+        {# ── 空态 ── #}
+        <div id="sc-empty-state" class="sc-empty-state">
+          <div class="sc-empty-icon">⬡</div>
+          <div class="sc-empty-title">供应链依赖分析</div>
+          <div class="sc-empty-desc">
+            {% if market == "cn" %}
+            解析 CNINFO 年报，提取前五名供应商集中度及关联方采购依赖。
+            {% else %}
+            扫描 SEC 10-K Risk Factors，识别独家来源、单一供应商等关键依赖。
+            {% endif %}
+          </div>
+          <button class="sc-start-btn" id="sc-scan-btn" onclick="scScan('{{ stock.code }}', '{{ market }}')">
+            开始溯源
+          </button>
+        </div>
+
+        {# ── 加载态 ── #}
+        <div id="sc-loading-state" style="display:none">
+          <div class="sc-loading-wrap">
+            <div class="sc-loading-spinner"></div>
+            <div class="sc-loading-steps" id="sc-loading-steps">
+              {% if market == "cn" %}
+              <span class="sc-step" id="scs-0">查找年报 PDF</span>
+              <span class="sc-step-sep">→</span>
+              <span class="sc-step" id="scs-1">解析供应商章节</span>
+              <span class="sc-step-sep">→</span>
+              <span class="sc-step" id="scs-2">AI 提取结构化数据</span>
+              {% else %}
+              <span class="sc-step" id="scs-0">EDGAR 定位 10-K</span>
+              <span class="sc-step-sep">→</span>
+              <span class="sc-step" id="scs-1">提取 Risk Factors</span>
+              <span class="sc-step-sep">→</span>
+              <span class="sc-step" id="scs-2">AI 分析供应商依赖</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# ── 结果态 ── #}
+        <div id="sc-results" style="display:none">
+          <div class="sc-summary-bar" id="sc-summary-bar"></div>
+          <div id="sc-content" class="sc-list"></div>
+          <div class="sc-footer">
+            <span id="sc-scan-date" class="sc-footer-date"></span>
+            <button class="sc-rescan-btn" id="sc-rescan-btn"
+                    onclick="scScan('{{ stock.code }}', '{{ market }}')">重新溯源</button>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+
     </div>
   </section>
 
@@ -1310,6 +1372,215 @@ document.addEventListener('DOMContentLoaded', () => {
   if (fundSection) {
     new IntersectionObserver(entries => { if (entries[0].isIntersecting) buildChart(); }, { threshold: 0.1 }).observe(fundSection);
   } else { buildChart(); }
+})();
+
+// ── US-97 供应链溯源 ──
+(function() {
+  const code   = '{{ stock.code }}';
+  const market = '{{ market }}';
+  if (!['us','cn'].includes(market)) return;
+
+  // ── 工具函数 ──
+  const $ = id => document.getElementById(id);
+
+  const DEP_LABELS = {
+    sole_source:          '独家来源',
+    single_source:        '单一来源',
+    limited_alternatives: '有限替代',
+    qualified_supply_list:'资质供应商清单',
+    concentration_risk:   '采购集中度',
+    other:                '采购依赖',
+  };
+  const DEP_COLORS = {
+    sole_source: '#b91c1c', single_source: '#b91c1c',
+    limited_alternatives: '#d97706', qualified_supply_list: '#d97706',
+    concentration_risk: '#1d4ed8',
+    other: '#6b7280',
+  };
+
+  function scoreColor(s) {
+    if (s >= 80) return '#b91c1c';
+    if (s >= 60) return '#d97706';
+    return '#15803d';
+  }
+  function scoreLabel(s) {
+    if (s >= 85) return '极高';
+    if (s >= 70) return '高';
+    if (s >= 55) return '中';
+    return '低';
+  }
+
+  // ── 切换三态 ──
+  function showState(name) {
+    $('sc-empty-state').style.display   = name === 'empty'   ? '' : 'none';
+    $('sc-loading-state').style.display = name === 'loading' ? '' : 'none';
+    $('sc-results').style.display       = name === 'results' ? '' : 'none';
+  }
+
+  // 加载步骤高亮
+  let _stepTimer = null;
+  function animateSteps() {
+    let step = 0;
+    clearInterval(_stepTimer);
+    for (let i = 0; i < 3; i++) { const el = $(`scs-${i}`); if (el) el.className = 'sc-step'; }
+    _stepTimer = setInterval(() => {
+      if (step > 0) { const prev = $(`scs-${step-1}`); if (prev) prev.className = 'sc-step sc-step-done'; }
+      const cur = $(`scs-${step}`); if (cur) cur.className = 'sc-step sc-step-active';
+      step++;
+      if (step >= 3) clearInterval(_stepTimer);
+    }, 10000);
+  }
+
+  // ── 渲染结果 ──
+  function renderLinks(links, scannedAt) {
+    if (!links || !links.length) {
+      showState('empty');
+      // 用 fund-note 替换说明文字
+      const desc = document.querySelector('.sc-empty-desc');
+      if (desc) desc.textContent = '扫描完成，未检测到可量化的供应商集中依赖。';
+      return;
+    }
+
+    // 汇总条
+    const topRisk = Math.max(...links.map(l => l.chokepoint_score));
+    const topName = links.find(l => l.chokepoint_score === topRisk)?.supplier_name || '';
+    const summaryEl = $('sc-summary-bar');
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <span class="sc-sum-count">${links.length} 项依赖</span>
+        <span class="sc-sum-sep">·</span>
+        <span class="sc-sum-top">最高风险 <strong style="color:${scoreColor(topRisk)}">${topName.slice(0,12)}${topName.length>12?'…':''}</strong>
+          <span class="sc-sum-score" style="background:${scoreColor(topRisk)}">${topRisk}</span></span>`;
+    }
+
+    // 日期
+    const dateEl = $('sc-scan-date');
+    if (dateEl && scannedAt) dateEl.textContent = `上次扫描: ${scannedAt.slice(0,10)}`;
+
+    // 卡片列表
+    const contentEl = $('sc-content');
+    if (!contentEl) return;
+
+    let html = '';
+    links.forEach(lnk => {
+      const sc    = lnk.chokepoint_score;
+      const color = scoreColor(sc);
+      const depColor = DEP_COLORS[lnk.dependency_type] || '#6b7280';
+      const depLabel = DEP_LABELS[lnk.dependency_type] || '采购依赖';
+      const isAggregate = lnk.supplier_name.includes('合计') || lnk.supplier_name.includes('前五名供应商');
+
+      const tickerChip = lnk.supplier_ticker
+        ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>`
+        : '';
+      const addBtn = lnk.supplier_ticker
+        ? `<button class="sc-watchlist-btn"
+              onclick="scAddWatch('${lnk.supplier_ticker}', this)"
+              title="加入自选股">+ 自选股</button>`
+        : '';
+
+      if (isAggregate) {
+        // 汇总条目——蓝色信息卡
+        const pct = lnk.evidence_quote.match(/(\d+\.?\d*)%/)?.[1];
+        html += `
+          <div class="sc-card sc-card-aggregate">
+            <div class="sc-agg-label">采购集中度</div>
+            <div class="sc-agg-value">${pct ? pct + '%' : '—'}</div>
+            <div class="sc-agg-bar-wrap">
+              <div class="sc-agg-bar-fill" style="width:${Math.min(pct||0,100)}%"></div>
+            </div>
+            <div class="sc-agg-quote">${lnk.evidence_quote}</div>
+          </div>`;
+      } else {
+        // 具名供应商卡
+        html += `
+          <div class="sc-card">
+            <div class="sc-card-left" style="background:${color}"></div>
+            <div class="sc-card-body">
+              <div class="sc-card-row1">
+                <span class="sc-name">${lnk.supplier_name}</span>
+                ${tickerChip}
+                ${addBtn}
+              </div>
+              <div class="sc-card-row2">
+                <span class="sc-dep-chip" style="background:${depColor}1a;color:${depColor};border-color:${depColor}40">${depLabel}</span>
+                <span class="sc-risk-badge" style="color:${color}">风险 <strong>${sc}</strong>
+                  <em class="sc-risk-level">${scoreLabel(sc)}</em></span>
+              </div>
+              <div class="sc-bar-track">
+                <div class="sc-bar-fill" style="width:${sc}%;background:${color}"></div>
+              </div>
+              ${lnk.evidence_quote ? `<blockquote class="sc-evidence">${lnk.evidence_quote}</blockquote>` : ''}
+            </div>
+          </div>`;
+      }
+    });
+    contentEl.innerHTML = html;
+    showState('results');
+  }
+
+  // ── 加自选股 ──
+  window.scAddWatch = function(ticker, btn) {
+    btn.disabled = true;
+    btn.textContent = '添加中…';
+    fetch(`/api/watchlist/add`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code: ticker}),
+    })
+    .then(r => r.json())
+    .then(d => { btn.textContent = d.ok ? '✓ 已加入' : '+ 自选股'; btn.disabled = !d.ok; })
+    .catch(() => { btn.textContent = '+ 自选股'; btn.disabled = false; });
+  };
+
+  // ── 触发扫描 ──
+  window.scScan = function(c, mkt) {
+    const scanBtn   = $('sc-scan-btn');
+    const rescanBtn = $('sc-rescan-btn');
+    if (scanBtn)   scanBtn.disabled   = true;
+    if (rescanBtn) rescanBtn.disabled = true;
+    showState('loading');
+    animateSteps();
+
+    fetch(`/api/supply-chain/scan/${c}`, {method:'POST'})
+      .then(() => {
+        let tries = 0;
+        const poll = setInterval(() => {
+          tries++;
+          fetch(`/api/supply-chain/${c}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data.links && data.links.length) {
+                clearInterval(poll); clearInterval(_stepTimer);
+                // Mark all steps done
+                for(let i=0;i<3;i++){const el=$(`scs-${i}`);if(el)el.className='sc-step sc-step-done';}
+                renderLinks(data.links, data.links[0]?.scanned_at);
+                if (rescanBtn) rescanBtn.disabled = false;
+              } else if (tries >= 20) {
+                clearInterval(poll); clearInterval(_stepTimer);
+                showState('empty');
+                const desc = document.querySelector('.sc-empty-desc');
+                if (desc) desc.textContent = '扫描超时。可能是网络延迟或文件格式不支持，请稍后重试。';
+                if (scanBtn)   { scanBtn.disabled = false; }
+              }
+            })
+            .catch(() => {});
+        }, 5000);
+      })
+      .catch(() => {
+        showState('empty');
+        if (scanBtn) scanBtn.disabled = false;
+      });
+  };
+
+  // ── 页面初始化：自动加载缓存 ──
+  fetch(`/api/supply-chain/${code}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.links && data.links.length) {
+        renderLinks(data.links, data.links[0]?.scanned_at);
+      }
+    })
+    .catch(() => {});
 })();
 
 // ── 巴菲特信 modal ──

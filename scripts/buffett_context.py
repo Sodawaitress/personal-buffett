@@ -399,3 +399,66 @@ def build_v3_entry_context(market: str, price: dict, entry_price: float = None, 
         f" | 现价 {pnl_sign} {abs(pnl_pct):.1f}%"
         f"\n→ 结论必须考虑持仓成本，给出买入/持有/观察/减持/卖出建议。"
     )
+
+
+def build_serenity_context(code: str, locale: str = "zh") -> str:
+    """
+    US-96：从 SERENITY_THESES 查找供应链论文，格式化为 prompt 注入块。
+    找不到对应条目时返回空字符串（对非覆盖股票无影响）。
+    """
+    try:
+        from scripts.serenity_theses import get_thesis
+        thesis = get_thesis(code)
+    except Exception:
+        return ""
+    if not thesis:
+        return ""
+
+    conviction = thesis.get("conviction", "")
+    role_map = {
+        "chokepoint": ("供应链唯一瓶颈（无可替代）" if locale == "zh" else "Single-point chokepoint (no substitute)"),
+        "tier1":      ("一级供应商（可有限替代）" if locale == "zh" else "Tier-1 supplier (limited substitutability)"),
+        "integrator": ("系统整合商（可被绕过风险）" if locale == "zh" else "System integrator (bypass risk)"),
+    }
+    role_label = role_map.get(thesis.get("supply_chain_role", ""), thesis.get("supply_chain_role", ""))
+
+    atm_risk = thesis.get("atm_risk", "")
+    atm_map = {
+        "high":   ("高ATM稀释风险（大规模配股在进行中）" if locale == "zh" else "HIGH ATM dilution risk — active large-scale equity issuance"),
+        "medium": ("中等ATM风险（需持续关注稀释动向）" if locale == "zh" else "Medium ATM risk — monitor dilution"),
+        "low":    ("低ATM风险" if locale == "zh" else "Low ATM risk"),
+        "none":   ("无ATM风险（战略投资方/可转债融资）" if locale == "zh" else "No ATM risk — strategic / convertible financing"),
+    }
+    atm_label = atm_map.get(atm_risk, atm_risk)
+
+    customers = "、".join(thesis.get("key_customers", []))
+    catalysts = "；".join(thesis.get("catalysts", []))
+    fail_conds = "；".join(thesis.get("fail_conditions", []))
+    track = thesis.get("track_record_note", "")
+
+    if locale == "en":
+        lines = [
+            f"[Serenity Supply-Chain Thesis — Conviction {conviction}]",
+            f"Supply chain role: {role_label}",
+            f"Core thesis: {thesis.get('thesis', '')}",
+            f"Key customers / design wins: {customers}",
+            f"Near-term catalysts: {catalysts}",
+            f"Thesis fail conditions: {fail_conds}",
+            f"ATM / dilution: {atm_label}",
+        ]
+        if track:
+            lines.append(f"Track record: {track}")
+    else:
+        lines = [
+            f"【Serenity 供应链论文 — 信念等级 {conviction}】",
+            f"供应链地位：{role_label}",
+            f"核心论文：{thesis.get('thesis', '')}",
+            f"关键客户/设计赢：{customers}",
+            f"近期催化剂：{catalysts}",
+            f"论文失效条件：{fail_conds}",
+            f"ATM稀释风险：{atm_label}",
+        ]
+        if track:
+            lines.append(f"验证记录：{track}")
+
+    return "\n".join(lines)

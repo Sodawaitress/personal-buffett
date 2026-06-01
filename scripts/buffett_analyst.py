@@ -455,7 +455,8 @@ def analyze_stock_v3(code: str, name: str, market: str,
                      entry_price: float = None, buy_date: str = None,
                      data_warnings: list = None, earnings_flags: list = None,
                      inst_signals: dict = None,
-                     locale: str = "zh") -> dict:
+                     locale: str = "zh",
+                     serenity_context: str = None) -> dict:
     """
     Layer 3: mini-prompt LLM narrative letter.
     Layer 2 has already computed quant_result + trading_params.
@@ -557,13 +558,16 @@ def analyze_stock_v3(code: str, name: str, market: str,
             _label = "【机构信号】" if locale == "zh" else "[Institutional signals]"
             inst_str = f"\n{_label}\n" + "\n".join(f"  {p}" for p in _parts)
 
+    serenity_block_en = f"\n[Serenity supply-chain thesis]\n{serenity_context}" if serenity_context else ""
+    serenity_block_zh = f"\n{serenity_context}" if serenity_context else ""
+
     if locale == "en":
         user_msg = f"""Company: {name} ({code})  Market: {market.upper()}
 {price_str}{entry_str}{warn_str}
 
 [Layer 2 quant results — finalised, do not change grade or conclusion]
 {quant_str}
-{trading_str}{inst_str}
+{trading_str}{inst_str}{serenity_block_en}
 
 [Recent news — top 3]
 {news_lines}
@@ -571,6 +575,7 @@ def analyze_stock_v3(code: str, name: str, market: str,
 
 Write a 150–250 word analysis letter.
 - Use Buffett's voice; conclusion paragraph must reference the quant rating (Grade {grade} · {conclusion_display}); do not change the grade or conclusion
+- If a Serenity supply-chain thesis is provided, weave in the chokepoint position, key design-wins, and ATM risk before the valuation conclusion
 - If trade parameters are provided, output a ===TRADE=== block after the conclusion (fill in only "Position strategy" and "Key triggers"; copy all pre-calculated price lines verbatim)"""
     else:
         user_msg = f"""公司：{name}（{code}）市场：{market.upper()}
@@ -578,7 +583,7 @@ Write a 150–250 word analysis letter.
 
 【Layer 2 量化结果（已定案，LLM 不得更改评级）】
 {quant_str}
-{trading_str}{inst_str}
+{trading_str}{inst_str}{serenity_block_zh}
 
 【近期新闻（前3条重要新闻）】
 {news_lines}
@@ -586,6 +591,7 @@ Write a 150–250 word analysis letter.
 
 请写150-250字分析信。
 - 用巴菲特语气，结论段引用量化评级（{grade}级 · {conclusion}），不要改动评级和结论
+- 如果提供了 Serenity 供应链论文，分析中必须涵盖：供应链瓶颈地位、关键设计赢客户、ATM稀释风险，然后再给估值结论
 - 若有操作参数，结论段后另起一行输出 ===TRADE=== 块（只补「仓位策略」和「关键监控」两行，其余行原样复制预计算数字）"""
 
     raw = _call_groq(system_prompt, user_msg, max_tokens=500)

@@ -127,6 +127,8 @@
 - **US-93 持仓透视卡（2026-05-25）**：`_build_position_insight()` in presenter.py；`get_price_52week` + `get_watchlist_entry` in data/stocks.py；detail.html §1 卡片（买入价/浮盈亏/持有天数/年化收益率/52周区间进度条）；stock.css `.pos-insight-*` 样式
 - **US-94 分析师共识卡（2026-05-25）**：`analyst_consensus` 表；`scripts/fetch_analyst_consensus.py`（stock_profit_forecast_ths，机构数+EPS预测）；`/api/analyst/<code>` 端点；detail.html §2 卡片；48h pipeline 缓存；bug fix: `db.get/save_analyst_consensus` 不存在→改用 `radar_app.data.stocks` 直接导入
 - **US-95 行业信号卡（2026-05-25）**：`industry_signals` 表；`scripts/industry_signals.py`（stock_board_industry_hist_em 30日涨跌，cycle_commodity 额外拉 macro_china_pmi_yearly 连续扩张月数）；pipeline 1b 层集成；detail.html §2 顺风/逆风/中性卡片；24h 缓存；graceful fallback
+- **US-97 自动供应链溯源（2026-05-30）**：`scripts/supply_chain_mapper.py`（SEC EDGAR CIK查找 → 最新10-K URL → Risk Factors 提取 → Groq LLM结构化提取 → chokepoint_score 0-100打分 → yfinance ticker查找 → 写入DB）；`supply_chain_links` 表（downstream_code/supplier_name/supplier_ticker/dependency_type/chokepoint_score/evidence_quote）；`/api/supply-chain/scan/<code>` POST（后台线程触发）；`/api/supply-chain/<code>` GET（读缓存）；detail.html fundamentals区新增「上游供应链」section（仅美股显示，扫描按钮+轮询+供应商卡片含风险进度条+证据引用+"加入自选股"按钮）；stock.css `.sc-*` 样式；30天缓存TTL
+- **US-96 Serenity 供应链瓶颈框架集成（2026-05-30）**：`scripts/serenity_theses.py` 静态论文库（SIVE/AXTI/MU/NBIS/LITE/COHR/AAOI/LPTH 8只股票，conviction/supply_chain_role/thesis/催化剂/失效条件/ATM风险）；`SYSTEM_SUPPLY_CHAIN` + `SYSTEM_SUPPLY_CHAIN_EN` prompt 注入 `buffett_prompts.py`；`FRAMEWORK_MAP` 新增 supply_chain 路由；`buffett_context.build_serenity_context()` 格式化上下文；`classifier.py` 新增 supply_chain company_type 检测（非A股 + 代码在论文库 or sector 关键词）；`analyze_stock_v3` 新增 `serenity_context` 参数，注入 user_msg；pipeline 自动 log "注入 Serenity 供应链论文"
 
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）

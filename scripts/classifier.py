@@ -89,6 +89,14 @@ _GROWTH_KW     = {"科技", "软件", "互联网", "半导体", "芯片", "生�
                    "人工智能", "AI", "云", "tech", "software", "internet",
                    "semiconductor", "biotech", "pharma"}
 
+# 供应链瓶颈关键词（非A股市场，sector 匹配任一关键词 → supply_chain 候选）
+_SUPPLY_CHAIN_KW = {
+    "semiconductor", "photonics", "laser", "optical", "memory", "hbm",
+    "cpo", "transceiver", "wafer", "substrate", "epi", "indium",
+    "gallium", "germanium", "defense optics", "thermal imaging",
+    "gpu cloud", "ai infrastructure",
+}
+
 
 def _match_kw(text: str, kw_set: set) -> bool:
     text_lower = text.lower()
@@ -158,12 +166,28 @@ def classify_stock(code: str) -> dict:
          and (latest_roe is None or latest_roe < 5))
     )
 
+    # supply_chain：非A股在 US Serenity 论文库、A股在 CN Serenity 论文库、或 sector 命中关键词
+    _is_supply_chain = False
+    try:
+        from scripts.serenity_theses import SERENITY_CODES, CN_SERENITY_CODES
+        pure_code = code.upper().split(".")[0]
+        if market == "cn":
+            if pure_code in CN_SERENITY_CODES:
+                _is_supply_chain = True
+        else:
+            if pure_code in SERENITY_CODES or _match_kw(sector, _SUPPLY_CHAIN_KW):
+                _is_supply_chain = True
+    except Exception:
+        pass
+
     if _is_etf(code, name):
         company_type = "etf"
     elif st_status in ("ST", "*ST", "SST"):
         company_type = "distressed"
     elif is_speculative:
         company_type = "speculative"
+    elif _is_supply_chain:
+        company_type = "supply_chain"
     elif _match_kw(sector, _FINANCIAL_KW):
         company_type = "financial"
     elif _match_kw(sector, _UTILITY_KW):
