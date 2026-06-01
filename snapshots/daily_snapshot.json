@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T21:26:03.329413Z",
+  "generated_at": "2026-06-01T14:06:52.547228Z",
   "scope": "all_users",
   "stocks": [
     {
@@ -197,8 +197,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 0.12,
+        "cache_age_hours": 0.4,
+        "score": 0.93,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -206,13 +206,13 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 2.5,
+          "change_pct": 18.7,
           "direction": ""
         }
       },
       "price": {
-        "current": 18.46,
-        "change_pct": -2.22
+        "current": 17.95,
+        "change_pct": 0.06
       }
     },
     {
@@ -235,35 +235,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 4.39,
+        "cache_age_hours": 0.5,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 31,
+          "count_30d": 1,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-04-27",
               "n_inst": 5,
-              "method": "电话交流",
-              "is_specific": false
-            },
-            {
-              "date": "2026-03-31",
-              "n_inst": 4,
-              "method": "电话交流",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 126.9,
+          "change_pct": 115.1,
           "direction": ""
         }
       },
       "price": {
-        "current": 186.51,
-        "change_pct": 4.2
+        "current": 174.66,
+        "change_pct": -1.87
       }
     },
     {
@@ -286,29 +280,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 2.64,
-        "is_active": true,
+        "cache_age_hours": 0.2,
+        "score": 1.25,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 28,
+          "days_since_latest": 32,
           "events": [
             {
               "date": "2026-04-30",
               "n_inst": 41,
-              "method": "业绩发布会,举办电话+网络业绩交流会",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": -15.6,
+          "change_pct": -2.7,
           "direction": ""
         }
       },
       "price": {
-        "current": 8.7,
-        "change_pct": -0.57
+        "current": 9.16,
+        "change_pct": 1.33
       }
     },
     {
@@ -321,22 +315,22 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-18",
-        "grade": "B-",
+        "date": "2026-06-01",
+        "grade": "B",
         "conclusion": "持有",
-        "moat": "29/35：ROE: 10/15 分 - 良好盈利能力（ROE > 15%）; 净利率: 6/10 分 - 中等定价权（净利率 > 10%）",
-        "reasoning": "综合评分 64/100：一般公司，需要观察",
-        "quant_score": 64,
+        "moat": "29/35",
+        "reasoning": "综合得分 71/100：普通公司，价格也是普通价",
+        "quant_score": 71,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 5.0,
+        "cache_age_hours": 0.5,
+        "score": 2.0,
         "is_active": true,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 15,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-05-13",
@@ -359,13 +353,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -65.6,
+          "change_pct": -81.1,
           "direction": ""
         }
       },
       "price": {
-        "current": 25.25,
-        "change_pct": -2.88
+        "current": 23.59,
+        "change_pct": 0.3
       }
     },
     {
@@ -388,41 +382,29 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 4.47,
+        "cache_age_hours": 0.5,
+        "score": 3.33,
         "is_active": true,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 16,
+          "count_30d": 1,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-05-12",
               "n_inst": 1,
               "method": "业绩说明会",
               "is_specific": false
-            },
-            {
-              "date": "2026-04-15",
-              "n_inst": 118,
-              "method": "电话会议",
-              "is_specific": false
-            },
-            {
-              "date": "2026-03-31",
-              "n_inst": 158,
-              "method": "电话会议",
-              "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 34.1,
+          "change_pct": 31.9,
           "direction": ""
         }
       },
       "price": {
-        "current": 39.67,
-        "change_pct": 3.09
+        "current": 42.31,
+        "change_pct": 4.47
       }
     },
     {
@@ -435,18 +417,18 @@
       "is_new": false,
       "watched_by": "3,2",
       "analysis": {
-        "date": "2026-05-27",
+        "date": "2026-06-01",
         "grade": "A",
         "conclusion": "买入",
         "moat": "34/35：赚钱能力（ROE）: 15/15 分 — 顶级赚钱机器——投入100元就能赚回25元以上，这是很强护城河的标志; 利润率: 10/10 分 — 极强定价权——卖100元东西，能留下25元以上的利润",
-        "reasoning": "综合得分 88/100：很少见的好机会——公司优秀，价格还便宜",
-        "quant_score": 88,
+        "reasoning": "综合得分 90/100：很少见的好机会——公司优秀，价格还便宜",
+        "quant_score": 90,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 0.58,
+        "cache_age_hours": 0.2,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -454,13 +436,13 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -11.6,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 102.95,
-        "change_pct": -1.11
+        "current": 99.68,
+        "change_pct": -1.89
       }
     },
     {
@@ -483,29 +465,29 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 2.14,
+        "cache_age_hours": 0.5,
+        "score": 2.86,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 41,
+          "days_since_latest": 45,
           "events": [
             {
               "date": "2026-04-17",
               "n_inst": 1,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 32.8,
+          "change_pct": 33.0,
           "direction": ""
         }
       },
       "price": {
-        "current": 79.71,
-        "change_pct": 0.2
+        "current": 81.19,
+        "change_pct": 0.42
       }
     },
     {
@@ -519,29 +501,22 @@
       "watched_by": "2",
       "analysis": null,
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 0.92,
+        "cache_age_hours": 0.3,
+        "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 1,
-          "days_since_latest": 58,
-          "events": [
-            {
-              "date": "2026-03-31",
-              "n_inst": 1,
-              "method": "业绩说明会,网络文字互动",
-              "is_specific": false
-            }
-          ]
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
         },
         "short_selling": {
-          "change_pct": -8.4,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 14.42,
-        "change_pct": -0.35
+        "current": 14.6,
+        "change_pct": 2.46
       }
     },
     {
@@ -564,17 +539,17 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 0.5,
+        "cache_age_hours": 0.2,
+        "score": 1.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 49,
+          "days_since_latest": 53,
           "events": [
             {
               "date": "2026-04-09",
               "n_inst": 1,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
@@ -585,8 +560,8 @@
         }
       },
       "price": {
-        "current": 14.31,
-        "change_pct": -1.72
+        "current": 14.85,
+        "change_pct": 5.02
       }
     },
     {
@@ -609,41 +584,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 3.33,
+        "cache_age_hours": 0.4,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 20,
+          "count_30d": 1,
+          "days_since_latest": 24,
           "events": [
             {
               "date": "2026-05-08",
               "n_inst": 296,
               "method": "特定对象调研,线上会议",
               "is_specific": true
-            },
-            {
-              "date": "2026-04-22",
-              "n_inst": 1,
-              "method": "业绩说明会",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-10",
-              "n_inst": 270,
-              "method": "特定对象调研,线上会议等",
-              "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 6.6,
+          "change_pct": 41.5,
           "direction": ""
         }
       },
       "price": {
-        "current": 124.2,
-        "change_pct": 2.89
+        "current": 123.75,
+        "change_pct": -1.57
       }
     },
     {
@@ -666,12 +629,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 1.93,
+        "cache_age_hours": 0.5,
+        "score": 0.42,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 23,
           "events": [
             {
               "date": "2026-05-09",
@@ -682,13 +645,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -12.0,
+          "change_pct": 8.5,
           "direction": ""
         }
       },
       "price": {
-        "current": 33.25,
-        "change_pct": -2.12
+        "current": 32.2,
+        "change_pct": -0.62
       }
     },
     {
@@ -711,12 +674,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 5.0,
+        "cache_age_hours": 0.5,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 5,
-          "days_since_latest": 1,
+          "count_30d": 2,
+          "days_since_latest": 5,
           "events": [
             {
               "date": "2026-05-27",
@@ -729,35 +692,17 @@
               "n_inst": 2,
               "method": "电话会议",
               "is_specific": false
-            },
-            {
-              "date": "2026-04-21",
-              "n_inst": 4,
-              "method": "特定对象调研,现场交流",
-              "is_specific": true
-            },
-            {
-              "date": "2026-04-10",
-              "n_inst": 1,
-              "method": "业绩说明会,网络平台在线交流",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-01",
-              "n_inst": 2,
-              "method": "特定对象调研,现场参观,现场交流",
-              "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 52.5,
+          "change_pct": 51.3,
           "direction": ""
         }
       },
       "price": {
-        "current": 13.25,
-        "change_pct": -4.88
+        "current": 12.62,
+        "change_pct": -1.94
       }
     },
     {
@@ -780,29 +725,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 0.92,
+        "cache_age_hours": 0.4,
+        "score": 0.58,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 43,
+          "days_since_latest": 47,
           "events": [
             {
               "date": "2026-04-15",
               "n_inst": 1,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 8.4,
+          "change_pct": 11.7,
           "direction": ""
         }
       },
       "price": {
-        "current": 416.55,
-        "change_pct": 3.49
+        "current": 421.93,
+        "change_pct": -0.49
       }
     },
     {
@@ -825,35 +770,35 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 2.71,
-        "is_active": true,
+        "cache_age_hours": 0.2,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 30,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-04-28",
               "n_inst": 15,
-              "method": "电话接待",
+              "method": "",
               "is_specific": false
             },
             {
               "date": "2026-04-17",
               "n_inst": 20,
-              "method": "电话接待",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 34.1,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 53.07,
-        "change_pct": -2.12
+        "current": 50.6,
+        "change_pct": -1.04
       }
     },
     {
@@ -876,8 +821,8 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 1.82,
+        "cache_age_hours": 0.3,
+        "score": 1.63,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -885,13 +830,13 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -36.5,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 52.7,
-        "change_pct": -1.48
+        "current": 52.31,
+        "change_pct": -0.66
       }
     },
     {
@@ -914,35 +859,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 3.0,
-        "is_active": true,
+        "cache_age_hours": 0.3,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 34,
+          "count_30d": 1,
+          "days_since_latest": 38,
           "events": [
             {
               "date": "2026-04-24",
               "n_inst": 36,
-              "method": "公司现场接待,电话接待",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-01",
-              "n_inst": 66,
-              "method": "公司现场接待,电话接待",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 3738.1,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 12.96,
-        "change_pct": -6.22
+        "current": 12.39,
+        "change_pct": 0.32
       }
     },
     {
@@ -965,29 +904,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 2.12,
-        "is_active": true,
+        "cache_age_hours": 0.4,
+        "score": 0.2,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 34,
+          "days_since_latest": 38,
           "events": [
             {
               "date": "2026-04-24",
               "n_inst": 232,
-              "method": "特定对象调研,分析师会议,业绩说明会,电话会议",
+              "method": "",
               "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 12.4,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 51.64,
-        "change_pct": -4.28
+        "current": 53.05,
+        "change_pct": -2.43
       }
     },
     {
@@ -1011,11 +950,11 @@
       },
       "precursor": {
         "cache_age_hours": 0.1,
-        "score": 4.71,
-        "is_active": true,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
-          "count_30d": 4,
-          "days_since_latest": 10,
+          "count_30d": 2,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-05-18",
@@ -1028,29 +967,17 @@
               "n_inst": 181,
               "method": "特定对象调研,业绩说明会,券商策略会,电话会议",
               "is_specific": true
-            },
-            {
-              "date": "2026-04-27",
-              "n_inst": 426,
-              "method": "特定对象调研,电话会议",
-              "is_specific": true
-            },
-            {
-              "date": "2026-03-31",
-              "n_inst": 249,
-              "method": "特定对象调研,电话会议",
-              "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 32.9,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 273.9,
-        "change_pct": 0.59
+        "current": 235.57,
+        "change_pct": -6.89
       }
     },
     {
@@ -1060,7 +987,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -1073,29 +1000,29 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 1.64,
-        "is_active": false,
+        "cache_age_hours": 0.5,
+        "score": 2.25,
+        "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 29,
+          "days_since_latest": 33,
           "events": [
             {
               "date": "2026-04-29",
               "n_inst": 51,
-              "method": "业绩说明会,现场、价值在线会议及网络直播相结合",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 20.8,
+          "change_pct": 24.3,
           "direction": ""
         }
       },
       "price": {
-        "current": 50.43,
-        "change_pct": 2.4
+        "current": 49.04,
+        "change_pct": 2.38
       }
     },
     {
@@ -1105,7 +1032,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1118,12 +1045,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 3.4,
-        "is_active": true,
+        "cache_age_hours": 0.5,
+        "score": 0.52,
+        "is_active": false,
         "survey": {
-          "count_30d": 4,
-          "days_since_latest": 17,
+          "count_30d": 2,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-05-11",
@@ -1136,29 +1063,17 @@
               "n_inst": 21,
               "method": "现场参观",
               "is_specific": true
-            },
-            {
-              "date": "2026-04-29",
-              "n_inst": 43,
-              "method": "现场参观,电话会议",
-              "is_specific": true
-            },
-            {
-              "date": "2026-04-03",
-              "n_inst": 1,
-              "method": "现场参观",
-              "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": -7.9,
+          "change_pct": -10.3,
           "direction": ""
         }
       },
       "price": {
-        "current": 383.01,
-        "change_pct": -2.53
+        "current": 349.66,
+        "change_pct": -5.12
       }
     },
     {
@@ -1168,7 +1083,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1181,12 +1096,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 3.5,
+        "cache_age_hours": 0.5,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 13,
+          "count_30d": 2,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-05-15",
@@ -1199,23 +1114,17 @@
               "n_inst": 138,
               "method": "电话会议",
               "is_specific": false
-            },
-            {
-              "date": "2026-04-24",
-              "n_inst": 96,
-              "method": "2025年度暨2026年第一季度报告电话会议",
-              "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": -53.4,
+          "change_pct": -55.8,
           "direction": ""
         }
       },
       "price": {
-        "current": 44.58,
-        "change_pct": -2.49
+        "current": 44.59,
+        "change_pct": 2.62
       }
     },
     {
@@ -1225,25 +1134,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-23",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "11/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和稳定增长前景的公司。然而，东威科技的当前表现让我感到担忧。公司的ROE趋势令人担忧，连续三年下滑，这表明公司的盈利能力正在下降。虽然最近有一些反弹，但这并不能完全缓解我的担忧。\n\n此外，公司的估值水平也令人感到惊讶，PE异常高，PB估值数据缺失。这使得我难以对公司的估值进行准确的判断。虽然公司的安全性和持续盈利能力仍然较好，但这些优势并不能完全抵",
-        "quant_score": 34,
+        "reasoning": "作为一名成长股质量分析师，我对东威科技的表现感到担忧。公司的ROE趋势令人担忧，连续三年下滑后虽然有所反弹，但仍然处于较低水平。同时，公司的利润增速也在萎缩，每年平均减少10.5%。这些迹象表明公司的盈利能力和增长动力都存在问题。\n\n从估值角度来看，公司的PE估值异常高，PB估值也略贵。这些迹象表明公司的估值可能过高，投资者需要谨慎。考虑到公司的基本面和估值情况，我认为东威科技的投资价值不高。\n\n",
+        "quant_score": 33,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
         "cache_age_hours": 0.0,
-        "score": 5.19,
-        "is_active": true,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 1,
+          "count_30d": 2,
+          "days_since_latest": 5,
           "events": [
             {
               "date": "2026-05-27",
@@ -1256,23 +1165,17 @@
               "n_inst": 130,
               "method": "现场调研,其他",
               "is_specific": false
-            },
-            {
-              "date": "2026-04-28",
-              "n_inst": 70,
-              "method": "现场调研,电话会议",
-              "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 33.7,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 86.56,
-        "change_pct": 2.37
+        "current": 80.8,
+        "change_pct": -1.92
       }
     },
     {
@@ -1282,21 +1185,21 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-23",
-        "grade": "D",
-        "conclusion": "卖出",
-        "moat": "0/35",
-        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
-        "quant_score": 17,
+        "date": "2026-06-01",
+        "grade": "B+",
+        "conclusion": "买入",
+        "moat": "27/35：赚钱能力（ROE）: 15/15 分 — 顶级赚钱机器——投入100元就能赚回25元以上，这是很强护城河的标志; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "作为一名成长股分析师，我对九号公司的表现感到兴趣。该公司的高赚钱能力和高速增长令人印象深刻，ROE达到15/15分，利润增速每年平均增加71.5%。然而，利润率相对较低，仅为4/10分，表明定价权偏弱。近期新闻显示，公司董事长和实控人提议回购CDR用于注销，这可能是为了减少注册资本和提高股价。\n\n尽管如此，公司的估值仍然相对便宜，PE估值和PB估值均为低位。考虑到公司的成长潜力和当前的估值水平，我",
+        "quant_score": 79,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
         "cache_age_hours": 0.0,
-        "score": 0.42,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -1304,13 +1207,13 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -5.3,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 38.05,
-        "change_pct": -3.7
+        "current": 38.48,
+        "change_pct": 0.16
       }
     },
     {
@@ -1320,7 +1223,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1333,12 +1236,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 3.0,
+        "cache_age_hours": 0.5,
+        "score": 3.63,
         "is_active": true,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 15,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-05-13",
@@ -1355,13 +1258,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": 110.0,
+          "change_pct": 113.3,
           "direction": ""
         }
       },
       "price": {
-        "current": 14.83,
-        "change_pct": -1.13
+        "current": 15.26,
+        "change_pct": 4.66
       }
     },
     {
@@ -1371,7 +1274,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1384,12 +1287,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 0.94,
-        "is_active": false,
+        "cache_age_hours": 0.5,
+        "score": 2.0,
+        "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 24,
           "events": [
             {
               "date": "2026-05-08",
@@ -1405,8 +1308,8 @@
         }
       },
       "price": {
-        "current": 10.24,
-        "change_pct": 3.64
+        "current": 12.65,
+        "change_pct": 10.0
       }
     },
     {
@@ -1416,25 +1319,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "0/35：护城河数据不足",
-        "reasoning": "综合得分 -18/100：高危，建议优先考虑退出\n⚠️ 风险：🚨 公司当前在亏损（ROE < 0%）",
+        "moat": "-15/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
+        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和稳定财务表现的公司。然而，上海瀚讯（300762）似乎并不符合这些标准。该公司当前的亏损状态和负的净利率引发了我的担忧。同时，公司的估值也相对较高，PE异常高，PB估值也不理想。\n\n从供应链的角度来看，上海瀹讯可能面临着供应链瓶颈的挑战，这可能会影响公司的生产和销售。然而，没有具体的供应链数据，我无法对此进行进一步的分析。\n\n基于以上分析，我认为",
         "quant_score": -18,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 0.94,
+        "cache_age_hours": 0.4,
+        "score": 0.81,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-05-15",
@@ -1445,13 +1348,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -8.8,
+          "change_pct": -16.2,
           "direction": ""
         }
       },
       "price": {
-        "current": 36.5,
-        "change_pct": -2.22
+        "current": 32.48,
+        "change_pct": -3.42
       }
     },
     {
@@ -1461,7 +1364,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-27",
@@ -1474,12 +1377,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 1.69,
+        "cache_age_hours": 0.3,
+        "score": 0.18,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 6,
+          "days_since_latest": 10,
           "events": [
             {
               "date": "2026-05-22",
@@ -1490,13 +1393,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -23.7,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 367.19,
-        "change_pct": 0.9
+        "current": 375.62,
+        "change_pct": -6.75
       }
     },
     {
@@ -1506,25 +1409,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-23",
-        "grade": "D",
-        "conclusion": "卖出",
-        "moat": "0/35：护城河数据不足",
-        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
-        "quant_score": 17,
+        "date": "2026-06-01",
+        "grade": "C+",
+        "conclusion": "观察",
+        "moat": "18/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 2/10 分 — 定价权很弱——卖100元东西，利润还不到5元",
+        "reasoning": "亨通光电的当前价格¥77.12，相比其历史价格而言，显得有些高昂。从基本面分析来看，公司的赚钱能力（ROE）偏弱，仅为3/15分，表明投入100元只能赚回5-10元，这是一个令人担忧的信号。同时，利润率也很低，仅为2/10分，意味着卖100元东西，利润还不到5元，这进一步凸显了公司的定价权很弱。\n\n从估值判断来看，PE估值为-2/7分，表明公司的估值很高，远高于其历史价格的大多数时候。考虑到这些因",
+        "quant_score": 52,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 1.39,
+        "cache_age_hours": 0.4,
+        "score": 1.67,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-05-15",
@@ -1535,13 +1438,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": 13.3,
+          "change_pct": -12.5,
           "direction": ""
         }
       },
       "price": {
-        "current": 69.39,
-        "change_pct": -0.03
+        "current": 75.76,
+        "change_pct": -1.76
       }
     },
     {
@@ -1551,7 +1454,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1564,47 +1467,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 6.49,
+        "cache_age_hours": 0.5,
+        "score": 2.19,
         "is_active": true,
         "survey": {
-          "count_30d": 4,
-          "days_since_latest": 14,
+          "count_30d": 1,
+          "days_since_latest": 18,
           "events": [
             {
               "date": "2026-05-14",
               "n_inst": 12,
               "method": "现场参观",
               "is_specific": true
-            },
-            {
-              "date": "2026-04-29",
-              "n_inst": 11,
-              "method": "特定对象调研",
-              "is_specific": true
-            },
-            {
-              "date": "2026-04-22",
-              "n_inst": 1,
-              "method": "业绩说明会",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-21",
-              "n_inst": 36,
-              "method": "特定对象调研",
-              "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 68.0,
+          "change_pct": 119.5,
           "direction": ""
         }
       },
       "price": {
-        "current": 433.01,
-        "change_pct": 6.45
+        "current": 437.77,
+        "change_pct": -3.83
       }
     },
     {
@@ -1614,7 +1499,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1627,12 +1512,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 1.21,
-        "is_active": false,
+        "cache_age_hours": 0.5,
+        "score": 2.69,
+        "is_active": true,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 13,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-05-15",
@@ -1649,13 +1534,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -1.2,
+          "change_pct": 36.3,
           "direction": ""
         }
       },
       "price": {
-        "current": 12.31,
-        "change_pct": 1.15
+        "current": 12.96,
+        "change_pct": 1.49
       }
     },
     {
@@ -1665,25 +1550,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-23",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "-3/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 2/10 分 — 定价权很弱——卖100元东西，利润还不到5元",
-        "reasoning": "这家公司的基本面令人担忧。从数字来看，ROE几乎为零，仅0/15分，说明其赚钱能力极弱。同时，利润率也很低，仅2/10分，表明其定价权很弱。虽然其利润增速较高，但考虑到其基本面的弱点，这种增长是否可持续仍然存疑。另外，公司的估值也不低，PE和PB估值均不具备优势。\n\n从新闻来看，股东户数的下降可能是公司基本面恶化的信号。情绪值为0.0，关键信号也没有任何积极的迹象。综上所述，这家公司的基本面和估值",
+        "reasoning": "这家公司陷入困境。从基本面分析来看，浙江正特的赚钱能力几乎为零，ROE仅为0/15分，意味着投入100元几乎连5元都赚不到。同时，利润率也很弱，卖100元东西，利润还不到5元。这些数字表明公司的竞争优势非常薄弱。\n\n从估值判断来看，PE估值正常，但PB估值略贵。考虑到公司的基本面问题，估值并不具有吸引力。另外，公司的成长性虽然高速，但盈利一致性不佳，3年里有1年出现了亏损。\n\n基于以上，我的判断是",
         "quant_score": 34,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 2.02,
-        "is_active": true,
+        "cache_age_hours": 0.5,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 24,
           "events": [
             {
               "date": "2026-05-08",
@@ -1699,8 +1584,8 @@
         }
       },
       "price": {
-        "current": 41.8,
-        "change_pct": -2.9
+        "current": 42.06,
+        "change_pct": 2.59
       }
     },
     {
@@ -1710,197 +1595,20 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-23",
-        "grade": "D",
-        "conclusion": "卖出",
-        "moat": "0/35",
-        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
-        "quant_score": 17,
+        "date": "2026-06-01",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "14/35：赚钱能力（ROE）: 13/15 分 — 优秀赚钱能力——投入100元能赚回20元以上; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
+        "reasoning": "作为一名成长股质量分析师，我对思特威（688213）的表现进行了深入分析。公司的净利润增速达到155%，但营收仅增51%，这表明可能存在一次性收益的影响。同时，公司的护城河评分为14/35，赚钱能力优秀，但定价权中等。\n\n从成长和管理层的角度来看，公司的利润增速高达739.1%，明显超行业，盈利一致性也很好。安全性方面，公司的借债风险适度，持续盈利能力强。\n\n然而，估值方面，公司的PE估值便宜，但",
+        "quant_score": 60,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
         "cache_age_hours": 0.1,
-        "score": 0.21,
-        "is_active": false,
-        "survey": {
-          "count_30d": 0,
-          "days_since_latest": null,
-          "events": []
-        },
-        "short_selling": {
-          "change_pct": 4.3,
-          "direction": ""
-        }
-      },
-      "price": {
-        "current": 109.39,
-        "change_pct": 0.63
-      }
-    },
-    {
-      "code": "300308",
-      "name": "300308",
-      "market": "cn",
-      "status": "watching",
-      "entry_price": null,
-      "added_at": "2026-05-23",
-      "is_new": true,
-      "watched_by": "2",
-      "analysis": {
-        "date": "2026-05-28",
-        "grade": "B",
-        "conclusion": "持有",
-        "moat": "27/35",
-        "reasoning": "综合得分 67/100：普通公司，价格也是普通价",
-        "quant_score": 67,
-        "data_incomplete": 0,
-        "data_quality": "ok"
-      },
-      "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 3.8,
-        "is_active": true,
-        "survey": {
-          "count_30d": 4,
-          "days_since_latest": 13,
-          "events": [
-            {
-              "date": "2026-05-15",
-              "n_inst": 1,
-              "method": "投资者网上集体接待日",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-24",
-              "n_inst": 1,
-              "method": "业绩说明会",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-16",
-              "n_inst": 162,
-              "method": "电话会议",
-              "is_specific": false
-            },
-            {
-              "date": "2026-03-30",
-              "n_inst": 153,
-              "method": "电话会议",
-              "is_specific": false
-            }
-          ]
-        },
-        "short_selling": {
-          "change_pct": -0.9,
-          "direction": ""
-        }
-      },
-      "price": {
-        "current": 1116.16,
-        "change_pct": 1.19
-      }
-    },
-    {
-      "code": "688398",
-      "name": "688398",
-      "market": "cn",
-      "status": "watching",
-      "entry_price": null,
-      "added_at": "2026-05-23",
-      "is_new": true,
-      "watched_by": "2",
-      "analysis": {
-        "date": "2026-05-24",
-        "grade": "C+",
-        "conclusion": "观察",
-        "moat": "0/35",
-        "reasoning": "综合得分 47/100：有明显风险信号，暂时不适合买入\n⚠️ 风险：🚨 投入100元赚不到5元（ROE < 5%）——赚钱能力几乎为零",
-        "quant_score": 47,
-        "data_incomplete": 0,
-        "data_quality": "incomplete"
-      },
-      "precursor": {
-        "cache_age_hours": 0.0,
-        "score": 1.19,
-        "is_active": false,
-        "survey": {
-          "count_30d": 0,
-          "days_since_latest": null,
-          "events": []
-        },
-        "short_selling": {
-          "change_pct": 23.9,
-          "direction": ""
-        }
-      },
-      "price": {
-        "current": 32.96,
-        "change_pct": -0.72
-      }
-    },
-    {
-      "code": "000009",
-      "name": "000009",
-      "market": "cn",
-      "status": "watching",
-      "entry_price": null,
-      "added_at": "2026-05-23",
-      "is_new": true,
-      "watched_by": "2",
-      "analysis": {
-        "date": "2026-05-24",
-        "grade": "D",
-        "conclusion": "卖出",
-        "moat": "0/35：护城河数据不足",
-        "reasoning": "综合得分 30/100：高危，建议优先考虑退出\n⚠️ 风险：🚨 投入100元赚不到5元（ROE < 5%）——赚钱能力几乎为零",
-        "quant_score": 30,
-        "data_incomplete": 0,
-        "data_quality": "incomplete"
-      },
-      "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 2.31,
-        "is_active": true,
-        "survey": {
-          "count_30d": 0,
-          "days_since_latest": null,
-          "events": []
-        },
-        "short_selling": {
-          "change_pct": 324.0,
-          "direction": ""
-        }
-      },
-      "price": {
-        "current": 7.42,
-        "change_pct": -1.98
-      }
-    },
-    {
-      "code": "600150",
-      "name": "600150",
-      "market": "cn",
-      "status": "watching",
-      "entry_price": null,
-      "added_at": "2026-05-23",
-      "is_new": true,
-      "watched_by": "2",
-      "analysis": {
-        "date": "2026-05-23",
-        "grade": "B-",
-        "conclusion": "持有",
-        "moat": "8/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
-        "reasoning": "中国船舶的表现令人关注，净利润增速86%远超营收增速14%，这可能意味着存在一次性收益的影响。从基本面分析来看，公司的赚钱能力（ROE）偏弱，仅为3/15分，表明投入100元只能赚回5-10元。同时，利润率也偏低，仅为4/10分，说明公司的定价权较弱。\n\n从估值角度来看，公司的PE估值略便宜，PB估值也按资产算略便宜。然而，公司的成长性和管理层表现较好，利润增速高速增长，过去3年持续盈利。\n\n基于",
-        "quant_score": 55,
-        "data_incomplete": 0,
-        "data_quality": "ok"
-      },
-      "precursor": {
-        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -1914,8 +1622,167 @@
         }
       },
       "price": {
-        "current": 38.1,
-        "change_pct": -1.52
+        "current": 98.28,
+        "change_pct": -0.61
+      }
+    },
+    {
+      "code": "300308",
+      "name": "300308",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": false,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-05-28",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "27/35",
+        "reasoning": "综合得分 67/100：普通公司，价格也是普通价",
+        "quant_score": 67,
+        "data_incomplete": 0,
+        "data_quality": "ok"
+      },
+      "precursor": {
+        "cache_age_hours": 0.5,
+        "score": 1.04,
+        "is_active": false,
+        "survey": {
+          "count_30d": 1,
+          "days_since_latest": 17,
+          "events": [
+            {
+              "date": "2026-05-15",
+              "n_inst": 1,
+              "method": "投资者网上集体接待日",
+              "is_specific": false
+            }
+          ]
+        },
+        "short_selling": {
+          "change_pct": -2.9,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 1136.89,
+        "change_pct": -2.09
+      }
+    },
+    {
+      "code": "688398",
+      "name": "688398",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": false,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-05-24",
+        "grade": "C+",
+        "conclusion": "观察",
+        "moat": "0/35",
+        "reasoning": "综合得分 47/100：有明显风险信号，暂时不适合买入\n⚠️ 风险：🚨 投入100元赚不到5元（ROE < 5%）——赚钱能力几乎为零",
+        "quant_score": 47,
+        "data_incomplete": 0,
+        "data_quality": "incomplete"
+      },
+      "precursor": {
+        "cache_age_hours": 0.1,
+        "score": 0.67,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 29.66,
+        "change_pct": -3.48
+      }
+    },
+    {
+      "code": "000009",
+      "name": "000009",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": false,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-06-01",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "6/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "中国宝安（000009）目前的状况令人担忧。其ROE几乎为零，意味着投入100元也难以赚到5元，这是其基本面的一个重大缺陷。尽管公司过去三年的盈利表现尚可，但其利润增速却在萎缩，每年平均减少-48.2%。此外，公司的定价权偏弱，卖100元的商品只能留下5-10元的利润。\n\n从估值角度来看，公司的PE估值异常高，达到了367.6倍，这通常是利润骤降或数据错误的迹象。使用PB估值虽然显示公司相对便宜，",
+        "quant_score": 30,
+        "data_incomplete": 0,
+        "data_quality": "ok"
+      },
+      "precursor": {
+        "cache_age_hours": 0.6,
+        "score": 0.0,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 7.48,
+        "change_pct": 1.08
+      }
+    },
+    {
+      "code": "600150",
+      "name": "600150",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-23",
+      "is_new": false,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-05-23",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "8/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "中国船舶的表现令人关注，净利润增速86%远超营收增速14%，这可能意味着存在一次性收益的影响。从基本面分析来看，公司的赚钱能力（ROE）偏弱，仅为3/15分，表明投入100元只能赚回5-10元。同时，利润率也偏低，仅为4/10分，说明公司的定价权较弱。\n\n从估值角度来看，公司的PE估值略便宜，PB估值也按资产算略便宜。然而，公司的成长性和管理层表现较好，利润增速高速增长，过去3年持续盈利。\n\n基于",
+        "quant_score": 55,
+        "data_incomplete": 0,
+        "data_quality": "ok"
+      },
+      "precursor": {
+        "cache_age_hours": 0.4,
+        "score": 0.0,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 36.77,
+        "change_pct": -1.63
       }
     },
     {
@@ -1925,7 +1792,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1938,29 +1805,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 0.97,
+        "cache_age_hours": 0.5,
+        "score": 0.88,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-04-27",
               "n_inst": 53,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": -9.4,
+          "change_pct": -17.5,
           "direction": ""
         }
       },
       "price": {
-        "current": 9.04,
-        "change_pct": -1.31
+        "current": 9.06,
+        "change_pct": 0.89
       }
     },
     {
@@ -1970,7 +1837,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-23",
@@ -1983,8 +1850,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 1.97,
+        "cache_age_hours": 0.2,
+        "score": 0.42,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -1992,13 +1859,13 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 31.3,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 8.98,
-        "change_pct": -5.07
+        "current": 8.81,
+        "change_pct": -2.0
       }
     },
     {
@@ -2008,7 +1875,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": null,
       "precursor": null
@@ -2020,7 +1887,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-23",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": null,
       "precursor": null
@@ -2032,7 +1899,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-27",
@@ -2046,11 +1913,11 @@
       },
       "precursor": {
         "cache_age_hours": 0.0,
-        "score": 2.09,
-        "is_active": true,
+        "score": 0.12,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-05-15",
@@ -2066,8 +1933,8 @@
         }
       },
       "price": {
-        "current": 148.56,
-        "change_pct": -0.42
+        "current": 133.78,
+        "change_pct": -4.38
       }
     },
     {
@@ -2077,7 +1944,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2090,29 +1957,29 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 2.5,
+        "cache_age_hours": 0.5,
+        "score": 2.0,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 29,
+          "days_since_latest": 33,
           "events": [
             {
               "date": "2026-04-29",
               "n_inst": 1,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": -40.8,
+          "change_pct": -47.9,
           "direction": ""
         }
       },
       "price": {
-        "current": 13.22,
-        "change_pct": -2.44
+        "current": 13.02,
+        "change_pct": 1.17
       }
     },
     {
@@ -2122,42 +1989,42 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "-15/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
-        "reasoning": "综合得分 -4/100：高危，建议优先考虑退出\n⚠️ 风险：🚨 公司当前在亏损（ROE < 0%）",
+        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和成长潜力的公司。然而，华大智造的当前表现令人担忧。公司的净利润增速虽然达到了63%，但营收却仅增-8%，这表明可能存在一次性收益的影响。更令人担忧的是，公司当前处于亏损状态，且连续三年亏损，这对其长期的可持续性构成重大威胁。\n\n从护城河和成长性方面来看，公司的表现也不佳。其赚钱能力和利润率均为负，这意味着公司的运营效率存在问题。同时，公司的成长性",
         "quant_score": -4,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
         "cache_age_hours": 0.1,
-        "score": 3.5,
-        "is_active": true,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-04-27",
               "n_inst": 81,
-              "method": "特定对象调研",
+              "method": "",
               "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 81.2,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 52.1,
-        "change_pct": -2.49
+        "current": 49.2,
+        "change_pct": -2.57
       }
     },
     {
@@ -2167,35 +2034,35 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "-15/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和稳定增长的公司。然而，京源环保的表现令人担忧。公司的亏损状况和负利润率表明其在行业中面临着激烈的竞争和运营效率低下。\n\n从估值角度来看，公司的PE和PB估值偏贵，表明市场对其未来前景的预期过高。同时，公司的成长性和盈利能力也存在疑问，连续三年亏损的记录让人难以相信其能够在短期内扭转局势。\n\n基于以上，我的判断是：卖出。因为公司的基本面存在明显问题",
+        "reasoning": "作为一名成长股质量分析师，我对京源环保的表现感到担忧。公司当前的亏损状态和负利润率表明其在市场中面临着重大挑战。同时，公司的成长性和管理层的表现也未能令人满意，三年连续亏损的记录令人担忧。\n\n从估值角度来看，公司的PE和PB估值均偏贵，表明市场对其未来前景的预期可能过高。考虑到公司当前的基本面和估值水平，我认为投资者需要谨慎对待京源环保的股票。\n\n基于以上，我的判断是：卖出。因为公司当前的亏损状态",
         "quant_score": -17,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
         "cache_age_hours": 0.1,
-        "score": 2.17,
-        "is_active": true,
+        "score": 0.69,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": -97.5,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 12.46,
-        "change_pct": -3.26
+        "current": 13.15,
+        "change_pct": 10.04
       }
     },
     {
@@ -2205,25 +2072,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "-1/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
-        "reasoning": "光力科技的当前状况令人担忧。从基本面分析来看，公司的赚钱能力几乎为零，ROE仅为0%，远远低于行业平均水平。同时，公司的利润增速大幅超过营收增速，高度疑似含一次性收益，这使得公司的盈利能力难以维持。另外，公司的估值水平较高，PB估值也偏贵。\n\n从新闻来看，顶流基金经理减持慧泰医疗，机构密集调研期的到来可能会带来一些短期的市场波动。但这些新闻并没有改变公司基本面的坏处。公司的半导体业务营收占比虽然在",
-        "quant_score": 11,
+        "reasoning": "光力科技的基本面分析显示，该公司的赚钱能力几乎为零，ROE仅为0%，远远低于行业平均水平。同时，公司的利润增速大幅超过营收增速，高度疑似含一次性收益，这使得公司的盈利能力难以维持。另外，公司的估值较高，PB估值略高，且PE估值异常高，通常为利润骤降或数据错误。\n\n近期新闻显示，主力资金净流入，共封装光学(CPO)概念涨幅较大，但这些因素并不能改变公司的基本面。情绪值为0.0，关键信号无，表明市场对",
+        "quant_score": 14,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 3.0,
-        "is_active": true,
+        "cache_age_hours": 0.5,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
-          "count_30d": 5,
-          "days_since_latest": 15,
+          "count_30d": 4,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-05-13",
@@ -2248,12 +2115,6 @@
               "n_inst": 11,
               "method": "特定对象调研,路演活动,现场参观",
               "is_specific": true
-            },
-            {
-              "date": "2026-04-28",
-              "n_inst": 53,
-              "method": "业绩说明会,2025年度、2026年第一季度业绩电话交流会",
-              "is_specific": false
             }
           ]
         },
@@ -2263,8 +2124,8 @@
         }
       },
       "price": {
-        "current": 34.1,
-        "change_pct": -3.73
+        "current": 32.62,
+        "change_pct": -1.51
       }
     },
     {
@@ -2274,25 +2135,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "5/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和增长潜力的公司。然而，金橙子（688291）似乎并不符合这些标准。公司的盈利能力较弱，ROE几乎为零，这是一个令人担忧的信号。同时，公司的利润增速也在下降，这可能表明公司的增长故事已经触顶。\n\n从估值角度来看，公司的PE和PB估值并不特别吸引人。考虑到公司的基本面和估值，似乎没有足够的理由支持公司的当前股价。近期的新闻也没有提供任何令人兴奋的信息",
-        "quant_score": 32,
+        "reasoning": "作为一名成长股分析师，我对金橙子（688291）进行了深入研究。该公司的营收增速和毛利率趋势令人担忧，尤其是其几乎没有赚钱能力，投入100元仅能赚取不到5元。同时，公司的利润增速也在萎缩，每年平均减少-6.5%。\n\n从估值角度来看，公司的PE估值略便宜，但PB估值却较贵。考虑到公司的红旗，包括几乎为零的赚钱能力和萎缩的利润增速，我认为公司的估值溢价并不合理。\n\n基于以上分析，我的判断是：卖出。因为",
+        "quant_score": 34,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
         "cache_age_hours": 0.1,
-        "score": 3.5,
-        "is_active": true,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 11,
+          "days_since_latest": 15,
           "events": [
             {
               "date": "2026-05-17",
@@ -2303,13 +2164,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -49.0,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 53.02,
-        "change_pct": 1.09
+        "current": 46.79,
+        "change_pct": -1.25
       }
     },
     {
@@ -2319,7 +2180,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2333,34 +2194,28 @@
       },
       "precursor": {
         "cache_age_hours": 0.0,
-        "score": 5.4,
-        "is_active": true,
+        "score": 0.14,
+        "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 10,
+          "count_30d": 1,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-05-18",
               "n_inst": 68,
               "method": "特定对象调研,投资者线上交流,现场交流",
               "is_specific": true
-            },
-            {
-              "date": "2026-04-27",
-              "n_inst": 19,
-              "method": "特定对象调研,投资者线上交流会,线上交流,现场交流",
-              "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": -25.6,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 71.66,
-        "change_pct": 8.08
+        "current": 68.92,
+        "change_pct": 1.35
       }
     },
     {
@@ -2370,7 +2225,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2383,23 +2238,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 1.17,
+        "cache_age_hours": 0.4,
+        "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 16,
+          "count_30d": 1,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-05-12",
               "n_inst": 59,
               "method": "路演活动,现场",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-30",
-              "n_inst": 1,
-              "method": "业绩说明会",
               "is_specific": false
             }
           ]
@@ -2410,8 +2259,8 @@
         }
       },
       "price": {
-        "current": 63.26,
-        "change_pct": -0.74
+        "current": 56.53,
+        "change_pct": 0.66
       }
     },
     {
@@ -2421,7 +2270,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2434,23 +2283,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 1.0,
+        "cache_age_hours": 0.2,
+        "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 7,
+          "count_30d": 1,
+          "days_since_latest": 11,
           "events": [
             {
               "date": "2026-05-21",
               "n_inst": 55,
               "method": "2026年干散货航运论坛暨海通发展资本市场日",
-              "is_specific": false
-            },
-            {
-              "date": "2026-04-13",
-              "n_inst": 1,
-              "method": "业绩说明会",
               "is_specific": false
             }
           ]
@@ -2461,8 +2304,8 @@
         }
       },
       "price": {
-        "current": 11.76,
-        "change_pct": -1.18
+        "current": 11.53,
+        "change_pct": -0.86
       }
     },
     {
@@ -2472,7 +2315,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2485,29 +2328,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 2.12,
-        "is_active": true,
+        "cache_age_hours": 0.2,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-04-27",
               "n_inst": 50,
-              "method": "特定对象调研,现场参观,网络会议",
+              "method": "",
               "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 12.3,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 78.95,
-        "change_pct": 2.13
+        "current": 53.38,
+        "change_pct": 0.02
       }
     },
     {
@@ -2517,25 +2360,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "-15/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
-        "reasoning": "美锦能源陷入困境。从基本面分析来看，公司的ROE在2022-2024年连续下滑，最新年反弹至-8.1%，这表明公司的赚钱能力几乎为零。同时，公司的净利率为负，意味着公司在烧钱。这些指标表明公司的竞争优势正在恶化。\n\n从估值判断来看，公司的PE估值略便宜，但这并不能掩盖公司的基本面问题。新闻方面，虽然公司的子公司东于煤业恢复生产，但这并不能改变公司的基本面。\n\n基于以上分析，我认为美锦能源的风险位置",
+        "reasoning": "美锦能源的基本面令人担忧，ROE在2022-2024年连续下滑，最新年反弹至-8.1%，这表明公司的赚钱能力几乎为零。净利率为负，意味着公司在亏损，投进去的本金在缩水。同时，公司的盈利一致性也不稳定，3年里有2年亏损。\n\n从估值角度来看，公司的PE估值略便宜，PB估值也便宜。但是，这些好消息并不能掩盖公司的基本面问题。公司当前在亏损，卖东西不赚钱，这些红旗不能被忽视。\n\n基于以上分析，我的判断是：",
         "quant_score": 6,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 3.76,
-        "is_active": true,
+        "cache_age_hours": 0.5,
+        "score": 1.61,
+        "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 6,
+          "days_since_latest": 10,
           "events": [
             {
               "date": "2026-05-22",
@@ -2552,13 +2395,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -0.6,
+          "change_pct": 10.6,
           "direction": ""
         }
       },
       "price": {
-        "current": 4.12,
-        "change_pct": -1.44
+        "current": 4.43,
+        "change_pct": 2.31
       }
     },
     {
@@ -2568,7 +2411,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2581,12 +2424,12 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 0.68,
+        "cache_age_hours": 0.4,
+        "score": 1.79,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 7,
+          "days_since_latest": 11,
           "events": [
             {
               "date": "2026-05-21",
@@ -2597,13 +2440,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -3.0,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 9.56,
-        "change_pct": 0.63
+        "current": 10.08,
+        "change_pct": 1.82
       }
     },
     {
@@ -2613,25 +2456,25 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-24",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "-8/35",
-        "reasoning": "综合得分 -5/100：高危，建议优先考虑退出\n⚠️ 风险：🚨 公司当前在亏损（ROE < 0%）",
+        "moat": "-8/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
+        "reasoning": "作为一名成长股分析师，我对翱捷科技的表现感到担忧。尽管公司近期的5G eMBB产品出货量已超一季度，但其净利率仍然为负，这是一个令人担忧的信号。同时，公司的ROE和利润率也处于较低水平，表明其盈利能力较弱。\n\n此外，公司的估值也较高，PB估值数据显示其按资产算贵。考虑到公司的盈利能力和估值水平，我认为翱捷科技的投资风险较高。\n\n基于以上分析，我的判断是：卖出。因为公司的盈利能力较弱，估值水平较高，",
         "quant_score": -5,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
         "cache_age_hours": 0.1,
-        "score": 3.5,
-        "is_active": true,
+        "score": 0.42,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 17,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-05-11",
@@ -2642,13 +2485,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -76.3,
+          "change_pct": -8.3,
           "direction": ""
         }
       },
       "price": {
-        "current": 113.07,
-        "change_pct": 2.14
+        "current": 102.06,
+        "change_pct": -4.06
       }
     },
     {
@@ -2658,7 +2501,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2671,12 +2514,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 4.0,
-        "is_active": true,
+        "cache_age_hours": 0.4,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
-          "count_30d": 6,
-          "days_since_latest": 7,
+          "count_30d": 4,
+          "days_since_latest": 11,
           "events": [
             {
               "date": "2026-05-21",
@@ -2701,12 +2544,6 @@
               "n_inst": 16,
               "method": "券商策略会",
               "is_specific": false
-            },
-            {
-              "date": "2026-04-30",
-              "n_inst": 6,
-              "method": "路演活动,电话会议",
-              "is_specific": false
             }
           ]
         },
@@ -2716,8 +2553,8 @@
         }
       },
       "price": {
-        "current": 61.42,
-        "change_pct": -0.7
+        "current": 51.25,
+        "change_pct": -2.44
       }
     },
     {
@@ -2727,7 +2564,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-05-24",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
         "date": "2026-05-24",
@@ -2740,29 +2577,29 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 2.96,
+        "cache_age_hours": 0.4,
+        "score": 4.0,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 34,
+          "days_since_latest": 38,
           "events": [
             {
               "date": "2026-04-24",
               "n_inst": 41,
-              "method": "业绩说明会,路演活动,现场参观,股东会",
+              "method": "",
               "is_specific": true
             }
           ]
         },
         "short_selling": {
-          "change_pct": 29.2,
+          "change_pct": 41.6,
           "direction": ""
         }
       },
       "price": {
-        "current": 26.91,
-        "change_pct": 1.89
+        "current": 27.28,
+        "change_pct": 1.94
       }
     },
     {
@@ -2775,39 +2612,32 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-25",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "4/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 2/10 分 — 定价权很弱——卖100元东西，利润还不到5元",
-        "reasoning": "综合得分 20/100：高危，建议优先考虑退出\n⚠️ 风险：🚨 投入100元赚不到5元（ROE < 5%）——赚钱能力几乎为零",
-        "quant_score": 20,
+        "reasoning": "作为一名成长股质量分析师，我对甬矽电子的表现感到担忧。公司的营收增速和毛利率趋势令人失望，尤其是几乎没有赚钱能力，投入100元连5元都赚不到。这表明公司的定价权很弱，难以维持盈利。\n\n此外，公司的护城河较弱，缺乏明显的竞争壁垒。虽然公司有一定的借债风险，但仍然处于可接受范围内。然而，公司的估值溢价不合理，尤其是考虑到其几乎没有赚钱能力。\n\n基于以上分析，我的判断是：卖出。因为量化评分为D级 · 卖",
+        "quant_score": 28,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.0,
-        "score": 4.21,
-        "is_active": true,
+        "cache_age_hours": 0.1,
+        "score": 0.39,
+        "is_active": false,
         "survey": {
-          "count_30d": 1,
-          "days_since_latest": 57,
-          "events": [
-            {
-              "date": "2026-04-01",
-              "n_inst": 1,
-              "method": "业绩说明会,电话会议",
-              "is_specific": false
-            }
-          ]
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
         },
         "short_selling": {
-          "change_pct": 357.4,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 71.64,
-        "change_pct": -5.21
+        "current": 60.6,
+        "change_pct": -5.39
       }
     },
     {
@@ -2830,8 +2660,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
-        "score": 0.4,
+        "cache_age_hours": 0.3,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -2839,13 +2669,13 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 8.1,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 8.45,
-        "change_pct": -2.65
+        "current": 8.21,
+        "change_pct": 1.86
       }
     },
     {
@@ -2868,12 +2698,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 2.33,
-        "is_active": true,
+        "cache_age_hours": 0.5,
+        "score": 1.67,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 15,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-05-13",
@@ -2884,13 +2714,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -36.6,
+          "change_pct": -33.4,
           "direction": ""
         }
       },
       "price": {
-        "current": 5.35,
-        "change_pct": -1.11
+        "current": 5.07,
+        "change_pct": -1.55
       }
     },
     {
@@ -2913,12 +2743,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 4.0,
+        "cache_age_hours": 0.5,
+        "score": 3.3,
         "is_active": true,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 13,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-05-15",
@@ -2935,13 +2765,13 @@
           ]
         },
         "short_selling": {
-          "change_pct": -61.8,
+          "change_pct": -28.8,
           "direction": ""
         }
       },
       "price": {
-        "current": 11.1,
-        "change_pct": -3.06
+        "current": 11.26,
+        "change_pct": 4.65
       }
     },
     {
@@ -2954,22 +2784,22 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-27",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "-11/35",
-        "reasoning": "综合得分 7/100：高危，建议优先考虑退出\n⚠️ 风险：🚨 公司当前在亏损（ROE < 0%）",
-        "quant_score": 7,
+        "moat": "-11/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
+        "reasoning": "中兰环保的当前状况令人担忧，公司在亏损，净利率为负，这是最直接的危险信号。从基本面分析来看，ROE为-5/15分，利润率也为-5/10分，表明公司的赚钱能力几乎为零，销售额越多亏得越多。管理层的表现也没有给我们带来太多的信心，利润增速在这里没有意义，因为有亏损年份。\n\n估值方面，PE估值异常高，PB估值也偏贵，表明公司的估值水平较高。新闻方面，虽然公司的收盘价创历史新高，但这并不能掩盖公司的基本面",
+        "quant_score": 8,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 1.5,
-        "is_active": false,
+        "cache_age_hours": 0.4,
+        "score": 2.0,
+        "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 6,
+          "days_since_latest": 10,
           "events": [
             {
               "date": "2026-05-22",
@@ -2985,8 +2815,8 @@
         }
       },
       "price": {
-        "current": 41.7,
-        "change_pct": 1.34
+        "current": 28.84,
+        "change_pct": -14.5
       }
     },
     {
@@ -2999,18 +2829,18 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-27",
+        "date": "2026-06-01",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "-15/35：赚钱能力（ROE）: -5/15 分 — 🚨 公司当前在亏损——投进去的本金在缩水; 利润率: -5/10 分 — 🚨 卖东西不赚钱——销售额越多亏得越多",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和稳定的财务表现的公司。但是，勤上股份的现状让我感到担忧。公司当前的亏损状态和负的净利率表明其商业模式存在问题。尽管公司控股股东增持计划实施完成，但这并不能掩盖公司整体财务表现的弱点。\n\n从量化评分来看，公司的护城河、成长/管理层和安全性方面都存在较大的问题。公司的赚钱能力和利润率都处于较低水平，且连续三年亏损，这使得我对公司的未来前景感到担忧。\n",
+        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和财务状况。勤上股份当前的状况令人担忧，公司正在亏损，净利率为负，这意味着销售额越多，亏损越多。同时，公司的成长性也不佳，利润增速没有意义，且连续三年亏损。\n\n从安全性方面，公司的借债风险较低，但持续亏损的状况使得破产风险显著。估值方面，公司的PE和PB估值均偏贵。控股股东的增持计划实施完成，合计增持9825万股，这可能是公司试图稳定股价的举动，但并不能改",
         "quant_score": -14,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 0.93,
+        "cache_age_hours": 0.5,
+        "score": 1.48,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -3023,8 +2853,8 @@
         }
       },
       "price": {
-        "current": 4.51,
-        "change_pct": 5.13
+        "current": 4.52,
+        "change_pct": -0.44
       }
     },
     {
@@ -3037,39 +2867,153 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-05-27",
-        "grade": "D",
-        "conclusion": "卖出",
-        "moat": "0/35",
-        "reasoning": "综合得分 17/100：高危，建议优先考虑退出",
-        "quant_score": 17,
-        "data_incomplete": 1,
-        "data_quality": "incomplete"
+        "date": "2026-06-01",
+        "grade": "C",
+        "conclusion": "减持",
+        "moat": "13/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 2/10 分 — 定价权很弱——卖100元东西，利润还不到5元",
+        "reasoning": "长电科技的基本面分析显示，其赚钱能力偏弱，ROE仅为3/15分，投入100元只能赚回5-10元。同时，其定价权很弱，利润率仅为2/10分，卖100元东西，利润还不到5元。虽然公司过去3年持续盈利，但增长缓慢，利润每年平均只增加3.1%。从估值方面来看，公司的PE估值偏贵，比自己历史上大多数时候都贵，PB估值也按资产算贵。\n\n近期新闻显示，华海诚科再遇华天科技减持，这可能会对公司的股价产生一定影响。",
+        "quant_score": 42,
+        "data_incomplete": 0,
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
-        "score": 2.86,
-        "is_active": true,
+        "cache_age_hours": 0.3,
+        "score": 0.1,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 28,
+          "days_since_latest": 32,
           "events": [
             {
               "date": "2026-04-30",
               "n_inst": 1,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 136.2,
+          "change_pct": null,
           "direction": ""
         }
       },
       "price": {
-        "current": 94.08,
-        "change_pct": 6.68
+        "current": 76.9,
+        "change_pct": -6.28
+      }
+    },
+    {
+      "code": "600573",
+      "name": "600573",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-29",
+      "is_new": true,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-05-29",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "19/35：赚钱能力（ROE）: 3/15 分 — 赚钱能力偏弱——投入100元只能赚回5-10元; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
+        "reasoning": "惠泉啤酒的当前价格为¥13.25，相比历史价格而言，仍然处于相对低位。从基本面分析来看，公司的赚钱能力偏弱，ROE仅为3/15分，表明投入100元只能赚回5-10元。然而，公司的成长性较好，利润增速快速，过去3年持续盈利，没有亏损年。安全性方面，公司几乎不借债，财务非常保守，抗风险能力强。\n\n从估值角度来看，PE估值较低，跟自己历史价格比，现在处于很低的位置。然而，PB估值略贵，需要谨慎。近期新闻",
+        "quant_score": 67,
+        "data_incomplete": 0,
+        "data_quality": "ok"
+      },
+      "precursor": {
+        "cache_age_hours": 0.4,
+        "score": 1.59,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 13.57,
+        "change_pct": 1.8
+      }
+    },
+    {
+      "code": "600857",
+      "name": "600857",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-29",
+      "is_new": true,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-06-01",
+        "grade": "D",
+        "conclusion": "卖出",
+        "moat": "-1/35：赚钱能力（ROE）: 0/15 分 — ⚠️ 几乎没有赚钱能力——投入100元连5元都赚不到; 利润率: 4/10 分 — 定价权偏弱——卖100元东西，只能留5-10元",
+        "reasoning": "宁波中百的基本面分析显示，该公司的赚钱能力几乎为零，ROE仅为0%，这表明公司的盈利能力非常弱。同时，公司的定价权偏弱，净利率仅为4%。这些指标表明公司的竞争优势不明显，难以维持长期的盈利能力。\n\n从估值角度来看，公司的PE估值和PB估值均处于正常水平，但考虑到公司的基本面问题，估值可能被高估。另外，公司的红旗包括赚钱能力几乎为零，这是一个非常大的风险信号。\n\n近期新闻中，公司的分红公告可能会带来",
+        "quant_score": 23,
+        "data_incomplete": 0,
+        "data_quality": "ok"
+      },
+      "precursor": {
+        "cache_age_hours": 0.3,
+        "score": 1.06,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 15.8,
+        "change_pct": 2.13
+      }
+    },
+    {
+      "code": "002107",
+      "name": "002107",
+      "market": "cn",
+      "status": "watching",
+      "entry_price": null,
+      "added_at": "2026-05-29",
+      "is_new": true,
+      "watched_by": "2",
+      "analysis": {
+        "date": "2026-05-29",
+        "grade": "B",
+        "conclusion": "持有",
+        "moat": "21/35：赚钱能力（ROE）: 7/15 分 — 一般赚钱能力——投入100元赚回约10元; 利润率: 6/10 分 — 中等定价权——卖100元东西，能留约10元",
+        "reasoning": "沃华医药的基本面分析显示，公司的净利润增速达到163%，但营收仅增7%，这表明可能存在一次性收益的影响。公司的赚钱能力一般，ROE为7%，利润率为10%。成长方面，公司的利润增速快速，过去3年持续盈利。安全性方面，公司几乎不借债，抗风险能力强。\n\n估值方面，公司的PE估值较低，但PB估值略贵。近期新闻显示，公司董秘张戈计划减持不超189万股，这可能会对公司股价产生一定影响。情绪值为-0.11，关键",
+        "quant_score": 68,
+        "data_incomplete": 0,
+        "data_quality": "ok"
+      },
+      "precursor": {
+        "cache_age_hours": 0.5,
+        "score": 0.0,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": null,
+          "direction": ""
+        }
+      },
+      "price": {
+        "current": 6.54,
+        "change_pct": 1.08
       }
     }
   ]
