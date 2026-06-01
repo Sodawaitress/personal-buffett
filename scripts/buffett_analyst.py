@@ -300,7 +300,8 @@ def analyze_stock_v2(code: str, name: str, market: str,
                 pe_percentile=pe_percentile,
                 pb_percentile=pb_percentile,
                 price_52week_pct=price_52week_pct,
-                news_signals=news_signals_for_rating
+                news_signals=news_signals_for_rating,
+                signals=_sig,
             )
 
             grade = rating_result["grade"]
@@ -393,6 +394,7 @@ def analyze_stock_v2(code: str, name: str, market: str,
             "high_neg_resignation": 1 if any(k in _key2 for k in ("辞职", "离职")) else 0,
             "mid_neg_reduction":    1 if "减持" in _key2 else 0,
         }
+        _sig2 = (fundamentals.get("signals", {}) or {}) if fundamentals else {}
         _rating = QuantitativeRater().rate_stock(
             code=code,
             name=name,
@@ -401,6 +403,7 @@ def analyze_stock_v2(code: str, name: str, market: str,
             pb_percentile=fundamentals.get("pb_percentile_5y") if fundamentals else None,
             price_52week_pct=None,
             news_signals=_ns,
+            signals=_sig2,
         )
         grade      = _rating.get("grade", "C")
         conclusion = _rating.get("conclusion", "持有")

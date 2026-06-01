@@ -412,18 +412,26 @@ class QuantitativeRater:
             return -2, _t("fcf_poor", locale)
 
     @classmethod
-    def score_moat(cls, annual_data: List[Dict], locale: str = "zh") -> Tuple[int, List[str]]:
+    def score_moat(cls, annual_data: List[Dict], locale: str = "zh", signals: Dict = None) -> Tuple[int, List[str]]:
         """护城河总分 (40 分)"""
         details = []
         total = 0
         pts = _t("pts", locale)
 
-        if not annual_data:
+        if not annual_data and not signals:
             return 0, [_t("moat_data_insufficient", locale)]
 
-        latest = annual_data[0]
-        roe_pct = _pct(latest.get("roe"))
-        margin_pct = _pct(latest.get("net_margin"))
+        if annual_data:
+            latest = annual_data[0]
+            roe_pct = _pct(latest.get("roe"))
+            margin_pct = _pct(latest.get("net_margin"))
+        else:
+            # 非A股无年报时，用 yfinance 实时财务指标作 fallback
+            roe_val = signals.get("roe") if signals else None
+            margin_val = signals.get("profit_margin") if signals else None
+            roe_pct = roe_val * 100 if roe_val is not None else 0
+            margin_pct = margin_val * 100 if margin_val is not None else 0
+            annual_data = []  # 后续稳定性/FCF逻辑安全退化
 
         roe_score, roe_desc = cls.score_roe(roe_pct, locale)
         details.append(f"{_t('moat_roe_label', locale)}: {roe_score}/15 {pts} — {roe_desc}")
@@ -438,7 +446,8 @@ class QuantitativeRater:
         details.append(f"{_t('moat_stability_label', locale)}: {stability_score}/10 {pts} — {stability_desc}")
         total += stability_score
 
-        if "ocf_per_share" in latest and "eps" in latest:
+        if annual_data and "ocf_per_share" in annual_data[0] and "eps" in annual_data[0]:
+            latest = annual_data[0]
             try:
                 ocf = float(latest["ocf_per_share"])
                 eps = float(latest["eps"])
@@ -838,7 +847,8 @@ class QuantitativeRater:
                    pe_percentile: Optional[int], pb_percentile: Optional[int],
                    price_52week_pct: Optional[float],
                    news_signals: Dict,
-                   locale: str = "zh") -> Dict:
+                   locale: str = "zh",
+                   signals: Dict = None) -> Dict:
         """
         完整评级函数
 
@@ -852,7 +862,7 @@ class QuantitativeRater:
         )
         data_incomplete = int(_present < 2)  # 4个关键字段中少于2个有值 → 数据不完整
 
-        moat_score, moat_details = cls.score_moat(annual_data, locale)
+        moat_score, moat_details = cls.score_moat(annual_data, locale, signals=signals)
         growth_score, growth_details = cls.score_growth_and_management(annual_data, news_signals, locale)
         safety_score, safety_details = cls.score_safety(annual_data, locale)
         valuation_score, valuation_details = cls.score_valuation(
