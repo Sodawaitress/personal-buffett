@@ -40,6 +40,7 @@ jobs:
     needs: trigger
     env:
       APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Create remote backup
