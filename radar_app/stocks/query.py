@@ -21,6 +21,8 @@ def get_stock_page_bundle(code, user_id):
         return None
 
     market = stock.get("market", "us")
+    meta = db.get_stock_meta(code)
+    watchlist_entry = get_watchlist_entry(user_id, code)
     return {
         "code": code,
         "stock": stock,
@@ -35,26 +37,22 @@ def get_stock_page_bundle(code, user_id):
         "north_bound": db.get_north_bound() if market == "cn" else {},
         "fund": db.get_fundamentals(code),
         "pending_job": get_pending_job(code),
-        "in_watchlist": any(row.get("stock_code") == code for row in db.get_user_watchlist(user_id)),
-        "meta": db.get_stock_meta(code),
+        "in_watchlist": watchlist_entry is not None,
+        "meta": meta,
         "events": db.get_stock_events(code),
-        "watchlist_entry": get_watchlist_entry(user_id, code),
+        "watchlist_entry": watchlist_entry,
         "price_52w": get_price_52week(code),
         "analyst_consensus": get_analyst_consensus(code),
-        "industry_signal":   _get_industry_signal_for_stock(stock, market),
+        "industry_signal":   _get_industry_signal_for_stock(code, market, meta),
     }
 
 
-def _get_industry_signal_for_stock(stock: dict, market: str):
+def _get_industry_signal_for_stock(code: str, market: str, meta: dict):
     if market != "cn":
-        return None
-    code = (stock or {}).get("code")
-    if not code:
         return None
     try:
         from scripts.industry_signals import get_industry_key
-        meta = db.get_stock_meta(code) or {}
-        company_type = meta.get("company_type")
+        company_type = (meta or {}).get("company_type")
         industry_key = get_industry_key(company_type) if company_type else None
         return get_industry_signal(industry_key) if industry_key else None
     except Exception:

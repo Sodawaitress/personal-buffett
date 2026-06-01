@@ -75,11 +75,11 @@ def get_local_news(region="nz"):
 def get_intl_stock_news(stocks):
     intl_news = []
     try:
-        cn_codes = [stock["code"] for stock in stocks if stock["market"] in ("cn", "hk")]
+        cn_stocks = [s for s in stocks if s.get("market") in ("cn", "hk")][:15]
         seen = set()
-        for code in cn_codes[:15]:
-            stock_info = db.get_stock(code)
-            stock_name = stock_info.get("name", code) if stock_info else code
+        for stock in cn_stocks:
+            code = stock["code"]
+            stock_name = stock.get("name") or code
             for item in db.get_stock_news(code, days=3):
                 key = item.get("title", "")[:40]
                 if key and key not in seen:

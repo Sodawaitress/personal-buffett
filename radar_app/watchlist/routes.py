@@ -238,12 +238,13 @@ def register_watchlist_routes(app):
     @login_required
     def api_signals_scan():
         import subprocess, os
-        if _precursor_scan_running['value']:
-            return jsonify({'status': 'running', 'started_at': _precursor_scan_running['started_at']})
-
-        def _run():
+        with _precursor_scan_lock:
+            if _precursor_scan_running['value']:
+                return jsonify({'status': 'running', 'started_at': _precursor_scan_running['started_at']})
             _precursor_scan_running['value'] = True
             _precursor_scan_running['started_at'] = datetime.now(CN_TZ).isoformat()
+
+        def _run():
             try:
                 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
                 subprocess.run(
@@ -251,7 +252,8 @@ def register_watchlist_routes(app):
                     cwd=root, capture_output=True, timeout=600
                 )
             finally:
-                _precursor_scan_running['value'] = False
+                with _precursor_scan_lock:
+                    _precursor_scan_running['value'] = False
 
         t = threading.Thread(target=_run, daemon=True)
         t.start()
@@ -260,10 +262,10 @@ def register_watchlist_routes(app):
     @app.route('/api/signals/scan/status')
     @login_required
     def api_signals_scan_status():
-        return jsonify({
-            'running': _precursor_scan_running['value'],
-            'started_at': _precursor_scan_running['started_at'],
-        })
+        with _precursor_scan_lock:
+            running = _precursor_scan_running['value']
+            started_at = _precursor_scan_running['started_at']
+        return jsonify({'running': running, 'started_at': started_at})
 
     @app.route('/watchlist/performance')
     @login_required

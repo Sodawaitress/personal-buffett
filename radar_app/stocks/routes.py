@@ -1,16 +1,18 @@
 """Stock detail and analysis-related routes extracted from the legacy app module."""
 
+import json as _json
+from datetime import datetime
+
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 
 import db
-from radar_app.shared.auth import admin_required
+from radar_app.shared.auth import admin_required, login_required
 from radar_app.legacy.pipeline import (
     start_letter_job,
     start_news_update_job,
     start_pipeline_job,
     start_quant_job,
 )
-from radar_app.shared.auth import login_required
 from radar_app.stocks.action_service import (
     add_stock_event_record,
     cancel_job,
@@ -23,6 +25,9 @@ from radar_app.stocks.service import (
     get_job_payload,
     get_letter_payload,
 )
+from scripts.config import CN_TZ
+from scripts.institutional_radar import compute_intention_score, _classify_inst_sellers, _build_observations
+from scripts.precursor_signals import fetch_precursor_signals
 
 
 def _demo_block():
@@ -128,7 +133,7 @@ def register_stock_routes(app):
     def api_job(job_id):
         payload = get_job_payload(job_id)
         if not payload:
-            return jsonify({'status': 'not_found'}), 404
+            return jsonify({'error': 'not found'}), 404
         return jsonify(payload)
 
     @app.route('/api/job/<int:job_id>/cancel', methods=['POST'])
@@ -169,14 +174,6 @@ def register_stock_routes(app):
         code = code.upper().split(".")[0].zfill(6)
         if not (code.isdigit() and len(code) == 6):
             return jsonify({"error": "A股代码只支持6位数字"}), 400
-
-        import json as _json
-        from datetime import datetime
-
-        import db
-        from scripts.config import CN_TZ
-        from scripts.institutional_radar import compute_intention_score
-        from scripts.precursor_signals import fetch_precursor_signals
 
         # ── 从 DB 读取已有信号 ────────────────────────────────────────
         funds = db.get_fundamentals(code) or {}
@@ -307,11 +304,9 @@ def register_stock_routes(app):
         }
 
         # inst_classification 用真实 inst_top 重算（compute 里没有 inst_top 时为空）
-        from scripts.institutional_radar import _classify_inst_sellers
         score_data["inst_classification"] = _classify_inst_sellers(inst_top)
 
         # observations 重建（带完整 signals_snapshot）
-        from scripts.institutional_radar import _build_observations
         score_data["observations"] = _build_observations(
             score_data.get("components", {}),
             score_data["precursor_raw"],
