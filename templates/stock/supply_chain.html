@@ -62,7 +62,7 @@
           {% if market == "cn" %}{{ t.sc_source_cn }}{% else %}{{ t.sc_source_us }}{% endif %}
         </span>
         <button class="sc-rescan-btn" id="sc-rescan-btn"
-                onclick="scScan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
+                onclick="scConfirmRescan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
       </div>
     </div>
 
@@ -157,7 +157,7 @@
     const safeName = lnk.supplier_name.replace(/'/g, "\\'");
     const addBtn = lnk.supplier_ticker
       ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${safeName}',this)" title="加入自选股">+ 自选股</button>`
-      : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="搜索后添加">搜索添加</a>`;
+      : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="若该公司未上市可能搜不到">搜索上市主体</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
     return `
@@ -192,6 +192,7 @@
 
     const tier1 = (tree && tree.tier1) ? tree.tier1 : links.filter(l => (l.hop_depth||1) === 1);
     const t2map = (tree && tree.tier2_by_t1) ? tree.tier2_by_t1 : {};
+    _currentLinkCount = links.length;
 
     const topRisk = Math.max(...links.map(l => l.chokepoint_score));
     const topName = links.find(l => l.chokepoint_score === topRisk)?.supplier_name || '';
@@ -255,6 +256,15 @@
       }
     })
     .catch(() => { btn.textContent = '+ 自选股'; btn.disabled = false; });
+  };
+
+  let _currentLinkCount = 0;
+
+  window.scConfirmRescan = function(c, mkt) {
+    if (_currentLinkCount > 0) {
+      if (!confirm(`重新溯源会覆盖当前 ${_currentLinkCount} 条供应链记录，LLM 每次结果可能不同。确认继续？`)) return;
+    }
+    scScan(c, mkt);
   };
 
   window.scScan = function(c, mkt) {
