@@ -1,0 +1,739 @@
+openapi: "3.1.0"
+info:
+  title: Personal Buffett API
+  version: "1.0"
+  description: |
+    Internal API for the Personal Buffett stock research assistant.
+    All endpoints require a valid session cookie (set by /login or /auth/google).
+    CORS is enabled for http://localhost:3000 (Next.js dev server).
+
+    Response shapes:
+    - Legacy endpoints return ad-hoc JSON (shape documented per endpoint).
+    - New endpoints (US-99+) use the standard envelope:
+        { "ok": true, "data": <payload> }
+        { "ok": false, "error": "<message>", "code": "<SNAKE_CODE>" }
+
+servers:
+  - url: http://localhost:5001
+    description: Local dev (Flask)
+  - url: https://personal-buffett.fly.dev
+    description: Production (Fly.io)
+
+tags:
+  - name: search
+  - name: watchlist
+  - name: stock
+  - name: jobs
+  - name: signals
+  - name: portfolio
+  - name: system
+
+paths:
+
+  # ── Search ──────────────────────────────────────────────────────────────────
+
+  /api/search:
+    get:
+      tags: [search]
+      summary: Fuzzy stock search
+      description: AKShare for CN stocks, yfinance for others.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [auto, cn, fund, intl]
+            default: auto
+      responses:
+        "200":
+          description: List of matching stocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SearchResult"
+
+  # ── Watchlist ────────────────────────────────────────────────────────────────
+
+  /api/watchlist/filter:
+    get:
+      tags: [watchlist]
+      summary: Filter watchlist by market / grade
+      parameters:
+        - name: market
+          in: query
+          schema: { type: string, example: cn }
+        - name: grade
+          in: query
+          schema: { type: string, example: A }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  codes:
+                    type: array
+                    items: { type: string }
+
+  /api/stock/{code}/status:
+    post:
+      tags: [watchlist]
+      summary: Move stock to holding / watching / sold
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [holding, watching, sold] }
+                entry_price: { type: number }
+                buy_date: { type: string, format: date }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  status: { type: string }
+        "400":
+          description: Invalid status
+
+  /api/stock/{code}/remove:
+    delete:
+      tags: [watchlist]
+      summary: Remove stock from watchlist (soft delete)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Empty body — htmx swaps element away
+
+  /api/notification/{notif_id}/snooze:
+    post:
+      tags: [watchlist]
+      summary: Snooze a D-rating notification for 60 days
+      parameters:
+        - name: notif_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkTrue" }
+
+  /api/notification/{notif_id}/dismiss:
+    post:
+      tags: [watchlist]
+      summary: Permanently dismiss a notification
+      parameters:
+        - name: notif_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkTrue" }
+
+  # ── Stock analysis ───────────────────────────────────────────────────────────
+
+  /api/news/{code}:
+    get:
+      tags: [stock]
+      summary: Last 7 days of news for a stock
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /api/analyst/{code}:
+    get:
+      tags: [stock]
+      summary: Analyst consensus (EPS forecasts + rating distribution)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalystConsensus" }
+
+  /api/letter/{code}:
+    get:
+      tags: [stock]
+      summary: Latest Buffett letter for a stock
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LetterPayload" }
+
+  /api/analyze/{code}:
+    post:
+      tags: [stock]
+      summary: Start full pipeline analysis (price + financials + AI letter)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobStarted" }
+        "403":
+          description: Demo user — analysis not allowed
+        "404":
+          description: Stock not in watchlist
+
+  /api/analyze-only/{code}:
+    post:
+      tags: [stock]
+      summary: Start quantitative-only analysis (no LLM)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobStarted" }
+
+  /api/generate-letter/{code}:
+    post:
+      tags: [stock]
+      summary: Re-generate only the Buffett letter (skip data fetch)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobStarted" }
+
+  /api/refresh-news/{code}:
+    post:
+      tags: [stock]
+      summary: Refresh news cache for a stock (1h TTL)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobStarted" }
+
+  /api/analyze-batch:
+    post:
+      tags: [stock]
+      summary: Batch analysis for multiple stocks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                codes:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobStarted" }
+        "400":
+          description: No codes provided
+
+  /api/intention/{code}:
+    get:
+      tags: [stock]
+      summary: Institutional intent score (A-shares only)
+      description: |
+        Computes a weighted score (0–100) from 10 signals including insider
+        buys, institutional holdings, margin balance, fund flow, and precursor
+        signals (survey activity, short selling, participation trend).
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string, example: "600519" }
+        - name: force
+          in: query
+          schema: { type: string, enum: ["1"] }
+          description: Force-refresh precursor signals (skip 48h cache)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntentionScore" }
+        "400":
+          description: Not a valid 6-digit CN code
+
+  /api/stock/{code}/bundle:
+    get:
+      tags: [stock]
+      summary: Export analysis bundle (for sharing / archiving)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Full analysis bundle (stock info + latest letter + signals)
+        "404":
+          description: Stock not found
+
+  /api/stock/{code}/events:
+    post:
+      tags: [stock]
+      summary: Add a stock event (admin only)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_type: { type: string }
+                event_date: { type: string, format: date }
+                description: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkTrue" }
+
+  # ── Job polling ──────────────────────────────────────────────────────────────
+
+  /api/job/{job_id}:
+    get:
+      tags: [jobs]
+      summary: Poll analysis job status
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobStatus" }
+        "404":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: not_found }
+
+  /api/job/{job_id}/cancel:
+    post:
+      tags: [jobs]
+      summary: Cancel a running job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "404":
+          description: Job not found
+
+  # ── Signals ──────────────────────────────────────────────────────────────────
+
+  /api/signals/watchlist:
+    get:
+      tags: [signals]
+      summary: Top signal events for user's watchlist (CN stocks)
+      description: |
+        Returns stocks that triggered ≥2 resonant signals today.
+        Read from local cache — sub-100ms. CN stocks only.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SignalsWatchlist" }
+
+  /api/signals/scan:
+    post:
+      tags: [signals]
+      summary: Trigger a precursor signal scan for all CN watchlist stocks
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [started, running] }
+                  started_at: { type: string, format: date-time }
+
+  /api/signals/scan/status:
+    get:
+      tags: [signals]
+      summary: Check if a precursor scan is running
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  running: { type: boolean }
+                  started_at: { type: string, format: date-time, nullable: true }
+
+  /api/predict/{code}:
+    post:
+      tags: [signals]
+      summary: Submit a directional prediction for a stock signal
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [direction]
+              properties:
+                direction: { type: string, enum: [up, down, unsure] }
+                signal_type: { type: string, example: survey }
+                predicted_outcome: { type: string, enum: [confirms, fails], nullable: true }
+                note: { type: string, maxLength: 80 }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkTrue" }
+        "400":
+          description: Invalid direction
+
+    get:
+      tags: [signals]
+      summary: Retrieve last 10 predictions by current user for a stock
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prediction"
+
+  /api/knowledge/{slug}:
+    get:
+      tags: [signals]
+      summary: Knowledge card — situation-matched explanation for a signal
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, example: margin }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KnowledgeCard" }
+        "404":
+          description: No matching situation found
+
+  # ── Supply chain ─────────────────────────────────────────────────────────────
+
+  /api/supply-chain/scan/{code}:
+    post:
+      tags: [stock]
+      summary: Trigger SEC 10-K supply chain scan (US stocks only, async)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string, example: NVDA }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  status: { type: string, example: scanning }
+                  code: { type: string }
+
+  /api/supply-chain/{code}:
+    get:
+      tags: [stock]
+      summary: Get cached supply chain links
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items: { $ref: "#/components/schemas/SupplyChainLink" }
+                  fresh: { type: boolean }
+                  count: { type: integer }
+
+  # ── Portfolio / dashboard ────────────────────────────────────────────────────
+
+  /api/generate-brief:
+    post:
+      tags: [portfolio]
+      summary: Manually trigger LLM portfolio daily brief
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  brief: { type: string }
+
+  /api/home/refresh:
+    post:
+      tags: [system]
+      summary: Trigger fast home refresh (price + fund flow)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [started, running] }
+                  precursor_stale: { type: boolean }
+
+  /api/home/refresh/status:
+    get:
+      tags: [system]
+      summary: Check home refresh state
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  running: { type: boolean }
+                  step: { type: string }
+                  precursor_age_h: { type: number }
+                  precursor_label: { type: string }
+
+  /api/analyst/{code_2}:
+    get:
+      tags: [stock]
+      summary: "(duplicate — see /api/analyst/{code})"
+
+# ── Reusable schemas ─────────────────────────────────────────────────────────
+
+components:
+  schemas:
+
+    OkTrue:
+      type: object
+      properties:
+        ok: { type: boolean, example: true }
+
+    SearchResult:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        market: { type: string, enum: [cn, us, hk, nz, au, kr] }
+        exchange: { type: string }
+
+    NewsItem:
+      type: object
+      properties:
+        title: { type: string }
+        url: { type: string }
+        source: { type: string }
+        published_at: { type: string, format: date-time }
+        sentiment: { type: number, description: "-1 (negative) to +1 (positive)" }
+
+    AnalystConsensus:
+      type: object
+      properties:
+        code: { type: string }
+        n_institutions: { type: integer }
+        buy: { type: integer }
+        hold: { type: integer }
+        sell: { type: integer }
+        eps_next_year: { type: number, nullable: true }
+        fetched_at: { type: string, format: date-time }
+
+    LetterPayload:
+      type: object
+      properties:
+        code: { type: string }
+        letter: { type: string, description: Full Buffett-style letter text }
+        grade: { type: string, example: B+ }
+        rating_score: { type: integer }
+        conclusion: { type: string }
+        trade_block: { type: string, nullable: true }
+        analyzed_at: { type: string, format: date-time }
+
+    JobStarted:
+      type: object
+      properties:
+        job_id: { type: integer }
+        status: { type: string, example: queued }
+
+    JobStatus:
+      type: object
+      properties:
+        job_id: { type: integer }
+        status: { type: string, enum: [queued, running, done, failed] }
+        log: { type: string, nullable: true }
+        grade: { type: string, nullable: true }
+        rating_score: { type: integer, nullable: true }
+        letter: { type: string, nullable: true }
+        started_at: { type: string, format: date-time, nullable: true }
+        finished_at: { type: string, format: date-time, nullable: true }
+
+    IntentionScore:
+      type: object
+      properties:
+        score: { type: integer, description: "0–100 weighted tanh score" }
+        phase: { type: string, description: "One of 5 phase labels" }
+        phase_label: { type: string }
+        components: { type: object, description: Per-signal score breakdown }
+        observations: { type: array, items: { type: string } }
+        precursor_raw: { type: object }
+        precursor_fetched_at: { type: string }
+        precursor_from_cache: { type: boolean }
+
+    SignalsWatchlist:
+      type: object
+      properties:
+        top:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              name: { type: string }
+              direction: { type: string, enum: [bullish, bearish, mixed] }
+              score: { type: integer }
+              max_score: { type: integer }
+              signals: { type: array, items: { type: string } }
+        near:
+          type: array
+          items:
+            type: object
+
+    Prediction:
+      type: object
+      properties:
+        id: { type: integer }
+        direction: { type: string, enum: [up, down, unsure] }
+        signal_type: { type: string }
+        predicted_outcome: { type: string, nullable: true }
+        note: { type: string }
+        created_at: { type: string, format: date-time }
+        correct: { type: boolean, nullable: true }
+        actual_return_5d: { type: number, nullable: true }
+
+    KnowledgeCard:
+      type: object
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        body: { type: string }
+        situation: { type: string }
+
+    SupplyChainLink:
+      type: object
+      properties:
+        supplier_name: { type: string }
+        supplier_ticker: { type: string, nullable: true }
+        dependency_type: { type: string }
+        chokepoint_score: { type: integer, description: "0–100 risk score" }
+        evidence_quote: { type: string }
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+
+security:
+  - sessionCookie: []

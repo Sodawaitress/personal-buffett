@@ -4468,3 +4468,39 @@ yfinance 查询是否上市公司（name → ticker 匹配）
 - 自动批量扫描所有自选股（按需手动触发）
 - 供应商财务数据抓取（只做发现，不做分析）
 
+---
+
+## US-99 Flask API 层规范化（SPA 前置）
+
+**背景：** 当前 Flask 路由混合 SSR HTML 响应和 JSON API 响应，无统一约定，无文档，无 CORS。  
+在迁移 React/Next.js 前端之前，需要先把后端 API 整理成 SPA 可直接消费的状态。
+
+**目标：** 不改任何现有功能，只做规范化和补文档，最终产出一份 OpenAPI spec，Next.js 拿到即可开始对接。
+
+### Scope
+
+1. **路由审计** — 分类所有 Flask 路由：HTML SSR、JSON API、混合（同 URL 返回 HTML 或 JSON）
+2. **JSON 信封标准** — 所有 `/api/*` 端点统一响应格式：
+   ```json
+   { "ok": true, "data": {...} }
+   { "ok": false, "error": "message", "code": "ERROR_CODE" }
+   ```
+3. **CORS 配置** — `flask-cors` 允许 `http://localhost:3000`（Next.js dev），生产环境只允许同源
+4. **Auth 策略文档** — 记录 cookie session 如何在 Next.js SSR / CSR 两种模式下工作
+5. **OpenAPI spec** — `openapi.yaml`（手写或 `flask-smorest` 生成），覆盖所有 `/api/*` 端点
+
+### Acceptance Criteria
+
+- [ ] `scripts/audit_routes.py` 输出路由分类表（SSR / JSON API / mixed）
+- [ ] 所有 `/api/*` 端点返回统一 `{ ok, data/error }` 信封（不改 HTML 路由）
+- [ ] `flask-cors` 已安装并配置，Next.js dev server 可跨域请求 `/api/*`
+- [ ] `openapi.yaml` 文档存在，覆盖至少主要 API 端点（watchlist、stock、signals、analysis）
+- [ ] `requirements.txt` 更新（flask-cors、flask-smorest 或等价库）
+- [ ] 不破坏任何现有 HTML 页面功能
+
+**不做：**
+- 不改 HTML SSR 路由（保留给 Flask 继续渲染，直到 Next.js 逐页替换）
+- 不做 JWT（cookie session 已够用，避免引入新安全面）
+- 不做 API 版本前缀（`/api/v1/`）——现在加前缀反而是包袱，等真正需要 breaking change 再说
+- 不做 rate limiting（内部工具，不是公开 API）
+
