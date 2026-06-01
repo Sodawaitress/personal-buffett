@@ -655,10 +655,14 @@ def _cn_llm_fallback_scan(code: str, company_name: str, now: str) -> list:
             ratio = float(ratio) if ratio is not None else None
         except (TypeError, ValueError):
             ratio = None
+        sup_ticker = None
+        if s.get("is_listed"):
+            sup_ticker = _lookup_cn_ticker(name)
+            time.sleep(0.2)
         links.append({
             "downstream_code":  code,
             "supplier_name":    name,
-            "supplier_ticker":  None,
+            "supplier_ticker":  sup_ticker,
             "dependency_type":  "concentration_risk" if (ratio and ratio >= 30) else "other",
             "chokepoint_score": _score_cn_chokepoint(ratio),
             "evidence_quote":   (s.get("evidence_quote") or "基于公开信息")[:80],

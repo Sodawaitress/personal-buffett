@@ -144,6 +144,24 @@ def register_watchlist_routes(app):
         db.dismiss_notification(notif_id, session['user_id'])
         return jsonify({'ok': True})
 
+    @app.route('/api/watchlist/add', methods=['POST'])
+    @login_required
+    def api_watchlist_add():
+        """JSON 端点：从供应链卡片快速加股票到自选股并触发分析。"""
+        data = request.get_json() or {}
+        code = (data.get('code') or '').strip().upper()
+        name = (data.get('name') or code).strip()
+        if not code:
+            return jsonify({'ok': False, 'error': 'missing code'}), 400
+        from radar_app.data.stocks import get_watchlist_entry
+        if get_watchlist_entry(session['user_id'], code):
+            return jsonify({'ok': True, 'already': True})
+        try:
+            add_stock_and_start_analysis(session['user_id'], code, name, '', '')
+            return jsonify({'ok': True})
+        except Exception as e:
+            return jsonify({'ok': False, 'error': str(e)}), 500
+
     @app.route('/add', methods=['POST'])
     @login_required
     def add_stock():

@@ -1471,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tickerChip = lnk.supplier_ticker
       ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>` : '';
     const addBtn = lnk.supplier_ticker
-      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}',this)" title="加入自选股">+ 自选股</button>` : '';
+      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${lnk.supplier_name.replace(/'/g,"\\'")}',this)" title="加入自选股">+ 自选股</button>` : '';
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
     return `
@@ -1555,16 +1555,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── 加自选股 ──
-  window.scAddWatch = function(ticker, btn) {
+  window.scAddWatch = function(ticker, name, btn) {
     btn.disabled = true;
     btn.textContent = '添加中…';
     fetch(`/api/watchlist/add`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({code: ticker}),
+      body: JSON.stringify({code: ticker, name: name}),
     })
     .then(r => r.json())
-    .then(d => { btn.textContent = d.ok ? '✓ 已加入' : '+ 自选股'; btn.disabled = !d.ok; })
+    .then(d => {
+      if (d.ok) {
+        btn.textContent = d.already ? '✓ 已在列表' : '✓ 已加入';
+        btn.disabled = true;
+      } else {
+        btn.textContent = '+ 自选股';
+        btn.disabled = false;
+      }
+    })
     .catch(() => { btn.textContent = '+ 自选股'; btn.disabled = false; });
   };
 
