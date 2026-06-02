@@ -6,6 +6,7 @@ from radar_app.data.market import get_precursor_cache
 from radar_app.data.signal_events import _calc_divergence, _SIGNALS_MAX_AGE_H
 from radar_app.legacy.pipeline import compute_trading_params
 from radar_app.shared.market import MARKET_CURRENCY
+from radar_app.shared.metric_hints import compute_metric_hints
 from radar_app.shared.runtime import CN_TZ
 
 try:
@@ -607,6 +608,13 @@ def present_stock_page(bundle):
         "analyst_consensus": bundle.get("analyst_consensus"),
         # US-95
         "industry_signal": bundle.get("industry_signal"),
+        # metric hints — human-readable one-liners for PE/ROE/etc
+        "metric_hints": compute_metric_hints(
+            annual[0] if annual else None,
+            signals,
+            fund.get("pe_current") if fund else None,
+            bundle["price"],
+        ),
     }
 
 

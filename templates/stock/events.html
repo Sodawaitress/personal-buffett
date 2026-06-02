@@ -22,7 +22,11 @@
         'delist_warning':           t.ev_delist_warning,
         'delist_final':             t.ev_delist_final,
         'major_shareholder_change': t.ev_major_shareholder,
-        'scheme_risk':              t.ev_scheme_risk
+        'scheme_risk':              t.ev_scheme_risk,
+        'share_unlock':             t.ev_share_unlock,
+        'earnings_report':          t.ev_earnings_report,
+        'major_announcement':       t.ev_major_announcement,
+        'earnings_forecast':        t.ev_earnings_forecast
       } %}
       {% for ev in events %}
       <div class="event-item event-type-{{ ev.event_type }}">
@@ -55,6 +59,10 @@
           <option value="delist_warning">{{ t.ev_delist_warning }}</option>
           <option value="major_shareholder_change">{{ t.ev_major_shareholder }}</option>
           <option value="scheme_risk">{{ t.ev_scheme_risk }}</option>
+          <option value="share_unlock">{{ t.ev_share_unlock }}</option>
+          <option value="earnings_report">{{ t.ev_earnings_report }}</option>
+          <option value="major_announcement">{{ t.ev_major_announcement }}</option>
+          <option value="earnings_forecast">{{ t.ev_earnings_forecast }}</option>
         </select>
         <input type="date" id="evDate" placeholder="{{ t.lbl_event_date_placeholder }}">
       </div>

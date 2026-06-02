@@ -20,10 +20,19 @@
 
     {# ── Verdict bar — 结论先行 ── #}
     {% set grade_tier = analysis.grade[0] if analysis.grade else 'C' %}
-    <div class="verdict-bar verdict-{{ grade_tier }}">
-      <span class="verdict-grade-big">{{ analysis.grade or '—' }}</span>
+    {% set data_incomplete = analysis.data_incomplete %}
+    {% set prec_score = (precursor.score or 0) | float if precursor else 0 %}
+    {% set data_mislead = data_incomplete and prec_score > 3 %}
+    <div class="verdict-bar verdict-{{ grade_tier }}{% if data_incomplete %} verdict-incomplete{% endif %}">
+      <span class="verdict-grade-big">{{ '?' if data_mislead else (analysis.grade or '—') }}</span>
       <div class="verdict-body">
+        {% if data_mislead %}
+        <div class="verdict-conclusion" style="color:#b45309;font-weight:600">{{ t.verdict_mislead_prefix }}{{ '%.1f'|format(prec_score) }}{{ t.verdict_mislead_suffix }}</div>
+        {% elif data_incomplete %}
+        <div class="verdict-conclusion" style="color:#b45309">{{ t.verdict_incomplete }}</div>
+        {% else %}
         <div class="verdict-conclusion">{{ analysis.conclusion }}</div>
+        {% endif %}
         <div class="verdict-date">{{ analysis.analysis_date }}</div>
       </div>
       {% if stock.asset_type not in ('场外基金', 'ETF') %}
@@ -31,7 +40,7 @@
         {% if analysis.letter_html %}
         <button onclick="showLetter()" class="btn-outline-ink btn-sm" style="white-space:nowrap">{{ t.js_read_letter }}</button>
         {% else %}
-        <a href="#" id="letter-btn-{{ stock.code }}" onclick="triggerLetterGeneration('{{ stock.code }}');return false" class="btn-outline-ink btn-sm" style="font-size:12px;text-decoration:none;display:inline-block">重新生成信件</a>
+        <a href="#" id="letter-btn-{{ stock.code }}" onclick="triggerLetterGeneration('{{ stock.code }}');return false" class="btn-outline-ink btn-sm" style="font-size:12px;text-decoration:none;display:inline-block">{{ t.btn_regen_letter }}</a>
         {% endif %}
       </div>
       {% endif %}

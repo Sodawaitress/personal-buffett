@@ -9,8 +9,10 @@
 
   <div class="stock-page-body">
 
-    <div class="sc-section-head">
+    <div class="sc-section-head" style="display:flex;align-items:center;justify-content:space-between">
       <span class="fund-section-label">{{ t.lbl_supply_chain }}</span>
+      <button class="sc-rescan-btn" id="sc-rescan-btn" style="display:none"
+              onclick="scConfirmRescan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
     </div>
     <hr class="section-rule" style="margin-bottom:12px">
 
@@ -61,8 +63,6 @@
         <span class="sc-source-pill">
           {% if market == "cn" %}{{ t.sc_source_cn }}{% else %}{{ t.sc_source_us }}{% endif %}
         </span>
-        <button class="sc-rescan-btn" id="sc-rescan-btn"
-                onclick="scConfirmRescan('{{ stock.code }}', '{{ market }}')">{{ t.sc_rescan_btn }}</button>
       </div>
     </div>
 
@@ -81,12 +81,12 @@
   const $ = id => document.getElementById(id);
 
   const DEP_LABELS = {
-    sole_source:          '独家来源',
-    single_source:        '单一来源',
-    limited_alternatives: '有限替代',
-    qualified_supply_list:'资质供应商清单',
-    concentration_risk:   '采购集中度',
-    other:                '采购依赖',
+    sole_source:          '{{ t.sc_dep_sole_source }}',
+    single_source:        '{{ t.sc_dep_single_source }}',
+    limited_alternatives: '{{ t.sc_dep_limited_alternatives }}',
+    qualified_supply_list:'{{ t.sc_dep_qualified_supply_list }}',
+    concentration_risk:   '{{ t.sc_dep_concentration_risk }}',
+    other:                '{{ t.sc_dep_other }}',
   };
   const DEP_COLORS = {
     sole_source: '#b91c1c', single_source: '#b91c1c',
@@ -102,17 +102,19 @@
     return '#15803d';
   }
   function scoreLabel(s) {
-    if (s === 50) return '—';         // 无数据
-    if (s >= 85) return '极高';
-    if (s >= 70) return '高';
-    if (s >= 55) return '中';
-    return '低';
+    if (s === 50) return '—';
+    if (s >= 85) return '{{ t.sc_risk_very_high }}';
+    if (s >= 70) return '{{ t.sc_risk_high }}';
+    if (s >= 55) return '{{ t.sc_risk_medium }}';
+    return '{{ t.sc_risk_low }}';
   }
 
   function showState(name) {
     $('sc-empty-state').style.display   = name === 'empty'   ? '' : 'none';
     $('sc-loading-state').style.display = name === 'loading' ? '' : 'none';
     $('sc-results').style.display       = name === 'results' ? '' : 'none';
+    const rb = $('sc-rescan-btn');
+    if (rb) rb.style.display = name === 'results' ? '' : 'none';
   }
 
   let _stepTimer = null;
@@ -158,7 +160,7 @@
       ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>` : '';
     const safeName = lnk.supplier_name.replace(/'/g, "\\'");
     const addBtn = lnk.supplier_ticker
-      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${safeName}',this)" title="加入自选股">+ 自选股</button>`
+      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${safeName}',this)" title="{{ t.sc_watchlist_add }}">{{ t.sc_watchlist_add }}</button>`
       : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="{{ t.sc_search_listed_hint }}">{{ t.sc_search_listed }}</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
@@ -193,8 +195,9 @@
     const t2map = (tree && tree.tier2_by_t1) ? tree.tier2_by_t1 : {};
     _currentLinkCount = links.length;
 
-    const topRisk = Math.max(...links.map(l => l.chokepoint_score));
-    const topName = links.find(l => l.chokepoint_score === topRisk)?.supplier_name || '';
+    const realLinks = links.filter(l => l.chokepoint_score !== 50);
+    const topRisk = realLinks.length ? Math.max(...realLinks.map(l => l.chokepoint_score)) : 50;
+    const topName = realLinks.find(l => l.chokepoint_score === topRisk)?.supplier_name || links[0]?.supplier_name || '';
     const t1count = tier1.length;
     const t2count = Object.values(t2map).reduce((s, arr) => s + arr.length, 0);
     const summaryEl = $('sc-summary-bar');
@@ -213,32 +216,23 @@
     const contentEl = $('sc-content');
     if (!contentEl) return;
 
-    let html = '';
-    tier1.forEach(t1lnk => {
-      html += _scCard(t1lnk, false);
-      const t1tick = t1lnk.supplier_ticker;
-      if (t1tick && t2map[t1tick] && t2map[t1tick].length) {
-        html += `<div class="sc-t2-group">`;
-        t2map[t1tick].forEach(t2lnk => { html += _scCard(t2lnk, true); });
-        html += `</div>`;
-      }
-    });
-    const usedT1 = new Set(tier1.map(l => l.supplier_ticker).filter(Boolean));
-    Object.entries(t2map).forEach(([t1code, rows]) => {
-      if (!usedT1.has(t1code) && rows.length) {
-        html += `<div class="sc-t2-group">`;
-        rows.forEach(lnk => { html += _scCard(lnk, true); });
-        html += `</div>`;
-      }
+    // 打平所有卡片，按风险分降序（score=50 无数据沉底）
+    const allCards = [];
+    tier1.forEach(lnk => allCards.push({ lnk, isT2: false }));
+    Object.values(t2map).forEach(arr => arr.forEach(lnk => allCards.push({ lnk, isT2: true })));
+    allCards.sort((a, b) => {
+      const sa = a.lnk.chokepoint_score === 50 ? -1 : a.lnk.chokepoint_score;
+      const sb = b.lnk.chokepoint_score === 50 ? -1 : b.lnk.chokepoint_score;
+      return sb - sa;
     });
 
-    contentEl.innerHTML = html;
+    contentEl.innerHTML = allCards.map(({ lnk, isT2 }) => _scCard(lnk, isT2)).join('');
     showState('results');
   }
 
   window.scAddWatch = function(ticker, name, btn) {
     btn.disabled = true;
-    btn.textContent = '添加中…';
+    btn.textContent = '{{ t.sc_watchlist_adding }}';
     fetch(`/api/watchlist/add`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -247,21 +241,21 @@
     .then(r => r.json())
     .then(d => {
       if (d.ok) {
-        btn.textContent = d.already ? '✓ 已在列表' : '✓ 已加入';
+        btn.textContent = d.already ? '{{ t.sc_watchlist_already }}' : '{{ t.sc_watchlist_added }}';
         btn.disabled = true;
       } else {
-        btn.textContent = '+ 自选股';
+        btn.textContent = '{{ t.sc_watchlist_add }}';
         btn.disabled = false;
       }
     })
-    .catch(() => { btn.textContent = '+ 自选股'; btn.disabled = false; });
+    .catch(() => { btn.textContent = '{{ t.sc_watchlist_add }}'; btn.disabled = false; });
   };
 
   let _currentLinkCount = 0;
 
   window.scConfirmRescan = function(c, mkt) {
     if (_currentLinkCount > 0) {
-      if (!confirm(`重新溯源会覆盖当前 ${_currentLinkCount} 条供应链记录，LLM 每次结果可能不同。确认继续？`)) return;
+      if (!confirm('{{ t.sc_rescan_confirm }}'.replace('{n}', _currentLinkCount))) return;
     }
     scScan(c, mkt);
   };

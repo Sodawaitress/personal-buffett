@@ -155,6 +155,22 @@
     "en": "ST Triggered",
     "zh": "ST触发"
   },
+  "ev_share_unlock": {
+    "en": "Share Unlock",
+    "zh": "限售解禁"
+  },
+  "ev_earnings_report": {
+    "en": "Earnings Report",
+    "zh": "财务报告"
+  },
+  "ev_major_announcement": {
+    "en": "Major Announcement",
+    "zh": "重大事项"
+  },
+  "ev_earnings_forecast": {
+    "en": "Earnings Forecast",
+    "zh": "业绩预告"
+  },
   "fw_cyclical": {
     "en": "Cyclical",
     "zh": "周期资源"
@@ -478,6 +494,14 @@
   "lbl_no_history": {
     "en": "No analysis history",
     "zh": "暂无历史分析"
+  },
+  "lbl_show_history": {
+    "en": "Show older",
+    "zh": "查看更多"
+  },
+  "lbl_hide_history": {
+    "en": "Hide older",
+    "zh": "收起"
   },
   "lbl_no_news_found": {
     "en": "No relevant news found",
@@ -1238,6 +1262,24 @@
   "sc_search_listed_hint": {
     "en": "May not be found if company is not publicly listed",
     "zh": "若该公司未上市可能搜不到"
+  },
+  "sc_dep_sole_source":          {"en": "Sole source",          "zh": "独家来源"},
+  "sc_dep_single_source":        {"en": "Single source",        "zh": "单一来源"},
+  "sc_dep_limited_alternatives": {"en": "Limited alternatives", "zh": "有限替代"},
+  "sc_dep_qualified_supply_list":{"en": "Qualified supply list","zh": "资质供应商清单"},
+  "sc_dep_concentration_risk":   {"en": "Concentration risk",   "zh": "采购集中度"},
+  "sc_dep_other":                {"en": "Procurement dependency","zh": "采购依赖"},
+  "sc_risk_very_high": {"en": "Very high", "zh": "极高"},
+  "sc_risk_high":      {"en": "High",      "zh": "高"},
+  "sc_risk_medium":    {"en": "Medium",    "zh": "中"},
+  "sc_risk_low":       {"en": "Low",       "zh": "低"},
+  "sc_watchlist_add":  {"en": "+ Watchlist", "zh": "+ 自选股"},
+  "sc_watchlist_adding": {"en": "Adding…",  "zh": "添加中…"},
+  "sc_watchlist_added":  {"en": "✓ Added",  "zh": "✓ 已加入"},
+  "sc_watchlist_already":{"en": "✓ Already in list", "zh": "✓ 已在列表"},
+  "sc_rescan_confirm": {
+    "en": "Re-scanning will overwrite {n} existing records. LLM results vary each run. Continue?",
+    "zh": "重新溯源会覆盖当前 {n} 条供应链记录，LLM 每次结果可能不同。确认继续？"
   },
   "lbl_data_mislead_short": {
     "en": "⚠ Financial data missing — rating invalid",

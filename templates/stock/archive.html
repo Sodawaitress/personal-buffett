@@ -9,26 +9,34 @@
 
   <div class="stock-page-body">
 
-    {# ── 历史分析 ── #}
-    <div class="archive-section-title">{{ t.lbl_history }}</div>
-    {% if history %}
-    {% for h in history %}
-    <div class="history-item {{ 'history-current' if loop.first else '' }}">
-      <div class="history-header">
-        <span class="wax-seal wax-seal-sm grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
-          {{ h.grade or '—' }}
+    {# ── 护城河评估（核心判断，最先看）── #}
+    <section class="fund-section">
+      <div class="fund-section-label">{{ t.lbl_moat_eval }}</div>
+      <hr class="section-rule">
+      {% set latest_a = history[0] if history else none %}
+      {% set moat_dir = signals.get("moat_direction") if signals else none %}
+      {% if latest_a and latest_a.moat %}
+      <p class="fund-text">{{ latest_a.moat }}</p>
+      {% elif moat_dir or (latest_a and latest_a.reasoning) %}
+      {% if moat_dir %}
+      <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:600;color:var(--ink)">{{ t.lbl_moat_direction }}</span>
+        <span style="font-size:13px;padding:3px 10px;border-radius:12px;font-weight:600;
+          background:{% if '拓宽' in moat_dir %}#e8f5e9{% elif '收窄' in moat_dir %}#fdecea{% else %}#f5f0e8{% endif %};
+          color:{% if '拓宽' in moat_dir %}#2e7d32{% elif '收窄' in moat_dir %}#c62828{% else %}var(--ink-2){% endif %}">
+          {{ moat_dir }}
         </span>
-        <span class="history-conclusion">{{ h.conclusion }}</span>
-        <span class="history-date">{{ h.analysis_date }}</span>
       </div>
-      <p class="history-reasoning">{{ (h.reasoning or '')[:300] }}</p>
-    </div>
-    {% endfor %}
-    {% else %}
-    <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_history }}</p>
-    {% endif %}
+      {% endif %}
+      {% if latest_a and latest_a.reasoning %}
+      <p class="fund-text" style="margin-top:8px">{{ latest_a.reasoning }}</p>
+      {% endif %}
+      {% else %}
+      <p class="fund-note" style="padding:12px 0">{{ t.lbl_moat_pending }}</p>
+      {% endif %}
+    </section>
 
-    {# ── 公司概览 ── #}
+    {# ── 公司概览（背景上下文）── #}
     <div class="archive-section-title">{{ t.lbl_company_overview }}</div>
     {% set sector = signals.get('sector') if signals else none %}
     {% set framework_lbl = {
@@ -245,33 +253,6 @@
     </section>
     {% endif %}
 
-    {# ── 护城河评估 ── #}
-    <section class="fund-section">
-      <div class="fund-section-label">{{ t.lbl_moat_eval }}</div>
-      <hr class="section-rule">
-      {% set latest_a = history[0] if history else none %}
-      {% set moat_dir = signals.get("moat_direction") if signals else none %}
-      {% if latest_a and latest_a.moat %}
-      <p class="fund-text">{{ latest_a.moat }}</p>
-      {% elif moat_dir or (latest_a and latest_a.reasoning) %}
-      {% if moat_dir %}
-      <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-size:13px;font-weight:600;color:var(--ink)">{{ t.lbl_moat_direction }}</span>
-        <span style="font-size:13px;padding:3px 10px;border-radius:12px;font-weight:600;
-          background:{% if '拓宽' in moat_dir %}#e8f5e9{% elif '收窄' in moat_dir %}#fdecea{% else %}#f5f0e8{% endif %};
-          color:{% if '拓宽' in moat_dir %}#2e7d32{% elif '收窄' in moat_dir %}#c62828{% else %}var(--ink-2){% endif %}">
-          {{ moat_dir }}
-        </span>
-      </div>
-      {% endif %}
-      {% if latest_a and latest_a.reasoning %}
-      <p class="fund-text" style="margin-top:8px">{{ latest_a.reasoning }}</p>
-      {% endif %}
-      {% else %}
-      <p class="fund-note" style="padding:12px 0">{{ t.lbl_moat_pending }}</p>
-      {% endif %}
-    </section>
-
     {# ── 技术支撑位（A股专属）── #}
     {% if market == "cn" %}
     {% set tech2 = signals.get("technicals", {}) if signals else {} %}
@@ -375,6 +356,36 @@
     </section>
     {% endif %}
 
+    {# ── 历史分析（折叠，放底部）── #}
+    <div style="margin-top:40px;padding-top:16px;border-top:1px solid var(--rule-light)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:var(--ink-muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase">{{ t.lbl_history }}</span>
+        {% if history and history|length > 0 %}
+        <button id="hist-toggle" onclick="toggleHistory()" style="font-size:11px;color:var(--ink-muted);background:none;border:1px solid var(--rule-light);border-radius:4px;cursor:pointer;padding:2px 8px">
+          {{ t.lbl_show_history }} ({{ history|length }})
+        </button>
+        {% endif %}
+      </div>
+      <div id="hist-older" style="display:none;margin-top:12px">
+        {% if history %}
+        {% for h in history %}
+        <div class="history-item">
+          <div class="history-header">
+            <span class="wax-seal wax-seal-sm grade-{{ h.grade | lower | replace('+','-plus') | replace('-','-minus') if h.grade else 'c' }}">
+              {{ h.grade or '—' }}
+            </span>
+            <span class="history-conclusion">{{ h.conclusion }}</span>
+            <span class="history-date">{{ h.analysis_date }}</span>
+          </div>
+          <p class="history-reasoning">{{ (h.reasoning or '')[:300] }}</p>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="text-align:center;color:var(--ink-muted);padding:20px 0;font-size:13px">{{ t.lbl_no_history }}</p>
+        {% endif %}
+      </div>
+    </div>
+
   </div>{# /.stock-page-body #}
 
 </div>{# /.stock-page #}
@@ -404,5 +415,17 @@
     }
   });
 })();
+</script>
+<script>
+function toggleHistory() {
+  const el  = document.getElementById('hist-older');
+  const btn = document.getElementById('hist-toggle');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : '';
+  btn.textContent  = open
+    ? '{{ t.lbl_show_history }} ({{ history|length if history else 0 }})'
+    : '{{ t.lbl_hide_history }}';
+}
 </script>
 {% endblock %}

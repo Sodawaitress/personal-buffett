@@ -8,18 +8,33 @@
 
   <div class="stock-page-body">
 
+    {# ── 背离摘要卡（最高置信度结论，有数据时第一眼看到）── #}
+    {% if divergence_card %}
+    {% set dc = divergence_card %}
+    <div class="diverg-summary-card diverg-card-{{ dc.type }}">
+      <div class="diverg-summary-icon">
+        {% if dc.type == 'danger' %}⚠{% elif dc.type == 'opportunity' %}💡{% elif dc.type == 'consistent' %}✓{% else %}◎{% endif %}
+      </div>
+      <div class="diverg-summary-body">
+        <div class="diverg-summary-headline">{{ dc.headline }}</div>
+        <div class="diverg-summary-note">{{ dc.note }}</div>
+        {% if dc.action %}<div class="diverg-summary-action">{{ dc.action }}</div>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+
     {# ── 综合研判（结论先行）── #}
     {% if resonance and resonance.direction != 'unknown' %}
     <div class="resonance-hero resonance-{{ resonance.direction }}">
       <div class="resonance-hero-top">
         <div class="resonance-hero-dir">
-          {% if resonance.direction == 'bullish' %}看多信号
-          {% elif resonance.direction == 'bearish' %}看空信号
-          {% else %}信号分歧{% endif %}
+          {% if resonance.direction == 'bullish' %}{{ t.resonance_bullish }}
+          {% elif resonance.direction == 'bearish' %}{{ t.resonance_bearish }}
+          {% else %}{{ t.resonance_mixed }}{% endif %}
         </div>
         <div class="resonance-hero-score">
           {% for i in range(resonance.max_score) %}<span class="rdot-lg {% if i < resonance.score %}rdot-on{% else %}rdot-off{% endif %}"></span>{% endfor %}
-          <span class="resonance-hero-score-text">{{ resonance.score }}/{{ resonance.max_score }} 独立来源共振</span>
+          <span class="resonance-hero-score-text">{{ resonance.score }}/{{ resonance.max_score }} {{ t.resonance_sources }}</span>
         </div>
       </div>
       {% if resonance.strongest_combo %}
@@ -304,6 +319,105 @@
 
     </div>{# /.signal-3col #}
 
+    {# ── US-95: 行业信号（A股）── #}
+    {% if market == "cn" and industry_signal %}
+    {% set isig = industry_signal %}
+    <div class="industry-signal-card industry-signal-{{ isig.get('signal','neutral') | lower | replace('顺风','tailwind') | replace('逆风','headwind') | replace('中性','neutral') }}">
+      <div class="industry-signal-header">
+        <span class="industry-signal-label">{{ isig.get('label', '') }}</span>
+        <span class="industry-signal-badge industry-signal-badge-{{ isig.get('signal','') }}">
+          {% if isig.get('signal') == '顺风' %}{{ t.industry_signal_tailwind }}
+          {% elif isig.get('signal') == '逆风' %}{{ t.industry_signal_headwind }}
+          {% else %}{{ t.industry_signal_neutral }}{% endif %}
+        </span>
+      </div>
+      <div class="industry-signal-desc">{{ isig.get('description', '') }}</div>
+      {% if isig.get('cycle_tag') %}<div class="industry-signal-cycle-tag">{{ isig.cycle_tag }}</div>{% endif %}
+      <div class="industry-signal-meta">
+        {{ t.industry_signal_30d }}：
+        <span class="industry-signal-change {% if isig.get('change_30d', 0) >= 0 %}up{% else %}down{% endif %}">{{ '%+.1f'|format(isig.get('change_30d', 0)) }}%</span>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── 前兆信号叉乘情境（A股）── #}
+    {% if market == "cn" and signal_contexts %}
+    <div class="sigctx-row">
+      {% set mc = signal_contexts.get('margin', {}) %}
+      {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
+      <div class="sigctx-card sigctx-{{ mc.get('direction','neutral') }}">
+        <div class="sigctx-head">
+          <span class="sigctx-title">{{ t.sigctx_margin_title }}</span>
+          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (mc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
+        </div>
+        <div class="sigctx-body">{{ mc.get('full_desc','') }}</div>
+        {% if mc.get('_kcard') %}<button class="kcard-btn" data-slug="short_selling" data-params="{{ mc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
+      </div>
+      {% endif %}
+      {% set sv = signal_contexts.get('survey', {}) %}
+      {% if sv and sv.get('intensity', 'none') != 'none' %}
+      <div class="sigctx-card sigctx-{{ sv.get('direction','neutral') }}">
+        <div class="sigctx-head">
+          <span class="sigctx-title">{{ t.sigctx_survey_title }}</span>
+          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (sv.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
+        </div>
+        <div class="sigctx-body">{{ sv.get('full_desc','') }}</div>
+        {% if sv.get('modifiers') %}<div class="sigctx-mods">{% for m in sv.modifiers[:2] %}<span class="sigctx-mod">{{ m }}</span>{% endfor %}</div>{% endif %}
+        {% if sv.get('_kcard') %}<button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
+      </div>
+      {% endif %}
+      {% set pc = signal_contexts.get('participation', {}) %}
+      {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+      <div class="sigctx-card sigctx-{{ pc.get('direction','neutral') }}">
+        <div class="sigctx-head">
+          <span class="sigctx-title">{{ t.sigctx_participation_title }}</span>
+          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (pc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
+        </div>
+        <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
+        {% if pc.get('_kcard') %}<button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# ── US-94: 分析师共识（A股）── #}
+    {% if market == "cn" %}
+    {% set ac = analyst_consensus %}
+    <div class="analyst-card">
+      <div class="analyst-card-title">{{ t.analyst_title }}</div>
+      {% if ac and ac.get('forecasts') %}
+      <div class="analyst-meta">{{ t.analyst_institutions.replace('{n}', ac.institution_count | string) }}</div>
+      <div class="analyst-forecasts">
+        {% for f in ac.forecasts %}
+        <div class="af-row">
+          <span class="af-year">{{ f.year }}</span>
+          <span class="af-eps">{{ t.analyst_eps_avg }}: <strong>{{ f.eps_avg }}</strong></span>
+          <span class="af-range">{{ t.analyst_eps_range }}: {{ f.eps_min }}–{{ f.eps_max }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="analyst-no-coverage">{{ t.analyst_no_coverage }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# ── 机构雷达（A股，异步加载）── #}
+    {% if market == "cn" %}
+    <div class="detail-subsection-title">{{ t.inst_radar_section_title }}</div>
+    <div id="intention-root">
+      <div class="intention-loading" id="intention-loading" style="display:flex">
+        <div class="intention-spinner"></div>
+        <span>{{ t.inst_radar_loading_text }}</span>
+        <span style="font-size:11px;color:var(--ink-faint)">（{{ t.inst_radar_loading_detail }}）</span>
+      </div>
+      <div id="intention-content" style="display:none"></div>
+      <div id="intention-empty" style="display:none">
+        <p class="intention-error">{{ t.inst_radar_load_error }}</p>
+      </div>
+    </div>
+    {% endif %}
+
     {# ── 消息-机构背离警告 ── #}
     {% if market == "cn" and divergence and news %}
       {% set pos_ct2 = news | selectattr("sentiment", "equalto", "positive") | list | length %}
@@ -318,7 +432,7 @@
           {% else %} — 消息与机构方向不完全一致，保持谨慎。
           {% endif %}
           {% if market == "cn" %}
-          <a href="{{ url_for('stock_radar_page', code=stock.code) }}" class="diverg-warn-link">查看机构雷达 →</a>
+          <a href="#intention-root" class="diverg-warn-link">查看机构雷达 ↑</a>
           {% endif %}
         </span>
       </div>
@@ -335,6 +449,13 @@
         {% if n.sentiment == 'positive' %}<span title="{{ t.lbl_positive }}">📈</span>
         {% elif n.sentiment == 'negative' %}<span title="{{ t.lbl_negative }}">📉</span>
         {% elif n.sentiment %}<span title="{{ t.lbl_neutral }}">➖</span>{% endif %}
+        {% if n.get('consistency') == 'divergent' %}
+        <span class="news-consistency news-cst-divergent" title="{{ t.news_cst_divergent_title }}">{{ t.news_cst_divergent }}</span>
+        {% elif n.get('consistency') == 'contrarian' %}
+        <span class="news-consistency news-cst-contrarian" title="{{ t.news_cst_contrarian_title }}">{{ t.news_cst_contrarian }}</span>
+        {% elif n.get('consistency') == 'consistent' and n.sentiment in ('positive','negative') %}
+        <span class="news-consistency news-cst-consistent">{{ t.news_cst_consistent }}</span>
+        {% endif %}
       </div>
       {% if n.link %}
       <a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
@@ -346,6 +467,57 @@
     {% endfor %}
     {% else %}
     <p class="empty-state" style="padding:40px 0;text-align:center;color:var(--ink-muted)">{{ t.lbl_no_news_found }}</p>
+    {% endif %}
+
+    {# ── 我的判断（信号预测记录）── #}
+    {% if in_watchlist %}
+    <div class="predict-widget" id="predict-widget">
+      <div class="predict-widget-title">{{ t.predict_title }}</div>
+      <div class="predict-widget-sub">{{ t.predict_subtitle }}</div>
+      <div class="predict-sig-row" id="predict-sig-row">
+        {% if market == "cn" and signal_contexts %}
+          {% set mc = signal_contexts.get('margin', {}) %}
+          {% set sv = signal_contexts.get('survey', {}) %}
+          {% set pc = signal_contexts.get('participation', {}) %}
+          {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
+          <button class="predict-sig-btn" data-stype="margin" onclick="selectSigType(this)">{{ t.predict_margin }}</button>
+          {% endif %}
+          {% if sv and sv.get('intensity', 'none') != 'none' %}
+          <button class="predict-sig-btn" data-stype="survey" onclick="selectSigType(this)">{{ t.predict_survey }}</button>
+          {% endif %}
+          {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+          <button class="predict-sig-btn" data-stype="participation" onclick="selectSigType(this)">{{ t.predict_participation }}</button>
+          {% endif %}
+        {% endif %}
+        {% if divergence_card %}
+        <button class="predict-sig-btn" data-stype="fund_flow" onclick="selectSigType(this)">{{ t.predict_fund_flow }}</button>
+        {% endif %}
+        <button class="predict-sig-btn predict-sig-btn-active" data-stype="general" onclick="selectSigType(this)">{{ t.predict_general }}</button>
+      </div>
+      <div class="predict-outcome-row">
+        <span class="predict-outcome-label">{{ t.predict_outcome_label }}</span>
+        <div class="predict-outcome-btns">
+          <button class="predict-outcome-btn" data-outcome="confirms" onclick="selectOutcome(this)">{{ t.predict_confirms }}</button>
+          <button class="predict-outcome-btn" data-outcome="fails" onclick="selectOutcome(this)">{{ t.predict_fails }}</button>
+        </div>
+      </div>
+      <div class="predict-dir-row">
+        <span class="predict-dir-label">{{ t.predict_dir_label }}</span>
+        <div class="predict-dir-btns">
+          <button class="predict-dir-btn predict-dir-up" data-dir="up" onclick="selectDir(this)">{{ t.predict_up }}</button>
+          <button class="predict-dir-btn predict-dir-down" data-dir="down" onclick="selectDir(this)">{{ t.predict_down }}</button>
+          <button class="predict-dir-btn predict-dir-unsure" data-dir="unsure" onclick="selectDir(this)">{{ t.predict_unsure }}</button>
+        </div>
+      </div>
+      <div class="predict-note-row">
+        <input type="text" id="predict-note" class="predict-note-input" maxlength="80" placeholder="{{ t.predict_note_placeholder }}">
+      </div>
+      <div class="predict-actions">
+        <button class="btn-ink btn-sm" onclick="submitPrediction('{{ stock.code }}')">{{ t.predict_submit }}</button>
+        <span id="predict-msg" class="predict-msg"></span>
+      </div>
+      <div id="predict-history" class="predict-history"></div>
+    </div>
     {% endif %}
 
   </div>{# /.stock-page-body #}
@@ -364,4 +536,104 @@
 
 {% block scripts %}
 {% include 'stock/_stock_scripts.html' %}
+{% if market == "cn" %}
+<script src="{{ url_for('static', filename='js/stock-radar.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const root = document.getElementById('intention-root');
+  if (!root) return;
+  const obs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      obs.disconnect();
+      if (typeof loadIntentionTab === 'function') loadIntentionTab();
+    }
+  }, { threshold: 0.1 });
+  obs.observe(root);
+});
+</script>
+{% endif %}
+<script>
+// ── 预测 widget ──
+let _predSigType = 'general';
+let _predOutcome = null;
+let _predDir = null;
+
+function selectSigType(btn) {
+  document.querySelectorAll('.predict-sig-btn').forEach(b => b.classList.remove('predict-sig-btn-active'));
+  btn.classList.add('predict-sig-btn-active');
+  _predSigType = btn.dataset.stype;
+}
+function selectOutcome(btn) {
+  document.querySelectorAll('.predict-outcome-btn').forEach(b => b.classList.remove('predict-outcome-btn-active'));
+  btn.classList.add('predict-outcome-btn-active');
+  _predOutcome = btn.dataset.outcome;
+}
+function selectDir(btn) {
+  document.querySelectorAll('.predict-dir-btn').forEach(b => b.classList.remove('predict-dir-btn-active'));
+  btn.classList.add('predict-dir-btn-active');
+  _predDir = btn.dataset.dir;
+}
+
+async function submitPrediction(code) {
+  if (!_predDir) { document.getElementById('predict-msg').textContent = '请先选择方向'; return; }
+  const note = document.getElementById('predict-note').value.trim();
+  const msg  = document.getElementById('predict-msg');
+  msg.textContent = '提交中…';
+  try {
+    const resp = await fetch(`/api/predict/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ direction: _predDir, note, signal_type: _predSigType, predicted_outcome: _predOutcome }),
+    });
+    const d = await resp.json();
+    if (d.ok) {
+      msg.textContent = '✓ 已记录';
+      msg.style.color = 'var(--green)';
+      document.getElementById('predict-note').value = '';
+      _predDir = null; _predOutcome = null;
+      document.querySelectorAll('.predict-dir-btn,.predict-outcome-btn').forEach(b => b.classList.remove('predict-dir-btn-active','predict-outcome-btn-active'));
+      loadPredictionHistory(code);
+    } else {
+      msg.textContent = d.error || '提交失败';
+      msg.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    msg.textContent = '网络错误';
+    msg.style.color = 'var(--red)';
+  }
+}
+
+async function loadPredictionHistory(code) {
+  const container = document.getElementById('predict-history');
+  if (!container) return;
+  try {
+    const rows = await (await fetch(`/api/predict/${code}`)).json();
+    if (!rows.length) { container.innerHTML = ''; return; }
+    const dirLabel = { up: '▲ 看涨', down: '▼ 看跌', unsure: '— 不确定' };
+    const correctLabel = { 1: '<span style="color:var(--green)">✓ 正确</span>', 0: '<span style="color:var(--red)">✗ 错误</span>' };
+    const sigTypeLabel = { margin:'融券', survey:'调研', participation:'参与度', fund_flow:'资金', insider:'内部人', northbound:'北向', block_trade:'大宗', inst_hold:'机构持仓' };
+    container.innerHTML = '<div class="predict-hist-title">历史判断</div>' +
+      rows.map(r => {
+        const stLbl = (r.signal_type && r.signal_type !== 'general') ? `<span class="predict-hist-type">${sigTypeLabel[r.signal_type] || r.signal_type}</span>` : '';
+        const retHtml = r.actual_return_5d != null
+          ? `<span class="predict-hist-return ${r.actual_return_5d >= 0 ? 'up' : 'down'}">${r.actual_return_5d >= 0 ? '+' : ''}${r.actual_return_5d.toFixed(1)}%</span>`
+          : '<span class="predict-hist-pending">待验证</span>';
+        return `<div class="predict-hist-row">
+          <span class="predict-hist-dir">${dirLabel[r.direction] || r.direction}</span>
+          ${stLbl}
+          <span class="predict-hist-date">${r.created_at.slice(0,10)}</span>
+          ${retHtml}
+          ${r.correct != null ? correctLabel[r.correct] || '' : ''}
+          ${r.note ? `<span class="predict-hist-note">${r.note}</span>` : ''}
+        </div>`;
+      }).join('');
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  {% if in_watchlist %}
+  loadPredictionHistory('{{ stock.code }}');
+  {% endif %}
+});
+</script>
 {% endblock %}
