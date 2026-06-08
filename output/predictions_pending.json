@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-06-08",
+    "code": "600031",
+    "name": "三一重工",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "组合内前兆最高 3.56 + 今日逆势+3.7% + 融券+31.2% 温和分歧",
+    "price_at_prediction": 19.34
+  },
+  {
+    "date": "2026-06-08",
+    "code": "600114",
+    "name": "东睦股份",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "融券+261% 极端值（强制提示线），缺乏调研背书，新股期资金分歧拉满",
+    "price_at_prediction": 40.93
+  }
+]
