@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-06-15",
+    "code": "600549",
+    "name": "厦门钨业",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "前兆全场最高3.32+融券-26.1%空头撤退+价格未响应，机构先动大众未知的抢跑结构",
+    "price_at_prediction": 64.8
+  },
+  {
+    "date": "2026-06-15",
+    "code": "002318",
+    "name": "久立特材",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "融券六周持续减少（-81.1%→-40.6%），调研支撑，今日+4.81%价格再次确认方向",
+    "price_at_prediction": 23.09
+  }
+]
