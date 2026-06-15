@@ -110,10 +110,19 @@ def register_system_routes(app):
         def _run():
             update_job(job_id, "running")
             errors = []
+            # Run precursor scan with a hard 5-min timeout so a hung scan
+            # can never prevent run_daily_digest() from committing the snapshot.
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError as _FuturesTimeout
             try:
                 from scripts.precursor_scan import run_precursor_scan
-                result = run_precursor_scan()
-                app_ctx.logger.info("[trigger-scan] precursor done: %s", result)
+                with ThreadPoolExecutor(max_workers=1) as _ex:
+                    _f = _ex.submit(run_precursor_scan)
+                    try:
+                        result = _f.result(timeout=300)
+                        app_ctx.logger.info("[trigger-scan] precursor done: %s", result)
+                    except _FuturesTimeout:
+                        errors.append("precursor: timed out (300s)")
+                        app_ctx.logger.warning("[trigger-scan] precursor timed out, proceeding to digest")
             except Exception as e:
                 errors.append(f"precursor: {e}")
                 app_ctx.logger.warning("[trigger-scan] precursor failed: %s", e)
@@ -199,3 +208,135 @@ def register_system_routes(app):
             return redirect(url_for("settings"))
 
         return render_template("settings.html", **get_settings_context(user_id))
+
+    # ── Session status (for Next.js navbar) ──────────────────────────────────
+
+    @app.route("/api/me")
+    def api_me():
+        return jsonify({
+            "user_id": session.get("user_id"),
+            "display_name": session.get("display_name"),
+            "role": session.get("role"),
+        })
+
+    # ── Public API (no auth required) ────────────────────────────────────────
+
+    @app.route("/api/public/feed")
+    def api_public_feed():
+        """Return publicly published analyses for the homepage."""
+        from radar_app.data.core import get_conn
+        with get_conn() as c:
+            rows = c.execute("""
+                SELECT ar.id, ar.code, ar.grade, ar.conclusion, ar.reasoning,
+                       ar.analysis_date, ar.framework_used,
+                       s.name AS stock_name, s.market
+                FROM analysis_results ar
+                JOIN stocks s ON s.code = ar.code
+                WHERE ar.is_public = 1
+                ORDER BY ar.analysis_date DESC, ar.id DESC
+                LIMIT 20
+            """).mappings().all()
+        return jsonify([dict(r) for r in rows])
+
+    @app.route("/api/public/article/<code>")
+    def api_public_article(code):
+        """Return a single public article (full letter_html)."""
+        from radar_app.data.core import get_conn
+        with get_conn() as c:
+            row = c.execute("""
+                SELECT ar.*, s.name AS stock_name, s.market, s.industry
+                FROM analysis_results ar
+                JOIN stocks s ON s.code = ar.code
+                WHERE ar.code = :code AND ar.is_public = 1
+                ORDER BY ar.id DESC LIMIT 1
+            """, {"code": code}).mappings().fetchone()
+        if not row:
+            return jsonify({"error": "not found"}), 404
+        return jsonify(dict(row))
+
+    @app.route("/api/public/poll/today")
+    def api_poll_today():
+        """Return today's market poll (creates one if none exists)."""
+        import datetime
+        from radar_app.data.core import get_conn
+        today = datetime.date.today().isoformat()
+        with get_conn() as c:
+            row = c.execute(
+                "SELECT * FROM market_polls WHERE poll_date = :d",
+                {"d": today}
+            ).mappings().fetchone()
+            if not row:
+                c.execute(
+                    "INSERT INTO market_polls (poll_date, question) VALUES (:d, :q)",
+                    {"d": today, "q": "大盘今天涨还是跌？"}
+                )
+                row = c.execute(
+                    "SELECT * FROM market_polls WHERE poll_date = :d",
+                    {"d": today}
+                ).mappings().fetchone()
+        return jsonify(dict(row))
+
+    @app.route("/api/public/poll/vote", methods=["POST"])
+    def api_poll_vote():
+        """Submit a vote. Body: {direction: 'up'|'down'}. Cookie-based dedup."""
+        import datetime
+        from radar_app.data.core import get_conn
+        today = datetime.date.today().isoformat()
+        cookie_key = f"voted_{today}"
+        if request.cookies.get(cookie_key):
+            return jsonify({"error": "already_voted"}), 400
+        data = request.get_json(silent=True) or {}
+        direction = data.get("direction")
+        if direction not in ("up", "down"):
+            return jsonify({"error": "invalid direction"}), 400
+        col = "up_votes" if direction == "up" else "down_votes"
+        with get_conn() as c:
+            # Ensure today's poll exists
+            exists = c.execute(
+                "SELECT id FROM market_polls WHERE poll_date = :d", {"d": today}
+            ).fetchone()
+            if not exists:
+                c.execute(
+                    "INSERT INTO market_polls (poll_date, question) VALUES (:d, :q)",
+                    {"d": today, "q": "大盘今天涨还是跌？"}
+                )
+            c.execute(
+                f"UPDATE market_polls SET {col} = {col} + 1 WHERE poll_date = :d",
+                {"d": today}
+            )
+            row = c.execute(
+                "SELECT up_votes, down_votes FROM market_polls WHERE poll_date = :d",
+                {"d": today}
+            ).mappings().fetchone()
+        resp = jsonify({"up_votes": row["up_votes"], "down_votes": row["down_votes"]})
+        resp.set_cookie(cookie_key, "1", max_age=86400, samesite="Lax")
+        return resp
+
+    @app.route("/api/public/city-data")
+    def api_city_data():
+        """Return city living cost data grouped by category (major / lifestyle).
+        30-day TTL for Numbeo cities; lifestyle cities always use latest manual seed.
+        """
+        import threading
+        from scripts.fetch_city_costs import _ensure_table, get_all_cities, is_stale, refresh_all
+
+        _ensure_table()
+        cities = get_all_cities()
+
+        major_stale = [c for c in cities if c.get("city_category") == "major"
+                       and is_stale(c.get("fetched_at", ""), days=30)]
+        needs_refresh = len(cities) == 0 or len(major_stale) > 0
+
+        if len(cities) == 0:
+            cities = refresh_all()
+        elif needs_refresh:
+            threading.Thread(target=refresh_all, daemon=True).start()
+
+        # Determine display year (most recent report_year in DB)
+        years = [c["report_year"] for c in cities if c.get("report_year")]
+        report_year = max(years) if years else 2025
+
+        return jsonify({
+            "cities": cities,
+            "report_year": report_year,
+        })
