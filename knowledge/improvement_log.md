@@ -932,3 +932,24 @@ Claude判断（05-29）：sideways — 公司底好+股价逆势涨，但融券1
 
 ---
 
+## 2026-06-15 · Routine 重复触发 · 跳过
+
+**情境**：今日 Routine 在 13:09 UTC 已执行（commit a78144e），daily_push.txt / predictions_pending.json / improvement_log.md 三件套均已落盘并 push 到 main，GHA wechat-push 已触发，妈妈应已收到微信。本次（13:12 UTC）系当日二次触发。
+
+**Step 2 freshness gate 判断**：
+- snapshot generated_at = 2026-06-15T04:16:58Z，距今 ~9h，未超 20h 阈值。
+- 但 md5(/tmp/snap.json) == md5(snapshots/daily_snapshot.json) == `0f734a038443d9d09c7888c5477e2ad6`，与上次 Routine 处理的快照 **byte-identical**——条件 2 触发。
+
+**本期处理（idempotency 协议）**：
+1. **不重写 output/daily_push.txt**：内容若与已发出版本 byte-identical 不会触发 GHA（paths filter 需文件 diff），但若我重写一份风格不同的"重复推送"反而会被 wechat-push 当成新事件发给妈妈，造成同日双推（信息冗余 + 信任损耗）。所以一律不动。
+2. **跳过 Step 5c**：predictions_pending.json 维持上午写入的两条不变，避免被 Fly.io ingest 时重复计数。
+3. **不发 PushNotification 给本人**：当日新息=0，按"无新进展则保持沉默"原则。
+4. 仅追加本条 idempotency 日志，commit。
+
+**反思（待写进 CLAUDE_ROUTINE.md Step 2 的小补丁）**：
+- 当前 freshness gate 措辞偏向"服务器今日未刷新（跨天停摆）"，没明确处理"同一日 Routine 被二次触发"（无论是手动 /loop、还是 GHA 重复调度、还是 fleet 备份触发）。
+- 建议在 Step 2 增补："若 snapshot 与上次处理 byte-identical **且** 当日已有 routine commit（grep `chore: routine log YYYY-MM-DD`），直接终止本次执行——不重写任何文件、不写改进日志正文、可在日志追加一条 idempotency stub（如本条）作为审计留痕。"
+- 这条规则的价值是把"幂等"做成显式契约，而不是依赖我每次临场判断。妈妈侧的体验底线是"一天最多一条推送"，系统侧的底线是"训练样本不重复"。
+
+---
+
