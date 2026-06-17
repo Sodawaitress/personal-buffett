@@ -978,3 +978,62 @@ Claude判断（05-29）：sideways — 公司底好+股价逆势涨，但融券1
 
 ---
 
+## 2026-06-17 · Run1 · 数据停摆日 Day3（按 06-10 协议降级为单段警报）
+
+**快照新鲜度门控触发（条件 1 + 条件 2，连续第 3 天）**：
+- snapshot.generated_at = 2026-06-15T04:16:58Z，今日 13:08 UTC 距今约 57 小时，已 2.8× 超过 20h 阈值。
+- md5 = `0f734a038443d9d09c7888c5477e2ad6`——与 06-15、06-16 处理的快照完全一致，连续第 3 个 byte-identical 日。
+- git 远端最新 commit 仍是 `8248035 chore: routine log 2026-06-16 (Day2 stale snapshot)`，往上找不到任何 `chore: daily snapshot 2026-06-16/17` —— Fly.io 端连续两个交易日没成功跑出新 snapshot。
+
+**本期处理（按 06-10 写入的 "Day3+ 单段警报" 协议执行）**：
+1. **推送降级为单段警报**：output/daily_push.txt 不再包含完整五选/预言/状态盘点，只保留三块——① 警报头（说明已停摆 3 天）；② 持仓自助盯盘（600031 + 300274 两条带止损动作）；③ 系统故障提醒（提示用户检查 fly.io cron / GITHUB_TOKEN / AKShare 超时）。理由：连续 3 天发同一份盘点，妈妈会麻木甚至怀疑系统坏了；单段警报比"另一份昨日翻版"更能传递信号——"今天没新数据，但请你看一眼实时价"。
+2. **跳过 Step 5c**：predictions_pending.json 维持 06-15 写入的两条不变（600549 ¥64.80 up / 002318 ¥23.09 up），不写新预言。06-15 写入的两条由于 Fly.io 服务停摆，至今未被 ingest 进数据库——但写入日 06-15 的窗口是 06-25 到期，还有 8 天，等服务器恢复后再 ingest 也来得及。
+3. **PushNotification 给本人**：发出，把"连续 3 天停摆"升级为更明确的服务端故障警报，附 fly.io 检查清单。Routine 这边已无更多自助选项，必须把信号送到 zhouhooper 手上去动服务端。
+4. **预言窗口跟踪（无新数据，仅时间推进）**：
+   - 06-08 预言（明日 06-18 到期，窗口最后一天）：600031 -2.2% 已偏负、600114 -5.8% 已错——若明日仍无新快照，结算只能按 06-15 收盘价做（与初始价相差 7 天，统计上不算成功的 10 天窗口，但 backfill_returns.py 会按规则结算）。
+   - 06-15 预言（窗口第 3 天 / 10）：600549 / 002318，无新价格可验证。
+
+---
+
+## 2026-06-17 · 系统故障跟踪 · Fly.io 快照停摆 Day3
+
+> 06-10 协议要求："Day3+ byte-identical：推送降级为单段警报。同时改进日志里要写"系统故障跟踪"段。" 本段为首次启用。
+
+**故障事实**：
+- 最后一次成功的 snapshot commit：06-15 04:16:58Z（GitHub 上 `chore: daily snapshot 2026-06-15`，commit `2987956`）。
+- 06-16、06-17 连续两天 GitHub 端未收到任何新的 snapshot commit。
+- 因此 Routine 在 06-16（Day2）和 06-17（Day3）连续命中 freshness gate 的"陈旧 + byte-identical"双条件。
+
+**故障演变时间线**：
+- 06-08 ~ 06-13：之前的一轮长停摆（06-08 ~ 06-13 共 6 天，05-23 ~ 06-13 之间 GITHUB_TOKEN 过期 + precursor_scan 无超时保护卡住）—— 06-13 修复后 06-15 恢复跑一次 → 06-16 又开始停。
+- 06-15：服务器恢复跑一次（snapshot generated_at = 04:16Z），Routine Run1 正常分析五选 + 写入预言。
+- 06-16（Day1 of 当前停摆）：服务器没跑——Routine 命中 byte-identical，按 06-10 协议发"状态确认型"推送。
+- 06-17（Day2 of 当前停摆 / Day3 of byte-identical 计数）：服务器仍没跑——按 06-10 协议降级为单段警报（即本次）。
+
+**疑似根因（待用户登录 fly.io 确认）**：
+1. **GITHUB_TOKEN 再次过期**：06-13 修复后只设置了一个新的 token，可能没有放宽过期时间或没有持久化到 secrets。可以在 `flyctl secrets list -a personal-buffett` 看 token 时间戳。
+2. **precursor_scan 卡在 AKShare 超时**：06-13 加了 5 分钟超时（见 commit `4f40164 fix(scan): add 5-min timeout to run_precursor_scan in trigger_scan thread`），但如果 cron 周期内连续两次超时仍可能跳过 commit。需要看 fly.io logs 是否有 timeout 日志。
+3. **fly.io machine 进入 stopped 状态**：fly.io 的免费/小规格 machine 在长时间空闲后可能自动停机。`flyctl status -a personal-buffett` 可以确认。
+4. **cron / scheduled task 配置丢失**：如果 06-13 修复时是在临时 shell 里跑的脚本，重启后没有重新配置 cron，新一轮的抓取就不会自动触发。
+
+**Routine 这边可做和不能做的事**：
+- **能做的（已做）**：① freshness gate 拦住陈旧快照；② Day3+ 单段警报防止信息麻木；③ predictions_pending.json 不污染；④ PushNotification 把故障升级到用户手机。
+- **不能做的**：① 我没有 fly.io 凭证，无法直接重启 machine 或重新部署；② 也无法刷新 GITHUB_TOKEN；③ 不能远程触发 precursor scan。所有这些都要靠用户在 fly.io 侧手动介入。
+
+**用户需要做的（清单）**：
+1. `flyctl status -a personal-buffett` → 看 machine 是否 stopped。
+2. `flyctl logs -a personal-buffett --no-tail | tail -200` → 找 precursor_scan / commit_snapshot 的最近一次执行记录，看是 timeout、auth fail、还是根本没触发。
+3. `flyctl secrets list -a personal-buffett` → 看 GITHUB_TOKEN 是否还有效。
+4. 必要时 `flyctl machines restart -a personal-buffett`。
+
+**Day4 / Day5+ 预案**：
+- 若 06-18 仍未恢复：Routine 继续单段警报，predictions_pending.json 维持不动。06-15 写入的两条预言窗口剩 7 天，仍来得及。
+- 若停摆到 06-22+（>= 7 天）：建议把 06-15 写入的两条预言从 predictions_pending.json 中**手动剔除**——price_at_prediction 已经过期太久（>=7 天），backfill_returns.py 算 10 天窗口实际起点失真严重，作为训练样本噪音过大。这条不在 Routine 自动逻辑里，需要用户/我手工介入。
+- 若停摆到 06-25 之后：把整条服务端可观测性的事提上日程——加 Server酱告警，"snapshot >24h 未更新自动给我发微信"，这是 06-10 反思里就提出的待办，现在确实必须做了。
+
+**反思（待写进 CLAUDE_ROUTINE.md）**：
+- 当前 Routine 已经积累 4 套停摆应对协议（首日陈旧、Day1 byte-identical、Day2 byte-identical、Day3+ 单段警报），但**所有协议都是被动等用户来读改进日志才知道**。妈妈侧的推送只是"听天由命"地收到降级内容，并不知道"系统出问题"和"判断质量下降"是两回事。
+- 建议下一轮改进：在 daily_push.txt 顶部加一个永久"系统健康状态"小卡片，用 emoji 直观展示——🟢 全部正常 / 🟡 数据陈旧但仍可用 / 🔴 系统故障，推送降级。让妈妈一眼就能区分"今天质量正常"和"今天因为系统问题信不过"。这条比所有协议都重要——透明度优于完整度。
+
+---
+
