@@ -1080,3 +1080,35 @@ Claude判断（05-29）：sideways — 公司底好+股价逆势涨，但融券1
 
 ---
 
+## 2026-06-19 · Run1 · 数据停摆日 Day5（连续 byte-identical 第 5 天）
+
+**快照新鲜度门控触发（条件 1 + 条件 2，连续第 5 天）**：
+- snapshot.generated_at = 2026-06-15T04:16:58Z，今日 13:09 UTC 距今约 104.9 小时，已 5.24× 超过 20h 阈值（条件 1）。
+- md5 = `0f734a038443d9d09c7888c5477e2ad6`——与 06-15 / 06-16 / 06-17 / 06-18 处理的快照完全一致，连续第 5 个 byte-identical 日（条件 2）。
+- git 远端最新 commit `76127c5 chore: routine log 2026-06-18 (Day4 stale snapshot, single-segment alert + health status card)`，往上找不到任何新的 `chore: daily snapshot 2026-06-16/17/18/19`——Fly.io 端连续 4 个自然日没成功跑出新 snapshot（06-15 之后）。
+
+**本期处理（按 06-10/06-17/06-18 协议执行 Day5 单段警报，沿用 Day4 模板做参数化更新）**：
+1. **推送维持单段警报 + 🔴 健康卡片**（沿用 Day4 模板的结构，差异：Day 计数 5、停摆时长 105h、06-08 预言结算正文从主体剔除——Day4 已结算过，再写一次只会让妈妈以为重复；06-15 预言窗口推进到 Day 4/10；距 06-22 剔除阈值剩 3 天；阳光电源未跟进天数 10 → 11）。
+2. **跳过 Step 5c**：predictions_pending.json 维持 06-15 写入的两条不变（600549 / 002318），不写新预言。
+3. **持仓自助盯盘提醒沿用**：600031 / 300274 两条，止损动作不变。
+4. **PushNotification 给本人**：本次会话 fleet 中 **未挂载 PushNotification 工具**（ToolSearch `select:PushNotification` 无匹配）——只能把"必须人工介入 fly.io"的信号嵌入 daily_push.txt 顶部 🔴 卡片 + 系统故障提醒段，间接传递给 zhouhooper。这是 Day5 暴露的一个工具配置层 gap，应记入下方反思。
+
+**Day7（06-22）剔除预案再次确认**：
+- 06-22 = 06-15 + 7 天 = 初始价格过期阈值。
+- 若届时服务器仍未恢复：手动从 predictions_pending.json 剔除 600549 + 002318 两条（price_at_prediction 偏离实际窗口起点超 7 天，作为训练样本噪音过大）。
+- 距今 3 天。
+
+**反思（Day5 增量，两条）**：
+
+1. **单段警报"参数化生成"今日首次落地**——Day4 反思里提到的"用变量填充天数 / 预言到期事项 / 持仓最后已知价"，本次的 daily_push.txt 是从 Day4 模板"用人脑参数化替换"产出的（Day 4→5、81h→105h、Day 3/10→Day 4/10、未跟进 10 天→11 天、距 06-22 剔除 4 天→3 天、剔除 06-08 已结算段以免重复），没有重新手写正文。
+   - 证明协议工程化是可行的：下一轮停摆里可以直接写一个 `scripts/stale_day_alert.py`，参数 `--day N --hours H --prediction-window D --days-to-removal R --unfollowed-days U`，从 Jinja 模板渲染。这会把"应对手册"升级为"自动化告警生成器"——但具体实现等 zhouhooper 处理完当前 fly.io 故障后再回头落地，避免在停摆期临场改动 Routine 自动逻辑。
+
+2. **PushNotification 工具不可用是 Day5 暴露的新缺口**——06-16/06-17/06-18 改进日志都说"PushNotification 给本人"，但本次会话用 ToolSearch 查 `select:PushNotification` 返回 no match，fleet 没挂载这个工具。
+   - 这意味着过去三天的"PushNotification 升级警报"很可能也没真正送到 zhouhooper 手机上，只是改进日志写"发出"——一个隐藏的协议失效。
+   - 待修复：需要在 Routine 启动器里显式声明 PushNotification 依赖（或者改用 send_later / 其它推送通道），否则改进日志里写的"PushNotification 给本人"全是文档幻觉。
+   - 临时补救：本次把"必须人工介入 fly.io"的紧迫感直接嵌入到 daily_push.txt 顶部 🔴 卡片和系统故障提醒段，zhouhooper 看妈妈推送时就能同时看到——但这是降级方案，不是真正的双通道告警。
+
+3. **Day5 进入"等用户人工"阶段，Routine 自身没有更多可改进的**——所有继续累积停摆 Day6/Day7+ 的应对都已在 Day4 协议覆盖范围内。Day7（06-22）届时若仍停摆，按预案手动剔除两条预言，并视情况升级为"长停摆 Hibernation"协议（停止每日推送、只在服务器恢复或用户主动触发时再激活）——Hibernation 协议待 06-22 真到那一天再正式起草。
+
+---
+
