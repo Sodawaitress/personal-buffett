@@ -234,15 +234,23 @@ def _fetch_risk_factors(doc_url: str) -> str:
 
 _SYSTEM_SC = (
     "You are a supply-chain risk analyst. "
-    "Given an excerpt from a 10-K Risk Factors section, identify the company's "
-    "critical Tier-1 suppliers, components, or raw materials where there is "
-    "concentrated dependency (sole source, single source, limited alternatives, "
-    "or strategic chokepoints). "
-    "Return ONLY valid JSON — a list of objects with keys: "
+    "Given an excerpt from a 10-K filing, identify the company's critical Tier-1 suppliers "
+    "or raw material sources where there is concentrated dependency. "
+    "\n\nRULES — follow strictly:"
+    "\n1. supplier_name MUST be a real, specific entity: a company name (e.g. 'TSMC', 'Samsung Electronics', 'Foxconn'), "
+    "a named country/region source (e.g. 'Chinese rare earth suppliers', 'Taiwan-based foundries'), "
+    "or a specific material (e.g. 'indium phosphide wafers', 'gallium arsenide'). "
+    "\n2. NEVER use generic categories: do NOT output 'Unspecified', 'sole source suppliers', "
+    "'contract manufacturers', 'third-party suppliers', 'limited number of suppliers', or any phrase "
+    "that doesn't identify WHO or WHAT the dependency is on. Skip these entirely."
+    "\n3. If the text mentions sole/single source risk but names no specific supplier, skip it."
+    "\n4. Country/material entries ARE valid when they represent a real geographic or commodity chokepoint "
+    "(e.g. 'Chinese rare earth metals', 'Taiwan semiconductor foundries')."
+    "\n\nReturn ONLY valid JSON — a list of objects with keys: "
     '"supplier_name" (string), "dependency_type" '
     '("sole_source"|"single_source"|"limited_alternatives"|"qualified_supply_list"|"concentration_risk"|"other"), '
     '"evidence_quote" (≤80 chars from the text), "is_public_company" (true|false). '
-    "List at most 8 entries. If nothing material, return []."
+    "List at most 8 entries. If no specific named dependencies found, return []."
 )
 
 
@@ -291,6 +299,38 @@ def _score_chokepoint(dep: dict) -> int:
         default=0,
     )
     return min(100, max(base, bonus))
+
+
+# ── 地理/材料依赖 → A股代表性标的映射 ─────────────────────────────────────────
+# 当 LLM 提取到"Chinese rare earth"等地理/材料依赖时，自动映射到 A 股龙头代码。
+# 这是静态知识表，不需要网络，匹配用小写关键词。
+
+_GEO_MATERIAL_MAP: list[tuple[list[str], str, str]] = [
+    # (关键词列表,  A股代码,  公司名)
+    (["rare earth", "稀土"],                          "600111", "北方稀土"),
+    (["gallium", "germanium", "镓", "锗"],             "002614", "腾远钴业"),   # 镓锗生产商
+    (["indium", "铟"],                                "000809", "铁岭新城"),   # fallback
+    (["tungsten", "钨"],                              "000549", "厦门钨业"),
+    (["lithium", "锂"],                               "002460", "赣锋锂业"),
+    (["cobalt", "钴"],                                "603799", "华友钴业"),
+    (["graphite", "石墨"],                            "002203", "海达股份"),
+    (["silicon carbide", "碳化硅", "sic wafer"],      "688536", "思瑞浦"),
+    (["pcb", "printed circuit board", "线路板"],      "002384", "东山精密"),
+    (["optical fiber", "光纤", "fiber optic"],        "600487", "亨通光电"),
+    (["taiwan semiconductor", "tsmc", "台积电"],      None,     None),  # 台股，不映射A股
+    (["samsung", "三星"],                             None,     None),
+]
+
+
+def _lookup_geo_material(name: str) -> tuple[str | None, str | None]:
+    """
+    检查供应商名称是否匹配地理/材料依赖关键词，返回 (A股代码, 公司名) 或 (None, None)。
+    """
+    lower = name.lower()
+    for keywords, code, cname in _GEO_MATERIAL_MAP:
+        if any(kw in lower for kw in keywords):
+            return code, cname
+    return None, None
 
 
 # ── 公共公司 ticker 查找 ──────────────────────────────────────────────────────
@@ -378,9 +418,19 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
         name = dep.get("supplier_name", "").strip()
         if not name:
             continue
+        # Filter out generic/unnamed entries that slipped past the LLM prompt
+        _generic = {"unspecified", "unknown", "sole source suppliers",
+                    "contract manufacturers", "third-party suppliers",
+                    "independent contract manufacturers", "limited number of suppliers"}
+        if name.lower() in _generic or len(name) < 4:
+            continue
         score = _score_chokepoint(dep)
         sup_ticker = None
-        if dep.get("is_public_company"):
+        # First: try geo/material → A-share mapping (covers "Chinese rare earth" etc.)
+        geo_code, geo_name = _lookup_geo_material(name)
+        if geo_code:
+            sup_ticker = geo_code
+        elif dep.get("is_public_company"):
             sup_ticker = _lookup_ticker(name)
             time.sleep(0.3)  # yfinance rate limit courtesy
 
