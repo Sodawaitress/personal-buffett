@@ -295,31 +295,46 @@ def _score_chokepoint(dep: dict) -> int:
 
 # ── 公共公司 ticker 查找 ──────────────────────────────────────────────────────
 
-_REJECT_TYPES   = {"ETF", "MUTUALFUND", "CURRENCY", "FUTURE", "INDEX"}
-_REJECT_SUFFIXES = (".SA", ".HK", ".SZ", ".SS", ".L", ".T", ".PA", ".DE", ".AX")
+_REJECT_TYPES    = {"ETF", "MUTUALFUND", "CURRENCY", "FUTURE", "INDEX"}
+_REJECT_SUFFIXES = (".SA", ".L", ".T", ".PA", ".DE", ".AX")
+# Note: .HK, .SZ, .SS intentionally NOT rejected — we want to capture Chinese suppliers.
+# yfinance returns .SS for Shanghai, .SZ for Shenzhen; we strip the suffix and use
+# _lookup_cn_ticker() to get the clean 6-digit A-share code.
 
 
 def _lookup_ticker(name: str) -> str | None:
     """
-    用 yfinance 搜索供应商名称，返回主要交易所 ticker（美股/台股优先）。
-    排除 ADR 非主要市场（.SA / .HK 等）、ETF、基金。
+    用 yfinance 搜索供应商名称，返回主要交易所 ticker。
+    - 美股/台股：直接返回 ticker
+    - A股（.SS/.SZ）：剥离后缀，走 _lookup_cn_ticker() 匹配本地 JSON 得到6位代码
+    - 港股（.HK）：保留，供 Tier-2 跳转用
     最多尝试 5 个结果，取第一个通过过滤的。
     """
     if not name:
         return None
+
+    # 先尝试 A股本地匹配（更准确，无网络依赖）
+    cn_code = _lookup_cn_ticker(name)
+    if cn_code:
+        return cn_code
+
     try:
         import yfinance as yf
         results = yf.Search(name, max_results=5)
         for q in (results.quotes or []):
             ticker    = q.get("symbol") or q.get("ticker") or ""
             type_hint = (q.get("typeDisp") or q.get("quoteType") or "").upper()
-            exchange  = (q.get("exchange") or q.get("exchDisp") or "").upper()
             if not ticker:
                 continue
             if type_hint in _REJECT_TYPES:
                 continue
-            # Reject non-primary market suffixes (ADRs on .SA, .HK, etc.)
             if any(ticker.upper().endswith(s) for s in _REJECT_SUFFIXES):
+                continue
+            # A股：yfinance 返回 600519.SS 或 000858.SZ → 转为6位代码
+            if ticker.upper().endswith(".SS") or ticker.upper().endswith(".SZ"):
+                bare = ticker.split(".")[0]
+                if bare.isdigit() and len(bare) == 6:
+                    return bare
                 continue
             return ticker
     except Exception:

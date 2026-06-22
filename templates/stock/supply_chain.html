@@ -281,7 +281,7 @@
                 for(let i=0;i<4;i++){const el=$(`scs-${i}`);if(el)el.className='sc-step sc-step-done';}
                 renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
                 if (rescanBtn) rescanBtn.disabled = false;
-              } else if (tries >= 20) {
+              } else if (tries >= 48) {
                 clearInterval(poll); clearInterval(_stepTimer);
                 showState('empty');
                 const desc = document.querySelector('.sc-empty-desc');
