@@ -13,6 +13,16 @@ jobs:
       APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
 
     steps:
+      - name: Trigger daily digest (snapshot commit + prediction ingest)
+        run: |
+          HTTP=$(curl -s -o /tmp/digest.json -w "%{http_code}" \
+            -X POST "${APP_URL}/api/trigger-digest" \
+            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}" \
+            -H "Content-Type: application/json")
+          echo "digest → HTTP $HTTP"
+          cat /tmp/digest.json
+          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
+
       - name: Trigger daily pipeline
         run: |
           HTTP=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
@@ -23,7 +33,7 @@ jobs:
           cat /tmp/pipeline.json
           [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
 
-      - name: Trigger precursor scan (A-share signals)
+      - name: Trigger precursor scan (A-share signals, independent of digest)
         run: |
           HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
             -X POST "${APP_URL}/api/trigger-scan" \

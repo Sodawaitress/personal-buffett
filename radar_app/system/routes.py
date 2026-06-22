@@ -98,9 +98,29 @@ def register_system_routes(app):
         threading.Thread(target=_run, daemon=False, name="gh-pipeline-trigger").start()
         return jsonify({"status": "started", "job_id": job_id}), 202
 
+    @app.route("/api/trigger-digest", methods=["POST"])
+    def trigger_digest():
+        """GitHub Actions cron step 2: commit daily snapshot + ingest predictions.
+        Runs in its own thread, completely independent of precursor scan."""
+        if not _check_scan_token():
+            return jsonify({"error": "unauthorized"}), 401
+
+        app_ctx = current_app._get_current_object()
+
+        def _run():
+            try:
+                from scripts.daily_digest import run_daily_digest
+                run_daily_digest()
+                app_ctx.logger.info("[trigger-digest] daily digest done")
+            except Exception as e:
+                app_ctx.logger.warning("[trigger-digest] daily digest failed: %s", e)
+
+        threading.Thread(target=_run, daemon=False, name="gh-digest-trigger").start()
+        return jsonify({"status": "started"}), 202
+
     @app.route("/api/trigger-scan", methods=["POST"])
     def trigger_scan():
-        """GitHub Actions cron 调用此端点触发每日前兆扫描 + 快照提交。"""
+        """GitHub Actions cron 调用此端点触发每日前兆扫描（仅扫描，不提交快照）。"""
         if not _check_scan_token():
             return jsonify({"error": "unauthorized"}), 401
 
@@ -110,33 +130,14 @@ def register_system_routes(app):
         def _run():
             update_job(job_id, "running")
             errors = []
-            # Run precursor scan with a hard 5-min timeout so a hung scan
-            # can never prevent run_daily_digest() from committing the snapshot.
-            from concurrent.futures import ThreadPoolExecutor, TimeoutError as _FuturesTimeout
             try:
                 from scripts.precursor_scan import run_precursor_scan
-                with ThreadPoolExecutor(max_workers=1) as _ex:
-                    _f = _ex.submit(run_precursor_scan)
-                    try:
-                        result = _f.result(timeout=300)
-                        app_ctx.logger.info("[trigger-scan] precursor done: %s", result)
-                    except _FuturesTimeout:
-                        errors.append("precursor: timed out (300s)")
-                        app_ctx.logger.warning("[trigger-scan] precursor timed out, proceeding to digest")
-            except Exception as e:
-                errors.append(f"precursor: {e}")
-                app_ctx.logger.warning("[trigger-scan] precursor failed: %s", e)
-            try:
-                from scripts.daily_digest import run_daily_digest
-                run_daily_digest()
-                app_ctx.logger.info("[trigger-scan] daily digest done")
-            except Exception as e:
-                errors.append(f"digest: {e}")
-                app_ctx.logger.warning("[trigger-scan] digest failed: %s", e)
-            if errors:
-                update_job(job_id, "failed", error="; ".join(errors))
-            else:
+                result = run_precursor_scan()
+                app_ctx.logger.info("[trigger-scan] precursor done: %s", result)
                 update_job(job_id, "done")
+            except Exception as e:
+                app_ctx.logger.warning("[trigger-scan] precursor failed: %s", e)
+                update_job(job_id, "failed", error=str(e))
 
         threading.Thread(target=_run, daemon=False, name="gh-scan-trigger").start()
         return jsonify({"status": "started", "job_id": job_id}), 202
