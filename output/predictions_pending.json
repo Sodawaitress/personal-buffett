@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-06-22",
+    "code": "600549",
+    "name": "厦门钨业",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "涨停后短期超买；ps=3.68 老信号 59 天未跟进；融券未参与无新动能",
+    "price_at_prediction": 94.5
+  },
+  {
+    "date": "2026-06-22",
+    "code": "603259",
+    "name": "药明康德",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "A 级公司+估值便宜+今日放量开启动能，医药板块抬头",
+    "price_at_prediction": 106.74
+  }
+]
