@@ -116,32 +116,23 @@ def test_search_variable_consistency():
     with open(watchlist_path, encoding='utf-8') as f:
         watchlist_content = f.read()
 
-    # 查找 doSearch 函数
-    dosearch_match = re.search(
-        r'async function doSearch\(([^)]+)\)\s*\{(.*?)\n\s*\}',
+    # filterBySearch 做 DOM 过滤（不再是 async fetch）
+    filter_match = re.search(
+        r'function filterBySearch\(([^)]+)\)\s*\{(.*?)\n\}',
         watchlist_content,
         re.DOTALL
     )
 
-    assert dosearch_match, "未能找到 doSearch 函数"
+    assert filter_match, "未能找到 filterBySearch 函数"
 
-    func_params = dosearch_match.group(1)
-    func_body = dosearch_match.group(2)
+    func_body = filter_match.group(2)
 
-    # 检查第一个参数的赋值（应该是 items）
-    assign_match = re.search(r'const (\w+)\s*=\s*await.*fetch.*json\(\)', func_body)
-    if assign_match:
-        assigned_var = assign_match.group(1)
-        print(f"✓ doSearch() 中的变量赋值: const {assigned_var} = ...")
-
-        # 检查后续引用是否一致
-        if assigned_var == 'items':
-            # items 应该在后面被检查
-            assert 'if (items && items.loading)' in func_body, \
-                f"watchlist.html: 发现了 data/items 混淆 bug! 检查第 668 行"
-            print(f"✓ 变量引用一致: if (items && items.loading) ✓")
-        else:
-            print(f"⚠ 发现非标准的变量名: {assigned_var}")
+    # 确认函数体包含 DOM 过滤逻辑（.toLowerCase()），而不是 async fetch
+    assert '.toLowerCase()' in func_body, \
+        "watchlist.html: filterBySearch 缺少 toLowerCase 过滤逻辑"
+    assert 'fetch' not in func_body, \
+        "watchlist.html: filterBySearch 不应包含 fetch 调用（应为纯 DOM 过滤）"
+    print("✓ filterBySearch() 是纯 DOM 过滤函数 ✓")
 
 
 if __name__ == '__main__':
