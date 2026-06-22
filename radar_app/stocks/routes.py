@@ -442,6 +442,13 @@ def register_stock_routes(app):
             try:
                 from scripts.supply_chain_mapper import run_multihop_scan
                 run_multihop_scan(ticker, market, company_name)
+                # For US stocks, also scan three cross-border sources (A-share suppliers)
+                if market == "us":
+                    try:
+                        from scripts.supply_chain_sources import scan_all_sources
+                        scan_all_sources(ticker, company_name)
+                    except Exception as e2:
+                        print(f"[supply_chain] three-source scan error: {e2}")
             except Exception as e:
                 print(f"[supply_chain] scan thread error: {e}")
 
@@ -451,8 +458,10 @@ def register_stock_routes(app):
     @app.route('/api/supply-chain/<path:code>', methods=['GET'])
     @login_required
     def api_supply_chain_get(code):
-        """返回缓存的供应链链接（含多跳树结构）。"""
+        """返回缓存的供应链链接（含多跳树结构）以及跨境A股供应商。"""
         ticker = code.upper().split('.')[0]
+        stock_row = db.get_stock(ticker) or {}
+        market = stock_row.get("market", "us")
         try:
             from scripts.supply_chain_mapper import get_supply_chain_links, get_supply_chain_tree, is_cache_fresh
             links = get_supply_chain_links(ticker)
@@ -460,4 +469,16 @@ def register_stock_routes(app):
             fresh = is_cache_fresh(ticker)
         except Exception as e:
             return jsonify({'error': str(e), 'links': [], 'tree': {}, 'fresh': False})
-        return jsonify({'links': links, 'tree': tree, 'fresh': fresh, 'count': len(links)})
+
+        a_share_suppliers = []
+        if market == "us":
+            try:
+                from scripts.supply_chain_sources import get_us_suppliers_for_ticker
+                a_share_suppliers = get_us_suppliers_for_ticker(ticker)
+            except Exception:
+                pass
+
+        return jsonify({
+            'links': links, 'tree': tree, 'fresh': fresh, 'count': len(links),
+            'a_share_suppliers': a_share_suppliers,
+        })

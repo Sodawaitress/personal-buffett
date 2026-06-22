@@ -478,6 +478,46 @@ _SCHEMA_SQL = """
         CREATE INDEX IF NOT EXISTS idx_supply_chain_links_code
             ON supply_chain_links(downstream_code, chokepoint_score DESC);
 
+        -- US-106 跨境供应链三源融合：A股年报客户反查索引
+        CREATE TABLE IF NOT EXISTS supply_chain_customer_index (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            a_share_code  TEXT NOT NULL,
+            a_share_name  TEXT,
+            customer_name TEXT NOT NULL,
+            us_ticker     TEXT,
+            revenue_pct   REAL,
+            source        TEXT NOT NULL DEFAULT 'cninfo_annual',
+            report_year   INTEGER,
+            scanned_at    TEXT DEFAULT (datetime('now')),
+            UNIQUE(a_share_code, customer_name, source)
+        );
+        CREATE INDEX IF NOT EXISTS idx_sc_customer_us_ticker
+            ON supply_chain_customer_index(us_ticker);
+        CREATE INDEX IF NOT EXISTS idx_sc_customer_a_share
+            ON supply_chain_customer_index(a_share_code);
+
+        CREATE TABLE IF NOT EXISTS market_polls (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            poll_date  TEXT NOT NULL UNIQUE,
+            question   TEXT NOT NULL DEFAULT '大盘今天涨还是跌？',
+            up_votes   INTEGER DEFAULT 0,
+            down_votes INTEGER DEFAULT 0,
+            outcome    TEXT,
+            clue_1     TEXT,
+            clue_2     TEXT,
+            clue_3     TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id    INTEGER NOT NULL,
+            token      TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
+            used       INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
         -- Performance indices on high-frequency query columns
         CREATE INDEX IF NOT EXISTS idx_stock_prices_code_time
             ON stock_prices(code, fetched_at DESC);
@@ -487,6 +527,19 @@ _SCHEMA_SQL = """
             ON pipeline_jobs(code, started_at DESC);
         CREATE INDEX IF NOT EXISTS idx_watchlist_user_status
             ON user_watchlist(user_id, removed_at, status);
+
+        -- 城市生活成本参考（Numbeo, 30天 TTL）
+        CREATE TABLE IF NOT EXISTS city_living_data (
+            city_slug          TEXT PRIMARY KEY,
+            city_name          TEXT NOT NULL,
+            tier               TEXT NOT NULL,
+            city_category      TEXT DEFAULT 'major',   -- 'major' | 'lifestyle'
+            avg_monthly_salary REAL,
+            avg_monthly_cost   REAL,
+            source             TEXT DEFAULT 'numbeo',
+            report_year        INTEGER,
+            fetched_at         TEXT NOT NULL
+        );
 """
 
 
@@ -510,6 +563,13 @@ def _migrate():
         ("supply_chain_links", "hop_depth",      "INTEGER DEFAULT 1"),
         ("supply_chain_links", "upstream_path",  "TEXT"),
         ("supply_chain_links", "tier1_code",     "TEXT"),
+        # US-106 supply_chain_customer_index source confidence
+        ("supply_chain_customer_index", "confidence", "INTEGER DEFAULT 80"),
+        # US-104 公开博客层
+        ("analysis_results",   "is_public",      "INTEGER DEFAULT 0"),
+        # US-105 双城市 FIRE
+        ("city_living_data",   "city_category",  "TEXT DEFAULT 'major'"),
+        ("city_living_data",   "report_year",    "INTEGER"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

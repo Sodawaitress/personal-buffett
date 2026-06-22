@@ -66,6 +66,18 @@
       </div>
     </div>
 
+    {# ── 跨境A股供应商（仅美股） ── #}
+    {% if market == "us" %}
+    <div id="sc-cn-suppliers" style="display:none;margin-top:24px">
+      <div class="sc-section-head" style="margin-bottom:8px">
+        <span class="fund-section-label" style="font-size:13px">A股上游供应商</span>
+        <span class="sc-cn-badge">跨境反查</span>
+      </div>
+      <div class="sc-cn-desc">来自A股年报客户字段、美国海关记录及财报电话会议的中国供应商</div>
+      <div id="sc-cn-list" class="sc-list" style="margin-top:8px"></div>
+    </div>
+    {% endif %}
+
   </div>{# /.stock-page-body #}
 
 </div>{# /.stock-page #}
@@ -280,6 +292,9 @@
                 clearInterval(poll); clearInterval(_stepTimer);
                 for(let i=0;i<4;i++){const el=$(`scs-${i}`);if(el)el.className='sc-step sc-step-done';}
                 renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
+                if (data.a_share_suppliers && data.a_share_suppliers.length) {
+                  renderCnSuppliers(data.a_share_suppliers);
+                }
                 if (rescanBtn) rescanBtn.disabled = false;
               } else if (tries >= 48) {
                 clearInterval(poll); clearInterval(_stepTimer);
@@ -298,12 +313,65 @@
       });
   };
 
+  const SOURCE_LABELS = {
+    cninfo_annual: '年报确认',
+    importyeti:    '海关记录',
+    earnings_call: '电话会议',
+    llm_knowledge: 'LLM推断',
+  };
+  const SOURCE_COLORS = {
+    cninfo_annual: '#15803d',
+    importyeti:    '#1d4ed8',
+    earnings_call: '#d97706',
+    llm_knowledge: '#6b7280',
+  };
+
+  function _cnCard(s) {
+    const srcLabel = SOURCE_LABELS[s.source] || s.source;
+    const srcColor = SOURCE_COLORS[s.source] || '#6b7280';
+    const conf = s.confidence || 60;
+    const pct = s.revenue_pct != null ? `<span class="sc-cn-pct">${s.revenue_pct}%营收</span>` : '';
+    const addBtn = s.a_share_code && !s.a_share_code.startsWith('_')
+      ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${s.a_share_code}','${(s.a_share_name||s.a_share_code).replace(/'/g,"\\'")}',this)" title="加入自选股">+ 自选股</button>`
+      : '';
+    return `
+      <div class="sc-card sc-card-cn">
+        <div class="sc-card-left" style="background:${srcColor}"></div>
+        <div class="sc-card-body">
+          <div class="sc-card-row1">
+            <span class="sc-name">${s.a_share_name || s.a_share_code}</span>
+            ${s.a_share_code && !s.a_share_code.startsWith('_') ? `<span class="sc-ticker-chip">${s.a_share_code}</span>` : ''}
+            ${addBtn}
+          </div>
+          <div class="sc-card-row2">
+            <span class="sc-dep-chip" style="background:${srcColor}1a;color:${srcColor};border-color:${srcColor}40">${srcLabel}</span>
+            ${pct}
+            <span class="sc-cn-conf" style="color:#6b7280;font-size:11px">置信度 ${conf}%</span>
+          </div>
+          <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${conf}%;background:${srcColor}80"></div></div>
+          ${s.customer_name ? `<blockquote class="sc-evidence">客户字段中标注的下游买家: ${s.customer_name}</blockquote>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderCnSuppliers(suppliers) {
+    const wrap = $('sc-cn-suppliers');
+    const list = $('sc-cn-list');
+    if (!wrap || !list) return;
+    if (!suppliers || !suppliers.length) return;
+    list.innerHTML = suppliers.map(s => _cnCard(s)).join('');
+    wrap.style.display = '';
+  }
+
   // Auto-load cache on page load
   fetch(`/api/supply-chain/${code}`)
     .then(r => r.json())
     .then(data => {
       if (data.links && data.links.length) {
         renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
+      }
+      if (data.a_share_suppliers && data.a_share_suppliers.length) {
+        renderCnSuppliers(data.a_share_suppliers);
       }
     })
     .catch(() => {});

@@ -1802,5 +1802,32 @@
   margin: 2px 0 4px;
   font-family: monospace;
 }
+.sc-cn-badge {
+  display: inline-block;
+  font-size: 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.sc-cn-desc {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+.sc-cn-pct {
+  font-size: 11px;
+  color: #374151;
+  margin-right: 6px;
+}
+.sc-cn-conf {
+  margin-left: 4px;
+}
+.sc-card-cn {
+  border-left: none;
+}
 
 /* 主容器 */
