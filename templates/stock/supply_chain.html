@@ -87,8 +87,9 @@
 {% include 'stock/_stock_scripts.html' %}
 <script>
 (function() {
-  const code   = '{{ stock.code }}';
-  const market = '{{ market }}';
+  const code        = '{{ stock.code }}';
+  const market      = '{{ market }}';
+  const userRegion  = '{{ user_region }}';
 
   const $ = id => document.getElementById(id);
 
@@ -98,14 +99,41 @@
     limited_alternatives: '{{ t.sc_dep_limited_alternatives }}',
     qualified_supply_list:'{{ t.sc_dep_qualified_supply_list }}',
     concentration_risk:   '{{ t.sc_dep_concentration_risk }}',
+    jv_partner:           'JV合作',
     other:                '{{ t.sc_dep_other }}',
   };
   const DEP_COLORS = {
     sole_source: '#b91c1c', single_source: '#b91c1c',
     limited_alternatives: '#d97706', qualified_supply_list: '#d97706',
     concentration_risk: '#1d4ed8',
+    jv_partner: '#7c3aed',
     other: '#6b7280',
   };
+
+  // 市场标志 + 市场名称
+  const MKT_FLAG = {
+    us: '🇺🇸', cn: '🇨🇳', jp: '🇯🇵', eu: '🇪🇺', tw: '🇹🇼',
+    kr: '🇰🇷', hk: '🇭🇰', au: '🇦🇺', nz: '🇳🇿', private: '🔒',
+    unknown: '',
+  };
+  const MKT_NAME = {
+    us:'US', cn:'A股', jp:'JP', eu:'EU', tw:'TW',
+    kr:'KR', hk:'HK', au:'AU', nz:'NZ', private:'未上市', unknown:'',
+  };
+
+  // 地理排序优先级：用户所在市场排第一
+  const _MKT_PRIORITY_BASE = ['us','cn','jp','eu','tw','kr','hk','au','nz','private','unknown'];
+  function _marketPriority(mkt) {
+    // 用户本地市场排最前
+    const localMap = { cn:'cn', hk:'hk', nz:'nz', au:'au', us:'us', kr:'kr' };
+    const local = localMap[userRegion] || 'us';
+    if (mkt === local) return 0;
+    // private / unknown 沉底
+    if (mkt === 'private') return 90;
+    if (!mkt || mkt === 'unknown') return 99;
+    const idx = _MKT_PRIORITY_BASE.indexOf(mkt);
+    return idx < 0 ? 50 : idx + 1;
+  }
 
   function scoreColor(s) {
     if (s === 50) return '#9ca3af';   // 无数据默认值，不渲染成红/绿
@@ -168,16 +196,25 @@
       } catch(e) {}
     }
 
+    const mkt      = lnk.supplier_market || 'unknown';
+    const mktFlag  = MKT_FLAG[mkt] || '';
+    const mktName  = MKT_NAME[mkt] || '';
+    const isPrivate = mkt === 'private' || (!lnk.supplier_ticker && mkt === 'unknown');
+
     const tickerChip = lnk.supplier_ticker
-      ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>` : '';
+      ? `<span class="sc-ticker-chip">${lnk.supplier_ticker}</span>`
+      : (mktFlag ? `<span class="sc-mkt-chip sc-mkt-${mkt}">${mktFlag} ${mktName}</span>` : '');
+
     const safeName = lnk.supplier_name.replace(/'/g, "\\'");
     const addBtn = lnk.supplier_ticker
       ? `<button class="sc-watchlist-btn" onclick="scAddWatch('${lnk.supplier_ticker}','${safeName}',this)" title="{{ t.sc_watchlist_add }}">{{ t.sc_watchlist_add }}</button>`
-      : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="{{ t.sc_search_listed_hint }}">{{ t.sc_search_listed }}</a>`;
+      : isPrivate
+        ? `<span class="sc-private-tag">未上市</span>`
+        : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="{{ t.sc_search_listed_hint }}">{{ t.sc_search_listed }}</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
     return `
-      <div class="sc-card${isT2?' sc-card-t2':''}">
+      <div class="sc-card${isT2?' sc-card-t2':''}${isPrivate?' sc-card-private':''}">
         <div class="sc-card-left" style="background:${isT2 ? 'transparent' : color}"></div>
         <div class="sc-card-body">
           <div class="sc-card-row1">
@@ -228,11 +265,16 @@
     const contentEl = $('sc-content');
     if (!contentEl) return;
 
-    // 打平所有卡片，按风险分降序（score=50 无数据沉底）
+    // 打平所有卡片，双键排序：
+    //   主键 = 市场优先级（用户本地市场 → 其他上市 → 私有/未知）
+    //   次键 = chokepoint_score 降序（50=无数据 沉底）
     const allCards = [];
     tier1.forEach(lnk => allCards.push({ lnk, isT2: false }));
     Object.values(t2map).forEach(arr => arr.forEach(lnk => allCards.push({ lnk, isT2: true })));
     allCards.sort((a, b) => {
+      const ma = _marketPriority(a.lnk.supplier_market || 'unknown');
+      const mb = _marketPriority(b.lnk.supplier_market || 'unknown');
+      if (ma !== mb) return ma - mb;
       const sa = a.lnk.chokepoint_score === 50 ? -1 : a.lnk.chokepoint_score;
       const sb = b.lnk.chokepoint_score === 50 ? -1 : b.lnk.chokepoint_score;
       return sb - sa;

@@ -576,6 +576,8 @@ def _migrate():
         ("supply_chain_links", "tier1_code",     "TEXT"),
         # US-106 supply_chain_customer_index source confidence
         ("supply_chain_customer_index", "confidence", "INTEGER DEFAULT 80"),
+        # US-107 地理个性化排序：供应商所属市场
+        ("supply_chain_links", "supplier_market", "TEXT DEFAULT 'unknown'"),
         # US-104 公开博客层
         ("analysis_results",   "is_public",      "INTEGER DEFAULT 0"),
         # US-105 双城市 FIRE

@@ -69,6 +69,49 @@ _CHOKEPOINT_KW = {
 
 CACHE_TTL_DAYS = 30  # 重新扫描间隔
 
+# ── 市场推断 ──────────────────────────────────────────────────────────────────
+
+# 日本/欧洲大厂名称关键词 → 快速判断无 ticker 时的市场归属
+_JP_KEYWORDS = {
+    "shin-etsu", "shinetsu", "sumco", "jsr", "tokyo ohka", "tok ", " tok",
+    "kioxia", "toshiba", "tokyo electron", " tel ", "murata", "tdk",
+    "kyocera", "renesas", "rohm", "nidec", "canon", "nikon",
+    "ibiden", "mitsui", "mitsubishi", "hitachi", "fujitsu", "elpida",
+    "air liquide japan", "showa denko",
+}
+_EU_KEYWORDS = {
+    "asml", "infineon", "st microelectronics", "stmicro", "asm international",
+    "aixtron", "suss microtec", "besi", "amsl", "siltronic",
+    "merck kgaa", "basf", "air liquide",
+}
+_TW_KEYWORDS = {
+    "tsmc", "taiwan semiconductor", "ase group", "ase technology",
+    "unimicron", "nan ya", "powerchip", "mediatek", "realtek",
+    "united microelectronics", "umc",
+}
+
+
+def _infer_market(supplier_name: str, supplier_ticker: str | None) -> str:
+    """
+    根据 ticker 后缀或供应商名称关键词推断所属市场。
+    返回: us / cn / jp / eu / tw / kr / au / hk / private / unknown
+    """
+    if supplier_ticker:
+        t = supplier_ticker.upper()
+        if t.endswith(".HK"):    return "hk"
+        if t.endswith(".KS") or t.endswith(".KQ"): return "kr"
+        if t.endswith(".AX"):    return "au"
+        if t.endswith(".NZ"):    return "nz"
+        if re.match(r"^\d{6}$", t): return "cn"
+        if re.match(r"^[A-Z]{1,5}$", t): return "us"
+
+    name_l = supplier_name.lower()
+    if any(kw in name_l for kw in _JP_KEYWORDS): return "jp"
+    if any(kw in name_l for kw in _EU_KEYWORDS): return "eu"
+    if any(kw in name_l for kw in _TW_KEYWORDS): return "tw"
+    return "private"
+
+
 # ── CIK 查找 ──────────────────────────────────────────────────────────────────
 
 _cik_cache: dict[str, str] = {}
@@ -246,10 +289,13 @@ _SYSTEM_SC = (
     "\n3. If the text mentions sole/single source risk but names no specific supplier, skip it."
     "\n4. Country/material entries ARE valid when they represent a real geographic or commodity chokepoint "
     "(e.g. 'Chinese rare earth metals', 'Taiwan semiconductor foundries')."
+    "\n5. For supplier_market: use 'us' for US-listed, 'cn' for China A-share/HK, 'jp' for Japan, "
+    "'eu' for Europe, 'tw' for Taiwan, 'kr' for Korea, 'private' for unlisted private companies."
     "\n\nReturn ONLY valid JSON — a list of objects with keys: "
     '"supplier_name" (string), "dependency_type" '
     '("sole_source"|"single_source"|"limited_alternatives"|"qualified_supply_list"|"concentration_risk"|"other"), '
-    '"evidence_quote" (≤80 chars from the text), "is_public_company" (true|false). '
+    '"evidence_quote" (≤80 chars from the text), "is_public_company" (true|false), '
+    '"supplier_market" (us|cn|jp|eu|tw|kr|private|unknown). '
     "List at most 8 entries. If no specific named dependencies found, return []."
 )
 
@@ -388,14 +434,17 @@ def was_scan_attempted(ticker: str) -> bool:
 _SYSTEM_US_LLM = (
     "You are a supply-chain risk analyst. Based on your training knowledge, "
     "list the key upstream suppliers of the given company. "
-    "Focus on: sole-source components, specialized materials, critical contract manufacturers. "
-    "Return ONLY valid JSON — a list (max 8 items) with keys: "
+    "Focus on: sole-source components, specialized materials, critical contract manufacturers, "
+    "joint venture manufacturing partners. Include equipment suppliers and materials suppliers "
+    "if they represent concentration risk. "
+    "Return ONLY valid JSON — a list (max 10 items) with keys: "
     '"supplier_name" (real company name, not generic), '
     '"dependency_type" (one of: sole_source, single_source, limited_alternatives, '
-    "qualified_supply_list, concentration_risk, other), "
+    "qualified_supply_list, concentration_risk, jv_partner, other), "
     '"chokepoint_score" (0-100: 80+ = very high risk, 50 = unknown), '
     '"evidence_quote" (≤80 chars — what this supplier provides), '
-    '"is_public_company" (true|false). '
+    '"is_public_company" (true|false), '
+    '"supplier_market" (us|cn|jp|eu|tw|kr|private|unknown — stock market where this supplier is listed, or private if unlisted). '
     "Skip vague entries like 'various suppliers'. "
     "Return [] if you have no reliable knowledge of this company's supply chain."
 )
@@ -429,6 +478,7 @@ def _us_llm_fallback_scan(ticker: str, company_name: str, now: str) -> list:
         if dep.get("is_public_company"):
             sup_ticker = _lookup_ticker(name)
             time.sleep(0.2)
+        market = _infer_market(name, sup_ticker) or dep.get("supplier_market", "unknown")
         links.append({
             "downstream_code":  ticker,
             "supplier_name":    name,
@@ -438,6 +488,7 @@ def _us_llm_fallback_scan(ticker: str, company_name: str, now: str) -> list:
             "evidence_quote":   (dep.get("evidence_quote") or "")[:80],
             "scanned_at":       now,
             "source":           "llm_knowledge",
+            "supplier_market":  market,
         })
     print(f"    [supply_chain] LLM 知识兜底提取 {len(links)} 个供应商")
     return links
@@ -506,6 +557,7 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
         if dep.get("is_public_company"):
             sup_ticker = _lookup_ticker(name)
             time.sleep(0.3)  # yfinance rate limit courtesy
+        market = _infer_market(name, sup_ticker) or dep.get("supplier_market", "unknown")
 
         link = {
             "downstream_code":  ticker,
@@ -516,6 +568,7 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
             "evidence_quote":   (dep.get("evidence_quote") or "")[:80],
             "scanned_at":       now,
             "source":           "sec_10k",
+            "supplier_market":  market,
         }
         links.append(link)
 
@@ -540,18 +593,21 @@ def _save_links(downstream_code: str, links: list[dict]) -> None:
                 INSERT INTO supply_chain_links
                   (downstream_code, supplier_name, supplier_ticker,
                    dependency_type, chokepoint_score, evidence_quote,
-                   scanned_at, source, hop_depth, upstream_path, tier1_code)
+                   scanned_at, source, hop_depth, upstream_path, tier1_code,
+                   supplier_market)
                 VALUES
                   (:downstream_code, :supplier_name, :supplier_ticker,
                    :dependency_type, :chokepoint_score, :evidence_quote,
                    :scanned_at, :source,
-                   :hop_depth, :upstream_path, :tier1_code)
+                   :hop_depth, :upstream_path, :tier1_code,
+                   :supplier_market)
                 """,
                 {
                     **lnk,
-                    "hop_depth":     lnk.get("hop_depth", 1),
-                    "upstream_path": lnk.get("upstream_path"),
-                    "tier1_code":    lnk.get("tier1_code"),
+                    "hop_depth":      lnk.get("hop_depth", 1),
+                    "upstream_path":  lnk.get("upstream_path"),
+                    "tier1_code":     lnk.get("tier1_code"),
+                    "supplier_market": lnk.get("supplier_market", "unknown"),
                 },
             )
     print(f"    [supply_chain] 写入 {len(links)} 条 supply_chain_links (hop={links[0].get('hop_depth',1) if links else '-'})")
@@ -566,7 +622,8 @@ def get_supply_chain_links(ticker: str) -> list[dict]:
             SELECT supplier_name, supplier_ticker, dependency_type,
                    chokepoint_score, evidence_quote, scanned_at, source,
                    COALESCE(hop_depth, 1) AS hop_depth,
-                   upstream_path, tier1_code
+                   upstream_path, tier1_code,
+                   COALESCE(supplier_market, 'unknown') AS supplier_market
             FROM   supply_chain_links
             WHERE  downstream_code = :code
             ORDER BY COALESCE(hop_depth,1) ASC, chokepoint_score DESC

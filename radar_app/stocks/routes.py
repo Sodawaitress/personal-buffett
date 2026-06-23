@@ -462,6 +462,7 @@ def register_stock_routes(app):
         ticker = code.upper().split('.')[0]
         stock_row = db.get_stock(ticker) or {}
         market = stock_row.get("market", "us")
+        user_region = session.get("region", "nz")
         try:
             from scripts.supply_chain_mapper import (
                 get_supply_chain_links, get_supply_chain_tree,
@@ -486,4 +487,5 @@ def register_stock_routes(app):
             'links': links, 'tree': tree, 'fresh': fresh, 'count': len(links),
             'a_share_suppliers': a_share_suppliers,
             'scan_attempted': scan_attempted,
+            'user_region': user_region,
         })
