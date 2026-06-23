@@ -576,11 +576,18 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
         }
         links.append(link)
 
-    # 6. Write to DB + log completion
-    if links:
-        _save_links(ticker, links)
-    _log_scan_complete(ticker, len(links), "sec_10k")
+    # 6. If 10-K text didn't yield named suppliers, fall back to LLM knowledge
+    if not links:
+        print(f"    [supply_chain] 10-K 未找到具名供应商，降级到 LLM 知识兜底")
+        links = _us_llm_fallback_scan(ticker, company_name, now)
+        if links:
+            _save_links(ticker, links)
+        _log_scan_complete(ticker, len(links), "llm_knowledge",
+                           note="10-K had no named suppliers; used LLM knowledge")
+        return {"ok": bool(links), "links": links, "error": None}
 
+    _save_links(ticker, links)
+    _log_scan_complete(ticker, len(links), "sec_10k")
     return {"ok": True, "links": links, "error": None}
 
 
