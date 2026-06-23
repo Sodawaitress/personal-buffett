@@ -219,6 +219,23 @@ def _fetch_cn_customer_text(pdf_url: str) -> str:
     return ""
 
 
+_CNINFO_REACHABLE: bool | None = None  # None = not checked yet
+
+def _check_cninfo_reachable() -> bool:
+    """Quick DNS check for CNINFO (fails silently on non-China servers)."""
+    global _CNINFO_REACHABLE
+    if _CNINFO_REACHABLE is not None:
+        return _CNINFO_REACHABLE
+    try:
+        import socket
+        socket.setdefaulttimeout(3)
+        socket.getaddrinfo("www.cninfo.com.cn", 80)
+        _CNINFO_REACHABLE = True
+    except Exception:
+        _CNINFO_REACHABLE = False
+    return _CNINFO_REACHABLE
+
+
 def scan_a_share_customers(code: str, name: str = "") -> list[dict]:
     """
     扫描单只A股年报，提取客户信息写入 supply_chain_customer_index。
@@ -229,12 +246,16 @@ def scan_a_share_customers(code: str, name: str = "") -> list[dict]:
     now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
     # 获取年报 PDF URL（复用 supply_chain_mapper 的函数）
-    try:
-        from scripts.supply_chain_mapper import _get_cn_annual_report_pdf_url
-        pdf_url = _get_cn_annual_report_pdf_url(code)
-    except Exception as e:
-        print(f"    [sc_sources①] PDF URL 获取失败: {e}")
-        pdf_url = None
+    # 先检查 CNINFO 是否可达（Fly.io 海外服务器无法访问中国网站）
+    pdf_url = None
+    if _check_cninfo_reachable():
+        try:
+            from scripts.supply_chain_mapper import _get_cn_annual_report_pdf_url
+            pdf_url = _get_cn_annual_report_pdf_url(code)
+        except Exception as e:
+            print(f"    [sc_sources①] PDF URL 获取失败: {e}")
+    else:
+        print(f"    [sc_sources①] CNINFO 不可达（海外服务器），跳过PDF下载")
 
     customers_raw = []
 
@@ -548,25 +569,16 @@ def scan_all_sources(us_ticker: str, company_name: str = "") -> dict:
     """
     对一只美股同时触发三个数据源扫描。
     返回 {"ok": True, "results": {source: [rows]}, "total": n}
+
+    注意：数据源 ① (A股年报反查) 不在此处做批量扫描——那需要扫全部A股，
+    极慢且会 OOM（79只A股 × CNINFO超时 + Groq调用）。
+    改为直接读已缓存的结果，批量扫描由 batch_scan_all_cn_watchlist() 单独触发。
     """
     us_ticker = us_ticker.upper().split(".")[0]
     results: dict[str, list] = {}
 
-    # ① 批量扫描所有A股年报（看谁把这只美股列为客户）— 异步触发，不阻塞
-    # 注意：batch_scan 很慢（扫全部A股），这里只对已有结果做查询
-    # 实时触发改为：只扫妈妈持仓里还没扫过的A股
-    from radar_app.data.stocks import get_all_cn_watchlist_stocks
-    cn_stocks = get_all_cn_watchlist_stocks()
-    source1_rows = []
-    for code, name in cn_stocks:
-        if not is_customer_scan_fresh(code, max_days=60):
-            try:
-                rows = scan_a_share_customers(code, name)
-                source1_rows.extend(rows)
-                time.sleep(0.5)
-            except Exception as e:
-                print(f"    [scan_all] ① {code} 失败: {e}")
-    results["cninfo_annual"] = source1_rows
+    # ① 读缓存（不触发新扫描）
+    results["cninfo_annual"] = get_us_suppliers_for_ticker(us_ticker)
 
     # ② ImportYeti
     try:

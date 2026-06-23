@@ -938,6 +938,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (_autoQ) {
     const panel = document.getElementById('add-panel');
     if (panel) panel.classList.remove('hidden');
+    // If query is non-Chinese (e.g. a US ticker or company name from supply chain),
+    // switch to intl search so it actually finds the stock.
+    const _hasCn = /[一-鿿]/.test(_autoQ);
+    const _isDigits = /^\d{6}$/.test(_autoQ);
+    if (!_hasCn && !_isDigits && _wlSearchType === 'cn') {
+      _wlSearchType = 'intl';
+      document.querySelectorAll('#wl-search-type-seg .seg-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === 'intl');
+      });
+    }
     const inp = document.getElementById('search-q');
     if (inp) {
       inp.value = _autoQ;
