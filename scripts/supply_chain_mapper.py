@@ -94,8 +94,15 @@ _TW_KEYWORDS = {
 def _infer_market(supplier_name: str, supplier_ticker: str | None) -> str:
     """
     根据 ticker 后缀或供应商名称关键词推断所属市场。
+    名称优先于 ticker，避免 ADR（KXIAY/TOELY）被误判为美股。
     返回: us / cn / jp / eu / tw / kr / au / hk / private / unknown
     """
+    name_l = supplier_name.lower()
+    # Name-based check first: JP/EU/TW names are never "really" US
+    if any(kw in name_l for kw in _JP_KEYWORDS): return "jp"
+    if any(kw in name_l for kw in _EU_KEYWORDS): return "eu"
+    if any(kw in name_l for kw in _TW_KEYWORDS): return "tw"
+
     if supplier_ticker:
         t = supplier_ticker.upper()
         if t.endswith(".HK"):    return "hk"
@@ -105,10 +112,6 @@ def _infer_market(supplier_name: str, supplier_ticker: str | None) -> str:
         if re.match(r"^\d{6}$", t): return "cn"
         if re.match(r"^[A-Z]{1,5}$", t): return "us"
 
-    name_l = supplier_name.lower()
-    if any(kw in name_l for kw in _JP_KEYWORDS): return "jp"
-    if any(kw in name_l for kw in _EU_KEYWORDS): return "eu"
-    if any(kw in name_l for kw in _TW_KEYWORDS): return "tw"
     return "private"
 
 
@@ -726,10 +729,13 @@ def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_dept
             if lnk.get("supplier_name") in t1_names:
                 continue
 
+            t2_name   = lnk["supplier_name"]
+            t2_ticker = lnk.get("supplier_ticker")
+            t2_market = lnk.get("supplier_market") or _infer_market(t2_name, t2_ticker)
             tier2_all.append({
                 "downstream_code":  ticker,
-                "supplier_name":    lnk["supplier_name"],
-                "supplier_ticker":  lnk.get("supplier_ticker"),
+                "supplier_name":    t2_name,
+                "supplier_ticker":  t2_ticker,
                 "dependency_type":  lnk.get("dependency_type", "other"),
                 "chokepoint_score": lnk.get("chokepoint_score", 40),
                 "evidence_quote":   lnk.get("evidence_quote", ""),
@@ -738,6 +744,7 @@ def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_dept
                 "hop_depth":        2,
                 "upstream_path":    json.dumps([ticker, sup_ticker]),
                 "tier1_code":       sup_ticker,
+                "supplier_market":  t2_market,
             })
 
     if tier2_all:
@@ -753,11 +760,13 @@ def run_multihop_scan(ticker: str, market: str, company_name: str = "", max_dept
                     INSERT INTO supply_chain_links
                       (downstream_code, supplier_name, supplier_ticker,
                        dependency_type, chokepoint_score, evidence_quote,
-                       scanned_at, source, hop_depth, upstream_path, tier1_code)
+                       scanned_at, source, hop_depth, upstream_path, tier1_code,
+                       supplier_market)
                     VALUES
                       (:downstream_code, :supplier_name, :supplier_ticker,
                        :dependency_type, :chokepoint_score, :evidence_quote,
-                       :scanned_at, :source, :hop_depth, :upstream_path, :tier1_code)
+                       :scanned_at, :source, :hop_depth, :upstream_path, :tier1_code,
+                       :supplier_market)
                     """,
                     lnk,
                 )
