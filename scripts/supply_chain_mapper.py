@@ -166,75 +166,85 @@ def _get_latest_10k_url(cik: str) -> str | None:
 
 # ── Risk Factors 提取 ─────────────────────────────────────────────────────────
 
-_ITEM_1A_RE = re.compile(
-    r'(?:item\s+1a[^a-z]{0,20}risk\s+factors)(.*?)(?:item\s+1b|item\s+2)',
-    re.IGNORECASE | re.DOTALL,
-)
 _TAG_RE = re.compile(r'<[^>]+>')
 
-
-_SUPPLY_KEYWORDS = [
-    # Sole/single source
-    "sole source", "single source", "single supplier", "sole supplier",
-    "no alternative", "no substitute",
-    # Named foundries / manufacturers
-    "tsmc", "taiwan semiconductor", "samsung foundry", "samsung electronics",
-    "globalfoundries", "intel foundry", "sk hynix", "micron technology",
-    "foxconn", "hon hai", "flextronics", "jabil",
-    # NAND flash / memory specific (SanDisk, Kioxia, etc.)
-    "kioxia", "joint venture", "flash venture", "nand flash", "nand memory",
-    "wafer", "fab ", " fab", "fabrication", "3d nand", "qlc", "tlc",
-    # Generic supply chain risk language
-    "foundry", "contract manufacturer", "outsource", "third-party manufacturer",
-    "limited number of supplier", "limited alternative",
-    "qualified supplier", "approved vendor", "approved supplier",
-    "supply disruption", "supplier concentration",
-    "purchase from", "procure", "rely on", "dependent on",
+# Keywords with a priority weight — higher weight snippets sort first
+# so the most specific supply chain language wins the char budget
+_SUPPLY_KEYWORDS: list[tuple[str, int]] = [
+    # Named companies / products (highest priority)
+    ("tsmc", 10), ("taiwan semiconductor", 10), ("kioxia", 10),
+    ("samsung foundry", 10), ("samsung electronics", 10),
+    ("globalfoundries", 10), ("intel foundry", 10),
+    ("sk hynix", 10), ("micron technology", 10),
+    ("foxconn", 10), ("hon hai", 10), ("flextronics", 10), ("jabil", 10),
+    ("flash venture", 10), ("applied materials", 9), ("lam research", 9),
+    ("kla corporation", 9), ("tokyo electron", 9), ("asml", 9),
+    # Sole/single source (very specific)
+    ("sole source", 9), ("single source", 9),
+    ("sole supplier", 9), ("single supplier", 9),
+    ("no substitute", 8), ("no alternative", 8),
+    # JV / manufacturing
+    ("joint venture", 8), ("nand flash", 8), ("nand memory", 8),
+    ("wafer", 7), ("3d nand", 8), ("flash memory", 7),
+    ("foundry", 7), ("contract manufacturer", 7),
+    # Generic risk language
+    ("limited number of supplier", 7), ("limited alternative", 7),
+    ("qualified supplier", 6), ("approved vendor", 6), ("approved supplier", 6),
+    ("supply disruption", 6), ("supplier concentration", 6),
+    ("purchase from", 5), ("procure", 5), ("rely on", 5), ("dependent on", 5),
     # Materials
-    "rare earth", "indium", "gallium", "germanium",
-    "memory", "hbm", "high bandwidth memory", "cobalt",
-    # Equipment (semiconductor)
-    "lithography", "etch", "deposition", "cvd", "pvd", "cmp",
-    "applied materials", "lam research", "kla corporation",
-    "tokyo electron", "asml",
+    ("rare earth", 8), ("indium", 8), ("gallium", 8), ("germanium", 8),
+    ("hbm", 8), ("high bandwidth memory", 8), ("cobalt", 7),
+    # Equipment
+    ("lithography", 7), ("fabrication", 6),
 ]
 
-_ITEM_1_RE = re.compile(
-    r'item\s+1[^a-z]{0,20}business(.*?)item\s+1a',
-    re.IGNORECASE | re.DOTALL,
-)
 
-
-def _extract_supply_snippets(text: str, max_chars: int = 8000) -> str:
-    """在文本中按关键词定位段落，返回拼接片段（最多 max_chars）。"""
+def _extract_supply_snippets(text: str, max_chars: int = 10000) -> str:
+    """
+    全文关键词搜索，按优先级权重排序后拼接，总长不超 max_chars。
+    不依赖 Item 1A/1B 章节边界——对任何格式的 10-K 都能工作。
+    """
     lower = text.lower()
+    # Collect (weight, position, start, end, snippet)
+    hits: list[tuple[int, int, str]] = []
     seen_ranges: list[tuple[int, int]] = []
-    snippets: list[str] = []
 
-    for kw in _SUPPLY_KEYWORDS:
+    for kw, weight in _SUPPLY_KEYWORDS:
         idx = 0
         while True:
             pos = lower.find(kw, idx)
             if pos == -1:
                 break
-            start = max(0, pos - 400)
-            end   = min(len(text), pos + 600)
-            overlap = any(s <= pos <= e for s, e in seen_ranges)
-            if not overlap:
+            start = max(0, pos - 300)
+            end   = min(len(text), pos + 700)
+            # Skip if this position was already covered
+            if not any(s <= pos <= e for s, e in seen_ranges):
                 seen_ranges.append((start, end))
-                snippets.append(text[start:end])
+                hits.append((weight, pos, text[start:end]))
             idx = pos + 1
 
-    if not snippets:
+    if not hits:
         return ""
-    combined = " ... ".join(snippets)
+
+    # Sort by weight desc, then position asc (named companies first, then by doc order)
+    hits.sort(key=lambda h: (-h[0], h[1]))
+
+    combined = " ... ".join(snip for _, _, snip in hits)
     return combined[:max_chars]
+
+
+_PROSE_START_RE = re.compile(
+    r'(?:part\s+i\b|table\s+of\s+contents|forward.looking\s+statement)',
+    re.IGNORECASE,
+)
 
 
 def _fetch_risk_factors(doc_url: str) -> str:
     """
-    下载 10-K HTML，从 Item 1 (Business) + Item 1A (Risk Factors) 提取供应链段落。
-    策略：两个区段分别用关键词定位，拼接后给 LLM。
+    下载 10-K HTML，全文关键词搜索提取供应链段落。
+    跳过 XBRL 内联元数据前缀（现代 SEC 文件首 20-30K 是 XBRL，不是散文）。
+    不依赖 Item 1A 章节边界正则，对任意格式的年报均有效。
     """
     try:
         import html as _html
@@ -242,42 +252,23 @@ def _fetch_risk_factors(doc_url: str) -> str:
         resp.raise_for_status()
         raw = resp.text
 
-        # Strip HTML tags, then decode HTML entities (&#160; → \xa0, &amp; → &, etc.)
+        # Strip HTML tags + decode entities (&#160; etc.)
         plain = _TAG_RE.sub(' ', raw)
         plain = _html.unescape(plain)
         plain = re.sub(r'\s+', ' ', plain)
 
-        # Item 1A: pick longest match (skip TOC entry)
-        item1a = ""
-        for m in _ITEM_1A_RE.finditer(plain):
-            candidate = m.group(1).strip()
-            if len(candidate) > len(item1a):
-                item1a = candidate
+        # Skip XBRL/metadata preamble — find where actual prose begins
+        m = _PROSE_START_RE.search(plain)
+        prose_start = m.start() if m else min(25000, len(plain) // 4)
+        prose = plain[prose_start:]
 
-        # Item 1 (Business): pick longest match
-        item1 = ""
-        for m in _ITEM_1_RE.finditer(plain):
-            candidate = m.group(1).strip()
-            if len(candidate) > len(item1):
-                item1 = candidate
+        snippets = _extract_supply_snippets(prose, max_chars=10000)
+        if snippets:
+            print(f"    [supply_chain] 提取到供应链段落 {len(snippets)} chars (prose_start={prose_start})")
+            return snippets
 
-        # Extract supplier-relevant paragraphs from both sections
-        # item1a gets 2x budget: supply chain risks appear deep into Risk Factors
-        snip1  = _extract_supply_snippets(item1,   max_chars=3000)
-        snip1a = _extract_supply_snippets(item1a,  max_chars=9000)
-
-        combined = ""
-        if snip1:
-            combined += "[Business section]\n" + snip1
-        if snip1a:
-            combined += "\n\n[Risk Factors section]\n" + snip1a
-
-        if combined:
-            print(f"    [supply_chain] 提取到供应链段落 {len(combined)} chars (item1={len(snip1)}, item1a={len(snip1a)})")
-            return combined[:12000]
-
-        # Fallback: first 8000 chars of Item 1A
-        return item1a[:8000] or plain[:8000]
+        # Fallback: first 8000 chars of prose
+        return prose[:8000]
     except Exception as e:
         print(f"    [supply_chain] fetch_risk_factors failed: {e}")
     return ""
@@ -316,7 +307,7 @@ def _extract_suppliers_llm(text: str, company_name: str) -> list[dict]:
         return []
     user_msg = (
         f"Company: {company_name}\n\n"
-        f"Risk Factors excerpt:\n{text[:10000]}\n\n"
+        f"Supply chain excerpts from 10-K:\n{text}\n\n"
         "Return the JSON list of critical supplier dependencies."
     )
     raw = _call_groq(_SYSTEM_SC, user_msg, max_tokens=800)
