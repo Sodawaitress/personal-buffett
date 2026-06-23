@@ -296,11 +296,18 @@
                   renderCnSuppliers(data.a_share_suppliers);
                 }
                 if (rescanBtn) rescanBtn.disabled = false;
+              } else if (data.scan_attempted) {
+                // 扫描完成但确实无结果（非超时）
+                clearInterval(poll); clearInterval(_stepTimer);
+                showState('empty');
+                const desc = document.querySelector('.sc-empty-desc');
+                if (desc) desc.textContent = '扫描完成，未检测到可量化的供应商集中依赖。公司可能无公开年报（私营企业），或供应商信息未在年报中披露。';
+                if (scanBtn) { scanBtn.disabled = false; }
               } else if (tries >= 48) {
                 clearInterval(poll); clearInterval(_stepTimer);
                 showState('empty');
                 const desc = document.querySelector('.sc-empty-desc');
-                if (desc) desc.textContent = '扫描超时。可能是网络延迟或文件格式不支持，请稍后重试。';
+                if (desc) desc.textContent = '扫描超时。可能是网络延迟，请稍后重试。';
                 if (scanBtn) { scanBtn.disabled = false; }
               }
             })

@@ -463,10 +463,14 @@ def register_stock_routes(app):
         stock_row = db.get_stock(ticker) or {}
         market = stock_row.get("market", "us")
         try:
-            from scripts.supply_chain_mapper import get_supply_chain_links, get_supply_chain_tree, is_cache_fresh
-            links = get_supply_chain_links(ticker)
-            tree  = get_supply_chain_tree(ticker)
-            fresh = is_cache_fresh(ticker)
+            from scripts.supply_chain_mapper import (
+                get_supply_chain_links, get_supply_chain_tree,
+                is_cache_fresh, was_scan_attempted,
+            )
+            links           = get_supply_chain_links(ticker)
+            tree            = get_supply_chain_tree(ticker)
+            fresh           = is_cache_fresh(ticker)
+            scan_attempted  = was_scan_attempted(ticker)
         except Exception as e:
             return jsonify({'error': str(e), 'links': [], 'tree': {}, 'fresh': False})
 
@@ -481,4 +485,5 @@ def register_stock_routes(app):
         return jsonify({
             'links': links, 'tree': tree, 'fresh': fresh, 'count': len(links),
             'a_share_suppliers': a_share_suppliers,
+            'scan_attempted': scan_attempted,
         })

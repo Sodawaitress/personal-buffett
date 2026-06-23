@@ -478,6 +478,17 @@ _SCHEMA_SQL = """
         CREATE INDEX IF NOT EXISTS idx_supply_chain_links_code
             ON supply_chain_links(downstream_code, chokepoint_score DESC);
 
+        -- 供应链扫描日志：记录每次扫描完成时间和结果数，用于区分"扫描中"和"扫描完无结果"
+        CREATE TABLE IF NOT EXISTS supply_chain_scan_log (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticker       TEXT NOT NULL,
+            scanned_at   TEXT DEFAULT (datetime('now')),
+            result_count INTEGER DEFAULT 0,
+            source       TEXT DEFAULT 'sec_10k',
+            note         TEXT,
+            UNIQUE(ticker)
+        );
+
         -- US-106 跨境供应链三源融合：A股年报客户反查索引
         CREATE TABLE IF NOT EXISTS supply_chain_customer_index (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,

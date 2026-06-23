@@ -351,29 +351,138 @@ def _lookup_ticker(name: str) -> str | None:
     return None
 
 
+# ── 扫描日志（区分"还在跑"和"跑完了但没结果"）─────────────────────────────────
+
+def _log_scan_complete(ticker: str, result_count: int, source: str = "sec_10k", note: str = "") -> None:
+    """记录扫描完成时间，哪怕结果为空。"""
+    from datetime import datetime
+    now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    with get_conn() as c:
+        c.execute(
+            """
+            INSERT INTO supply_chain_scan_log (ticker, scanned_at, result_count, source, note)
+            VALUES (:ticker, :now, :cnt, :src, :note)
+            ON CONFLICT(ticker) DO UPDATE SET
+                scanned_at   = excluded.scanned_at,
+                result_count = excluded.result_count,
+                source       = excluded.source,
+                note         = excluded.note
+            """,
+            {"ticker": ticker, "now": now, "cnt": result_count, "src": source, "note": note},
+        )
+
+
+def was_scan_attempted(ticker: str) -> bool:
+    """返回该 ticker 是否已做过扫描（结果可能为空）。"""
+    ticker = ticker.upper().split(".")[0]
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT id FROM supply_chain_scan_log WHERE ticker = :ticker",
+            {"ticker": ticker},
+        ).fetchone()
+    return row is not None
+
+
+# ── LLM 知识兜底扫描（当无公开年报时） ─────────────────────────────────────────
+
+_SYSTEM_US_LLM = (
+    "You are a supply-chain risk analyst. Based on your training knowledge, "
+    "list the key upstream suppliers of the given company. "
+    "Focus on: sole-source components, specialized materials, critical contract manufacturers. "
+    "Return ONLY valid JSON — a list (max 8 items) with keys: "
+    '"supplier_name" (real company name, not generic), '
+    '"dependency_type" (one of: sole_source, single_source, limited_alternatives, '
+    "qualified_supply_list, concentration_risk, other), "
+    '"chokepoint_score" (0-100: 80+ = very high risk, 50 = unknown), '
+    '"evidence_quote" (≤80 chars — what this supplier provides), '
+    '"is_public_company" (true|false). '
+    "Skip vague entries like 'various suppliers'. "
+    "Return [] if you have no reliable knowledge of this company's supply chain."
+)
+
+
+def _us_llm_fallback_scan(ticker: str, company_name: str, now: str) -> list:
+    """当 SEC EDGAR 无记录时（私营/新上市/海外公司），用 LLM 知识兜底。"""
+    user_msg = (
+        f"Company: {company_name or ticker} (Ticker: {ticker})\n\n"
+        "List the known key upstream suppliers or critical dependencies for this company."
+    )
+    raw = _call_groq(_SYSTEM_US_LLM, user_msg, max_tokens=700)
+    m = re.search(r'\[.*\]', raw or "", re.DOTALL)
+    if not m:
+        return []
+    try:
+        suppliers = json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return []
+
+    _generic = {"unspecified", "unknown", "various suppliers", "contract manufacturers",
+                "third-party suppliers", "multiple suppliers"}
+    links = []
+    for dep in suppliers:
+        name = (dep.get("supplier_name") or "").strip()
+        if not name or name.lower() in _generic or len(name) < 4:
+            continue
+        score = int(dep.get("chokepoint_score") or 50)
+        score = max(0, min(100, score))
+        sup_ticker = None
+        if dep.get("is_public_company"):
+            sup_ticker = _lookup_ticker(name)
+            time.sleep(0.2)
+        links.append({
+            "downstream_code":  ticker,
+            "supplier_name":    name,
+            "supplier_ticker":  sup_ticker,
+            "dependency_type":  dep.get("dependency_type", "other"),
+            "chokepoint_score": score,
+            "evidence_quote":   (dep.get("evidence_quote") or "")[:80],
+            "scanned_at":       now,
+            "source":           "llm_knowledge",
+        })
+    print(f"    [supply_chain] LLM 知识兜底提取 {len(links)} 个供应商")
+    return links
+
+
 # ── 主扫描函数 ────────────────────────────────────────────────────────────────
 
 def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
     """
     全流程：SEC → 10-K → LLM 提取 → 打分 → 写库。
+    无 SEC 记录时（私营/新上市）降级到 LLM 知识兜底。
     返回 {"ok": bool, "links": [...], "error": str|None}
     """
     ticker = ticker.upper().split(".")[0]
     print(f"[supply_chain] 开始扫描 {ticker}")
+    now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 1. CIK
+    # 1. CIK — 私营/非上市公司 EDGAR 找不到，降级到 LLM 知识兜底
     cik = _ticker_to_cik(ticker)
     if not cik:
-        return {"ok": False, "links": [], "error": f"CIK not found for {ticker}"}
+        print(f"    [supply_chain] {ticker} 无 SEC EDGAR 记录，降级到 LLM 知识兜底")
+        links = _us_llm_fallback_scan(ticker, company_name, now)
+        if links:
+            _save_links(ticker, links)
+        _log_scan_complete(ticker, len(links), "llm_knowledge",
+                           note="no SEC EDGAR record")
+        return {"ok": bool(links), "links": links,
+                "error": None if links else "no SEC filing, LLM also returned no data"}
 
     # 2. 10-K URL
     doc_url = _get_latest_10k_url(cik)
     if not doc_url:
-        return {"ok": False, "links": [], "error": "No 10-K filing found"}
+        print(f"    [supply_chain] {ticker} 找到 CIK 但无 10-K 文件，降级 LLM")
+        links = _us_llm_fallback_scan(ticker, company_name, now)
+        if links:
+            _save_links(ticker, links)
+        _log_scan_complete(ticker, len(links), "llm_knowledge",
+                           note="CIK found but no 10-K")
+        return {"ok": bool(links), "links": links,
+                "error": None if links else "No 10-K filing found"}
 
     # 3. Risk Factors text
     rf_text = _fetch_risk_factors(doc_url)
     if not rf_text:
+        _log_scan_complete(ticker, 0, "sec_10k", note="could not extract text")
         return {"ok": False, "links": [], "error": "Could not extract Risk Factors"}
 
     # 4. LLM extraction
@@ -381,7 +490,6 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
     print(f"    [supply_chain] LLM 提取到 {len(suppliers)} 个供应商")
 
     # 5. Score + ticker lookup
-    now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
     links = []
     for dep in suppliers:
         name = dep.get("supplier_name", "").strip()
@@ -411,9 +519,10 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
         }
         links.append(link)
 
-    # 6. Write to DB
+    # 6. Write to DB + log completion
     if links:
         _save_links(ticker, links)
+    _log_scan_complete(ticker, len(links), "sec_10k")
 
     return {"ok": True, "links": links, "error": None}
 
