@@ -262,8 +262,9 @@ def _fetch_risk_factors(doc_url: str) -> str:
                 item1 = candidate
 
         # Extract supplier-relevant paragraphs from both sections
-        snip1  = _extract_supply_snippets(item1,   max_chars=4000)
-        snip1a = _extract_supply_snippets(item1a,  max_chars=4000)
+        # item1a gets 2x budget: supply chain risks appear deep into Risk Factors
+        snip1  = _extract_supply_snippets(item1,   max_chars=3000)
+        snip1a = _extract_supply_snippets(item1a,  max_chars=9000)
 
         combined = ""
         if snip1:
@@ -273,7 +274,7 @@ def _fetch_risk_factors(doc_url: str) -> str:
 
         if combined:
             print(f"    [supply_chain] 提取到供应链段落 {len(combined)} chars (item1={len(snip1)}, item1a={len(snip1a)})")
-            return combined[:8000]
+            return combined[:12000]
 
         # Fallback: first 8000 chars of Item 1A
         return item1a[:8000] or plain[:8000]
@@ -315,7 +316,7 @@ def _extract_suppliers_llm(text: str, company_name: str) -> list[dict]:
         return []
     user_msg = (
         f"Company: {company_name}\n\n"
-        f"Risk Factors excerpt:\n{text[:6000]}\n\n"
+        f"Risk Factors excerpt:\n{text[:10000]}\n\n"
         "Return the JSON list of critical supplier dependencies."
     )
     raw = _call_groq(_SYSTEM_SC, user_msg, max_tokens=800)
