@@ -167,7 +167,7 @@ def _get_latest_10k_url(cik: str) -> str | None:
 # ── Risk Factors 提取 ─────────────────────────────────────────────────────────
 
 _ITEM_1A_RE = re.compile(
-    r'(?:item\s+1a[\.\s]*risk\s+factors)(.*?)(?:item\s+1b|item\s+2)',
+    r'(?:item\s+1a[^a-z]{0,20}risk\s+factors)(.*?)(?:item\s+1b|item\s+2)',
     re.IGNORECASE | re.DOTALL,
 )
 _TAG_RE = re.compile(r'<[^>]+>')
@@ -200,7 +200,7 @@ _SUPPLY_KEYWORDS = [
 ]
 
 _ITEM_1_RE = re.compile(
-    r'item\s+1[\.\s]*business(.*?)item\s+1a',
+    r'item\s+1[^a-z]{0,20}business(.*?)item\s+1a',
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -237,12 +237,14 @@ def _fetch_risk_factors(doc_url: str) -> str:
     策略：两个区段分别用关键词定位，拼接后给 LLM。
     """
     try:
+        import html as _html
         resp = requests.get(doc_url, headers=EDGAR_HEADERS, timeout=30)
         resp.raise_for_status()
         raw = resp.text
 
-        # Strip HTML tags
+        # Strip HTML tags, then decode HTML entities (&#160; → \xa0, &amp; → &, etc.)
         plain = _TAG_RE.sub(' ', raw)
+        plain = _html.unescape(plain)
         plain = re.sub(r'\s+', ' ', plain)
 
         # Item 1A: pick longest match (skip TOC entry)
