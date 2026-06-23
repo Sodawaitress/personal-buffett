@@ -76,6 +76,17 @@
       <div class="sc-cn-desc">来自A股年报客户字段、美国海关记录及财报电话会议的中国供应商</div>
       <div id="sc-cn-list" class="sc-list" style="margin-top:8px"></div>
     </div>
+
+    {# ── 全局供应链共振（仅美股） ── #}
+    <div id="sc-global-wrap" style="display:none;margin-top:32px">
+      <div class="sc-section-head" style="margin-bottom:8px">
+        <span class="fund-section-label" style="font-size:13px">全局供应链共振</span>
+        <span class="sc-cn-badge" style="background:#7c3aed1a;color:#7c3aed;border-color:#c4b5fd">你的持仓</span>
+      </div>
+      <div class="sc-cn-desc">你持有的美股中，出现在多家公司供应链的共同节点——系统性风险预警</div>
+      <div id="sc-global-alerts" style="margin-top:10px"></div>
+      <div id="sc-global-graph" style="width:100%;min-height:300px;margin-top:12px;border-radius:8px;background:#f9fafb;overflow:hidden"></div>
+    </div>
     {% endif %}
 
   </div>{# /.stock-page-body #}
@@ -85,6 +96,9 @@
 
 {% block scripts %}
 {% include 'stock/_stock_scripts.html' %}
+{% if market == "us" %}
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+{% endif %}
 <script>
 (function() {
   const code        = '{{ stock.code }}';
@@ -213,13 +227,19 @@
         : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="{{ t.sc_search_listed_hint }}">{{ t.sc_search_listed }}</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
+    const srcBadge = lnk.source === 'sec_10k'
+      ? `<span class="sc-src-badge sc-src-doc" title="从SEC年报原文提取">年报</span>`
+      : lnk.source === 'llm_knowledge'
+        ? `<span class="sc-src-badge sc-src-ai" title="基于AI训练知识推断，未经文件验证">AI推测</span>`
+        : '';
+
     return `
       <div class="sc-card${isT2?' sc-card-t2':''}${isPrivate?' sc-card-private':''}">
         <div class="sc-card-left" style="background:${isT2 ? 'transparent' : color}"></div>
         <div class="sc-card-body">
           <div class="sc-card-row1">
             <span class="sc-name${isT2?' sc-name-t2':''}">${lnk.supplier_name}</span>
-            ${hopBadge}${tickerChip}${addBtn}
+            ${hopBadge}${srcBadge}${tickerChip}${addBtn}
           </div>
           ${pathBadge}
           <div class="sc-card-row2">
@@ -412,12 +432,115 @@
     wrap.style.display = '';
   }
 
+  // ── 全局共振图 ────────────────────────────────────────────────────────────────
+  const MKT_COLOR = {
+    us:'#2563eb', cn:'#dc2626', jp:'#7c3aed', eu:'#0369a1',
+    tw:'#d97706', kr:'#059669', hk:'#9333ea', private:'#9ca3af', unknown:'#d1d5db'
+  };
+
+  function renderGlobalGraph(globalData) {
+    const wrap = $('sc-global-wrap');
+    if (!wrap) return;
+
+    const { nodes, edges, shared, stock_codes } = globalData;
+    if (!nodes || nodes.length < 2) { wrap.style.display='none'; return; }
+
+    // ── 共享供应商预警卡 ──────────────────────────────────────────────────────
+    const alertEl = $('sc-global-alerts');
+    if (alertEl && shared && shared.length) {
+      alertEl.innerHTML = shared.map(s => {
+        const stk = s.stocks.join(' · ');
+        const sc = s.max_score;
+        const col = sc >= 80 ? '#b91c1c' : sc >= 60 ? '#d97706' : '#1d4ed8';
+        const flag = MKT_FLAG[s.market] || '';
+        return `<div class="sc-global-alert" style="border-left-color:${col}">
+          <span class="sc-global-alert-sup">${flag} ${s.supplier_name}</span>
+          <span class="sc-global-alert-stocks">同时出现在 <strong>${stk}</strong></span>
+          <span class="sc-global-alert-score" style="color:${col}">风险 ${sc}</span>
+        </div>`;
+      }).join('');
+    } else if (alertEl) {
+      alertEl.innerHTML = `<p style="color:#6b7280;font-size:13px;margin:0">你的持仓美股暂无共同供应商节点</p>`;
+    }
+
+    // ── D3 力导向图 ───────────────────────────────────────────────────────────
+    const graphEl = $('sc-global-graph');
+    if (!graphEl || typeof d3 === 'undefined') return;
+
+    const W = graphEl.offsetWidth || 600, H = 340;
+    graphEl.innerHTML = '';
+    const svg = d3.select(graphEl).append('svg')
+      .attr('width', W).attr('height', H)
+      .attr('viewBox', `0 0 ${W} ${H}`);
+
+    // Arrow marker
+    svg.append('defs').append('marker')
+      .attr('id','sc-arrow').attr('viewBox','0 -5 10 10')
+      .attr('refX',18).attr('refY',0)
+      .attr('markerWidth',6).attr('markerHeight',6)
+      .attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#d1d5db');
+
+    const sharedIds = new Set((shared||[]).map(s=>s.supplier_id));
+    const stockSet  = new Set(stock_codes||[]);
+
+    const simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(edges).id(d=>d.id).distance(d => d.score > 70 ? 90 : 120).strength(0.6))
+      .force('charge', d3.forceManyBody().strength(-220))
+      .force('center', d3.forceCenter(W/2, H/2))
+      .force('collision', d3.forceCollide().radius(d => stockSet.has(d.id) ? 28 : 18));
+
+    const link = svg.append('g').selectAll('line').data(edges).join('line')
+      .attr('stroke', d => d.score >= 80 ? '#fca5a5' : d.score >= 60 ? '#fcd34d' : '#d1d5db')
+      .attr('stroke-width', d => Math.max(1, d.score/30))
+      .attr('marker-end','url(#sc-arrow)')
+      .attr('opacity', 0.7);
+
+    const node = svg.append('g').selectAll('g').data(nodes).join('g')
+      .attr('cursor','pointer')
+      .call(d3.drag()
+        .on('start', (e,d) => { if(!e.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+        .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
+        .on('end',   (e,d) => { if(!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }));
+
+    node.append('circle')
+      .attr('r', d => stockSet.has(d.id) ? 22 : sharedIds.has(d.id) ? 16 : 11)
+      .attr('fill', d => stockSet.has(d.id) ? '#1e293b' : (MKT_COLOR[d.market] || '#9ca3af'))
+      .attr('stroke', d => sharedIds.has(d.id) ? '#ef4444' : '#fff')
+      .attr('stroke-width', d => sharedIds.has(d.id) ? 2.5 : 1.5)
+      .attr('opacity', 0.92);
+
+    node.append('text')
+      .attr('text-anchor','middle').attr('dy', d => stockSet.has(d.id) ? '0.35em' : '-1.6em')
+      .attr('font-size', d => stockSet.has(d.id) ? 11 : 10)
+      .attr('font-weight', d => stockSet.has(d.id) ? '700' : '400')
+      .attr('fill', d => stockSet.has(d.id) ? '#fff' : '#374151')
+      .text(d => (d.id || '').slice(0,6));
+
+    simulation.on('tick', () => {
+      link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+          .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+      node.attr('transform',d=>`translate(${Math.max(20,Math.min(W-20,d.x))},${Math.max(20,Math.min(H-20,d.y))})`);
+    });
+
+    wrap.style.display = '';
+  }
+
+  function loadGlobalGraph() {
+    if (market !== 'us') return;
+    fetch('/api/supply-chain/global')
+      .then(r=>r.json())
+      .then(data=>{ if(!data.error) renderGlobalGraph(data); })
+      .catch(()=>{});
+  }
+
   // Auto-load cache on page load
   fetch(`/api/supply-chain/${code}`)
     .then(r => r.json())
     .then(data => {
       if (data.links && data.links.length) {
         renderLinks(data.links, data.links[0]?.scanned_at, data.tree);
+        if (market === 'us') loadGlobalGraph();
       }
       if (data.a_share_suppliers && data.a_share_suppliers.length) {
         renderCnSuppliers(data.a_share_suppliers);

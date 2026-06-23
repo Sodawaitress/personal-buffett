@@ -397,4 +397,15 @@ def run_daily_all():
         market = stock.get("market", "nz")
         job_id = db.create_job(user_id=None, code=code, job_type="daily")
         run_pipeline(job_id, code, market)
+
+        # 差评预警：分析完后逐用户检查连续 D 评级
+        for uid in db.get_users_watching_code(code):
+            try:
+                grades = db.check_poor_rating_streak(code, uid)
+                if grades:
+                    db.create_notification(uid, code, grades)
+                    print(f"  ⚠️ 差评预警 {code} user={uid}：连续{len(grades)}次 {grades[0]}")
+            except Exception as e:
+                print(f"  ⚠️ 差评预警检查失败 {code}/{uid}: {e}")
+
         time.sleep(1)

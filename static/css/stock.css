@@ -1689,6 +1689,7 @@
   cursor: pointer;
   transition: all 0.15s;
 }
+.sc-search-btn { text-decoration: none; }
 .sc-watchlist-btn:hover {
   background: var(--accent, #1a5276);
   color: #fff;
@@ -1862,6 +1863,62 @@
 }
 .sc-card-cn {
   border-left: none;
+}
+
+/* ── 供应商来源徽章 ── */
+.sc-src-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+  letter-spacing: 0.2px;
+}
+.sc-src-doc {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.sc-src-ai {
+  background: #fafaf9;
+  color: #78716c;
+  border: 1px solid #d6d3d1;
+}
+
+/* ── 全局共振图 ── */
+.sc-global-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-left: 4px solid #e5e7eb;
+  background: #fafafa;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.sc-global-alert-sup {
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sc-global-alert-stocks {
+  color: var(--ink-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.sc-global-alert-score {
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-left: auto;
 }
 
 /* 主容器 */

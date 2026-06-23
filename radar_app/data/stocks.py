@@ -80,6 +80,16 @@ def all_watched_codes():
         return [r["stock_code"] for r in c.execute("SELECT DISTINCT stock_code FROM user_watchlist WHERE removed_at IS NULL")]
 
 
+def get_users_watching_code(code: str) -> list[int]:
+    """返回所有 watching/holding 该股票的 user_id 列表（未删除）。"""
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT user_id FROM user_watchlist WHERE stock_code=:code AND removed_at IS NULL",
+            {"code": code},
+        ).fetchall()
+        return [r["user_id"] for r in rows]
+
+
 def get_all_cn_watchlist_stocks():
     """所有用户的A股自选股（含休眠用户）。"""
     with get_conn() as c:

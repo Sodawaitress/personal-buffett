@@ -592,8 +592,18 @@ def run_supply_chain_scan(ticker: str, company_name: str = "") -> dict:
 
 
 def _save_links(downstream_code: str, links: list[dict]) -> None:
-    """DELETE Tier-1 + INSERT — Tier-2 rows are NOT deleted here (handled by _save_multihop)."""
+    """
+    Upsert Tier-1 supply chain links.
+    只在新扫描结果 >= 旧结果条数时才全量替换，防止 LLM 限速导致数据缩水。
+    """
     with get_conn() as c:
+        existing = c.execute(
+            "SELECT COUNT(*) FROM supply_chain_links WHERE downstream_code=:code AND (hop_depth IS NULL OR hop_depth=1)",
+            {"code": downstream_code},
+        ).fetchone()[0]
+        if len(links) < existing:
+            print(f"    [supply_chain] 新结果({len(links)}) < 旧结果({existing})，保留旧数据跳过写入")
+            return
         c.execute(
             "DELETE FROM supply_chain_links WHERE downstream_code=:code AND (hop_depth IS NULL OR hop_depth=1)",
             {"code": downstream_code},

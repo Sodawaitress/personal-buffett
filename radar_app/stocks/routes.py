@@ -489,3 +489,101 @@ def register_stock_routes(app):
             'scan_attempted': scan_attempted,
             'user_region': user_region,
         })
+
+    @app.route('/api/supply-chain/global', methods=['GET'])
+    @login_required
+    def api_supply_chain_global():
+        """返回当前用户所有美股的供应链数据，找出共享供应商节点（跨组合系统性风险）。"""
+        uid = session['user_id']
+        try:
+            from radar_app.data.core import get_conn
+            with get_conn() as c:
+                # 用户所有美股自选股（含持有+观察）
+                stocks = c.execute("""
+                    SELECT uw.stock_code, s.name, uw.status
+                    FROM user_watchlist uw
+                    JOIN stocks s ON s.code = uw.stock_code
+                    WHERE uw.user_id = :uid
+                      AND s.market = 'us'
+                      AND uw.status IN ('holding','watching')
+                      AND uw.removed_at IS NULL
+                """, {"uid": uid}).fetchall()
+
+                if not stocks:
+                    return jsonify({"nodes": [], "edges": [], "shared": []})
+
+                codes = [r["stock_code"] for r in stocks]
+                placeholders = ",".join(f"'{c}'" for c in codes)
+
+                links = c.execute(f"""
+                    SELECT downstream_code, supplier_name, supplier_ticker,
+                           dependency_type, chokepoint_score, supplier_market,
+                           source, hop_depth
+                    FROM supply_chain_links
+                    WHERE downstream_code IN ({placeholders})
+                      AND (hop_depth IS NULL OR hop_depth = 1)
+                    ORDER BY chokepoint_score DESC
+                """).fetchall()
+
+            # Build graph nodes + edges
+            stock_meta = {r["stock_code"]: {"name": r["name"], "status": r["status"]} for r in stocks}
+            nodes = {}
+            edges = []
+
+            # Stock nodes
+            for code in codes:
+                nodes[code] = {
+                    "id": code, "type": "stock",
+                    "name": stock_meta[code]["name"],
+                    "status": stock_meta[code]["status"],
+                    "market": "us",
+                }
+
+            # Supplier nodes + edges
+            supplier_stocks: dict[str, list[str]] = {}  # supplier_id → [stock codes]
+            for lnk in links:
+                sup_id = lnk["supplier_ticker"] or lnk["supplier_name"]
+                if sup_id not in nodes:
+                    nodes[sup_id] = {
+                        "id": sup_id, "type": "supplier",
+                        "name": lnk["supplier_name"],
+                        "market": lnk["supplier_market"] or "unknown",
+                        "max_score": lnk["chokepoint_score"],
+                    }
+                else:
+                    nodes[sup_id]["max_score"] = max(
+                        nodes[sup_id].get("max_score", 0), lnk["chokepoint_score"]
+                    )
+                edges.append({
+                    "from": lnk["downstream_code"],
+                    "to": sup_id,
+                    "dep_type": lnk["dependency_type"],
+                    "score": lnk["chokepoint_score"],
+                    "source": lnk["source"],
+                })
+                supplier_stocks.setdefault(sup_id, [])
+                if lnk["downstream_code"] not in supplier_stocks[sup_id]:
+                    supplier_stocks[sup_id].append(lnk["downstream_code"])
+
+            # Shared suppliers (appear in 2+ stocks)
+            shared = [
+                {
+                    "supplier_id": sid,
+                    "supplier_name": nodes[sid]["name"],
+                    "market": nodes[sid]["market"],
+                    "stocks": slist,
+                    "max_score": nodes[sid].get("max_score", 0),
+                }
+                for sid, slist in supplier_stocks.items()
+                if len(slist) >= 2
+            ]
+            shared.sort(key=lambda x: (-x["max_score"], -len(x["stocks"])))
+
+            return jsonify({
+                "nodes": list(nodes.values()),
+                "edges": edges,
+                "shared": shared,
+                "stock_codes": codes,
+            })
+        except Exception as e:
+            return jsonify({"error": str(e), "nodes": [], "edges": [], "shared": []})
