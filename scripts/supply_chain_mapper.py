@@ -181,6 +181,9 @@ _SUPPLY_KEYWORDS = [
     "tsmc", "taiwan semiconductor", "samsung foundry", "samsung electronics",
     "globalfoundries", "intel foundry", "sk hynix", "micron technology",
     "foxconn", "hon hai", "flextronics", "jabil",
+    # NAND flash / memory specific (SanDisk, Kioxia, etc.)
+    "kioxia", "joint venture", "flash venture", "nand flash", "nand memory",
+    "wafer", "fab ", " fab", "fabrication", "3d nand", "qlc", "tlc",
     # Generic supply chain risk language
     "foundry", "contract manufacturer", "outsource", "third-party manufacturer",
     "limited number of supplier", "limited alternative",
@@ -190,6 +193,10 @@ _SUPPLY_KEYWORDS = [
     # Materials
     "rare earth", "indium", "gallium", "germanium",
     "memory", "hbm", "high bandwidth memory", "cobalt",
+    # Equipment (semiconductor)
+    "lithography", "etch", "deposition", "cvd", "pvd", "cmp",
+    "applied materials", "lam research", "kla corporation",
+    "tokyo electron", "asml",
 ]
 
 _ITEM_1_RE = re.compile(
