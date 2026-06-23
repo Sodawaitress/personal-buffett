@@ -227,8 +227,8 @@
         : `<a class="sc-watchlist-btn sc-search-btn" href="/watchlist?q=${encodeURIComponent(lnk.supplier_name)}" title="{{ t.sc_search_listed_hint }}">{{ t.sc_search_listed }}</a>`;
     const hopBadge = isT2 ? `<span class="sc-hop-badge">Tier-2</span>` : '';
 
-    const srcBadge = lnk.source === 'sec_10k'
-      ? `<span class="sc-src-badge sc-src-doc" title="从SEC年报原文提取">年报</span>`
+    const srcBadge = (lnk.source === 'sec_10k' || lnk.source === 'cninfo_annual')
+      ? `<span class="sc-src-badge sc-src-doc" title="${lnk.source === 'sec_10k' ? '从SEC年报原文提取' : '从A股年报原文提取（东方财富PDF）'}">年报</span>`
       : lnk.source === 'llm_knowledge'
         ? `<span class="sc-src-badge sc-src-ai" title="基于AI训练知识推断，未经文件验证">AI推测</span>`
         : '';

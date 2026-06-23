@@ -896,42 +896,85 @@ def _cn_llm_fallback_scan(code: str, company_name: str, now: str) -> list:
     return links
 
 
+_EM_ANN_URL  = "https://np-anotice-stock.eastmoney.com/api/security/ann"
+_EM_CONT_URL = "https://np-cnotice-stock.eastmoney.com/api/content/ann"
+_EM_HEADERS  = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.eastmoney.com/"}
+
+# 年报正文标题特征：\d{4}年年度报告（全文/正文）结尾，或仅"年度报告"结尾
+_CN_ANNUAL_RE = re.compile(r'\d{4}年年度报告(全文|正文|（草案）)?$')
+# 非年报公告关键词（命中即排除）
+_CN_ANNUAL_EXCLUDE = ("英文", "摘要", "更正", "H股", "港股", "半年度",
+                      "说明会", "业绩会", "征集", "网上", "预约", "提示性公告")
+
+
 def _get_cn_annual_report_pdf_url(code: str) -> str | None:
     """
-    通过 AKShare CNINFO 接口获取最新年报的 PDF 下载 URL。
-    code: 6位A股代码（如 '600519'）
+    通过东方财富公告API获取A股最新年报 PDF 下载 URL。
+    不依赖 www.cninfo.com.cn（Fly.io 上 DNS 不可达）。
+    流程：
+    1. np-anotice-stock.eastmoney.com → 分页查找最新年报 art_code
+    2. np-cnotice-stock.eastmoney.com → 从内容API提取 pdf.dfcfw.com URL
     """
+    code = code.zfill(6)
+    org_pfx = "gssh" if code.startswith(("6", "9")) else "gssz"
+    stock_list = f"{code},{org_pfx}{code}"
+
+    art_code: str | None = None
     try:
-        import akshare as ak
-        from datetime import datetime, timedelta
-        end = datetime.now().strftime("%Y%m%d")
-        start = (datetime.now() - timedelta(days=400)).strftime("%Y%m%d")
-        df = ak.stock_zh_a_disclosure_report_cninfo(
-            symbol=code,
-            market="沪深京",
-            category="年报",
-            start_date=start,
-            end_date=end,
-        )
-        if df.empty:
-            return None
-        # 取最新一条正文年报（排除英文版/摘要/港股格式/更正）
-        for _, row in df.iterrows():
-            title = row.get("公告标题", "")
-            if any(k in title for k in ("英文", "摘要", "更正", "港股公告", "H股")):
-                continue
-            link = row.get("公告链接", "")
-            # Extract announcementId from the link
-            m = re.search(r'announcementId=(\d+)', link)
-            ann_date_m = re.search(r'announcementTime=([0-9-]+)', link)
-            if m and ann_date_m:
-                ann_id = m.group(1)
-                ann_date = ann_date_m.group(1)
-                pdf_url = f"https://static.cninfo.com.cn/finalpage/{ann_date}/{ann_id}.PDF"
-                return pdf_url
+        for page in range(1, 6):          # 最多翻5页，每页50条
+            r = requests.get(
+                _EM_ANN_URL,
+                params={"sr": -1, "page_size": 50, "page_index": page,
+                        "ann_type": "A", "client_source": "web",
+                        "stock_list": stock_list, "f_node": 0, "s_node": 0},
+                headers=_EM_HEADERS,
+                timeout=15,
+            )
+            items = r.json().get("data", {}).get("list", [])
+            if not items:
+                break
+            for item in items:
+                title = (item.get("title_ch") or item.get("title") or "")
+                # 去掉公司名前缀（"贵州茅台:2025年年度报告" → "2025年年度报告"）
+                bare = title.split(":")[-1].strip()
+                if any(kw in bare for kw in _CN_ANNUAL_EXCLUDE):
+                    continue
+                if _CN_ANNUAL_RE.search(bare):
+                    art_code = item.get("art_code", "")
+                    print(f"    [supply_chain_cn] 年报: {title[:50]} | {art_code}")
+                    break
+            if art_code:
+                break
+            # 当前页最旧一条超过3年前，不用再翻
+            oldest_year = (items[-1].get("notice_date") or "2000")[:4]
+            if int(oldest_year) < (datetime.now().year - 3):
+                break
     except Exception as e:
-        print(f"    [supply_chain_cn] CNINFO URL lookup failed: {e}")
-    return None
+        print(f"    [supply_chain_cn] Eastmoney ann lookup failed: {e}")
+        return None
+
+    if not art_code:
+        print(f"    [supply_chain_cn] {code} 未找到年报公告")
+        return None
+
+    # Step 2: get PDF URL from content API
+    try:
+        r2 = requests.get(
+            _EM_CONT_URL,
+            params={"art_code": art_code, "client_source": "web", "page_index": 1},
+            headers=_EM_HEADERS,
+            timeout=10,
+        )
+        pdf_urls = re.findall(
+            r"https://pdf\.dfcfw\.com/pdf/[^\s\"'\\]+\.pdf", r2.text, re.I
+        )
+        if pdf_urls:
+            return pdf_urls[0].split("?")[0]   # strip timestamp query param
+        # Fallback: construct from art_code (format: AN{YYYYMMDD}{id})
+        return f"https://pdf.dfcfw.com/pdf/H2_{art_code}_1.pdf"
+    except Exception as e:
+        print(f"    [supply_chain_cn] PDF URL lookup failed: {e}")
+        return None
 
 
 _CN_SUPPLIER_STRONG_KW = [
@@ -951,7 +994,9 @@ def _fetch_cn_supplier_text(pdf_url: str) -> str:
     """
     try:
         import pdfplumber, io
-        resp = requests.get(pdf_url, headers=CNINFO_HEADERS, timeout=40)
+        # Use EM_HEADERS: pdf.dfcfw.com and static.cninfo.com.cn both accept these
+        pdf_headers = {**_EM_HEADERS, "Referer": "https://www.eastmoney.com/"}
+        resp = requests.get(pdf_url, headers=pdf_headers, timeout=40)
         resp.raise_for_status()
 
         pages_text: list[tuple[int, str]] = []  # (page_idx, text)
@@ -1049,23 +1094,24 @@ def _lookup_cn_ticker(name: str) -> str | None:
 
 def run_cn_supply_chain_scan(code: str, company_name: str = "") -> dict:
     """
-    A股供应链扫描：优先 CNINFO 年报 PDF → LLM；CNINFO 不可达时降级为纯 LLM 知识。
+    A股供应链扫描：东方财富年报 PDF（pdf.dfcfw.com）→ pdfplumber → Groq LLM。
+    不再依赖 www.cninfo.com.cn（Fly.io Sydney 上 DNS 不可达）。
     code: 6位A股代码（如 '600519'）
     """
     code = code.zfill(6)
     print(f"[supply_chain_cn] 开始扫描 A股 {code}")
     now = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 1. 获取年报 PDF URL（CNINFO，可能因海外 DNS 不可达而失败）
+    # 1. 获取年报 PDF URL（东方财富公告API，全球可达）
     pdf_url = _get_cn_annual_report_pdf_url(code)
     if not pdf_url:
-        print(f"    [supply_chain_cn] CNINFO 不可达，降级为 LLM 知识扫描")
+        print(f"    [supply_chain_cn] 未找到年报PDF，降级为 LLM 知识扫描")
         links = _cn_llm_fallback_scan(code, company_name, now)
         if links:
             _save_links(code, links)
         return {"ok": bool(links), "links": links, "error": None if links else "LLM 未返回数据"}
 
-    print(f"    [supply_chain_cn] 年报 PDF: {pdf_url}")
+    print(f"    [supply_chain_cn] 东财年报 PDF: {pdf_url}")
 
     # 2. 提取供应商文本
     text = _fetch_cn_supplier_text(pdf_url)
@@ -1107,6 +1153,7 @@ def run_cn_supply_chain_scan(code: str, company_name: str = "") -> dict:
             sup_ticker = _lookup_cn_ticker(name)
             time.sleep(0.2)
 
+        market = _infer_market(name, sup_ticker) if sup_ticker else "cn"
         links.append({
             "downstream_code":  code,
             "supplier_name":    name,
@@ -1116,6 +1163,7 @@ def run_cn_supply_chain_scan(code: str, company_name: str = "") -> dict:
             "evidence_quote":   (s.get("evidence_quote") or "")[:80],
             "scanned_at":       now,
             "source":           "cninfo_annual",
+            "supplier_market":  market,
         })
 
     if links:
@@ -1126,7 +1174,7 @@ def run_cn_supply_chain_scan(code: str, company_name: str = "") -> dict:
 
 def run_supply_chain_scan_auto(code: str, market: str, company_name: str = "") -> dict:
     """
-    自动路由：A股走 CNINFO 年报，美股走 SEC 10-K。
+    自动路由：A股走东方财富年报PDF，美股走 SEC 10-K。
     """
     if market == "cn":
         return run_cn_supply_chain_scan(code, company_name)
