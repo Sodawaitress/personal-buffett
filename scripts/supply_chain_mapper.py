@@ -1005,32 +1005,42 @@ def _fetch_cn_supplier_text(pdf_url: str) -> str:
     """
     try:
         import pdfplumber, io
-        # Use EM_HEADERS: pdf.dfcfw.com and static.cninfo.com.cn both accept these
         pdf_headers = {**_EM_HEADERS, "Referer": "https://www.eastmoney.com/"}
 
-        # Stream download with 8MB cap — 年报 PDF 通常 2-8MB，超大年报跳过
+        # Stream download with 2MB hard cap — supplier section is always in first ~80 pages.
+        # For a 300-page annual report, 2MB covers pages 1-80 which is enough.
         resp = requests.get(pdf_url, headers=pdf_headers, timeout=40, stream=True)
         resp.raise_for_status()
-        MAX_BYTES = 8 * 1024 * 1024  # 8MB
+        MAX_BYTES = 2 * 1024 * 1024  # 2MB
         chunks = []
         total = 0
         for chunk in resp.iter_content(chunk_size=65536):
             total += len(chunk)
-            if total > MAX_BYTES:
-                print(f"    [supply_chain_cn] PDF 超过 8MB，截断下载")
-                break
             chunks.append(chunk)
+            if total >= MAX_BYTES:
+                print(f"    [supply_chain_cn] PDF 已下载 2MB，截断（节省内存）")
+                break
         pdf_bytes = b"".join(chunks)
-        print(f"    [supply_chain_cn] PDF 下载 {len(pdf_bytes)/1024:.0f} KB")
+        print(f"    [supply_chain_cn] PDF 下载 {len(pdf_bytes)//1024} KB")
 
-        # Limit to first 120 pages to avoid OOM on large annual reports
-        MAX_PAGES = 120
+        # Process pages one by one (lazy), stop at page 60.
+        # Supply section in Chinese annual reports is always within first 50 pages.
+        MAX_PAGES = 60
+        all_pages: list[tuple[int, str]] = []
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-            all_pages = [
-                (i, page.extract_text() or "")
-                for i, page in enumerate(pdf.pages)
-                if i < MAX_PAGES
-            ]
+            for i, page in enumerate(pdf.pages):
+                if i >= MAX_PAGES:
+                    break
+                text = page.extract_text() or ""
+                all_pages.append((i, text))
+                # Early-exit: found strong supplier keyword — read one more page then stop
+                if any(kw in text for kw in _CN_SUPPLIER_STRONG_KW) and i > 5:
+                    # read one more page for the supplier name table
+                    if i + 1 < len(pdf.pages):
+                        all_pages.append((i + 1, pdf.pages[i + 1].extract_text() or ""))
+                    print(f"    [supply_chain_cn] 早停：第{i+1}页找到供应商章节")
+                    break
+        del pdf_bytes  # free memory before LLM call
 
         # Priority 1: pages with strong supplier keywords (+ next page)
         strong_idx: set[int] = set()
