@@ -1007,12 +1007,30 @@ def _fetch_cn_supplier_text(pdf_url: str) -> str:
         import pdfplumber, io
         # Use EM_HEADERS: pdf.dfcfw.com and static.cninfo.com.cn both accept these
         pdf_headers = {**_EM_HEADERS, "Referer": "https://www.eastmoney.com/"}
-        resp = requests.get(pdf_url, headers=pdf_headers, timeout=40)
-        resp.raise_for_status()
 
-        pages_text: list[tuple[int, str]] = []  # (page_idx, text)
-        with pdfplumber.open(io.BytesIO(resp.content)) as pdf:
-            all_pages = [(i, page.extract_text() or "") for i, page in enumerate(pdf.pages)]
+        # Stream download with 8MB cap — 年报 PDF 通常 2-8MB，超大年报跳过
+        resp = requests.get(pdf_url, headers=pdf_headers, timeout=40, stream=True)
+        resp.raise_for_status()
+        MAX_BYTES = 8 * 1024 * 1024  # 8MB
+        chunks = []
+        total = 0
+        for chunk in resp.iter_content(chunk_size=65536):
+            total += len(chunk)
+            if total > MAX_BYTES:
+                print(f"    [supply_chain_cn] PDF 超过 8MB，截断下载")
+                break
+            chunks.append(chunk)
+        pdf_bytes = b"".join(chunks)
+        print(f"    [supply_chain_cn] PDF 下载 {len(pdf_bytes)/1024:.0f} KB")
+
+        # Limit to first 120 pages to avoid OOM on large annual reports
+        MAX_PAGES = 120
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            all_pages = [
+                (i, page.extract_text() or "")
+                for i, page in enumerate(pdf.pages)
+                if i < MAX_PAGES
+            ]
 
         # Priority 1: pages with strong supplier keywords (+ next page)
         strong_idx: set[int] = set()
