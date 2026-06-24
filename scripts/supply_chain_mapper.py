@@ -597,10 +597,11 @@ def _save_links(downstream_code: str, links: list[dict]) -> None:
     只在新扫描结果 >= 旧结果条数时才全量替换，防止 LLM 限速导致数据缩水。
     """
     with get_conn() as c:
-        existing = c.execute(
-            "SELECT COUNT(*) FROM supply_chain_links WHERE downstream_code=:code AND (hop_depth IS NULL OR hop_depth=1)",
+        row = c.execute(
+            "SELECT COUNT(*) AS cnt FROM supply_chain_links WHERE downstream_code=:code AND (hop_depth IS NULL OR hop_depth=1)",
             {"code": downstream_code},
-        ).fetchone()[0]
+        ).fetchone()
+        existing = row["cnt"] if row else 0
         if len(links) < existing:
             print(f"    [supply_chain] 新结果({len(links)}) < 旧结果({existing})，保留旧数据跳过写入")
             return
@@ -922,14 +923,24 @@ def _get_cn_annual_report_pdf_url(code: str) -> str | None:
     art_code: str | None = None
     try:
         for page in range(1, 6):          # 最多翻5页，每页50条
-            r = requests.get(
-                _EM_ANN_URL,
-                params={"sr": -1, "page_size": 50, "page_index": page,
-                        "ann_type": "A", "client_source": "web",
-                        "stock_list": stock_list, "f_node": 0, "s_node": 0},
-                headers=_EM_HEADERS,
-                timeout=15,
-            )
+            # Retry once on timeout — Eastmoney can be slow to first byte
+            for attempt in range(2):
+                try:
+                    r = requests.get(
+                        _EM_ANN_URL,
+                        params={"sr": -1, "page_size": 50, "page_index": page,
+                                "ann_type": "A", "client_source": "web",
+                                "stock_list": stock_list, "f_node": 0, "s_node": 0},
+                        headers=_EM_HEADERS,
+                        timeout=20,
+                    )
+                    break
+                except requests.Timeout:
+                    if attempt == 0:
+                        print(f"    [supply_chain_cn] Eastmoney timeout page={page}, retrying…")
+                        time.sleep(3)
+                    else:
+                        raise
             items = r.json().get("data", {}).get("list", [])
             if not items:
                 break
