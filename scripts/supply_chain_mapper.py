@@ -1004,43 +1004,43 @@ def _fetch_cn_supplier_text(pdf_url: str) -> str:
     3. 一般「采购」页（fallback）
     """
     try:
-        import pdfplumber, io
+        import pdfplumber, tempfile, os
         pdf_headers = {**_EM_HEADERS, "Referer": "https://www.eastmoney.com/"}
 
-        # Stream download with 2MB hard cap — supplier section is always in first ~80 pages.
-        # For a 300-page annual report, 2MB covers pages 1-80 which is enough.
-        resp = requests.get(pdf_url, headers=pdf_headers, timeout=40, stream=True)
+        # Stream full PDF to /tmp — pdfplumber reads from disk page-by-page,
+        # avoiding holding both raw bytes and parsed objects in RAM simultaneously.
+        resp = requests.get(pdf_url, headers=pdf_headers, timeout=60, stream=True)
         resp.raise_for_status()
-        MAX_BYTES = 2 * 1024 * 1024  # 2MB
-        chunks = []
-        total = 0
-        for chunk in resp.iter_content(chunk_size=65536):
-            total += len(chunk)
-            chunks.append(chunk)
-            if total >= MAX_BYTES:
-                print(f"    [supply_chain_cn] PDF 已下载 2MB，截断（节省内存）")
-                break
-        pdf_bytes = b"".join(chunks)
-        print(f"    [supply_chain_cn] PDF 下载 {len(pdf_bytes)//1024} KB")
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".pdf", dir="/tmp")
+        try:
+            total = 0
+            with os.fdopen(tmp_fd, "wb") as fout:
+                for chunk in resp.iter_content(chunk_size=65536):
+                    fout.write(chunk)
+                    total += len(chunk)
+            print(f"    [supply_chain_cn] PDF 写入磁盘 {total//1024} KB → {tmp_path}")
 
-        # Process pages one by one (lazy), stop at page 60.
-        # Supply section in Chinese annual reports is always within first 50 pages.
-        MAX_PAGES = 60
-        all_pages: list[tuple[int, str]] = []
-        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-            for i, page in enumerate(pdf.pages):
-                if i >= MAX_PAGES:
-                    break
-                text = page.extract_text() or ""
-                all_pages.append((i, text))
-                # Early-exit: found strong supplier keyword — read one more page then stop
-                if any(kw in text for kw in _CN_SUPPLIER_STRONG_KW) and i > 5:
-                    # read one more page for the supplier name table
-                    if i + 1 < len(pdf.pages):
-                        all_pages.append((i + 1, pdf.pages[i + 1].extract_text() or ""))
-                    print(f"    [supply_chain_cn] 早停：第{i+1}页找到供应商章节")
-                    break
-        del pdf_bytes  # free memory before LLM call
+            # Process pages one by one (lazy from disk), stop at page 60.
+            # Supply section in Chinese annual reports is always within first 50 pages.
+            MAX_PAGES = 60
+            all_pages: list[tuple[int, str]] = []
+            with pdfplumber.open(tmp_path) as pdf:
+                for i, page in enumerate(pdf.pages):
+                    if i >= MAX_PAGES:
+                        break
+                    text = page.extract_text() or ""
+                    all_pages.append((i, text))
+                    # Early-exit: found strong supplier keyword → grab next page then stop
+                    if any(kw in text for kw in _CN_SUPPLIER_STRONG_KW) and i > 5:
+                        if i + 1 < len(pdf.pages):
+                            all_pages.append((i + 1, pdf.pages[i + 1].extract_text() or ""))
+                        print(f"    [supply_chain_cn] 早停：第{i+1}页找到供应商章节")
+                        break
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
         # Priority 1: pages with strong supplier keywords (+ next page)
         strong_idx: set[int] = set()
