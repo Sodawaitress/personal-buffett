@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-06-26",
+    "code": "600660",
+    "name": "福耀玻璃",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "B+级q81/moat 33/35 + 普跌日逆势+5% + ROE满分但precursor缺信号——基本面共识被市场重新发现型上涨",
+    "price_at_prediction": 50.43
+  },
+  {
+    "date": "2026-06-26",
+    "code": "301611",
+    "name": "301611",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "B级q67普通公司 + 唯一调研51天前已失效 + 融券+70.5%（接近极端阈值）+ 今日+11.46%情绪型大涨——容易回调",
+    "price_at_prediction": 167.66
+  }
+]
