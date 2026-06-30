@@ -879,9 +879,11 @@ class QuantitativeRater:
                              ("stability", .15)], "v": "pe_or_price", "min": 2},
         # 未盈利成长：只看增速 + 烧钱效率，无利润是定义不是罪
         "preprofit":  {"q": [("rev_cagr", .55), ("rule40", .45)], "v": "price", "min": 1},
-        # 周期股：估值用 PB 不用 PE（顶部 PE 看着便宜是陷阱）
-        "cyclical":   {"q": [("roe", .25), ("margin", .20), ("stability", .15),
-                             ("rev_cagr", .15), ("piotroski", .25)], "v": "pb", "min": 2},
+        # 周期股：质量=中周期盈利力 + 稳定度 + 能否扛过谷底（survival）；
+        # 不放 piotroski/rev_cagr 这类趋势项——它们会在谷底误杀（而谷底正是该买的时候）。
+        # 周期"时机"由估值轴的周期位置调整处理，与质量分离。
+        "cyclical":   {"q": [("roe_mid", .30), ("margin_mid", .25), ("stability", .20),
+                             ("survival", .25)], "v": "pb", "min": 2},
         # 困境反转：看恢复趋势（利润率/ROE 触底回升没）+ 生存 + PB 便宜不便宜
         "turnaround": {"q": [("recovery", .50), ("survival", .30), ("rev_cagr", .20)],
                        "v": "pb", "min": 1},
@@ -897,9 +899,16 @@ class QuantitativeRater:
         "distressed": ("困境/重整股", "distressed"), "etf": ("基金/ETF", "fund/ETF"),
     }
 
+    _VALUE_TIERS = {"zh": ["便宜", "合理", "偏贵", "贵"],
+                    "en": ["cheap", "fair", "pricey", "expensive"]}
+
     @staticmethod
     def _rz(zh: str, en: str, locale: str = "zh") -> str:
         return en if locale == "en" else zh
+
+    @classmethod
+    def _tier_label(cls, rank: int, locale: str) -> str:
+        return cls._VALUE_TIERS["en" if locale == "en" else "zh"][rank]
 
     @staticmethod
     def _band(value: float, bands: list, default: int) -> int:
@@ -1090,12 +1099,60 @@ class QuantitativeRater:
                            "Recovery: " + ("; ".join(notes) if notes else "unclear"), locale)
 
     @classmethod
+    def _q_roe_mid(cls, annual, signals, locale):
+        """周期股：用中周期（历史均值）ROE，峰值不虚高、谷底不误杀。"""
+        roes = [v for v in cls._series(annual, "roe") if v is not None]
+        if not roes:
+            return cls._q_roe(annual, signals, locale)
+        avg = sum(roes) / len(roes)
+        sc = cls._band(avg, [(25, 100), (20, 90), (15, 78), (10, 60), (5, 40), (0, 20)], 0)
+        return sc, cls._rz(f"中周期 ROE {avg:.1f}%（{len(roes)}年均）",
+                           f"mid-cycle ROE {avg:.1f}% ({len(roes)}y avg)", locale)
+
+    @classmethod
+    def _q_margin_mid(cls, annual, signals, locale):
+        """周期股：用中周期（历史均值）净利率。"""
+        ms = [v for v in cls._series(annual, "net_margin") if v is not None]
+        if not ms:
+            return cls._q_margin(annual, signals, locale)
+        avg = sum(ms) / len(ms)
+        sc = cls._band(avg, [(25, 100), (15, 80), (10, 60), (5, 40), (0, 20)], 0)
+        return sc, cls._rz(f"中周期净利率 {avg:.1f}%（{len(ms)}年均）",
+                           f"mid-cycle margin {avg:.1f}% ({len(ms)}y avg)", locale)
+
+    @classmethod
+    def _cycle_position(cls, annual, locale):
+        """周期位置：当前 margin ÷ 中周期 margin。返回 (人话, ratio, 估值档调整 ±1)。
+        研究锚定（Industrials IB）：谷底通常比中周期低 30-50% → 0.70 / 1.30 阈值。"""
+        ms = [v for v in cls._series(annual, "net_margin") if v is not None]
+        if len(ms) < 3:
+            return None, None, 0
+        mid = sum(ms) / len(ms)
+        cur = ms[0]
+        if mid <= 0 or cur < 0:  # 中周期非正 或 当前亏损 → 无法判断周期位置
+            return None, None, 0
+        ratio = cur / mid
+        n = len(ms)
+        inc = "" if n >= 7 else cls._rz(f"（基于{n}年，周期可能不完整）",
+                                        f" (based on {n}y, cycle may be incomplete)", locale)
+        if ratio > 1.30:
+            return (cls._rz(f"利润率在周期高位（当前是中周期的{ratio*100:.0f}%），PE看着便宜其实贵{inc}",
+                            f"margin near cycle peak ({ratio*100:.0f}% of mid-cycle) — low PE is a trap{inc}",
+                            locale), ratio, +1)
+        if ratio < 0.70:
+            return (cls._rz(f"利润率在周期低谷（当前是中周期的{ratio*100:.0f}%），可能是机会{inc}",
+                            f"margin near cycle trough ({ratio*100:.0f}% of mid-cycle) — possible opportunity{inc}",
+                            locale), ratio, -1)
+        return (cls._rz(f"利润率在周期中段{inc}", f"margin mid-cycle{inc}", locale), ratio, 0)
+
+    @classmethod
     def _compute_quality(cls, profile, annual, signals, locale):
         """按配方算质量分 (0-100)；可算组件不足 → None（触发 NR）。"""
         fns = {"roe": cls._q_roe, "margin": cls._q_margin, "stability": cls._q_stability,
                "rev_cagr": cls._q_rev_cagr, "rule40": cls._q_rule40,
                "piotroski": cls._q_piotroski, "survival": cls._q_survival,
-               "recovery": cls._q_recovery}
+               "recovery": cls._q_recovery,
+               "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid}
         got, reasons = [], []
         for key, w in profile["q"]:
             val, reason = fns[key](annual, signals, locale)
@@ -1167,9 +1224,7 @@ class QuantitativeRater:
         if res is None:
             return None, 1, ""
         rank, reason = res
-        tiers = (["cheap", "fair", "pricey", "expensive"] if locale == "en"
-                 else ["便宜", "合理", "偏贵", "贵"])
-        return tiers[rank], rank, reason
+        return cls._tier_label(rank, locale), rank, reason
 
     # 质量档 × 估值档 → (grade, conclusion, emoji, (一句话_zh, _en))  —— 方案 A 矩阵
     _MATRIX = {
@@ -1254,6 +1309,15 @@ class QuantitativeRater:
         tier, value_rank, v_reason = cls._value_tier(
             profile, pe_percentile, pb_percentile, price_52week_pct, locale)
         has_value = tier is not None
+
+        # 周期股：按周期位置调整估值档（峰值往贵推=PE陷阱预警，谷底往便宜推=机会）
+        cycle_note = ""
+        if profile_key == "cyclical":
+            cycle_note, _ratio, _delta = cls._cycle_position(annual_data, locale)
+            if has_value and _delta:
+                value_rank = max(0, min(3, value_rank + _delta))
+                tier = cls._tier_label(value_rank, locale)
+
         grade, conclusion, emoji, verdict = cls._combine(
             quality, value_rank, has_value, profile, locale)
 
@@ -1265,6 +1329,8 @@ class QuantitativeRater:
             f"As {type_label}: quality {q_int}/100 ({top_q}), "
             f"{('valuation ' + (tier or '')) if has_value else 'valuation data thin'}. {verdict}.",
             locale)
+        if cycle_note:
+            reasoning += "\n🔄 " + cycle_note
         if flags:
             reasoning += "\n⚠ " + flags[0]
 

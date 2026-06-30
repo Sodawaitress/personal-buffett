@@ -83,7 +83,7 @@ def fetch_cn_financials(code: str) -> dict:
     rows = []
     try:
         df = ak.stock_financial_abstract_ths(symbol=pure, indicator='按年度')
-        for _, row in df.tail(6).iloc[::-1].iterrows():  # 最新6年，倒序
+        for _, row in df.tail(10).iloc[::-1].iterrows():  # 最新10年，倒序（US-116 #2：覆盖完整周期算中周期利润率）
             year  = str(row.get("报告期", ""))
             if not year or year in ("False", "nan"):
                 continue
