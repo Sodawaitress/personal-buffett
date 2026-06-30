@@ -404,6 +404,8 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
         price_52week_pct=_signals.get("price_position"),
         news_signals=news_for_rating,
         locale=locale,
+        signals=_signals,
+        company_type=company_type,
     )
     log(f"       量化评级: {quant_result['grade']} {quant_result['score']}/100 · {quant_result['conclusion']}")
 

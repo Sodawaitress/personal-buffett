@@ -152,6 +152,33 @@ def classify_stock(code: str) -> dict:
     except Exception:
         pb_current = None
 
+    # ── 财务签名（US-117：行为优先于行业关键词）──────────────
+    # Lynch 按行为分类：快成长=利润真在增长、困境反转=曾盈利现转亏、周期=随经济起落
+    _roe_hist = [_to_float(y.get("roe")) for y in annual]
+    _roe_hist = [r for r in _roe_hist if r is not None]
+    positive_roe_years = sum(1 for r in _roe_hist if r > 0)
+    profitable_years   = sum(1 for r in _roe_hist if r > 5)
+    never_profitable   = positive_roe_years == 0
+    was_profitable     = positive_roe_years >= 2
+    currently_losing   = latest_roe is not None and latest_roe < 0
+    # 营收近几年复合增速（行为信号：是不是真的在长）
+    rev_cagr_3y = None
+    _revs = []
+    for y in annual:
+        v = y.get("revenue")
+        if v is not None:
+            try:
+                s = str(v).strip()
+                mult = 1e4 if s.endswith("亿") else 1.0
+                _revs.append(float(s.rstrip("亿万")) * mult)
+            except (ValueError, TypeError):
+                _revs.append(None)
+        else:
+            _revs.append(None)
+    _revs = [r for r in _revs if r is not None]
+    if len(_revs) >= 2 and _revs[-1] > 0 and _revs[0] > 0:
+        rev_cagr_3y = ((_revs[0] / _revs[-1]) ** (1 / (len(_revs) - 1)) - 1) * 100
+
     # GEM 市场 + 财务恶化 → speculative（优先于 growth_tech）
     # 判据：GEM 板块 且 以下任一条件成立：
     #   - ROE < 0（当期亏损）
@@ -193,16 +220,25 @@ def classify_stock(code: str) -> dict:
     elif _match_kw(sector, _UTILITY_KW):
         company_type = "utility"
     elif _match_kw(sector, _CYCLICAL_KW):
+        # 周期行业：随经济起落，亏是行业低谷（看周期位置，不是公司出问题）
         company_type = "cyclical"
-    elif market_tier in ("star", "gem") or _match_kw(sector, _GROWTH_KW):
+    elif never_profitable and currently_losing:
+        # 从没真正盈利过 + 当前亏损 → 未盈利初创
+        company_type = "pre_profit"
+    elif was_profitable and currently_losing:
+        # 曾经盈利 + 当前转亏 → 困境反转（看恢复趋势，不是周期）
+        company_type = "turnaround"
+    elif rev_cagr_3y is not None and rev_cagr_3y >= 18 and not currently_losing:
+        # 营收真在高速增长 + 当前盈利 → 真·快成长
         company_type = "growth_tech"
+    elif market_tier in ("star", "gem") or _match_kw(sector, _GROWTH_KW):
+        # 成长板块/行业仅作 fallback 提示：盈利才算成长，亏损不再无脑 growth
+        if currently_losing:
+            company_type = "turnaround" if was_profitable else "pre_profit"
+        else:
+            company_type = "growth_tech"
     elif neg_roe_years >= 2:
-        # 区分「成熟公司暂时亏损」vs「真正的未盈利初创」：
-        # 如果历史上有3年以上盈利记录（ROE > 5%），说明是周期性困境，不是初创
-        profitable_years = sum(
-            1 for y in annual
-            if _to_float(y.get("roe")) is not None and _to_float(y["roe"]) > 5
-        )
+        # 历史有3年以上盈利记录 → 周期性困境（成熟价值），否则未盈利初创
         company_type = "mature_value" if profitable_years >= 3 else "pre_profit"
     else:
         company_type = "mature_value"
