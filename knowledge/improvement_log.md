@@ -1654,3 +1654,74 @@ Claude判断（05-29）：sideways — 公司底好+股价逆势涨，但融券1
 
 ---
 
+## 2026-07-01 · 【重大事故】用户反馈——推送分析基于陈旧数据
+
+**用户反馈原文**：「你给我发的分析都是错的为什么 昨天阳光电源狂跌 我妈追着我」
+
+**事故本质**：今天早些时候写入的"07-01 今日五选"是基于 **06-30 快照数据**，非 07-01 真实市场数据。快照文件 `generated_at` 更新到 2026-07-01T11:16:21Z，但 pipeline 实际没有抓取新的市场数据。
+
+**技术诊断**：对比 07-01 与 06-30 快照发现——
+- 价格字段（price.current + price.change_pct）**120 条完全一致，0 条不同**
+- analysis.date **0 条更新**（没有一只股票被重新分析）
+- 只有 `generated_at` 时间戳和 `precursor.cache_age_hours`（+24h 老化）发生变化
+
+服务器 pipeline 今天只做了"元数据翻新"，没做实质数据抓取。
+
+**Routine 端的漏洞（我犯的错）**：
+CLAUDE_ROUTINE.md 第 84-86 行的新鲜度门控规则第二条明确写着：
+> `generated_at` 与上次 Routine 已处理的快照内容完全相同（byte-identical，数据无新进展）
+
+我在 07-01 Run1 的新鲜度检查中，**只做了文件级 MD5 对比**：
+- 07-01 MD5: `f208135a55a5e43dd77eba24329d1629`
+- 06-30 MD5: `26d18e60042e24469225dc46fcccf671`
+- MD5 不同 → 我判定"snapshot fresh"
+
+但 MD5 差异实际上仅仅是因为 `generated_at` 字段（1 个 timestamp 字符串）和 125 只股票的 `cache_age_hours`（125 个 float）不同——**价格集合完全一致**。真正的"数据无新进展"应该检查**价格字段级 identity**，不是文件级 MD5。
+
+**造成的具体伤害**：
+- 五只股票的分析（002318 / 603019 / 600031 / 603259 / NVDA）全部基于 06-30 的价格
+- 尤其对 600031 三一重工的"妈妈持仓浮亏 16%，不加不割"的判断，是基于 06-30 的 ¥17.28——若 07-01 真实价格已经进一步下跌到 ¥16 甚至跌破止损位 ¥16.5，这个"不加不割"的建议就是错的
+- 300274 阳光电源在 06-30 推送里说"多头接力持续验证"，07-01 又重复了这个判断——若妈妈基于此认为持仓安全并追加仓位，且 07-01 真实市场其实继续下跌，那我们的推送就是给了反向的信心
+- 两条新预言（002318 sideways @¥23.90、603019 sideways @¥107.23）都写入了 predictions_pending.json，但基准价 `price_at_prediction` 是错的，会污染 backfill_returns.py 的训练样本
+
+**用户反馈的核心信号**：「昨天阳光电源狂跌」+「我妈追着我」→ 说明真实市场里 300274 近日出现了明显下跌，但我们的推送让妈妈以为一切安好。这是推送错误里最糟糕的类型：不是"漏掉信号"，是"给了反向信心"。
+
+**立即修复（07-01 事故响应）**：
+1. `output/predictions_pending.json` 清空为 `[]`，撤回今日两条错误预言。
+2. `output/daily_push.txt` 重写为"重要更正 · 请忽略今早推送"，明确告知妈妈今日五选作废，请以券商 APP 实时行情为准。
+3. 事故日志（本条）写入 knowledge/improvement_log.md，永久留存作为教训。
+4. commit + push 到 main，让 GitHub Actions 自动重发更正版推送。
+
+**永久性改进（必须在下一次 Routine 前落地）**：
+
+1. **快照新鲜度门控的价格字段级校验（必须）**：
+   - 不再依赖文件级 MD5
+   - 计算 `price_signature = md5(sorted([(code, price.current, price.change_pct) for stock in stocks]))`
+   - 只对比 `price_signature`，不对比 `generated_at` / `cache_age_hours` 等元数据
+   - 若与上次 Routine 处理的 signature 相同 → 严格执行"跳过 Step 5c + 顶部标注陈旧"
+   - `price_signature` 存到 `knowledge/last_price_signature.txt`，每次 Routine 读取比对
+
+2. **服务器 pipeline 侧的健康检查（推给 Fly.io 侧修复）**：
+   - snapshot generator 应记录"本次刷新中，price.current 字段实际更新了多少条"
+   - 若更新条数 = 0，snapshot 不应该更新 `generated_at`
+   - 或者在 `generated_at` 之外增加 `price_snapshot_at` 字段，专门反映"价格数据最后一次成功刷新的时刻"
+
+3. **推送前的最终 sanity check**：
+   - Routine 写完 daily_push.txt 前，随机抽 3 只股票，用真实市场 API（或 fallback）验证 snapshot 的 price 是否与真实价格差异 <5%
+   - 若差异 >5% 说明 snapshot 陈旧 → 阻塞推送，改发告警
+   - （问题：Routine 环境的 outbound API 大多被 proxy 403 屏蔽——需要设计一个可用的市场数据 fallback 源，或者依赖服务器侧提供 `price_snapshot_at` 字段）
+
+4. **06-30 推送的追溯审查**：
+   - 06-30 快照价格是否也是真实的？还是同样存在滞后？
+   - 若 06-30 也存在类似问题，说明 pipeline 数据陈旧已经持续了不止一天
+   - 需要拉取 06-29 → 06-30 → 07-01 三日快照做逐股对比，看什么时候开始"pipeline 空跑"
+   - 用户反馈"昨天狂跌"若属实，那 06-30 快照就已经错了——服务器 pipeline 至少两天没有真正工作
+
+**对 CLAUDE_ROUTINE.md 的更新建议（下一次 pushes 时同步）**：
+在 Step 2 后半段（新鲜度门控）明确加一条：
+> **重要（07-01 教训）**：MD5 对比不足以判断新鲜度——因为 `generated_at` + `cache_age_hours` 变化会让 MD5 不同但价格数据未变。必须计算 `price_signature`（仅基于 code + price.current + price.change_pct 的哈希）并与上次处理的 signature 对比。
+
+**给妈妈的正式道歉写在 daily_push.txt 里，不在改进日志里重复**——但事实上这次事故本质上是我作为 Routine 端最后一道防线失职，无论服务器侧 pipeline 是否有 bug，我都应该识别出 stale 数据并停止推送。
+
+---
+
