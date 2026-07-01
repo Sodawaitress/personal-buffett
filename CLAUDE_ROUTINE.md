@@ -79,13 +79,39 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 **交易日判断：** 若所有股票 price.change_pct 都为 null，说明今天非交易日，只发简短提示，不做分析。
 
-**快照新鲜度门控（重要）：** 检查快照顶层 `generated_at` 字段，满足以下任一条件即视为陈旧：
-- `generated_at` 与当前时间差距 > 20 小时（扫描周期约 2h + GHA 延迟最多 4h + 安全余量，超过 20h 说明服务器今日未刷新）
-- 或 `generated_at` 与上次 Routine 已处理的快照内容完全相同（byte-identical，数据无新进展）
+**快照新鲜度门控（三重校验，必须全部通过才继续）：**
 
-触发时：在推送顶部加一行 `⚠️ 数据为 {generated_at日期} 快照（服务器今日未刷新）`，正常做三层分析，但 **Step 5c 跳过**，不写入 predictions_pending.json，避免用陈旧价格污染训练样本。在改进日志里也注明"快照未刷新，本次跳过预言写入"。
+**① `generated_at` 时间戳距今 < 20 小时**（服务器扫描 2h + GHA 延迟 4h + 安全余量）。超过 20h 视为服务器未刷新。
 
-两个条件均不满足时：正常执行全部步骤。
+**② 价格签名 (`price_signature`) 与上次 Routine 处理的不同（2026-07-01 事故教训）**
+
+不要用文件 MD5——因为 `generated_at` 和 `precursor.cache_age_hours` 等元数据每次都会变，MD5 一定不同，无法识别"服务器空跑"。
+
+正确做法：
+```python
+import hashlib, json
+sig_input = sorted([
+    (s['code'], (s.get('price') or {}).get('current'), (s.get('price') or {}).get('change_pct'))
+    for s in snapshot['stocks']
+])
+price_signature = hashlib.md5(json.dumps(sig_input).encode()).hexdigest()
+```
+
+与 `knowledge/last_price_signature.txt` 存储的上次签名比对；若相同 → **服务器 pipeline 空跑，snapshot 陈旧**。处理完本次 Routine 后，把新签名写回该文件。
+
+**③ 推送前实价抽检（WebSearch 交叉验证）**
+
+选出五只后、写 daily_push.txt 之前，用 WebSearch 抽 2-3 只查真实收盘价：
+- 查询格式：`"{股票名} {代码} 股价 今日 收盘"` 或英文 ticker
+- 与 snapshot 里的 `price.current` 对比
+- 任意一只偏差 > 3% → 服务器数据已陈旧，中止推送
+
+**三重门控任一失守时**：
+- 顶部标注：`⚠️ 数据陈旧（{触发的检查名}：{证据}）`
+- **五选正文不写、predictions_pending.json 不写、`daily_push.txt` 只写"服务器数据未刷新，今日无分析。请以券商 APP 为准"**
+- 改进日志记录：哪重门控触发、证据、当日跳过原因
+
+**⚠️ 关键原则**：宁可发"今日无分析"让妈妈失望一次，也不要发基于陈旧数据的"有信心的错误分析"，后者会让妈妈追加错误的仓位。2026-07-01 事故的核心教训是：**给了反向的信心比什么都不发更危险**。
 
 ### Step 3：Claude 自主选出今日五只
 

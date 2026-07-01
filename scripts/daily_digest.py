@@ -124,13 +124,21 @@ def _build_snapshot() -> dict:
         try:
             with get_conn() as c:
                 pr = c.execute(
-                    "SELECT price, change_pct FROM stock_prices WHERE code=:code ORDER BY fetched_at DESC LIMIT 1",
+                    "SELECT price, change_pct, fetched_at FROM stock_prices "
+                    "WHERE code=:code AND DATE(fetched_at) >= DATE('now','-1 day') "
+                    "ORDER BY fetched_at DESC LIMIT 1",
                     {"code": code}
                 ).fetchone()
                 if pr:
-                    snap["price"] = {"current": pr["price"], "change_pct": pr["change_pct"]}
+                    snap["price"] = {
+                        "current": pr["price"],
+                        "change_pct": pr["change_pct"],
+                        "fetched_at": str(pr["fetched_at"] or "")[:19],
+                    }
+                else:
+                    snap["price"] = None
         except Exception:
-            pass
+            snap["price"] = None
 
         try:
             with get_conn() as c:
@@ -148,9 +156,21 @@ def _build_snapshot() -> dict:
 
         stocks.append(snap)
 
+    import hashlib
+    fresh_prices = [s for s in stocks if s.get("price") is not None]
+    sig_input = sorted([
+        (s["code"], (s.get("price") or {}).get("current"), (s.get("price") or {}).get("change_pct"))
+        for s in stocks
+    ])
+    price_signature = hashlib.md5(json.dumps(sig_input).encode()).hexdigest()
+
     return {
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "scope": "all_users",
+        "price_snapshot_at": datetime.utcnow().isoformat() + "Z",
+        "stocks_with_fresh_price": len(fresh_prices),
+        "stocks_total": len(stocks),
+        "price_signature": price_signature,
         "stocks": stocks,
     }
 
@@ -167,6 +187,18 @@ def _commit_snapshot_to_github(snapshot: dict):
             "[daily_digest] GITHUB_TOKEN 未配置 — 快照将无法提交到 GitHub，"
             "Claude Routine 会读到陈旧快照。"
             "在 Fly.io 设置: flyctl secrets set GITHUB_TOKEN=<PAT>"
+        )
+        return
+
+    fresh = snapshot.get("stocks_with_fresh_price", 0)
+    total = snapshot.get("stocks_total", 0)
+    if total > 0 and fresh / total < 0.5:
+        logger.error(
+            "[daily_digest] 中止 commit — 只有 %d/%d (%.0f%%) 只股票有当日新价格。"
+            "AKShare 抓价可能挂了，不覆盖 GitHub 上的旧快照。"
+            "2026-07-01 事故教训：宁可让 Routine 读到昨天的 snapshot 并识别为陈旧，"
+            "也不要用只翻新元数据的伪 snapshot 骗过 Routine。",
+            fresh, total, (fresh / total * 100)
         )
         return
 

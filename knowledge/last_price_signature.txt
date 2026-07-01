@@ -1,0 +1,3 @@
+5981ef04e777f96dd8836ca5deed3644
+# generated_at (snapshot): 2026-07-01T11:16:21Z
+# note: this signature is from the STALE 07-01 snapshot; any future snapshot matching this signature = server pipeline空跑
