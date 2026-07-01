@@ -410,6 +410,15 @@ def upsert_fundamentals(code, annual, pe_current=None, pe_percentile_5y=None, pb
         )
 
 
+def update_annual_json(code, annual):
+    """只更新 annual_json，不动 pe/pb/signals（US-116 #3：advanced 补字段后回写）。"""
+    with get_conn() as c:
+        c.execute(
+            "UPDATE stock_fundamentals SET annual_json=:a, updated_at=CURRENT_TIMESTAMP WHERE code=:code",
+            {"a": json.dumps(annual, ensure_ascii=False), "code": code},
+        )
+
+
 def upsert_signals(code, signals: dict):
     with get_conn() as c:
         row = c.execute(

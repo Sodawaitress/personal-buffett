@@ -887,8 +887,8 @@ class QuantitativeRater:
         # 困境反转：看恢复趋势（利润率/ROE 触底回升没）+ 生存 + PB 便宜不便宜
         "turnaround": {"q": [("recovery", .50), ("survival", .30), ("rev_cagr", .20)],
                        "v": "pb", "min": 1},
-        # 困境/重整：生存检查，不做估值打分
-        "distressed": {"q": [("survival", 1.0)], "v": "none", "min": 1},
+        # 困境/重整：真 Altman Z''（字段不全自动回退生存检查），不做估值打分
+        "distressed": {"q": [("altman", 1.0)], "v": "none", "min": 1},
     }
     _TYPE_NAMES = {
         "mature_value": ("成熟价值股", "mature value"), "utility": ("公用事业", "utility"),
@@ -1006,10 +1006,11 @@ class QuantitativeRater:
 
     @classmethod
     def _q_piotroski(cls, annual, signals, locale):
-        """Piotroski-lite：现有字段能算的子集（趋势向好=好）。"""
+        """完整 Piotroski-9（US-116 #3）。字段齐全→真9项；缺字段→用能算的子集（ROA无总资产时用ROE代理）。"""
         if len(annual or []) < 2:
             return None, ""
         cur, prev = annual[0], annual[1]
+        n = cls._num
         tests, passed = 0, 0
 
         def chk(cond):
@@ -1018,30 +1019,44 @@ class QuantitativeRater:
             if cond:
                 passed += 1
 
-        roe_c, roe_p = cls._num(cur.get("roe")), cls._num(prev.get("roe"))
-        m_c, m_p = cls._num(cur.get("net_margin")), cls._num(prev.get("net_margin"))
-        d_c, d_p = cls._num(cur.get("debt_ratio")), cls._num(prev.get("debt_ratio"))
-        rv_c, rv_p = cls._num(cur.get("revenue")), cls._num(prev.get("revenue"))
-        ocf, eps = cls._num(cur.get("ocf_per_share")), cls._num(cur.get("eps"))
-        if roe_c is not None:
-            chk(roe_c > 0)
-        if roe_c is not None and roe_p is not None:
-            chk(roe_c > roe_p)
-        if m_c is not None and m_p is not None:
-            chk(m_c > m_p)
-        if d_c is not None and d_p is not None:
-            chk(d_c < d_p)
-        if rv_c is not None and rv_p is not None:
-            chk(rv_c > rv_p)
-        if ocf is not None:
-            chk(ocf > 0)
-        if ocf is not None and eps is not None and eps > 0:
-            chk(ocf >= eps)
+        def roa(y):
+            ni, ta = n(y.get("net_profit")), n(y.get("total_assets"))
+            if ni is not None and ta and ta > 0:
+                return ni / ta * 100
+            return n(y.get("roe"))  # 代理：无总资产时用 ROE
+
+        def curr_ratio(y):
+            ca, cl = n(y.get("current_assets")), n(y.get("current_liabilities"))
+            return ca / cl if ca is not None and cl and cl > 0 else None
+
+        def asset_turn(y):
+            rev, ta = n(y.get("revenue")), n(y.get("total_assets"))
+            return rev / ta if rev is not None and ta and ta > 0 else None
+
+        ra_c, ra_p = roa(cur), roa(prev)
+        cfo, ni_c = n(cur.get("cfo")), n(cur.get("net_profit"))
+        d_c, d_p = n(cur.get("debt_ratio")), n(prev.get("debt_ratio"))
+        cr_c, cr_p = curr_ratio(cur), curr_ratio(prev)
+        sh_c, sh_p = n(cur.get("shares")), n(prev.get("shares"))
+        gm_c, gm_p = n(cur.get("gross_margin")), n(prev.get("gross_margin"))
+        at_c, at_p = asset_turn(cur), asset_turn(prev)
+
+        if ra_c is not None:                         chk(ra_c > 0)             # 1 ROA>0
+        if cfo is not None:                          chk(cfo > 0)             # 2 CFO>0
+        if ra_c is not None and ra_p is not None:    chk(ra_c > ra_p)         # 3 ΔROA↑
+        if cfo is not None and ni_c is not None:     chk(cfo > ni_c)          # 4 CFO>净利(应计,关键)
+        if d_c is not None and d_p is not None:      chk(d_c < d_p)           # 5 杠杆↓
+        if cr_c is not None and cr_p is not None:    chk(cr_c > cr_p)         # 6 流动比率↑
+        if sh_c is not None and sh_p and sh_p > 0:   chk(sh_c <= sh_p * 1.01) # 7 未增发
+        if gm_c is not None and gm_p is not None:    chk(gm_c > gm_p)         # 8 毛利率↑
+        if at_c is not None and at_p is not None:    chk(at_c > at_p)         # 9 资产周转↑
+
         if tests < 3:
             return None, ""
         sc = round(passed / tests * 100)
-        return sc, cls._rz(f"Piotroski 基本面趋势 {passed}/{tests} 项向好",
-                           f"Piotroski trend {passed}/{tests} improving", locale)
+        tag = "9项" if tests >= 8 else cls._rz(f"{tests}项·数据有限", f"{tests} tests·limited data", locale)
+        return sc, cls._rz(f"Piotroski {passed}/{tests} 项向好（{tag}）",
+                           f"Piotroski {passed}/{tests} improving ({tag})", locale)
 
     @classmethod
     def _q_survival(cls, annual, signals, locale):
@@ -1066,6 +1081,33 @@ class QuantitativeRater:
         sc = max(0, sc)
         return sc, cls._rz("生存检查：" + ("、".join(notes) if notes else "暂稳"),
                            "Survival: " + ("; ".join(notes) if notes else "stable"), locale)
+
+    @classmethod
+    def _q_altman(cls, annual, signals, locale):
+        """真 Altman Z''（新兴市场四变量版，用账面权益）。字段不全 → 回退 _q_survival。
+        Z'' = 3.25 + 6.56·(营运资本/资产) + 3.26·(留存/资产) + 6.72·(EBIT/资产) + 1.05·(权益/总负债)
+        >2.6 安全 / 1.1–2.6 灰区 / <1.1 危险。"""
+        if not annual:
+            return cls._q_survival(annual, signals, locale)
+        y, n = annual[0], cls._num
+        ta = n(y.get("total_assets"))
+        ca, cl = n(y.get("current_assets")), n(y.get("current_liabilities"))
+        re, ebit, eq = n(y.get("retained_earnings")), n(y.get("ebit")), n(y.get("equity"))
+        if not (ta and ta > 0 and ca is not None and cl is not None
+                and re is not None and ebit is not None and eq is not None):
+            return cls._q_survival(annual, signals, locale)  # 数据不全 → 回退
+        tl = ta - eq
+        if tl <= 0:
+            tl = ta * 0.01  # 几乎无负债，防除零
+        z = 3.25 + 6.56 * ((ca - cl) / ta) + 3.26 * (re / ta) + 6.72 * (ebit / ta) + 1.05 * (eq / tl)
+        if z >= 2.6:
+            sc, zone = min(100, 80 + (z - 2.6) * 10), cls._rz("安全区", "safe", locale)
+        elif z >= 1.1:
+            sc, zone = 30 + (z - 1.1) / 1.5 * 40, cls._rz("灰色地带", "grey zone", locale)
+        else:
+            sc, zone = max(0, z / 1.1 * 30), cls._rz("危险区", "distress zone", locale)
+        return round(sc), cls._rz(f"Altman Z''={z:.2f}（{zone}，>2.6安全/<1.1危险）",
+                                  f"Altman Z''={z:.2f} ({zone})", locale)
 
     @classmethod
     def _q_recovery(cls, annual, signals, locale):
@@ -1151,7 +1193,7 @@ class QuantitativeRater:
         fns = {"roe": cls._q_roe, "margin": cls._q_margin, "stability": cls._q_stability,
                "rev_cagr": cls._q_rev_cagr, "rule40": cls._q_rule40,
                "piotroski": cls._q_piotroski, "survival": cls._q_survival,
-               "recovery": cls._q_recovery,
+               "recovery": cls._q_recovery, "altman": cls._q_altman,
                "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid}
         got, reasons = [], []
         for key, w in profile["q"]:
