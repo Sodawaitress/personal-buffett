@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-07-01",
+    "code": "002318",
+    "name": "久立特材",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "30天5次机构调研(4次特定对象)+融券余量+337.3%极端加码=多空对峙，方向未定",
+    "price_at_prediction": 23.9
+  },
+  {
+    "date": "2026-07-01",
+    "code": "603019",
+    "name": "中科曙光",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "涨停+10%但融券同步+67.5%加仓，短线已被pricing in，需回调消化",
+    "price_at_prediction": 107.23
+  }
+]
