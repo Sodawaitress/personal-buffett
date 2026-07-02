@@ -655,6 +655,8 @@ def _migrate():
         # US-105 双城市 FIRE
         ("city_living_data",   "city_category",  "TEXT DEFAULT 'major'"),
         ("city_living_data",   "report_year",    "INTEGER"),
+        # US-116 验证层：分类来源 auto/crowd/manual（配合 manual_override 防覆盖）
+        ("stock_meta",         "type_source",    "TEXT DEFAULT 'auto'"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

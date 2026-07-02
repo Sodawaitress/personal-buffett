@@ -120,6 +120,17 @@ def classify_stock(code: str) -> dict:
     stock        = db.get_stock(code) or {}
     fundamentals = db.get_fundamentals(code) or {}
 
+    # US-116 验证层：crowd/manual 定过的分类，auto 不覆盖（尊重人工/众包采信结果）
+    _existing = db.get_stock_meta(code) or {}
+    if _existing.get("manual_override") or _existing.get("type_source") in ("crowd", "manual"):
+        return {
+            "company_type": _existing.get("company_type"),
+            "market_tier":  _existing.get("market_tier"),
+            "st_status":    _existing.get("st_status"),
+            "industry":     _existing.get("industry"),
+            "_protected":   True,
+        }
+
     name   = stock.get("name", "") or stock.get("name_cn", "")
     market = stock.get("market", "us")
     sector = stock.get("sector", "") or ""
