@@ -1,3 +1,7 @@
-5981ef04e777f96dd8836ca5deed3644
-# generated_at (snapshot): 2026-07-01T11:16:21Z
-# note: this signature is from the STALE 07-01 snapshot; any future snapshot matching this signature = server pipeline空跑
+53ced35fe8f3616f818ab077dfdc4edb
+# generated_at (snapshot): 2026-07-02T10:27:31Z
+# routine action: ABORTED (5-picks push suppressed) — third-gate WebSearch spot-check failed:
+#   - NVDA snap $112.80 vs real ~$197.18 (~75% divergence, structural US stale)
+#   - 300274 snap ¥127.84 vs real ~¥137 (~7% divergence + missed FCC event news)
+# A-share prices refreshed today (signature diff from 07-01), US-side data NOT refreshed.
+# If next run yields identical signature = server still stalled.
