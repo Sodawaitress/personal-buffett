@@ -322,6 +322,14 @@ _SCHEMA_SQL = """
             PRIMARY KEY (industry, metric)
         );
 
+        -- 用户对公司类型的众包判断（US-116 第一页；过验证门再回填分类）
+        CREATE TABLE IF NOT EXISTS stock_type_votes (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            code         TEXT,
+            company_type TEXT,
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
+
         -- 全市场 ticker→东财行业 映射（US-116 v2，无外键，含未跟踪股）
         CREATE TABLE IF NOT EXISTS stock_industry_map (
             code         TEXT PRIMARY KEY,

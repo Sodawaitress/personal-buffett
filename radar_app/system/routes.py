@@ -341,3 +341,50 @@ def register_system_routes(app):
             "cities": cities,
             "report_year": report_year,
         })
+
+    # ── US-116 价值发现·第一页「这是什么生意」（步0 分类，脚手架 + 众包）──
+    @app.route("/api/public/company/<code>")
+    def api_public_company(code):
+        """返回建议类型 + 人话解释 + 可改选候选（无建议时让用户帮判断）。"""
+        from radar_app.data.core import get_conn
+        from radar_app.data.company_types import TYPE_INFO, SELECTABLE_TYPES, type_card
+        with get_conn() as c:
+            row = c.execute(
+                "SELECT s.name, s.market, sm.company_type "
+                "FROM stocks s LEFT JOIN stock_meta sm ON sm.code = s.code "
+                "WHERE s.code = :code", {"code": code}
+            ).fetchone()
+        if not row:
+            return jsonify({"error": "not found"}), 404
+        ctype = row["company_type"]
+        suggested = type_card(ctype) if ctype and ctype in TYPE_INFO else None
+        return jsonify({
+            "code": code,
+            "name": row["name"],
+            "market": row["market"],
+            "suggested_type": ctype,
+            "suggested": suggested,
+            "options": [type_card(k) for k in SELECTABLE_TYPES],
+        })
+
+    @app.route("/api/public/company/<code>/classify", methods=["POST"])
+    def api_public_company_classify(code):
+        """记录用户对公司类型的判断（众包标签；过验证门再回填分类）。"""
+        from radar_app.data.core import get_conn
+        from radar_app.data.company_types import TYPE_INFO
+        data = request.get_json(silent=True) or {}
+        picked = data.get("type")
+        if picked not in TYPE_INFO:
+            return jsonify({"error": "invalid type"}), 400
+        with get_conn() as c:
+            c.execute(
+                "INSERT INTO stock_type_votes (code, company_type, created_at) "
+                "VALUES (:code, :t, datetime('now'))",
+                {"code": code, "t": picked},
+            )
+            rows = c.execute(
+                "SELECT company_type, COUNT(*) n FROM stock_type_votes "
+                "WHERE code = :code GROUP BY company_type ORDER BY n DESC",
+                {"code": code},
+            ).all()
+        return jsonify({"ok": True, "votes": [dict(r) for r in rows]})
