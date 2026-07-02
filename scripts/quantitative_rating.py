@@ -861,6 +861,7 @@ class QuantitativeRater:
         "financial": "financial", "bank": "bank",
         "securities": "securities", "insurance": "insurance",
         "growth_tech": "growth", "supply_chain": "growth", "speculative": "growth",
+        "biotech": "biotech", "property": "property",
         "pre_profit": "preprofit",
         "cyclical": "cyclical",
         "turnaround": "turnaround",
@@ -891,6 +892,14 @@ class QuantitativeRater:
                              ("stability", .15)], "v": "pe_or_price", "min": 2},
         # 未盈利成长：只看增速 + 烧钱效率，无利润是定义不是罪
         "preprofit":  {"q": [("rev_cagr", .55), ("rule40", .45)], "v": "price", "min": 1},
+        # 生物药/创新药（临床期）：现金跑道(能烧几年)为主 + 营收(若已商业化) + 毛利
+        #（管线价值需临床评估=数据缺口；估值需管线DCF，暂用股价位置粗代理）
+        "biotech":    {"q": [("cash_runway", .45), ("rev_cagr", .30), ("margin", .25)],
+                       "v": "price", "min": 1},
+        # 房地产：生存/负债(三道红线) + ROE(行业相对) + 中周期；估值 PB(≈NAV)
+        #（NAV/预售/土储=数据缺口）
+        "property":   {"q": [("survival", .40), ("roe", .30), ("roe_mid", .30)],
+                       "v": "pb", "min": 2},
         # 周期股：质量=中周期盈利力 + 稳定度 + 能否扛过谷底（survival）；
         # 不放 piotroski/rev_cagr 这类趋势项——它们会在谷底误杀（而谷底正是该买的时候）。
         # 周期"时机"由估值轴的周期位置调整处理，与质量分离。
@@ -909,6 +918,7 @@ class QuantitativeRater:
         "growth_tech": ("成长科技股", "growth/tech"),
         "supply_chain": ("供应链卡位股", "supply-chain"), "speculative": ("高风险题材股", "speculative"),
         "pre_profit": ("未盈利成长股", "pre-profit growth"), "cyclical": ("周期股", "cyclical"),
+        "biotech": ("生物药/创新药", "biotech"), "property": ("房地产", "real estate"),
         "turnaround": ("困境反转股", "turnaround"),
         "distressed": ("困境/重整股", "distressed"), "etf": ("基金/ETF", "fund/ETF"),
     }
@@ -1203,6 +1213,24 @@ class QuantitativeRater:
         return sc, cls._rz(f"ROA {roa:.2f}%（银行~1%算好）", f"ROA {roa:.2f}% (bank ~1% is good)", locale)
 
     @classmethod
+    def _q_cash_runway(cls, annual, signals, locale, industry=None):
+        """现金跑道（生物药/临床期核心）：还能烧几年。经营现金流为正=自我造血。"""
+        y = annual[0] if annual else {}
+        cfo = cls._num(y.get("cfo"))
+        ca, cl = cls._num(y.get("current_assets")), cls._num(y.get("current_liabilities"))
+        if cfo is None:
+            return None, ""
+        if cfo >= 0:
+            return 100, cls._rz("经营现金流为正，不烧钱（自我造血）",
+                                "OCF positive — self-funding", locale)
+        liquid = (ca - (cl or 0)) if ca is not None else None
+        if liquid is None or liquid <= 0:
+            return 20, cls._rz("在烧钱，流动性紧张", "burning cash, tight liquidity", locale)
+        runway = liquid / (-cfo)
+        sc = cls._band(runway, [(3, 100), (2, 80), (1, 50), (0.5, 30)], 15)
+        return sc, cls._rz(f"现金跑道约 {runway:.1f} 年", f"cash runway ~{runway:.1f}y", locale)
+
+    @classmethod
     def _q_book_growth(cls, annual, signals, locale, industry=None):
         """账面价值增速（资本积累）——银行/保险的 Capital 维近似。优先 equity。"""
         for field in ("equity", "retained_earnings", "bvps"):
@@ -1246,7 +1274,8 @@ class QuantitativeRater:
                "piotroski": cls._q_piotroski, "survival": cls._q_survival,
                "recovery": cls._q_recovery, "altman": cls._q_altman,
                "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid,
-               "roa": cls._q_roa, "book_growth": cls._q_book_growth}
+               "roa": cls._q_roa, "book_growth": cls._q_book_growth,
+               "cash_runway": cls._q_cash_runway}
         got, reasons = [], []
         for key, w in profile["q"]:
             val, reason = fns[key](annual, signals, locale, industry)

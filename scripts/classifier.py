@@ -85,6 +85,9 @@ _FINANCIAL_KW  = {"银行", "保险", "券商", "信托", "金融", "证券", "�
 _BANK_KW       = {"银行", "bank"}
 _SECURITIES_KW = {"券商", "证券", "投行", "securities", "broker"}
 _INSURANCE_KW  = {"保险", "险", "insurance"}
+# 结构不同的类型（US-116）：生物药看现金跑道/管线，房地产看NAV/负债三道红线
+_BIOTECH_KW    = {"生物", "创新药", "生物医药", "biotech", "生物制品", "基因"}
+_PROPERTY_KW   = {"房地产", "地产", "置业", "real estate", "property"}
 _CYCLICAL_KW   = {"钢铁", "煤炭", "化工", "地产", "建材", "有色", "铝", "铜",
                    "矿", "石油", "能源", "steel", "coal", "chemical", "property"}
 _UTILITY_KW    = {"电力", "水务", "燃气", "热力", "公用", "供电", "自来水",
@@ -232,9 +235,15 @@ def classify_stock(code: str) -> dict:
             company_type = "financial"
     elif _match_kw(sector, _UTILITY_KW):
         company_type = "utility"
+    elif _match_kw(sector, _PROPERTY_KW) or _match_kw(name, _PROPERTY_KW):
+        # 房地产：看 NAV/预售/负债(三道红线)，不是通用周期（先于 cyclical，因"地产"也在周期词里）
+        company_type = "property"
     elif _match_kw(sector, _CYCLICAL_KW):
         # 周期行业：随经济起落，亏是行业低谷（看周期位置，不是公司出问题）
         company_type = "cyclical"
+    elif (_match_kw(sector, _BIOTECH_KW) or _match_kw(name, _BIOTECH_KW)) and (never_profitable or currently_losing):
+        # 临床期生物药：看现金跑道/管线，Rule of 40 不适用（盈利的成熟药企不走这，落成长/价值）
+        company_type = "biotech"
     elif never_profitable and currently_losing:
         # 从没真正盈利过 + 当前亏损 → 未盈利初创
         company_type = "pre_profit"
