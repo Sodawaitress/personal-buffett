@@ -24,6 +24,11 @@ def get_engine():
         kw = {}
         if DATABASE_URL.startswith("sqlite"):
             kw["connect_args"] = {"check_same_thread": False}
+        else:
+            # Neon(serverless PG）：scale-to-zero 会断闲置连接，复用死连接→SSL SYSCALL 500。
+            # pre_ping 用前探活 + recycle 定期回收，避免间歇性报错。
+            kw["pool_pre_ping"] = True
+            kw["pool_recycle"] = 300
         _engine = create_engine(DATABASE_URL, **kw)
         if DATABASE_URL.startswith("sqlite"):
             @event.listens_for(_engine, "connect")
