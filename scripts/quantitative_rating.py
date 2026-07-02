@@ -945,17 +945,25 @@ class QuantitativeRater:
 
     # ── 质量组件，各返回 (0-100 或 None, 人话理由) ──────────────
     @classmethod
-    def _q_roe(cls, annual, signals, locale):
+    def _q_roe(cls, annual, signals, locale, industry=None):
         roe = cls._num((annual[0] if annual else {}).get("roe"))
         if roe is None and signals and signals.get("roe") is not None:
             roe = signals["roe"] * 100
         if roe is None:
             return None, ""
+        # ② 行业中性化：有行业 ROE 基准就跟同行比（z-score），否则绝对档（巴菲特线15%）
+        z = cls._industry_z(roe, industry, "roe")
+        if z is not None:
+            sc = cls._band(z, [(1.5, 95), (0.5, 80), (-0.5, 60), (-1.5, 35)], 15)
+            word = cls._rz("同行领先" if z >= 0.5 else ("同行相当" if z >= -0.5 else "低于同行"),
+                           "top vs peers" if z >= 0.5 else ("in line" if z >= -0.5 else "below peers"), locale)
+            return sc, cls._rz(f"ROE {roe:.1f}%，{word}（{z:+.1f}个标准差）",
+                               f"ROE {roe:.1f}%, {word} ({z:+.1f}σ)", locale)
         sc = cls._band(roe, [(25, 100), (20, 90), (15, 78), (10, 60), (5, 40), (0, 20)], 0)
         return sc, cls._rz(f"ROE {roe:.1f}%（巴菲特线 15%）", f"ROE {roe:.1f}% (Buffett bar 15%)", locale)
 
     @classmethod
-    def _q_margin(cls, annual, signals, locale):
+    def _q_margin(cls, annual, signals, locale, industry=None):
         m = cls._num((annual[0] if annual else {}).get("net_margin"))
         if m is None and signals and signals.get("profit_margin") is not None:
             m = signals["profit_margin"] * 100
@@ -965,7 +973,7 @@ class QuantitativeRater:
         return sc, cls._rz(f"净利率 {m:.1f}%", f"net margin {m:.1f}%", locale)
 
     @classmethod
-    def _q_stability(cls, annual, signals, locale):
+    def _q_stability(cls, annual, signals, locale, industry=None):
         roes = [v for v in cls._series(annual, "roe") if v is not None][:5]
         if len(roes) < 2:
             return None, ""
@@ -982,7 +990,7 @@ class QuantitativeRater:
         return sc, cls._rz(f"{len(roes)}年 ROE 稳定度", f"{len(roes)}-yr ROE stability", locale)
 
     @classmethod
-    def _q_rev_cagr(cls, annual, signals, locale):
+    def _q_rev_cagr(cls, annual, signals, locale, industry=None):
         revs = [v for v in cls._series(annual, "revenue") if v is not None]
         if len(revs) < 2 or revs[-1] <= 0 or revs[0] <= 0:
             return None, ""
@@ -992,7 +1000,7 @@ class QuantitativeRater:
                            f"revenue {len(revs)}-yr CAGR {cagr:.0f}%", locale)
 
     @classmethod
-    def _q_rule40(cls, annual, signals, locale):
+    def _q_rule40(cls, annual, signals, locale, industry=None):
         """Rule of 40：最近一年营收增速% + 净利率% ≥ 40。"""
         revs = [v for v in cls._series(annual, "revenue") if v is not None]
         m = cls._num((annual[0] if annual else {}).get("net_margin"))
@@ -1005,7 +1013,7 @@ class QuantitativeRater:
                            f"Rule of 40: growth{yoy:.0f}%+margin{m:.0f}%={score40:.0f}", locale)
 
     @classmethod
-    def _q_piotroski(cls, annual, signals, locale):
+    def _q_piotroski(cls, annual, signals, locale, industry=None):
         """完整 Piotroski-9（US-116 #3）。字段齐全→真9项；缺字段→用能算的子集（ROA无总资产时用ROE代理）。"""
         if len(annual or []) < 2:
             return None, ""
@@ -1059,7 +1067,7 @@ class QuantitativeRater:
                            f"Piotroski {passed}/{tests} improving ({tag})", locale)
 
     @classmethod
-    def _q_survival(cls, annual, signals, locale):
+    def _q_survival(cls, annual, signals, locale, industry=None):
         """困境股生存检查（Altman Z 思路：亏损/负债/营收趋势）。"""
         if not annual:
             return None, ""
@@ -1083,7 +1091,7 @@ class QuantitativeRater:
                            "Survival: " + ("; ".join(notes) if notes else "stable"), locale)
 
     @classmethod
-    def _q_altman(cls, annual, signals, locale):
+    def _q_altman(cls, annual, signals, locale, industry=None):
         """真 Altman Z''（新兴市场四变量版，用账面权益）。字段不全 → 回退 _q_survival。
         Z'' = 3.25 + 6.56·(营运资本/资产) + 3.26·(留存/资产) + 6.72·(EBIT/资产) + 1.05·(权益/总负债)
         >2.6 安全 / 1.1–2.6 灰区 / <1.1 危险。"""
@@ -1110,7 +1118,7 @@ class QuantitativeRater:
                                   f"Altman Z''={z:.2f} ({zone})", locale)
 
     @classmethod
-    def _q_recovery(cls, annual, signals, locale):
+    def _q_recovery(cls, annual, signals, locale, industry=None):
         """困境反转：利润率/ROE 是否触底回升（趋势向上=好，不看当期绝对值）。"""
         roes = [v for v in cls._series(annual, "roe") if v is not None]
         margins = [v for v in cls._series(annual, "net_margin") if v is not None]
@@ -1141,7 +1149,7 @@ class QuantitativeRater:
                            "Recovery: " + ("; ".join(notes) if notes else "unclear"), locale)
 
     @classmethod
-    def _q_roe_mid(cls, annual, signals, locale):
+    def _q_roe_mid(cls, annual, signals, locale, industry=None):
         """周期股：用中周期（历史均值）ROE，峰值不虚高、谷底不误杀。"""
         roes = [v for v in cls._series(annual, "roe") if v is not None]
         if not roes:
@@ -1152,7 +1160,7 @@ class QuantitativeRater:
                            f"mid-cycle ROE {avg:.1f}% ({len(roes)}y avg)", locale)
 
     @classmethod
-    def _q_margin_mid(cls, annual, signals, locale):
+    def _q_margin_mid(cls, annual, signals, locale, industry=None):
         """周期股：用中周期（历史均值）净利率。"""
         ms = [v for v in cls._series(annual, "net_margin") if v is not None]
         if not ms:
@@ -1188,7 +1196,7 @@ class QuantitativeRater:
         return (cls._rz(f"利润率在周期中段{inc}", f"margin mid-cycle{inc}", locale), ratio, 0)
 
     @classmethod
-    def _compute_quality(cls, profile, annual, signals, locale):
+    def _compute_quality(cls, profile, annual, signals, locale, industry=None):
         """按配方算质量分 (0-100)；可算组件不足 → None（触发 NR）。"""
         fns = {"roe": cls._q_roe, "margin": cls._q_margin, "stability": cls._q_stability,
                "rev_cagr": cls._q_rev_cagr, "rule40": cls._q_rule40,
@@ -1197,7 +1205,7 @@ class QuantitativeRater:
                "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid}
         got, reasons = [], []
         for key, w in profile["q"]:
-            val, reason = fns[key](annual, signals, locale)
+            val, reason = fns[key](annual, signals, locale, industry)
             if val is not None:
                 got.append((val, w))
                 reasons.append((w, reason))
@@ -1365,7 +1373,7 @@ class QuantitativeRater:
         type_label = cls._rz(type_zh, type_en, locale)
 
         # 数据门：质量无法计算 → NR「数据不足，暂不评级」，绝不返回 D
-        quality, q_reasons = cls._compute_quality(profile, annual_data, signals, locale)
+        quality, q_reasons = cls._compute_quality(profile, annual_data, signals, locale, industry)
         if quality is None:
             return {
                 "code": code, "name": name, "score": None,

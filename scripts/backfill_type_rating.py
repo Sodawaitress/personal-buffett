@@ -85,6 +85,8 @@ def rerate(grade_filter: str | None, apply: bool):
             pb_percentile=fund.get("pb_percentile_5y"),
             price_52week_pct=(sig or {}).get("price_position"),
             news_signals={}, locale="zh", signals=sig, company_type=ctype,
+            pe_current=fund.get("pe_current"), pb_current=fund.get("pb_current"),
+            industry=db.get_stock_industry(code),
         )
         new_grade = res["grade"]
         qv = f"{res.get('quality_score')}/{res.get('value_tier') or '-'}"

@@ -61,6 +61,7 @@ def build(limit=None):
     print(f"东财行业 {len(industries)} 个，开始拉成分…")
 
     done_bench, done_map = 0, 0
+    code2ind = {}  # ticker→行业，供 ROE 分组
     for i, name in enumerate(industries, 1):
         try:
             cons = _retry(ak.stock_board_industry_cons_em, symbol=name)
@@ -81,13 +82,68 @@ def build(limit=None):
         code_col = "代码" if "代码" in cons.columns else ("股票代码" if "股票代码" in cons.columns else None)
         if code_col:
             for code in cons[code_col].astype(str):
-                db.save_stock_industry(code.zfill(6), name)
+                pure = code.zfill(6)
+                db.save_stock_industry(pure, name)
+                code2ind[pure] = name
                 done_map += 1
 
         if i % 20 == 0:
             print(f"  [{i}/{len(industries)}] …{done_bench} 基准 / {done_map} 映射")
 
-    print(f"完成：{done_bench} 行业指标基准，{done_map} 只股票行业映射。")
+    print(f"PE/PB 完成：{done_bench} 行业指标基准，{done_map} 只股票行业映射。")
+    _build_roe(code2ind)
+
+
+def _build_roe(code2ind, report_date=None):
+    """ROE 行业基准：stock_yjbb_em 一次取全市场 ROE，按行业聚合 mean+std。"""
+    import akshare as ak
+    from collections import defaultdict
+    import datetime as _dt
+
+    # 选最近一个已披露的年报日期（往前找几个年末）
+    dates = [report_date] if report_date else [
+        f"{y}1231" for y in range(_dt.date.today().year - 1, _dt.date.today().year - 4, -1)
+    ]
+    df = None
+    for d in dates:
+        try:
+            df = _retry(ak.stock_yjbb_em, date=d)
+            if df is not None and len(df) > 100:
+                print(f"ROE 用业绩报表 {d}，{len(df)} 条")
+                break
+        except Exception as e:
+            print(f"  yjbb {d} 失败: {repr(e)[:60]}")
+    if df is None or len(df) == 0:
+        print("ROE：拿不到业绩报表，跳过（PE/PB 已够用）")
+        return
+
+    roe_col = next((c for c in df.columns if "净资产收益率" in c or "ROE" in c.upper()), None)
+    code_col = next((c for c in df.columns if "代码" in c), None)
+    if not roe_col or not code_col:
+        print(f"ROE：列名不符（cols={list(df.columns)[:12]}…），跳过")
+        return
+
+    buckets = defaultdict(list)
+    for _, row in df.iterrows():
+        code = str(row[code_col]).zfill(6)
+        ind = code2ind.get(code)
+        if not ind:
+            continue
+        try:
+            v = float(row[roe_col])
+            if v == v and -100 < v < 200:  # 去极端/NaN
+                buckets[ind].append(v)
+        except (ValueError, TypeError):
+            pass
+
+    n_ind = 0
+    for ind, vals in buckets.items():
+        if len(vals) >= 5:
+            mean = statistics.mean(vals)
+            std = statistics.pstdev(vals) if len(vals) > 1 else 0.0
+            db.save_industry_benchmark(ind, "roe", round(mean, 3), round(std, 3), len(vals))
+            n_ind += 1
+    print(f"ROE 完成：{n_ind} 个行业 ROE 基准（列={roe_col}）")
 
 
 if __name__ == "__main__":
