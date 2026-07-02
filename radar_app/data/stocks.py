@@ -410,6 +410,51 @@ def upsert_fundamentals(code, annual, pe_current=None, pe_percentile_5y=None, pb
         )
 
 
+def save_industry_benchmark(industry, metric, mean, std, n):
+    """写入/更新行业基准（US-116 v2 行业中性化）。"""
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO industry_benchmarks(industry, metric, mean, std, n, updated_at)
+               VALUES(:i,:m,:mean,:std,:n,CURRENT_TIMESTAMP)
+               ON CONFLICT(industry, metric) DO UPDATE SET
+                 mean=excluded.mean, std=excluded.std, n=excluded.n, updated_at=excluded.updated_at""",
+            {"i": industry, "m": metric, "mean": mean, "std": std, "n": n},
+        )
+
+
+def get_industry_benchmark(industry, metric):
+    """取某行业某指标的 mean/std/n；无则 None。"""
+    if not industry:
+        return None
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT mean, std, n FROM industry_benchmarks WHERE industry=:i AND metric=:m",
+            {"i": industry, "m": metric},
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def save_stock_industry(code, industry):
+    """写全市场 ticker→东财行业 映射（无外键，含未跟踪股）。"""
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO stock_industry_map(code, industry, updated_at)
+               VALUES(:code,:ind,CURRENT_TIMESTAMP)
+               ON CONFLICT(code) DO UPDATE SET industry=excluded.industry, updated_at=CURRENT_TIMESTAMP""",
+            {"code": code, "ind": industry},
+        )
+
+
+def get_stock_industry(code):
+    """取个股的东财行业（纯数字代码，去掉市场后缀）。"""
+    pure = str(code).split(".")[0].zfill(6)
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT industry FROM stock_industry_map WHERE code=:c", {"c": pure}
+        ).fetchone()
+        return row["industry"] if row else None
+
+
 def update_annual_json(code, annual):
     """只更新 annual_json，不动 pe/pb/signals（US-116 #3：advanced 补字段后回写）。"""
     with get_conn() as c:

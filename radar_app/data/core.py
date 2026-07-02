@@ -311,6 +311,24 @@ _SCHEMA_SQL = """
             updated_at         TEXT DEFAULT (datetime('now'))
         );
 
+        -- 行业基准（US-116 v2：行业中性化 z-score，东财行业 PE/PB mean+std）
+        CREATE TABLE IF NOT EXISTS industry_benchmarks (
+            industry     TEXT,
+            metric       TEXT,
+            mean         REAL,
+            std          REAL,
+            n            INTEGER,
+            updated_at   TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (industry, metric)
+        );
+
+        -- 全市场 ticker→东财行业 映射（US-116 v2，无外键，含未跟踪股）
+        CREATE TABLE IF NOT EXISTS stock_industry_map (
+            code         TEXT PRIMARY KEY,
+            industry     TEXT,
+            updated_at   TEXT DEFAULT (datetime('now'))
+        );
+
         -- 股票事件数据层（US-49）
         CREATE TABLE IF NOT EXISTS stock_events (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -507,6 +525,33 @@ _SCHEMA_SQL = """
         CREATE INDEX IF NOT EXISTS idx_sc_customer_a_share
             ON supply_chain_customer_index(a_share_code);
 
+        -- US-112 未定价信号
+        CREATE TABLE IF NOT EXISTS unpriced_signals (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            stock_code       TEXT NOT NULL,
+            user_id          INTEGER NOT NULL,
+            auto_score       INTEGER DEFAULT 0,
+            trends_json      TEXT,
+            reddit_json      TEXT,
+            news_freq_json   TEXT,
+            user_score       INTEGER DEFAULT 0,
+            discovery_method TEXT,
+            awareness_level  TEXT,
+            physical_signals TEXT,
+            insight_text     TEXT,
+            insight_type     TEXT,
+            insight_adj      INTEGER DEFAULT 0,
+            insight_reason   TEXT,
+            total_score      INTEGER DEFAULT 0,
+            digest_label     TEXT,
+            created_at       TEXT DEFAULT (datetime('now')),
+            updated_at       TEXT DEFAULT (datetime('now')),
+            actual_return_90d REAL,
+            return_checked_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_unpriced_signals_code_user
+            ON unpriced_signals(stock_code, user_id, created_at DESC);
+
         CREATE TABLE IF NOT EXISTS market_polls (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             poll_date  TEXT NOT NULL UNIQUE,
@@ -538,6 +583,25 @@ _SCHEMA_SQL = """
             ON pipeline_jobs(code, started_at DESC);
         CREATE INDEX IF NOT EXISTS idx_watchlist_user_status
             ON user_watchlist(user_id, removed_at, status);
+
+        -- US-114 价值发现工作流
+        CREATE TABLE IF NOT EXISTS value_theses (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id         INTEGER NOT NULL,
+            code            TEXT NOT NULL,
+            earnings_ps     REAL,
+            market_trend    TEXT,
+            market_obs      TEXT,
+            years_choice    INTEGER,
+            pe_low          REAL,
+            pe_high         REAL,
+            fair_value_low  REAL,
+            fair_value_high REAL,
+            price_at_save   REAL,
+            buy_thesis      TEXT,
+            review_date     TEXT,
+            created_at      TEXT DEFAULT (datetime('now'))
+        );
 
         -- 城市生活成本参考（Numbeo, 30天 TTL）
         CREATE TABLE IF NOT EXISTS city_living_data (

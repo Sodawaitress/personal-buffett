@@ -1228,12 +1228,46 @@ class QuantitativeRater:
                                      "Book profit but negative operating cash flow", locale))
         return flags, penalty
 
+    @staticmethod
+    def _industry_z(value, industry, metric):
+        """个股某估值指标 vs 同行业的 z-score（US-116 v2 行业中性化）。无基准→None。"""
+        if value is None or not industry:
+            return None
+        try:
+            import db
+            b = db.get_industry_benchmark(industry, metric)
+        except Exception:
+            return None
+        if not b or not b.get("std") or b["std"] <= 0:
+            return None
+        return (float(value) - b["mean"]) / b["std"]
+
     @classmethod
-    def _value_tier(cls, profile, pe_pct, pb_pct, price_52week_pct, locale):
-        """估值档：返回 (tier_zh, rank0-3, 理由)；无数据 → (None, 1, '')。"""
+    def _value_tier(cls, profile, pe_pct, pb_pct, price_52week_pct, locale,
+                    pe_current=None, pb_current=None, industry=None):
+        """估值档：返回 (tier_zh, rank0-3, 理由)；无数据 → (None, 1, '')。
+        优先级：① 跟同行业比(行业中性化 z) > ② 跟自己历史比(分位) > ③ 股价位置。"""
         metric = profile["v"]
         if metric == "none":
             return None, 1, ""
+
+        # ① 行业中性化 z-score（v2）——A股有行业基准时优先
+        z_metric = "pb" if metric == "pb" else "pe"
+        z_val = pb_current if z_metric == "pb" else pe_current
+        z = cls._industry_z(z_val, industry, z_metric)
+        if z is not None:
+            name = "PB" if z_metric == "pb" else "PE"
+            if z <= -1.0:
+                rank, word = 0, cls._rz("低于同行", "below peers", locale)
+            elif z <= 0.5:
+                rank, word = 1, cls._rz("与同行相当", "in line with peers", locale)
+            elif z <= 1.5:
+                rank, word = 2, cls._rz("高于同行", "above peers", locale)
+            else:
+                rank, word = 3, cls._rz("远高于同行", "well above peers", locale)
+            reason = cls._rz(f"{name} {word}（{z:+.1f}个标准差）",
+                             f"{name} {word} ({z:+.1f}σ vs industry)", locale)
+            return cls._tier_label(rank, locale), rank, reason
 
         def from_pct(p, name):
             if p is None:
@@ -1311,10 +1345,14 @@ class QuantitativeRater:
                    news_signals: Dict,
                    locale: str = "zh",
                    signals: Dict = None,
-                   company_type: Optional[str] = None) -> Dict:
+                   company_type: Optional[str] = None,
+                   pe_current: Optional[float] = None,
+                   pb_current: Optional[float] = None,
+                   industry: Optional[str] = None) -> Dict:
         """
         类型感知评级（US-116）。质量×价格两轴，按 company_type 选尺子。
         无 company_type → 回退旧版通用评级（向后兼容）。
+        pe_current/pb_current/industry：用于 v2 行业中性化估值（有则优先）。
         """
         if not company_type:
             return cls._rate_legacy(code, name, annual_data, pe_percentile,
@@ -1349,7 +1387,8 @@ class QuantitativeRater:
         quality = max(0.0, min(100.0, quality - penalty))
 
         tier, value_rank, v_reason = cls._value_tier(
-            profile, pe_percentile, pb_percentile, price_52week_pct, locale)
+            profile, pe_percentile, pb_percentile, price_52week_pct, locale,
+            pe_current=pe_current, pb_current=pb_current, industry=industry)
         has_value = tier is not None
 
         # 周期股：按周期位置调整估值档（峰值往贵推=PE陷阱预警，谷底往便宜推=机会）
