@@ -318,9 +318,10 @@ def save_precursor_cache(code: str, survey: dict, short_selling: dict,
         try:
             c.execute(
                 """
-                INSERT OR IGNORE INTO precursor_history
+                INSERT INTO precursor_history
                     (code, snapshot_date, survey_json, short_json, participation_json)
                 VALUES (:code, :date, :survey, :short, :partic)
+                ON CONFLICT DO NOTHING
                 """,
                 {
                     "code": code, "date": today,
@@ -330,9 +331,11 @@ def save_precursor_cache(code: str, survey: dict, short_selling: dict,
                 },
             )
             # 清理 90 天以外的旧快照
+            from datetime import datetime as _dt, timedelta as _td
+            _cut90 = (_dt.utcnow() - _td(days=90)).strftime("%Y-%m-%d")
             c.execute(
-                "DELETE FROM precursor_history WHERE code=:code AND snapshot_date < date('now','-90 days')",
-                {"code": code},
+                "DELETE FROM precursor_history WHERE code=:code AND snapshot_date < :cut",
+                {"code": code, "cut": _cut90},
             )
         except Exception:
             pass

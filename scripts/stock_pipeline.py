@@ -112,13 +112,12 @@ def _refresh_user_holdings_layer2(date_str: str):
     """
     from scripts.pipeline import _run_analysis, _run_layer2
 
-    push_users = _db.get_users_with_daily_push()
-    codes_to_refresh = set()
-    for u in push_users:
-        holdings = _db.get_user_holdings(u["id"])
-        watching = _db.get_user_watching(u["id"])
-        codes_to_refresh.update(holdings)
-        codes_to_refresh.update(watching)
+    # US-116：全用户刷新——所有用户的所有非卖出自选股（不再只限开推送的用户）
+    with _db.get_conn() as c:
+        rows = c.execute(
+            "SELECT DISTINCT stock_code FROM user_watchlist WHERE status != 'sold'"
+        ).all()
+    codes_to_refresh = {r["stock_code"] for r in rows if r["stock_code"]}
 
     if not codes_to_refresh:
         return

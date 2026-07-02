@@ -379,7 +379,7 @@ def register_system_routes(app):
         with get_conn() as c:
             c.execute(
                 "INSERT INTO stock_type_votes (code, company_type, created_at) "
-                "VALUES (:code, :t, datetime('now'))",
+                "VALUES (:code, :t, CURRENT_TIMESTAMP)",
                 {"code": code, "t": picked},
             )
             rows = c.execute(

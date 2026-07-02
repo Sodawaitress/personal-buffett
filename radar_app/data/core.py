@@ -91,6 +91,14 @@ class _ConnWrapper:
         return self._c.execute(stmt, list(seq_of_params))
 
 
+def _dialect_sql(sql: str) -> str:
+    """把 SQLite 专用 DDL 转成当前方言可用（PG）。SQLite 保持原样。"""
+    if DATABASE_URL.startswith("sqlite"):
+        return sql
+    # PostgreSQL：INTEGER PRIMARY KEY AUTOINCREMENT → SERIAL PRIMARY KEY
+    return sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+
+
 def init_db():
     if DATABASE_URL.startswith("sqlite"):
         os.makedirs(os.path.dirname(_DEFAULT_SQLITE) or ".", exist_ok=True)
@@ -99,7 +107,7 @@ def init_db():
     stmts = [s.strip() for s in _SCHEMA_SQL.split(";") if s.strip()]
     with get_engine().begin() as conn:
         for stmt in stmts:
-            conn.execute(text(stmt))
+            conn.execute(text(_dialect_sql(stmt)))
 
 
 _SCHEMA_SQL = """
@@ -114,7 +122,7 @@ _SCHEMA_SQL = """
             region          TEXT DEFAULT 'nz',
             role            TEXT DEFAULT 'member',
             onboarding_done INTEGER DEFAULT 0,
-            created_at      TEXT DEFAULT (datetime('now')),
+            created_at      TEXT DEFAULT (CURRENT_TIMESTAMP),
             last_login      TEXT
         );
 
@@ -156,7 +164,7 @@ _SCHEMA_SQL = """
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER REFERENCES users(id) ON DELETE CASCADE,
             stock_code  TEXT REFERENCES stocks(code) ON DELETE CASCADE,
-            added_at    TEXT DEFAULT (datetime('now')),
+            added_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
             notes       TEXT,
             status      TEXT DEFAULT 'watching',
             buy_date    TEXT,
@@ -177,7 +185,7 @@ _SCHEMA_SQL = """
             market_cap  REAL,
             pe_ratio    REAL,
             pb_ratio    REAL,
-            fetched_at  TEXT DEFAULT (datetime('now'))
+            fetched_at  TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         CREATE TABLE IF NOT EXISTS stock_fund_flow (
@@ -235,7 +243,7 @@ _SCHEMA_SQL = """
             period        TEXT DEFAULT 'daily',
             html          TEXT,
             md            TEXT,
-            created_at    TEXT DEFAULT (datetime('now')),
+            created_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
             UNIQUE(analysis_date, period)
         );
 
@@ -244,7 +252,7 @@ _SCHEMA_SQL = """
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             data_type  TEXT,
             payload    TEXT,
-            fetched_at TEXT DEFAULT (datetime('now'))
+            fetched_at TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         CREATE TABLE IF NOT EXISTS market_news (
@@ -267,7 +275,7 @@ _SCHEMA_SQL = """
             pb_current       REAL,
             pb_percentile_5y INTEGER,
             signals_json     TEXT,
-            updated_at       TEXT DEFAULT (datetime('now'))
+            updated_at       TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 组合每日简报（per-user LLM 合成）
@@ -277,7 +285,7 @@ _SCHEMA_SQL = """
             analysis_date   TEXT,
             macro_headline  TEXT,
             buffett_summary TEXT,
-            created_at      TEXT DEFAULT (datetime('now')),
+            created_at      TEXT DEFAULT (CURRENT_TIMESTAMP),
             UNIQUE(user_id, analysis_date)
         );
 
@@ -308,7 +316,7 @@ _SCHEMA_SQL = """
             float_shares       REAL,
             last_classified    TEXT,
             manual_override    INTEGER DEFAULT 0,
-            updated_at         TEXT DEFAULT (datetime('now'))
+            updated_at         TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 行业基准（US-116 v2：行业中性化 z-score，东财行业 PE/PB mean+std）
@@ -318,7 +326,7 @@ _SCHEMA_SQL = """
             mean         REAL,
             std          REAL,
             n            INTEGER,
-            updated_at   TEXT DEFAULT (datetime('now')),
+            updated_at   TEXT DEFAULT (CURRENT_TIMESTAMP),
             PRIMARY KEY (industry, metric)
         );
 
@@ -327,14 +335,14 @@ _SCHEMA_SQL = """
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             code         TEXT,
             company_type TEXT,
-            created_at   TEXT DEFAULT (datetime('now'))
+            created_at   TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 全市场 ticker→东财行业 映射（US-116 v2，无外键，含未跟踪股）
         CREATE TABLE IF NOT EXISTS stock_industry_map (
             code         TEXT PRIMARY KEY,
             industry     TEXT,
-            updated_at   TEXT DEFAULT (datetime('now'))
+            updated_at   TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 股票事件数据层（US-49）
@@ -346,7 +354,7 @@ _SCHEMA_SQL = """
             summary      TEXT,
             detail_json  TEXT,
             source       TEXT DEFAULT 'manual',
-            created_at   TEXT DEFAULT (datetime('now'))
+            created_at   TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
         CREATE INDEX IF NOT EXISTS idx_stock_events_code ON stock_events(code);
 
@@ -354,7 +362,7 @@ _SCHEMA_SQL = """
         CREATE TABLE IF NOT EXISTS northbound_history (
             date       TEXT PRIMARY KEY,
             total_net  REAL,
-            fetched_at TEXT DEFAULT (datetime('now'))
+            fetched_at TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 机构雷达：大宗交易近期记录
@@ -364,7 +372,7 @@ _SCHEMA_SQL = """
             trade_date  TEXT,
             premium_pct REAL,
             amount_mn   REAL,
-            fetched_at  TEXT DEFAULT (datetime('now')),
+            fetched_at  TEXT DEFAULT (CURRENT_TIMESTAMP),
             UNIQUE(code, trade_date, amount_mn)
         );
 
@@ -378,7 +386,7 @@ _SCHEMA_SQL = """
             shares      REAL,
             avg_price   REAL,
             change_date TEXT,
-            fetched_at  TEXT DEFAULT (datetime('now')),
+            fetched_at  TEXT DEFAULT (CURRENT_TIMESTAMP),
             UNIQUE(code, holder_name, change_date, change_type)
         );
 
@@ -388,7 +396,7 @@ _SCHEMA_SQL = """
             quarter         TEXT,
             shareholder_cnt INTEGER,
             sh_pct_change   REAL,
-            updated_at      TEXT DEFAULT (datetime('now')),
+            updated_at      TEXT DEFAULT (CURRENT_TIMESTAMP),
             PRIMARY KEY (code, quarter)
         );
 
@@ -399,7 +407,7 @@ _SCHEMA_SQL = """
             code          TEXT,
             type          TEXT,
             message       TEXT,
-            created_at    TEXT DEFAULT (datetime('now')),
+            created_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
             snoozed_until TEXT,
             dismissed_at  TEXT
         );
@@ -412,7 +420,7 @@ _SCHEMA_SQL = """
             value      TEXT,
             flag       TEXT,
             reason     TEXT,
-            logged_at  TEXT DEFAULT (datetime('now'))
+            logged_at  TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 用户提问箱（US-67）
@@ -421,7 +429,7 @@ _SCHEMA_SQL = """
             user_id    INTEGER,
             question   TEXT,
             answer     TEXT,
-            asked_at   TEXT DEFAULT (datetime('now'))
+            asked_at   TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 机构前兆信号每日缓存（US-69）
@@ -452,7 +460,7 @@ _SCHEMA_SQL = """
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id           INTEGER REFERENCES users(id) ON DELETE CASCADE,
             code              TEXT REFERENCES stocks(code),
-            created_at        TEXT DEFAULT (datetime('now')),
+            created_at        TEXT DEFAULT (CURRENT_TIMESTAMP),
             direction         TEXT NOT NULL,
             note              TEXT,
             signal_snapshot   TEXT,
@@ -479,13 +487,13 @@ _SCHEMA_SQL = """
 
         CREATE TABLE IF NOT EXISTS analyst_consensus (
             code       TEXT PRIMARY KEY,
-            fetched_at TEXT DEFAULT (datetime('now')),
+            fetched_at TEXT DEFAULT (CURRENT_TIMESTAMP),
             data_json  TEXT
         );
 
         CREATE TABLE IF NOT EXISTS industry_signals (
             industry_key TEXT PRIMARY KEY,
-            fetched_at   TEXT DEFAULT (datetime('now')),
+            fetched_at   TEXT DEFAULT (CURRENT_TIMESTAMP),
             signal_json  TEXT
         );
 
@@ -498,7 +506,7 @@ _SCHEMA_SQL = """
             dependency_type  TEXT,
             chokepoint_score INTEGER DEFAULT 0,
             evidence_quote   TEXT,
-            scanned_at       TEXT DEFAULT (datetime('now')),
+            scanned_at       TEXT DEFAULT (CURRENT_TIMESTAMP),
             source           TEXT DEFAULT 'sec_10k'
         );
         CREATE INDEX IF NOT EXISTS idx_supply_chain_links_code
@@ -508,7 +516,7 @@ _SCHEMA_SQL = """
         CREATE TABLE IF NOT EXISTS supply_chain_scan_log (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             ticker       TEXT NOT NULL,
-            scanned_at   TEXT DEFAULT (datetime('now')),
+            scanned_at   TEXT DEFAULT (CURRENT_TIMESTAMP),
             result_count INTEGER DEFAULT 0,
             source       TEXT DEFAULT 'sec_10k',
             note         TEXT,
@@ -525,7 +533,7 @@ _SCHEMA_SQL = """
             revenue_pct   REAL,
             source        TEXT NOT NULL DEFAULT 'cninfo_annual',
             report_year   INTEGER,
-            scanned_at    TEXT DEFAULT (datetime('now')),
+            scanned_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
             UNIQUE(a_share_code, customer_name, source)
         );
         CREATE INDEX IF NOT EXISTS idx_sc_customer_us_ticker
@@ -552,8 +560,8 @@ _SCHEMA_SQL = """
             insight_reason   TEXT,
             total_score      INTEGER DEFAULT 0,
             digest_label     TEXT,
-            created_at       TEXT DEFAULT (datetime('now')),
-            updated_at       TEXT DEFAULT (datetime('now')),
+            created_at       TEXT DEFAULT (CURRENT_TIMESTAMP),
+            updated_at       TEXT DEFAULT (CURRENT_TIMESTAMP),
             actual_return_90d REAL,
             return_checked_at TEXT
         );
@@ -570,7 +578,7 @@ _SCHEMA_SQL = """
             clue_1     TEXT,
             clue_2     TEXT,
             clue_3     TEXT,
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -579,7 +587,7 @@ _SCHEMA_SQL = """
             token      TEXT NOT NULL UNIQUE,
             expires_at TEXT NOT NULL,
             used       INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- Performance indices on high-frequency query columns
@@ -608,7 +616,7 @@ _SCHEMA_SQL = """
             price_at_save   REAL,
             buy_thesis      TEXT,
             review_date     TEXT,
-            created_at      TEXT DEFAULT (datetime('now'))
+            created_at      TEXT DEFAULT (CURRENT_TIMESTAMP)
         );
 
         -- 城市生活成本参考（Numbeo, 30天 TTL）

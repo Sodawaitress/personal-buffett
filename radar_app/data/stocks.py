@@ -307,7 +307,7 @@ def save_analyst_consensus(code, data: dict):
     with get_conn() as c:
         c.execute(
             """INSERT INTO analyst_consensus(code, fetched_at, data_json)
-               VALUES(:code, datetime('now'), :data)
+               VALUES(:code, CURRENT_TIMESTAMP, :data)
                ON CONFLICT(code) DO UPDATE SET fetched_at=excluded.fetched_at, data_json=excluded.data_json""",
             {"code": code, "data": json.dumps(data, ensure_ascii=False)},
         )
@@ -333,7 +333,7 @@ def save_industry_signal(industry_key: str, data: dict):
     with get_conn() as c:
         c.execute(
             """INSERT INTO industry_signals(industry_key, fetched_at, signal_json)
-               VALUES(:k, datetime('now'), :data)
+               VALUES(:k, CURRENT_TIMESTAMP, :data)
                ON CONFLICT(industry_key) DO UPDATE SET fetched_at=excluded.fetched_at, signal_json=excluded.signal_json""",
             {"k": industry_key, "data": json.dumps(data, ensure_ascii=False)},
         )
@@ -628,15 +628,17 @@ def get_news_sentiment_map(codes: list) -> dict:
     """
     if not codes:
         return {}
+    from datetime import datetime, timedelta
     placeholders = ", ".join(f":c{i}" for i in range(len(codes)))
     params = {f"c{i}": c for i, c in enumerate(codes)}
+    params["cutoff"] = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
     with get_conn() as conn:
         rows = conn.execute(
             f"""
             SELECT code, AVG(sentiment) AS avg_s
             FROM stock_news
             WHERE code IN ({placeholders})
-              AND fetched_date >= date('now', '-7 days')
+              AND fetched_date >= :cutoff
               AND sentiment IS NOT NULL
             GROUP BY code
             HAVING COUNT(*) >= 3

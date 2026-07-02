@@ -111,12 +111,19 @@ def _save_customer_rows(rows: list[dict]) -> int:
             try:
                 c.execute(
                     """
-                    INSERT OR REPLACE INTO supply_chain_customer_index
+                    INSERT INTO supply_chain_customer_index
                       (a_share_code, a_share_name, customer_name, us_ticker,
                        revenue_pct, source, report_year, scanned_at, confidence)
                     VALUES
                       (:a_share_code, :a_share_name, :customer_name, :us_ticker,
                        :revenue_pct, :source, :report_year, :scanned_at, :confidence)
+                    ON CONFLICT (a_share_code, customer_name, source) DO UPDATE SET
+                       a_share_name = excluded.a_share_name,
+                       us_ticker    = excluded.us_ticker,
+                       revenue_pct  = excluded.revenue_pct,
+                       report_year  = excluded.report_year,
+                       scanned_at   = excluded.scanned_at,
+                       confidence   = excluded.confidence
                     """,
                     r,
                 )
