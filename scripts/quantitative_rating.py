@@ -858,7 +858,8 @@ class QuantitativeRater:
     # type → 评分配方 key
     _PROFILE_OF = {
         "mature_value": "mature", "utility": "mature", "etf": "mature",
-        "financial": "financial",
+        "financial": "financial", "bank": "bank",
+        "securities": "securities", "insurance": "insurance",
         "growth_tech": "growth", "supply_chain": "growth", "speculative": "growth",
         "pre_profit": "preprofit",
         "cyclical": "cyclical",
@@ -870,10 +871,21 @@ class QuantitativeRater:
         # 成熟价值股：巴菲特质量 + Piotroski 趋势
         "mature":     {"q": [("roe", .30), ("margin", .20), ("stability", .20),
                              ("rev_cagr", .15), ("piotroski", .15)], "v": "pe", "min": 2},
-        # 银行/金融：CAMELS 简化——看 ROE/盈利能力/账面增长，不看负债率（杠杆是业务）
-        # margin 纳入配方，让只有 signals（无年报）的非A股银行也能评级而非 NR
+        # 金融（泛，未细分时的回退）
         "financial":  {"q": [("roe", .40), ("margin", .20), ("stability", .20),
                              ("rev_cagr", .20)], "v": "pb", "min": 2},
+        # 银行：CAMELS-lite 可得部分——ROA(核心)+ROE(行业相对)+账面增长，不罚负债
+        #（不良率/拨备/资本充足=数据缺口，待爬东财银行页）
+        "bank":       {"q": [("roa", .35), ("roe", .35), ("book_growth", .30)],
+                       "v": "pb", "min": 2},
+        # 券商/投行：金融周期股——中周期ROE+稳定度+当期ROE(行业相对)，估值PB
+        #（净资本/收入结构=数据缺口）
+        "securities": {"q": [("roe_mid", .40), ("stability", .30), ("roe", .30)],
+                       "v": "pb", "min": 2},
+        # 保险：ROE(行业相对)+账面增长+稳定度；PB作P/EV粗代理
+        #（内含价值EV/新业务价值/偿付能力=数据缺口）
+        "insurance":  {"q": [("roe", .45), ("book_growth", .35), ("stability", .20)],
+                       "v": "pb", "min": 2},
         # 成长科技：Rule of 40——增速 + 烧钱效率，不罚当期低 ROE
         "growth":     {"q": [("rev_cagr", .35), ("rule40", .30), ("margin", .20),
                              ("stability", .15)], "v": "pe_or_price", "min": 2},
@@ -892,7 +904,9 @@ class QuantitativeRater:
     }
     _TYPE_NAMES = {
         "mature_value": ("成熟价值股", "mature value"), "utility": ("公用事业", "utility"),
-        "financial": ("银行/金融", "bank/financial"), "growth_tech": ("成长科技股", "growth/tech"),
+        "financial": ("金融", "financial"), "bank": ("银行", "bank"),
+        "securities": ("券商/投行", "securities"), "insurance": ("保险", "insurance"),
+        "growth_tech": ("成长科技股", "growth/tech"),
         "supply_chain": ("供应链卡位股", "supply-chain"), "speculative": ("高风险题材股", "speculative"),
         "pre_profit": ("未盈利成长股", "pre-profit growth"), "cyclical": ("周期股", "cyclical"),
         "turnaround": ("困境反转股", "turnaround"),
@@ -1171,6 +1185,35 @@ class QuantitativeRater:
                            f"mid-cycle margin {avg:.1f}% ({len(ms)}y avg)", locale)
 
     @classmethod
+    def _q_roa(cls, annual, signals, locale, industry=None):
+        """ROA = 净利润/总资产（银行核心指标，~1%算好）。需 #3 补的 total_assets。"""
+        y = annual[0] if annual else {}
+        ni, ta = cls._num(y.get("net_profit")), cls._num(y.get("total_assets"))
+        if ni is None or not ta or ta <= 0:
+            return None, ""
+        roa = ni / ta * 100
+        z = cls._industry_z(roa, industry, "roa")
+        if z is not None:
+            sc = cls._band(z, [(1.5, 95), (0.5, 80), (-0.5, 60), (-1.5, 35)], 15)
+            word = cls._rz("同行领先" if z >= 0.5 else ("同行相当" if z >= -0.5 else "落后同行"),
+                           "top" if z >= 0.5 else ("in line" if z >= -0.5 else "below"), locale)
+            return sc, cls._rz(f"ROA {roa:.2f}%，{word}（{z:+.1f}个标准差）",
+                               f"ROA {roa:.2f}%, {word} ({z:+.1f}σ)", locale)
+        sc = cls._band(roa, [(1.5, 100), (1.0, 80), (0.7, 60), (0.4, 40), (0, 20)], 0)
+        return sc, cls._rz(f"ROA {roa:.2f}%（银行~1%算好）", f"ROA {roa:.2f}% (bank ~1% is good)", locale)
+
+    @classmethod
+    def _q_book_growth(cls, annual, signals, locale, industry=None):
+        """账面价值增速（资本积累）——银行/保险的 Capital 维近似。优先 equity。"""
+        for field in ("equity", "retained_earnings", "bvps"):
+            s = [v for v in cls._series(annual, field) if v is not None]
+            if len(s) >= 2 and s[1] and s[1] > 0 and s[0] > 0:
+                g = (s[0] / s[1] - 1) * 100
+                sc = cls._band(g, [(15, 100), (10, 80), (5, 60), (0, 40)], 15)
+                return sc, cls._rz(f"账面价值增速 {g:.0f}%", f"book value growth {g:.0f}%", locale)
+        return None, ""
+
+    @classmethod
     def _cycle_position(cls, annual, locale):
         """周期位置：当前 margin ÷ 中周期 margin。返回 (人话, ratio, 估值档调整 ±1)。
         研究锚定（Industrials IB）：谷底通常比中周期低 30-50% → 0.70 / 1.30 阈值。"""
@@ -1202,7 +1245,8 @@ class QuantitativeRater:
                "rev_cagr": cls._q_rev_cagr, "rule40": cls._q_rule40,
                "piotroski": cls._q_piotroski, "survival": cls._q_survival,
                "recovery": cls._q_recovery, "altman": cls._q_altman,
-               "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid}
+               "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid,
+               "roa": cls._q_roa, "book_growth": cls._q_book_growth}
         got, reasons = [], []
         for key, w in profile["q"]:
             val, reason = fns[key](annual, signals, locale, industry)

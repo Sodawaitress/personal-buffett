@@ -81,6 +81,10 @@ def _is_etf(code: str, name: str) -> bool:
 
 _FINANCIAL_KW  = {"银行", "保险", "券商", "信托", "金融", "证券", "资管",
                    "bank", "insurance", "financial"}
+# 金融细分（US-116：CAMELS只适用银行，券商/保险要各自尺子）
+_BANK_KW       = {"银行", "bank"}
+_SECURITIES_KW = {"券商", "证券", "投行", "securities", "broker"}
+_INSURANCE_KW  = {"保险", "险", "insurance"}
 _CYCLICAL_KW   = {"钢铁", "煤炭", "化工", "地产", "建材", "有色", "铝", "铜",
                    "矿", "石油", "能源", "steel", "coal", "chemical", "property"}
 _UTILITY_KW    = {"电力", "水务", "燃气", "热力", "公用", "供电", "自来水",
@@ -215,8 +219,17 @@ def classify_stock(code: str) -> dict:
         company_type = "speculative"
     elif _is_supply_chain:
         company_type = "supply_chain"
-    elif _match_kw(sector, _FINANCIAL_KW):
-        company_type = "financial"
+    elif _match_kw(sector, _FINANCIAL_KW) or _match_kw(name, _FINANCIAL_KW):
+        # 金融细分：银行/券商/保险 各自尺子（CAMELS只适用银行）
+        _nm_sec = f"{name} {sector}"
+        if _match_kw(_nm_sec, _BANK_KW):
+            company_type = "bank"
+        elif _match_kw(_nm_sec, _SECURITIES_KW):
+            company_type = "securities"
+        elif _match_kw(_nm_sec, _INSURANCE_KW):
+            company_type = "insurance"
+        else:
+            company_type = "financial"
     elif _match_kw(sector, _UTILITY_KW):
         company_type = "utility"
     elif _match_kw(sector, _CYCLICAL_KW):
