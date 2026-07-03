@@ -2727,34 +2727,46 @@
 .wl-add-hero {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 11px 36px;
-  font-size: 16px;
-  font-weight: 700;
+  gap: 7px;
+  padding: 9px 28px;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
   background: var(--ink);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   cursor: pointer;
-  transition: opacity .15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  transition: transform .12s ease, box-shadow .15s ease;
 }
-.wl-add-hero:hover { opacity: .88; }
+.wl-add-hero:hover { box-shadow: 0 3px 8px rgba(0,0,0,.16); transform: translateY(-1px); }
 .wl-add-hero svg { stroke: #fff; }
+
+/* 控件行：搜索 + 机构雷达/列表/排序筛选 —— 居中成一组，两侧留白平衡 */
 .wl-controls-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  flex-wrap: wrap;
   width: 100%;
-  gap: 10px;
+  gap: 8px;
 }
-.wl-controls-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.wl-controls-right { display: flex; align-items: center; gap: 8px; }
 
-/* 搜索：默认只见 🔍 图标，点开展开输入框 */
+/* 搜索：默认只见 🔍 图标（与其它控件同高的方形），点开展开输入框 */
 .wl-search-icon {
-  background: none; border: none; cursor: pointer;
-  font-size: 15px; padding: 4px 6px; opacity: .55; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  background: none; border: 1px solid var(--rule-light); border-radius: 6px;
+  cursor: pointer; font-size: 14px; opacity: .7; line-height: 1;
+  transition: opacity .15s, border-color .15s;
 }
-.wl-search-icon:hover { opacity: .9; }
+.wl-search-icon:hover { opacity: 1; border-color: var(--ink-faint); }
+/* 控件行里所有按钮统一 32px 高、垂直居中，一行对齐 */
+.wl-controls-row .wl-icon-btn {
+  height: 32px; display: inline-flex; align-items: center; gap: 5px;
+}
 .wl-search-wrap .wl-search-input {
   width: 0; padding: 0; border-width: 0; opacity: 0;
   transition: width .18s ease, opacity .18s ease, padding .18s ease;
