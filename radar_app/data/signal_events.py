@@ -33,8 +33,12 @@ def _get_fundamentals_with_age(code: str) -> tuple[dict, float]:
         pass
     age_h = 999
     try:
-        updated = datetime.fromisoformat((row["updated_at"] or "").replace(" ", "T"))
-        age_h = (datetime.now() - updated).total_seconds() / 3600
+        updated = row["updated_at"]
+        if isinstance(updated, str):
+            updated = datetime.fromisoformat(updated.replace(" ", "T"))
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=CN_TZ)
+        age_h = max(0, (datetime.now(CN_TZ) - updated).total_seconds() / 3600)
     except Exception:
         pass
     return signals, age_h
@@ -488,12 +492,16 @@ def get_watchlist_signals(user_id: int) -> dict:
     }
 
 
-def _cache_age_label(fetched_at_str: str) -> str:
+def _cache_age_label(fetched_at_str) -> str:
     if not fetched_at_str:
         return ""
     try:
-        fetched = datetime.fromisoformat(fetched_at_str.replace(" ", "T"))
-        age_h = (datetime.now() - fetched).total_seconds() / 3600
+        fetched = fetched_at_str
+        if isinstance(fetched, str):
+            fetched = datetime.fromisoformat(fetched.replace(" ", "T"))
+        if fetched.tzinfo is None:
+            fetched = fetched.replace(tzinfo=CN_TZ)
+        age_h = max(0, (datetime.now(CN_TZ) - fetched).total_seconds() / 3600)
         if age_h < 1:
             return f"{int(age_h * 60)}分钟前"
         if age_h < 24:

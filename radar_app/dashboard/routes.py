@@ -47,14 +47,17 @@ def _precursor_age_hours(user_id: int) -> float:
         if not codes:
             return 0
         with get_conn() as c:
-            placeholders = ",".join("?" * len(codes))
+            params = {f"c{i}": code for i, code in enumerate(codes)}
+            placeholders = ",".join(f":{k}" for k in params)
             row = c.execute(
-                f"SELECT MIN(fetched_at) as oldest FROM stock_precursor_cache WHERE code IN ({placeholders})",
-                codes,
+                f"SELECT MAX(fetched_at) as oldest FROM stock_precursor_cache WHERE code IN ({placeholders})",
+                params,
             ).fetchone()
         if not row or not row["oldest"]:
             return 999
-        oldest = datetime.fromisoformat(row["oldest"].replace(" ", "T"))
+        oldest = row["oldest"]
+        if isinstance(oldest, str):
+            oldest = datetime.fromisoformat(oldest.replace(" ", "T"))
         if oldest.tzinfo is None:
             oldest = oldest.replace(tzinfo=CN_TZ)
         return (datetime.now(CN_TZ) - oldest).total_seconds() / 3600
