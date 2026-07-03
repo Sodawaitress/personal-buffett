@@ -145,7 +145,8 @@
         <span id="add-selected-label"></span>
         <button type="button" class="btn-text" onclick="clearSelection()">×</button>
       </div>
-      <input type="text" name="desc" placeholder="{{ t.add_note_placeholder }}" maxlength="60">
+      {# 「备注」字段已删除：只写不读的死字段（全站从不展示），对妈妈是多余摩擦。
+         若将来要「记录买入理由」，会做成能在卡片/详情回看的形式再加回。 #}
       <button type="submit" id="btn-add-submit" class="btn-ink" disabled>{{ t.btn_add }}</button>
     </form>
   </div>
