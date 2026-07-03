@@ -2809,3 +2809,45 @@
   max-width: 520px;
 }
 .home-add-panel.hidden { display: none; }
+
+/* ══════════════════════════════════════════════════════════
+   卡片减负：状态=当前彩标签(点开切换) · 动作收进 ⋯ 菜单
+   ══════════════════════════════════════════════════════════ */
+.card-status-row { position: relative; }
+.status-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; font-family: -apple-system, sans-serif;
+  border: 1px solid transparent; cursor: pointer;
+}
+.status-chip-caret { font-size: 8px; opacity: .5; }
+.status-chip-watching { background: #f0ede6; color: var(--ink-muted); border-color: var(--rule-light); }
+.status-chip-holding  { background: #e8f3ea; color: #2f7d3a; border-color: #bfe0c6; }
+.status-chip-sold     { background: #f4f1ec; color: var(--ink-faint); border-color: var(--rule-light); }
+.status-picker {
+  position: absolute; top: 100%; left: 0; z-index: 5; margin-top: 4px;
+  background: var(--paper); border: 1px solid var(--rule-light); border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.10); padding: 6px;
+}
+
+.holding-meta { position: relative; }
+.card-menu-wrap { position: relative; }
+.card-menu-btn {
+  background: none; border: none; cursor: pointer; color: var(--ink-faint);
+  font-size: 17px; line-height: 1; padding: 0 6px; border-radius: 4px;
+}
+.card-menu-btn:hover { color: var(--ink); background: var(--rule-light); }
+.card-menu {
+  position: absolute; right: 0; bottom: 100%; z-index: 6; margin-bottom: 4px;
+  background: var(--paper); border: 1px solid var(--rule-light); border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.12); min-width: 124px; padding: 4px 0;
+}
+.card-menu button {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 8px 14px; font-size: 12px; color: var(--ink); cursor: pointer;
+  font-family: -apple-system, sans-serif; white-space: nowrap;
+}
+.card-menu button:hover { background: var(--rule-light); }
+.card-menu-remove {
+  color: #b3261e; border-top: 1px solid var(--rule-light); margin-top: 4px;
+}

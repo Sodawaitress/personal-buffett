@@ -229,6 +229,10 @@
     "en": "No major events coming up — we're watching for you 👀",
     "zh": "近期无重大事件，已替你盯着 👀"
   },
+  "btn_more": {
+    "en": "More",
+    "zh": "更多"
+  },
   "catalyst_share_unlock": {
     "en": "Share Unlock",
     "zh": "限售解禁"

@@ -151,15 +151,20 @@
 
     <div class="card-main">
       <div class="card-status-row" onclick="event.stopPropagation()">
-        <div class="status-tabs">
-          <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">{{ t.status_watching }}</button>
-          <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">{{ t.status_holding }}</button>
-          <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">{{ t.status_sold }}</button>
-        </div>
-        <div class="status-extra" id="extra-{{ s.code }}" style="display:none">
-          <input type="date"   class="status-date-input"  id="extra-date-{{ s.code }}"  value="{{ now_date or '' }}">
-          <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="{{ t.lbl_buy_price_placeholder }}" step="0.01" min="0">
-          <button class="status-confirm-btn" onclick="confirmStatus('{{ s.code }}')">✓</button>
+        <button class="status-chip status-chip-{{ s.status }}" onclick="toggleStatusPicker('{{ s.code }}')">
+          {{ {'watching': t.status_watching, 'holding': t.status_holding, 'sold': t.status_sold}.get(s.status, s.status) }}<span class="status-chip-caret">▾</span>
+        </button>
+        <div class="status-picker" id="picker-{{ s.code }}" style="display:none">
+          <div class="status-tabs">
+            <button class="status-tab {{ 'active' if s.status == 'watching' else '' }}" onclick="switchStatus('{{ s.code }}','watching',this)">{{ t.status_watching }}</button>
+            <button class="status-tab {{ 'active' if s.status == 'holding'  else '' }}" onclick="switchStatus('{{ s.code }}','holding',this)">{{ t.status_holding }}</button>
+            <button class="status-tab {{ 'active' if s.status == 'sold'     else '' }}" onclick="switchStatus('{{ s.code }}','sold',this)">{{ t.status_sold }}</button>
+          </div>
+          <div class="status-extra" id="extra-{{ s.code }}" style="display:none">
+            <input type="date"   class="status-date-input"  id="extra-date-{{ s.code }}"  value="{{ now_date or '' }}">
+            <input type="number" class="status-price-input" id="extra-price-{{ s.code }}" placeholder="{{ t.lbl_buy_price_placeholder }}" step="0.01" min="0">
+            <button class="status-confirm-btn" onclick="confirmStatus('{{ s.code }}')">✓</button>
+          </div>
         </div>
       </div>
 
@@ -209,34 +214,26 @@
       <div class="holding-analysis" style="color:var(--ink-faint);font-size:12px">{{ t.lbl_no_analysis }}</div>
       {% endif %}
 
-      {% if s.moat_direction or s.roic_latest or s.avg_sentiment is not none %}
-      <div class="holding-signals">
-        {% if s.moat_direction %}<span class="signal-chip">{{ s.moat_direction[:12] }}</span>{% endif %}
-        {% if s.roic_latest %}<span class="signal-chip">ROIC {{ "%.1f"|format(s.roic_latest) }}%</span>{% endif %}
-        {% if s.avg_sentiment is not none %}
-        <span class="signal-chip sentiment-chip" title="{{ t.sentiment_avg_tooltip }} {{ '%.2f'|format(s.avg_sentiment) }}">
-          {% if s.avg_sentiment > 0.3 %}📈{% elif s.avg_sentiment < -0.3 %}📉{% else %}➖{% endif %} {{ t.news_chip_label }}
-        </span>
-        {% endif %}
-      </div>
-      {% endif %}
 
       <div class="holding-meta">
         {% if s.analysis_date %}
         <span class="holding-date">{{ s.analysis_date }}</span>
         {% endif %}
-        <div class="holding-actions" onclick="event.stopPropagation()">
-          {% if s.has_letter %}
-          <button onclick="showLetter('{{ s.code }}','{{ s.name }}')" class="btn-text" style="font-size:11px">{{ t.btn_read_letter }}</button>
-          {% endif %}
-          {% if s.status != 'sold' %}
-          <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.js_quant_only_msg }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
-          {% endif %}
-          <button class="btn-text wl-card-remove"
-            hx-delete="/api/stock/{{ s.code }}/remove"
-            hx-confirm="{{ t.confirm_remove }}"
-            hx-target="closest .holding-card"
-            hx-swap="outerHTML">{{ t.btn_remove }}</button>
+        <div class="card-menu-wrap" onclick="event.stopPropagation()">
+          <button class="card-menu-btn" onclick="toggleCardMenu('{{ s.code }}')" title="{{ t.btn_more if t.btn_more else '更多' }}">⋯</button>
+          <div class="card-menu" id="cardmenu-{{ s.code }}" style="display:none">
+            {% if s.has_letter %}
+            <button onclick="showLetter('{{ s.code }}','{{ s.name }}');closeCardMenu('{{ s.code }}')">{{ t.btn_read_letter }}</button>
+            {% endif %}
+            {% if s.status != 'sold' %}
+            <button onclick="triggerAnalysis('{{ s.code }}');closeCardMenu('{{ s.code }}')">{{ t.btn_analyse }}</button>
+            {% endif %}
+            <button class="card-menu-remove"
+              hx-delete="/api/stock/{{ s.code }}/remove"
+              hx-confirm="{{ t.confirm_remove }}"
+              hx-target="closest .holding-card"
+              hx-swap="outerHTML">{{ t.btn_remove }}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -530,6 +527,32 @@ function setView(v) {
 }
 
 // ── 内联状态栏 ────────────────────────────────────────
+function _closeCardPopovers(except) {
+  document.querySelectorAll('.card-menu').forEach(el => { if (el !== except) el.style.display = 'none'; });
+  document.querySelectorAll('.status-picker').forEach(el => { if (el !== except) el.style.display = 'none'; });
+}
+function toggleStatusPicker(code) {
+  const p = document.getElementById('picker-' + code);
+  if (!p) return;
+  const showing = p.style.display !== 'none';
+  _closeCardPopovers(p);
+  p.style.display = showing ? 'none' : 'block';
+}
+function toggleCardMenu(code) {
+  const m = document.getElementById('cardmenu-' + code);
+  if (!m) return;
+  const showing = m.style.display !== 'none';
+  _closeCardPopovers(m);
+  m.style.display = showing ? 'none' : 'block';
+}
+function closeCardMenu(code) {
+  const m = document.getElementById('cardmenu-' + code);
+  if (m) m.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.card-menu-wrap') && !e.target.closest('.card-status-row')) _closeCardPopovers(null);
+}, { passive: true });
+
 let _pendingStatus = {};   // code → target status
 
 function switchStatus(code, status, btn) {
