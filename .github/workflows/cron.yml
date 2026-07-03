@@ -35,6 +35,20 @@ jobs:
         continue-on-error: true
         run: python -c "from scripts.backfill_returns import backfill_predictions; backfill_predictions()"
 
+      # 绝不静默失败：pipeline 挂了立刻微信推管理员（GitHub 也会默认邮件仓库主）
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ 每日 pipeline 失败" \
+              --data-urlencode "desp=GHA runner 里的每日 pipeline 跑挂了，数据可能过期。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          else
+            echo "未配置 SERVERCHAN_ADMIN_KEY，跳过微信告警（GitHub 会默认邮件仓库主）"
+          fi
+
   # 轻活：digest（快照+预测入库）+ precursor scan，仍触发 Fly（不 OOM，写 Neon）
   light:
     runs-on: ubuntu-latest
