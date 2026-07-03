@@ -79,6 +79,14 @@
   background: #fef5f5;
   border-left-color: #c62828;
 }
+/* NR：数据不足，暂不评级——中性灰，不是红色卖出 */
+.verdict-bar.verdict-N {
+  background: #f5f5f4;
+  border-left-color: #9ca3af;
+}
+.verdict-bar.verdict-N .verdict-grade-big { color: #6b7280; font-size: 26px; }
+.st-grade-N { color: #6b7280; }
+.grade-tag.grade-nr, .wax-seal.grade-nr { color: #6b7280; background: #e5e7eb; border-color: #d1d5db; }
 .verdict-bar.verdict-incomplete {
   background: #fffbeb;
   border-left-color: #d97706;
@@ -1689,6 +1697,7 @@
   cursor: pointer;
   transition: all 0.15s;
 }
+.sc-search-btn { text-decoration: none; }
 .sc-watchlist-btn:hover {
   background: var(--accent, #1a5276);
   color: #fff;
@@ -1864,4 +1873,301 @@
   border-left: none;
 }
 
+/* ── 供应商来源徽章 ── */
+.sc-src-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+  letter-spacing: 0.2px;
+}
+.sc-src-doc {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.sc-src-ai {
+  background: #fafaf9;
+  color: #78716c;
+  border: 1px solid #d6d3d1;
+}
+
+/* ── 全局共振图 ── */
+.sc-global-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-left: 4px solid #e5e7eb;
+  background: #fafafa;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.sc-global-alert-sup {
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sc-global-alert-stocks {
+  color: var(--ink-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.sc-global-alert-score {
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
 /* 主容器 */
+
+/* ── US-112 未定价信号 ──────────────────────────────────────────── */
+.up-auto-panel, .up-form-panel, .up-insight-panel {
+  background: #fafaf9;
+  border: 1px solid #e8e4de;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.up-panel-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+}
+.up-auto-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.up-scan-btn {
+  font-size: 12px;
+  padding: 4px 12px;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.up-scan-btn:disabled { background: #9ca3af; cursor: default; }
+.up-scan-status { font-size: 11px; color: #9ca3af; }
+.up-auto-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.up-auto-card {
+  flex: 1;
+  min-width: 120px;
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid;
+  text-align: center;
+}
+.up-sig-green { background:#f0fdf4; border-color:#86efac; }
+.up-sig-red   { background:#fef2f2; border-color:#fca5a5; }
+.up-sig-grey  { background:#f9fafb; border-color:#e5e7eb; }
+.up-auto-icon { font-size: 18px; margin-bottom: 4px; }
+.up-auto-name { font-size: 11px; color: #6b7280; }
+.up-auto-val  { font-size: 18px; font-weight: 700; margin: 4px 0; }
+.up-auto-sub  { font-size: 10px; color: #9ca3af; }
+.up-auto-placeholder { font-size: 13px; color: #9ca3af; padding: 8px 0; }
+
+.up-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.up-field-full { grid-column: 1 / -1; }
+.up-field-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; font-weight: 500; }
+.up-radio-group, .up-check-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.up-radio, .up-check {
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.up-radio em, .up-check em {
+  font-style: normal;
+  font-size: 11px;
+  color: #16a34a;
+  margin-left: auto;
+}
+.up-optional-tag {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.up-insight-textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  color: #374151;
+  resize: vertical;
+  font-family: inherit;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+.up-insight-textarea:focus { outline: none; border-color: #1d4ed8; }
+
+.up-submit-btn {
+  width: 100%;
+  padding: 10px;
+  background: #111827;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.up-submit-btn:hover { background: #1d4ed8; }
+
+.up-result { margin-top: 4px; }
+.up-digest-bar {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+.up-digest-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
+.up-digest-track {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.up-digest-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+.up-digest-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.up-insight-verdict {
+  font-size: 13px;
+  color: #374151;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.up-insight-verdict em { font-style: normal; }
+.up-adj-chip {
+  font-size: 11px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+.up-matrix-row {
+  font-size: 13px;
+  color: #374151;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.up-score-breakdown {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+.up-score-breakdown span { color: #374151; font-weight: 600; }
+@media (max-width: 480px) {
+  .up-form-grid { grid-template-columns: 1fr; }
+  .up-auto-cards { flex-direction: column; }
+}
+
+/* ── US-113 综合评分带 ──────────────────────────────────────────── */
+/* ── 框架信号带 ─────────────────────────────────────────────────── */
+.signal-trio {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e8e4de;
+  border-radius: 10px;
+  margin: 14px 0 18px;
+  overflow: hidden;
+}
+.st-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 16px;
+  border-right: 1px solid #f0ece6;
+  flex: 1;
+  min-width: 80px;
+}
+.st-cell-last { border-right: none; }
+.st-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b5afa7;
+}
+.st-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+.st-val small { font-size: 11px; font-weight: 400; color: #9ca3af; }
+
+/* 巴菲特评级色 */
+.st-grade-A { color: #15803d; }
+.st-grade-B { color: #1d4ed8; }
+.st-grade-C { color: #92400e; }
+.st-grade-D { color: #dc2626; }
+
+/* Camillo 窗口 & 马克斯钟摆色（按框架解读着色，非判断） */
+.st-fw-极早期, .st-fw-早期, .st-fw-底部区域, .st-fw-理性区间 { color: #15803d; }
+.st-fw-扩散中, .st-fw-乐观偏高 { color: #92400e; }
+.st-fw-进主流, .st-fw-热度升温 { color: #c2410c; }
+.st-fw-已公开, .st-fw-亢奋区  { color: #dc2626; }
+
+@media (max-width: 600px) {
+  .signal-trio { flex-wrap: wrap; }
+  .st-cell {
+    flex: 0 0 50%;
+    border-bottom: 1px solid #f0ece6;
+  }
+  .st-cell:nth-child(even) { border-right: none; }
+  .st-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .st-cell-last { border-right: none; }
+}

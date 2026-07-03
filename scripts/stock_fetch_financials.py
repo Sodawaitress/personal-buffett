@@ -83,7 +83,7 @@ def fetch_cn_financials(code: str) -> dict:
     rows = []
     try:
         df = ak.stock_financial_abstract_ths(symbol=pure, indicator='按年度')
-        for _, row in df.tail(6).iloc[::-1].iterrows():  # 最新6年，倒序
+        for _, row in df.tail(10).iloc[::-1].iterrows():  # 最新10年，倒序（US-116 #2：覆盖完整周期算中周期利润率）
             year  = str(row.get("报告期", ""))
             if not year or year in ("False", "nan"):
                 continue
@@ -181,16 +181,25 @@ def fetch_cn_advanced(code: str, annual: list = None) -> dict:
     try:
         bs = ak.stock_financial_report_sina(stock=symbol, symbol='资产负债表')
         cf = ak.stock_financial_report_sina(stock=symbol, symbol='现金流量表')
+        lp = ak.stock_financial_report_sina(stock=symbol, symbol='利润表')  # US-116 #3：EBIT
         bs_yr = _year_rows(bs)
         cf_yr = _year_rows(cf)
+        lp_yr = _year_rows(lp)
     except Exception as e:
         print(f"    ⚠️ {code} 高级财务读取失败: {e}")
         return result
 
+    def _yi2(v):  # 元 → 亿，None/NaN 安全
+        try:
+            f = float(v)
+            return round(f / 1e8, 2) if f == f else None
+        except (ValueError, TypeError):
+            return None
+
     roic_list, oe_list, equity_hist = [], [], []
     annual = annual or []
 
-    for _, bs_row in bs_yr.head(6).iterrows():
+    for _, bs_row in bs_yr.head(10).iterrows():
         date = str(bs_row['报告日'])
         year = date[:4]
 
@@ -211,6 +220,25 @@ def fetch_cn_advanced(code: str, annual: list = None) -> dict:
         ann = next((r for r in annual if str(r.get('year', ''))[:4] == year), None)
         if not ann:
             continue
+
+        # US-116 #3：把 Piotroski-9 + Altman Z'' 所需字段写进 annual（单位统一为亿）
+        cf_yr_row = cf_yr[cf_yr['报告日'].astype(str).str.startswith(year)]
+        lp_yr_row = lp_yr[lp_yr['报告日'].astype(str).str.startswith(year)]
+        ann["total_assets"]        = _yi2(bs_row.get('资产总计'))
+        ann["current_assets"]      = _yi2(bs_row.get('流动资产合计'))
+        ann["current_liabilities"] = _yi2(bs_row.get('流动负债合计'))
+        ann["retained_earnings"]   = _yi2(bs_row.get('未分配利润'))
+        ann["equity"]              = _yi2(equity)
+        ann["shares"]              = float(shares_capital) if shares_capital and shares_capital == shares_capital else None
+        if not cf_yr_row.empty:
+            ann["cfo"] = _yi2(cf_yr_row.iloc[0].get('经营活动产生的现金流量净额'))
+        if not lp_yr_row.empty:
+            _tot = lp_yr_row.iloc[0].get('利润总额')        # 税前利润（已扣利息）
+            _fin = lp_yr_row.iloc[0].get('财务费用')        # ≈ 利息，加回得 EBIT
+            try:
+                ann["ebit"] = round((float(_tot) + (float(_fin) if _fin == _fin else 0)) / 1e8, 2) if _tot == _tot else None
+            except (ValueError, TypeError):
+                ann["ebit"] = None
 
         net_p_yi = _parse_num(ann.get('net_profit', ''))   # 亿
         eps       = _parse_num(ann.get('eps', ''))

@@ -842,18 +842,684 @@ class QuantitativeRater:
     # 主评级函数
     # ─────────────────────────────────────────────────────────
 
+    # ════════════════════════════════════════════════════════════
+    # US-116 类型感知评级：质量×价格两轴 + 招牌标尺 + 数据门
+    # 判断依据出处（每条线不许拍脑袋）：
+    #   ① 自己跟自己比：pe/pb 历史分位（已有）
+    #   ③ 每类学术招牌标尺：
+    #      mature_value → Piotroski F-score（9点制基本面趋势，治价值陷阱）
+    #      growth/pre_profit → Rule of 40（营收增速%+利润率%≥40，不罚无利润）
+    #      distressed → 生存检查（Altman Z-score 思路：亏损/负债/营收趋势）
+    #      financial → CAMELS 简化（看 ROE/账面增长，不罚负债率=杠杆是业务）
+    #   ② 跟同类比：Damodaran 行业分位 → Phase 2（industry_benchmarks 表）
+    # 详见 PRODUCT.md US-116 / 研究方法论骨架
+    # ════════════════════════════════════════════════════════════
+
+    # type → 评分配方 key
+    _PROFILE_OF = {
+        "mature_value": "mature", "utility": "mature", "etf": "mature",
+        "financial": "financial", "bank": "bank",
+        "securities": "securities", "insurance": "insurance",
+        "growth_tech": "growth", "supply_chain": "growth", "speculative": "growth",
+        "biotech": "biotech", "property": "property",
+        "pre_profit": "preprofit",
+        "cyclical": "cyclical",
+        "turnaround": "turnaround",
+        "distressed": "distressed",
+    }
+    # profile → 质量组件(权重) + 价格用哪个分位 + 最少可算组件数（少于则 NR）
+    _PROFILES = {
+        # 成熟价值股：巴菲特质量 + Piotroski 趋势
+        "mature":     {"q": [("roe", .30), ("margin", .20), ("stability", .20),
+                             ("rev_cagr", .15), ("piotroski", .15)], "v": "pe", "min": 2},
+        # 金融（泛，未细分时的回退）
+        "financial":  {"q": [("roe", .40), ("margin", .20), ("stability", .20),
+                             ("rev_cagr", .20)], "v": "pb", "min": 2},
+        # 银行：CAMELS-lite 可得部分——ROA(核心)+ROE(行业相对)+账面增长，不罚负债
+        #（不良率/拨备/资本充足=数据缺口，待爬东财银行页）
+        "bank":       {"q": [("roa", .35), ("roe", .35), ("book_growth", .30)],
+                       "v": "pb", "min": 2},
+        # 券商/投行：金融周期股——中周期ROE+稳定度+当期ROE(行业相对)，估值PB
+        #（净资本/收入结构=数据缺口）
+        "securities": {"q": [("roe_mid", .40), ("stability", .30), ("roe", .30)],
+                       "v": "pb", "min": 2},
+        # 保险：ROE(行业相对)+账面增长+稳定度；PB作P/EV粗代理
+        #（内含价值EV/新业务价值/偿付能力=数据缺口）
+        "insurance":  {"q": [("roe", .45), ("book_growth", .35), ("stability", .20)],
+                       "v": "pb", "min": 2},
+        # 成长科技：Rule of 40——增速 + 烧钱效率，不罚当期低 ROE
+        "growth":     {"q": [("rev_cagr", .35), ("rule40", .30), ("margin", .20),
+                             ("stability", .15)], "v": "pe_or_price", "min": 2},
+        # 未盈利成长：只看增速 + 烧钱效率，无利润是定义不是罪
+        "preprofit":  {"q": [("rev_cagr", .55), ("rule40", .45)], "v": "price", "min": 1},
+        # 生物药/创新药（临床期）：现金跑道(能烧几年)为主 + 营收(若已商业化) + 毛利
+        #（管线价值需临床评估=数据缺口；估值需管线DCF，暂用股价位置粗代理）
+        "biotech":    {"q": [("cash_runway", .45), ("rev_cagr", .30), ("margin", .25)],
+                       "v": "price", "min": 1},
+        # 房地产：生存/负债(三道红线) + ROE(行业相对) + 中周期；估值 PB(≈NAV)
+        #（NAV/预售/土储=数据缺口）
+        "property":   {"q": [("survival", .40), ("roe", .30), ("roe_mid", .30)],
+                       "v": "pb", "min": 2},
+        # 周期股：质量=中周期盈利力 + 稳定度 + 能否扛过谷底（survival）；
+        # 不放 piotroski/rev_cagr 这类趋势项——它们会在谷底误杀（而谷底正是该买的时候）。
+        # 周期"时机"由估值轴的周期位置调整处理，与质量分离。
+        "cyclical":   {"q": [("roe_mid", .30), ("margin_mid", .25), ("stability", .20),
+                             ("survival", .25)], "v": "pb", "min": 2},
+        # 困境反转：看恢复趋势（利润率/ROE 触底回升没）+ 生存 + PB 便宜不便宜
+        "turnaround": {"q": [("recovery", .50), ("survival", .30), ("rev_cagr", .20)],
+                       "v": "pb", "min": 1},
+        # 困境/重整：真 Altman Z''（字段不全自动回退生存检查），不做估值打分
+        "distressed": {"q": [("altman", 1.0)], "v": "none", "min": 1},
+    }
+    _TYPE_NAMES = {
+        "mature_value": ("成熟价值股", "mature value"), "utility": ("公用事业", "utility"),
+        "financial": ("金融", "financial"), "bank": ("银行", "bank"),
+        "securities": ("券商/投行", "securities"), "insurance": ("保险", "insurance"),
+        "growth_tech": ("成长科技股", "growth/tech"),
+        "supply_chain": ("供应链卡位股", "supply-chain"), "speculative": ("高风险题材股", "speculative"),
+        "pre_profit": ("未盈利成长股", "pre-profit growth"), "cyclical": ("周期股", "cyclical"),
+        "biotech": ("生物药/创新药", "biotech"), "property": ("房地产", "real estate"),
+        "turnaround": ("困境反转股", "turnaround"),
+        "distressed": ("困境/重整股", "distressed"), "etf": ("基金/ETF", "fund/ETF"),
+    }
+
+    _VALUE_TIERS = {"zh": ["便宜", "合理", "偏贵", "贵"],
+                    "en": ["cheap", "fair", "pricey", "expensive"]}
+
+    @staticmethod
+    def _rz(zh: str, en: str, locale: str = "zh") -> str:
+        return en if locale == "en" else zh
+
+    @classmethod
+    def _tier_label(cls, rank: int, locale: str) -> str:
+        return cls._VALUE_TIERS["en" if locale == "en" else "zh"][rank]
+
+    @staticmethod
+    def _band(value: float, bands: list, default: int) -> int:
+        """从高到低套档位：命中第一个 value >= 阈值的档，返回其分数；都不中返回 default。"""
+        for thr, sc in bands:
+            if value >= thr:
+                return sc
+        return default
+
+    @staticmethod
+    def _num(v):
+        """解析财务值，处理 '%'、'亿'、'万' 单位；无法解析返回 None（区别于 0）。"""
+        if v is None:
+            return None
+        if isinstance(v, (int, float)):
+            return float(v)
+        s = str(v).strip().replace("%", "")
+        if not s:
+            return None
+        mult = 1.0
+        if s.endswith("亿"):
+            mult, s = 1e4, s[:-1]
+        elif s.endswith("万"):
+            mult, s = 1.0, s[:-1]
+        try:
+            return float(s) * mult
+        except (ValueError, TypeError):
+            return None
+
+    @classmethod
+    def _series(cls, annual, field):
+        """newest-first 数值序列（annual[0] 为最新年）。"""
+        return [cls._num(y.get(field)) for y in (annual or [])]
+
+    # ── 质量组件，各返回 (0-100 或 None, 人话理由) ──────────────
+    @classmethod
+    def _q_roe(cls, annual, signals, locale, industry=None):
+        roe = cls._num((annual[0] if annual else {}).get("roe"))
+        if roe is None and signals and signals.get("roe") is not None:
+            roe = signals["roe"] * 100
+        if roe is None:
+            return None, ""
+        # ② 行业中性化：有行业 ROE 基准就跟同行比（z-score），否则绝对档（巴菲特线15%）
+        z = cls._industry_z(roe, industry, "roe")
+        if z is not None:
+            sc = cls._band(z, [(1.5, 95), (0.5, 80), (-0.5, 60), (-1.5, 35)], 15)
+            word = cls._rz("同行领先" if z >= 0.5 else ("同行相当" if z >= -0.5 else "低于同行"),
+                           "top vs peers" if z >= 0.5 else ("in line" if z >= -0.5 else "below peers"), locale)
+            return sc, cls._rz(f"ROE {roe:.1f}%，{word}（{z:+.1f}个标准差）",
+                               f"ROE {roe:.1f}%, {word} ({z:+.1f}σ)", locale)
+        sc = cls._band(roe, [(25, 100), (20, 90), (15, 78), (10, 60), (5, 40), (0, 20)], 0)
+        return sc, cls._rz(f"ROE {roe:.1f}%（巴菲特线 15%）", f"ROE {roe:.1f}% (Buffett bar 15%)", locale)
+
+    @classmethod
+    def _q_margin(cls, annual, signals, locale, industry=None):
+        m = cls._num((annual[0] if annual else {}).get("net_margin"))
+        if m is None and signals and signals.get("profit_margin") is not None:
+            m = signals["profit_margin"] * 100
+        if m is None:
+            return None, ""
+        sc = cls._band(m, [(25, 100), (15, 80), (10, 60), (5, 40), (0, 20)], 0)
+        return sc, cls._rz(f"净利率 {m:.1f}%", f"net margin {m:.1f}%", locale)
+
+    @classmethod
+    def _q_stability(cls, annual, signals, locale, industry=None):
+        roes = [v for v in cls._series(annual, "roe") if v is not None][:5]
+        if len(roes) < 2:
+            return None, ""
+        avg = sum(roes) / len(roes)
+        if avg == 0:
+            return 10, cls._rz("ROE 波动大", "ROE volatile", locale)
+        cv = (sum((x - avg) ** 2 for x in roes) / len(roes)) ** 0.5 / abs(avg)
+        bands = [(0.10, 100), (0.20, 80), (0.30, 55), (0.50, 30)]
+        sc = 10
+        for thr, v in bands:
+            if cv < thr:
+                sc = v
+                break
+        return sc, cls._rz(f"{len(roes)}年 ROE 稳定度", f"{len(roes)}-yr ROE stability", locale)
+
+    @classmethod
+    def _q_rev_cagr(cls, annual, signals, locale, industry=None):
+        revs = [v for v in cls._series(annual, "revenue") if v is not None]
+        if len(revs) < 2 or revs[-1] <= 0 or revs[0] <= 0:
+            return None, ""
+        cagr = ((revs[0] / revs[-1]) ** (1 / (len(revs) - 1)) - 1) * 100
+        sc = cls._band(cagr, [(30, 100), (20, 85), (15, 70), (10, 55), (0, 35)], 10)
+        return sc, cls._rz(f"营收 {len(revs)}年复合增速 {cagr:.0f}%",
+                           f"revenue {len(revs)}-yr CAGR {cagr:.0f}%", locale)
+
+    @classmethod
+    def _q_rule40(cls, annual, signals, locale, industry=None):
+        """Rule of 40：最近一年营收增速% + 净利率% ≥ 40。"""
+        revs = [v for v in cls._series(annual, "revenue") if v is not None]
+        m = cls._num((annual[0] if annual else {}).get("net_margin"))
+        if len(revs) < 2 or revs[1] <= 0 or m is None:
+            return None, ""
+        yoy = (revs[0] / revs[1] - 1) * 100
+        score40 = yoy + m
+        sc = cls._band(score40, [(40, 100), (30, 75), (20, 50), (10, 30)], 10)
+        return sc, cls._rz(f"Rule of 40：增速{yoy:.0f}%+利润率{m:.0f}%={score40:.0f}",
+                           f"Rule of 40: growth{yoy:.0f}%+margin{m:.0f}%={score40:.0f}", locale)
+
+    @classmethod
+    def _q_piotroski(cls, annual, signals, locale, industry=None):
+        """完整 Piotroski-9（US-116 #3）。字段齐全→真9项；缺字段→用能算的子集（ROA无总资产时用ROE代理）。"""
+        if len(annual or []) < 2:
+            return None, ""
+        cur, prev = annual[0], annual[1]
+        n = cls._num
+        tests, passed = 0, 0
+
+        def chk(cond):
+            nonlocal tests, passed
+            tests += 1
+            if cond:
+                passed += 1
+
+        def roa(y):
+            ni, ta = n(y.get("net_profit")), n(y.get("total_assets"))
+            if ni is not None and ta and ta > 0:
+                return ni / ta * 100
+            return n(y.get("roe"))  # 代理：无总资产时用 ROE
+
+        def curr_ratio(y):
+            ca, cl = n(y.get("current_assets")), n(y.get("current_liabilities"))
+            return ca / cl if ca is not None and cl and cl > 0 else None
+
+        def asset_turn(y):
+            rev, ta = n(y.get("revenue")), n(y.get("total_assets"))
+            return rev / ta if rev is not None and ta and ta > 0 else None
+
+        ra_c, ra_p = roa(cur), roa(prev)
+        cfo, ni_c = n(cur.get("cfo")), n(cur.get("net_profit"))
+        d_c, d_p = n(cur.get("debt_ratio")), n(prev.get("debt_ratio"))
+        cr_c, cr_p = curr_ratio(cur), curr_ratio(prev)
+        sh_c, sh_p = n(cur.get("shares")), n(prev.get("shares"))
+        gm_c, gm_p = n(cur.get("gross_margin")), n(prev.get("gross_margin"))
+        at_c, at_p = asset_turn(cur), asset_turn(prev)
+
+        if ra_c is not None:                         chk(ra_c > 0)             # 1 ROA>0
+        if cfo is not None:                          chk(cfo > 0)             # 2 CFO>0
+        if ra_c is not None and ra_p is not None:    chk(ra_c > ra_p)         # 3 ΔROA↑
+        if cfo is not None and ni_c is not None:     chk(cfo > ni_c)          # 4 CFO>净利(应计,关键)
+        if d_c is not None and d_p is not None:      chk(d_c < d_p)           # 5 杠杆↓
+        if cr_c is not None and cr_p is not None:    chk(cr_c > cr_p)         # 6 流动比率↑
+        if sh_c is not None and sh_p and sh_p > 0:   chk(sh_c <= sh_p * 1.01) # 7 未增发
+        if gm_c is not None and gm_p is not None:    chk(gm_c > gm_p)         # 8 毛利率↑
+        if at_c is not None and at_p is not None:    chk(at_c > at_p)         # 9 资产周转↑
+
+        if tests < 3:
+            return None, ""
+        sc = round(passed / tests * 100)
+        tag = "9项" if tests >= 8 else cls._rz(f"{tests}项·数据有限", f"{tests} tests·limited data", locale)
+        return sc, cls._rz(f"Piotroski {passed}/{tests} 项向好（{tag}）",
+                           f"Piotroski {passed}/{tests} improving ({tag})", locale)
+
+    @classmethod
+    def _q_survival(cls, annual, signals, locale, industry=None):
+        """困境股生存检查（Altman Z 思路：亏损/负债/营收趋势）。"""
+        if not annual:
+            return None, ""
+        sc = 100
+        notes = []
+        profits = [v for v in cls._series(annual, "net_profit")[:3] if v is not None]
+        loss_years = sum(1 for p in profits if p < 0)
+        if loss_years:
+            sc -= 25 * loss_years
+            notes.append(cls._rz(f"近{len(profits)}年亏{loss_years}年", f"{loss_years} loss yrs", locale))
+        d = cls._num(annual[0].get("debt_ratio"))
+        if d is not None and d > 80:
+            sc -= 25
+            notes.append(cls._rz(f"负债率{d:.0f}%偏高", f"debt {d:.0f}%", locale))
+        revs = [v for v in cls._series(annual, "revenue") if v is not None]
+        if len(revs) >= 2 and revs[0] < revs[1]:
+            sc -= 15
+            notes.append(cls._rz("营收下滑", "revenue falling", locale))
+        sc = max(0, sc)
+        return sc, cls._rz("生存检查：" + ("、".join(notes) if notes else "暂稳"),
+                           "Survival: " + ("; ".join(notes) if notes else "stable"), locale)
+
+    @classmethod
+    def _q_altman(cls, annual, signals, locale, industry=None):
+        """真 Altman Z''（新兴市场四变量版，用账面权益）。字段不全 → 回退 _q_survival。
+        Z'' = 3.25 + 6.56·(营运资本/资产) + 3.26·(留存/资产) + 6.72·(EBIT/资产) + 1.05·(权益/总负债)
+        >2.6 安全 / 1.1–2.6 灰区 / <1.1 危险。"""
+        if not annual:
+            return cls._q_survival(annual, signals, locale)
+        y, n = annual[0], cls._num
+        ta = n(y.get("total_assets"))
+        ca, cl = n(y.get("current_assets")), n(y.get("current_liabilities"))
+        re, ebit, eq = n(y.get("retained_earnings")), n(y.get("ebit")), n(y.get("equity"))
+        if not (ta and ta > 0 and ca is not None and cl is not None
+                and re is not None and ebit is not None and eq is not None):
+            return cls._q_survival(annual, signals, locale)  # 数据不全 → 回退
+        tl = ta - eq
+        if tl <= 0:
+            tl = ta * 0.01  # 几乎无负债，防除零
+        z = 3.25 + 6.56 * ((ca - cl) / ta) + 3.26 * (re / ta) + 6.72 * (ebit / ta) + 1.05 * (eq / tl)
+        if z >= 2.6:
+            sc, zone = min(100, 80 + (z - 2.6) * 10), cls._rz("安全区", "safe", locale)
+        elif z >= 1.1:
+            sc, zone = 30 + (z - 1.1) / 1.5 * 40, cls._rz("灰色地带", "grey zone", locale)
+        else:
+            sc, zone = max(0, z / 1.1 * 30), cls._rz("危险区", "distress zone", locale)
+        return round(sc), cls._rz(f"Altman Z''={z:.2f}（{zone}，>2.6安全/<1.1危险）",
+                                  f"Altman Z''={z:.2f} ({zone})", locale)
+
+    @classmethod
+    def _q_recovery(cls, annual, signals, locale, industry=None):
+        """困境反转：利润率/ROE 是否触底回升（趋势向上=好，不看当期绝对值）。"""
+        roes = [v for v in cls._series(annual, "roe") if v is not None]
+        margins = [v for v in cls._series(annual, "net_margin") if v is not None]
+        if len(roes) < 2 and len(margins) < 2:
+            return None, ""
+        sc, notes = 40, []
+        # ROE 改善（newest-first：roes[0] 最新）
+        if len(roes) >= 2:
+            if roes[0] > roes[1]:
+                sc += 25
+                notes.append(cls._rz("ROE 回升", "ROE recovering", locale))
+                if len(roes) >= 3 and roes[1] > roes[2]:
+                    sc += 15  # 连续两年改善
+                if roes[0] > 0 and roes[1] <= 0:
+                    sc += 20  # 扭亏为盈
+                    notes.append(cls._rz("扭亏为盈", "back to profit", locale))
+            else:
+                sc -= 20
+                notes.append(cls._rz("ROE 仍在恶化", "ROE still worsening", locale))
+        if len(margins) >= 2:
+            if margins[0] > margins[1]:
+                sc += 15
+                notes.append(cls._rz("利润率改善", "margin improving", locale))
+            else:
+                sc -= 10
+        sc = max(0, min(100, sc))
+        return sc, cls._rz("恢复趋势：" + ("、".join(notes) if notes else "暂不明显"),
+                           "Recovery: " + ("; ".join(notes) if notes else "unclear"), locale)
+
+    @classmethod
+    def _q_roe_mid(cls, annual, signals, locale, industry=None):
+        """周期股：用中周期（历史均值）ROE，峰值不虚高、谷底不误杀。"""
+        roes = [v for v in cls._series(annual, "roe") if v is not None]
+        if not roes:
+            return cls._q_roe(annual, signals, locale)
+        avg = sum(roes) / len(roes)
+        sc = cls._band(avg, [(25, 100), (20, 90), (15, 78), (10, 60), (5, 40), (0, 20)], 0)
+        return sc, cls._rz(f"中周期 ROE {avg:.1f}%（{len(roes)}年均）",
+                           f"mid-cycle ROE {avg:.1f}% ({len(roes)}y avg)", locale)
+
+    @classmethod
+    def _q_margin_mid(cls, annual, signals, locale, industry=None):
+        """周期股：用中周期（历史均值）净利率。"""
+        ms = [v for v in cls._series(annual, "net_margin") if v is not None]
+        if not ms:
+            return cls._q_margin(annual, signals, locale)
+        avg = sum(ms) / len(ms)
+        sc = cls._band(avg, [(25, 100), (15, 80), (10, 60), (5, 40), (0, 20)], 0)
+        return sc, cls._rz(f"中周期净利率 {avg:.1f}%（{len(ms)}年均）",
+                           f"mid-cycle margin {avg:.1f}% ({len(ms)}y avg)", locale)
+
+    @classmethod
+    def _q_roa(cls, annual, signals, locale, industry=None):
+        """ROA = 净利润/总资产（银行核心指标，~1%算好）。需 #3 补的 total_assets。"""
+        y = annual[0] if annual else {}
+        ni, ta = cls._num(y.get("net_profit")), cls._num(y.get("total_assets"))
+        if ni is None or not ta or ta <= 0:
+            return None, ""
+        roa = ni / ta * 100
+        z = cls._industry_z(roa, industry, "roa")
+        if z is not None:
+            sc = cls._band(z, [(1.5, 95), (0.5, 80), (-0.5, 60), (-1.5, 35)], 15)
+            word = cls._rz("同行领先" if z >= 0.5 else ("同行相当" if z >= -0.5 else "落后同行"),
+                           "top" if z >= 0.5 else ("in line" if z >= -0.5 else "below"), locale)
+            return sc, cls._rz(f"ROA {roa:.2f}%，{word}（{z:+.1f}个标准差）",
+                               f"ROA {roa:.2f}%, {word} ({z:+.1f}σ)", locale)
+        sc = cls._band(roa, [(1.5, 100), (1.0, 80), (0.7, 60), (0.4, 40), (0, 20)], 0)
+        return sc, cls._rz(f"ROA {roa:.2f}%（银行~1%算好）", f"ROA {roa:.2f}% (bank ~1% is good)", locale)
+
+    @classmethod
+    def _q_cash_runway(cls, annual, signals, locale, industry=None):
+        """现金跑道（生物药/临床期核心）：还能烧几年。经营现金流为正=自我造血。"""
+        y = annual[0] if annual else {}
+        cfo = cls._num(y.get("cfo"))
+        ca, cl = cls._num(y.get("current_assets")), cls._num(y.get("current_liabilities"))
+        if cfo is None:
+            return None, ""
+        if cfo >= 0:
+            return 100, cls._rz("经营现金流为正，不烧钱（自我造血）",
+                                "OCF positive — self-funding", locale)
+        liquid = (ca - (cl or 0)) if ca is not None else None
+        if liquid is None or liquid <= 0:
+            return 20, cls._rz("在烧钱，流动性紧张", "burning cash, tight liquidity", locale)
+        runway = liquid / (-cfo)
+        sc = cls._band(runway, [(3, 100), (2, 80), (1, 50), (0.5, 30)], 15)
+        return sc, cls._rz(f"现金跑道约 {runway:.1f} 年", f"cash runway ~{runway:.1f}y", locale)
+
+    @classmethod
+    def _q_book_growth(cls, annual, signals, locale, industry=None):
+        """账面价值增速（资本积累）——银行/保险的 Capital 维近似。优先 equity。"""
+        for field in ("equity", "retained_earnings", "bvps"):
+            s = [v for v in cls._series(annual, field) if v is not None]
+            if len(s) >= 2 and s[1] and s[1] > 0 and s[0] > 0:
+                g = (s[0] / s[1] - 1) * 100
+                sc = cls._band(g, [(15, 100), (10, 80), (5, 60), (0, 40)], 15)
+                return sc, cls._rz(f"账面价值增速 {g:.0f}%", f"book value growth {g:.0f}%", locale)
+        return None, ""
+
+    @classmethod
+    def _cycle_position(cls, annual, locale):
+        """周期位置：当前 margin ÷ 中周期 margin。返回 (人话, ratio, 估值档调整 ±1)。
+        研究锚定（Industrials IB）：谷底通常比中周期低 30-50% → 0.70 / 1.30 阈值。"""
+        ms = [v for v in cls._series(annual, "net_margin") if v is not None]
+        if len(ms) < 3:
+            return None, None, 0
+        mid = sum(ms) / len(ms)
+        cur = ms[0]
+        if mid <= 0 or cur < 0:  # 中周期非正 或 当前亏损 → 无法判断周期位置
+            return None, None, 0
+        ratio = cur / mid
+        n = len(ms)
+        inc = "" if n >= 7 else cls._rz(f"（基于{n}年，周期可能不完整）",
+                                        f" (based on {n}y, cycle may be incomplete)", locale)
+        if ratio > 1.30:
+            return (cls._rz(f"利润率在周期高位（当前是中周期的{ratio*100:.0f}%），PE看着便宜其实贵{inc}",
+                            f"margin near cycle peak ({ratio*100:.0f}% of mid-cycle) — low PE is a trap{inc}",
+                            locale), ratio, +1)
+        if ratio < 0.70:
+            return (cls._rz(f"利润率在周期低谷（当前是中周期的{ratio*100:.0f}%），可能是机会{inc}",
+                            f"margin near cycle trough ({ratio*100:.0f}% of mid-cycle) — possible opportunity{inc}",
+                            locale), ratio, -1)
+        return (cls._rz(f"利润率在周期中段{inc}", f"margin mid-cycle{inc}", locale), ratio, 0)
+
+    @classmethod
+    def _compute_quality(cls, profile, annual, signals, locale, industry=None):
+        """按配方算质量分 (0-100)；可算组件不足 → None（触发 NR）。"""
+        fns = {"roe": cls._q_roe, "margin": cls._q_margin, "stability": cls._q_stability,
+               "rev_cagr": cls._q_rev_cagr, "rule40": cls._q_rule40,
+               "piotroski": cls._q_piotroski, "survival": cls._q_survival,
+               "recovery": cls._q_recovery, "altman": cls._q_altman,
+               "roe_mid": cls._q_roe_mid, "margin_mid": cls._q_margin_mid,
+               "roa": cls._q_roa, "book_growth": cls._q_book_growth,
+               "cash_runway": cls._q_cash_runway}
+        got, reasons = [], []
+        for key, w in profile["q"]:
+            val, reason = fns[key](annual, signals, locale, industry)
+            if val is not None:
+                got.append((val, w))
+                reasons.append((w, reason))
+        if len(got) < profile["min"]:
+            return None, []
+        quality = sum(v * w for v, w in got) / sum(w for _, w in got)
+        reasons.sort(reverse=True)
+        return quality, [r for _, r in reasons if r]
+
+    @classmethod
+    def _forensic_flags(cls, annual, locale):
+        """步2种子：现金流 vs 利润背离（最强单一打假信号）。"""
+        flags, penalty = [], 0
+        if annual:
+            ocf = cls._num(annual[0].get("ocf_per_share"))
+            eps = cls._num(annual[0].get("eps"))
+            np_ = cls._num(annual[0].get("net_profit"))
+            if ocf is not None and eps is not None and eps > 0:
+                if ocf / eps < 0.8:
+                    penalty += 15
+                    flags.append(cls._rz(
+                        f"利润是正的，但经营现金流只有利润的{ocf/eps*100:.0f}%——赚的钱没真正进账户",
+                        f"Profit positive but OCF only {ocf/eps*100:.0f}% of it — earnings not turning to cash",
+                        locale))
+            elif np_ is not None and np_ > 0 and ocf is not None and ocf < 0:
+                penalty += 20
+                flags.append(cls._rz("账面盈利，但经营现金流为负——利润质量存疑",
+                                     "Book profit but negative operating cash flow", locale))
+        return flags, penalty
+
+    @staticmethod
+    def _industry_z(value, industry, metric):
+        """个股某估值指标 vs 同行业的 z-score（US-116 v2 行业中性化）。无基准→None。"""
+        if value is None or not industry:
+            return None
+        try:
+            import db
+            b = db.get_industry_benchmark(industry, metric)
+        except Exception:
+            return None
+        if not b or not b.get("std") or b["std"] <= 0:
+            return None
+        return (float(value) - b["mean"]) / b["std"]
+
+    @classmethod
+    def _value_tier(cls, profile, pe_pct, pb_pct, price_52week_pct, locale,
+                    pe_current=None, pb_current=None, industry=None):
+        """估值档：返回 (tier_zh, rank0-3, 理由)；无数据 → (None, 1, '')。
+        优先级：① 跟同行业比(行业中性化 z) > ② 跟自己历史比(分位) > ③ 股价位置。"""
+        metric = profile["v"]
+        if metric == "none":
+            return None, 1, ""
+
+        # ① 行业中性化 z-score（v2）——A股有行业基准时优先
+        z_metric = "pb" if metric == "pb" else "pe"
+        z_val = pb_current if z_metric == "pb" else pe_current
+        z = cls._industry_z(z_val, industry, z_metric)
+        if z is not None:
+            name = "PB" if z_metric == "pb" else "PE"
+            if z <= -1.0:
+                rank, word = 0, cls._rz("低于同行", "below peers", locale)
+            elif z <= 0.5:
+                rank, word = 1, cls._rz("与同行相当", "in line with peers", locale)
+            elif z <= 1.5:
+                rank, word = 2, cls._rz("高于同行", "above peers", locale)
+            else:
+                rank, word = 3, cls._rz("远高于同行", "well above peers", locale)
+            reason = cls._rz(f"{name} {word}（{z:+.1f}个标准差）",
+                             f"{name} {word} ({z:+.1f}σ vs industry)", locale)
+            return cls._tier_label(rank, locale), rank, reason
+
+        def from_pct(p, name):
+            if p is None:
+                return None
+            if p <= 25:
+                return 0, cls._rz(f"{name}处于历史低位（第{p}百分位）", f"{name} historically cheap (pct {p})", locale)
+            if p <= 60:
+                return 1, cls._rz(f"{name}估值合理（第{p}百分位）", f"{name} fair (pct {p})", locale)
+            if p <= 80:
+                return 2, cls._rz(f"{name}偏贵（第{p}百分位）", f"{name} pricey (pct {p})", locale)
+            return 3, cls._rz(f"{name}处于历史高位（第{p}百分位）", f"{name} historically expensive (pct {p})", locale)
+
+        res = None
+        if metric == "pb":
+            res = from_pct(pb_pct, "PB")
+        elif metric == "pe":
+            res = from_pct(pe_pct, "PE")
+        elif metric == "pe_or_price":
+            res = from_pct(pe_pct, "PE")
+        if res is None and metric in ("price", "pe_or_price") and price_52week_pct is not None:
+            p = price_52week_pct
+            if p >= 85:
+                res = (3, cls._rz(f"股价接近52周高点（{p:.0f}%位置）", f"near 52-wk high ({p:.0f}%)", locale))
+            elif p >= 65:
+                res = (2, cls._rz(f"股价处于偏高位置（{p:.0f}%）", f"upper range ({p:.0f}%)", locale))
+            elif p >= 35:
+                res = (1, cls._rz(f"股价处于中位（{p:.0f}%）", f"mid range ({p:.0f}%)", locale))
+            else:
+                res = (0, cls._rz(f"股价处于偏低位置（{p:.0f}%）", f"lower range ({p:.0f}%)", locale))
+        if res is None:
+            return None, 1, ""
+        rank, reason = res
+        return cls._tier_label(rank, locale), rank, reason
+
+    # 质量档 × 估值档 → (grade, conclusion, emoji, (一句话_zh, _en))  —— 方案 A 矩阵
+    _MATRIX = {
+        ("hi", 0): ("A", "买入", "🟢", ("好公司 + 便宜，难得", "great business + cheap — rare")),
+        ("hi", 1): ("B+", "买入", "🟢", ("好公司，价格合理", "great business, fair price")),
+        ("hi", 2): ("B", "持有", "🟡", ("好公司，但价格不便宜", "great business, not cheap")),
+        ("hi", 3): ("B-", "观察", "🟡", ("好公司，但贵了，等回调", "great business but expensive — wait")),
+        ("mid", 0): ("B", "持有", "🟡", ("普通公司，胜在便宜", "average business, cheap")),
+        ("mid", 1): ("B-", "持有", "🟡", ("普通公司，普通价", "average business, average price")),
+        ("mid", 2): ("C+", "观察", "🟠", ("普通公司，偏贵", "average business, pricey")),
+        ("mid", 3): ("C", "减持", "🔴", ("普通公司，太贵", "average business, too expensive")),
+        ("lo", 0): ("C", "观察", "🟠", ("便宜有便宜的道理，警惕价值陷阱", "cheap for a reason — value trap risk")),
+        ("lo", 1): ("C", "减持", "🔴", ("质量偏弱", "weak quality")),
+        ("lo", 2): ("D", "减持", "🔴", ("质量弱又不便宜", "weak and not cheap")),
+        ("lo", 3): ("D", "卖出", "🔴", ("又弱又贵", "weak and expensive")),
+    }
+
+    @classmethod
+    def _combine(cls, quality, value_rank, has_value, profile, locale):
+        band = "hi" if quality >= 65 else ("mid" if quality >= 40 else "lo")
+        if profile["v"] == "none":
+            # 困境股：质量=生存分，无估值轴
+            if quality >= 55:
+                return "C", "观察", "🟠", cls._rz("能撑住，先观察", "surviving, watch", locale)
+            if quality >= 30:
+                return "C", "减持", "🔴", cls._rz("生存承压，控制仓位", "under stress, trim", locale)
+            return "D", "卖出", "🔴", cls._rz("生存堪忧", "survival at risk", locale)
+        rank = value_rank if has_value else 1  # 无估值数据时按"合理"中性处理
+        g, c, e, desc_pair = cls._MATRIX[(band, rank)]
+        desc = cls._rz(desc_pair[0], desc_pair[1], locale)
+        # 诚实原则：不知道价格就不喊"买入"，降为"持有"
+        if not has_value and c == "买入":
+            c = "持有"
+            desc = cls._rz(desc + "（价格数据不足，先不下买入结论）",
+                           desc + " (price data thin — holding off on a buy call)", locale)
+        return g, c, e, desc
+
     @classmethod
     def rate_stock(cls, code: str, name: str, annual_data: List[Dict],
                    pe_percentile: Optional[int], pb_percentile: Optional[int],
                    price_52week_pct: Optional[float],
                    news_signals: Dict,
                    locale: str = "zh",
-                   signals: Dict = None) -> Dict:
+                   signals: Dict = None,
+                   company_type: Optional[str] = None,
+                   pe_current: Optional[float] = None,
+                   pb_current: Optional[float] = None,
+                   industry: Optional[str] = None) -> Dict:
         """
-        完整评级函数
+        类型感知评级（US-116）。质量×价格两轴，按 company_type 选尺子。
+        无 company_type → 回退旧版通用评级（向后兼容）。
+        pe_current/pb_current/industry：用于 v2 行业中性化估值（有则优先）。
+        """
+        if not company_type:
+            return cls._rate_legacy(code, name, annual_data, pe_percentile,
+                                    pb_percentile, price_52week_pct, news_signals,
+                                    locale, signals)
 
-        Returns dict with grade, conclusion (always Chinese for DB), components, red_flags, reasoning.
-        """
+        profile_key = cls._PROFILE_OF.get(company_type, "mature")
+        profile = cls._PROFILES[profile_key]
+        type_zh, type_en = cls._TYPE_NAMES.get(company_type, ("公司", "company"))
+        type_label = cls._rz(type_zh, type_en, locale)
+
+        # 数据门：质量无法计算 → NR「数据不足，暂不评级」，绝不返回 D
+        quality, q_reasons = cls._compute_quality(profile, annual_data, signals, locale, industry)
+        if quality is None:
+            return {
+                "code": code, "name": name, "score": None,
+                "grade": "NR", "conclusion": cls._rz("数据不足，暂不评级", "Not rated — insufficient data", locale),
+                "emoji": "⚪",
+                "quality_score": None, "value_tier": None,
+                "components": {"quality": (None, []), "value": (None, ""),
+                               "type": company_type, "profile": profile_key},
+                "red_flags": [], "data_incomplete": 1,
+                "reasoning": cls._rz(
+                    f"按{type_label}的标准看，但当前缺少足够财务数据，暂不给评级（不是看空，是没数据）。",
+                    f"Judged as {type_label}, but not enough financial data yet — not rated (no view, not bearish).",
+                    locale),
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            }
+
+        # 打假叠加层（步2种子）：现金流 vs 利润背离 → 扣质量分
+        flags, penalty = cls._forensic_flags(annual_data, locale)
+        quality = max(0.0, min(100.0, quality - penalty))
+
+        tier, value_rank, v_reason = cls._value_tier(
+            profile, pe_percentile, pb_percentile, price_52week_pct, locale,
+            pe_current=pe_current, pb_current=pb_current, industry=industry)
+        has_value = tier is not None
+
+        # 周期股：按周期位置调整估值档（峰值往贵推=PE陷阱预警，谷底往便宜推=机会）
+        cycle_note = ""
+        if profile_key == "cyclical":
+            cycle_note, _ratio, _delta = cls._cycle_position(annual_data, locale)
+            if has_value and _delta:
+                value_rank = max(0, min(3, value_rank + _delta))
+                tier = cls._tier_label(value_rank, locale)
+
+        grade, conclusion, emoji, verdict = cls._combine(
+            quality, value_rank, has_value, profile, locale)
+
+        q_int = round(quality)
+        top_q = q_reasons[0] if q_reasons else ""
+        reasoning = cls._rz(
+            f"按{type_label}的标准看：质量 {q_int}/100（{top_q}），"
+            f"{('估值' + tier) if has_value else '估值数据不足'}。{verdict}。",
+            f"As {type_label}: quality {q_int}/100 ({top_q}), "
+            f"{('valuation ' + (tier or '')) if has_value else 'valuation data thin'}. {verdict}.",
+            locale)
+        if cycle_note:
+            reasoning += "\n🔄 " + cycle_note
+        if flags:
+            reasoning += "\n⚠ " + flags[0]
+
+        return {
+            "code": code, "name": name,
+            "score": q_int,            # quant_score 列存质量分
+            "grade": grade, "conclusion": conclusion, "emoji": emoji,
+            "quality_score": q_int, "value_tier": tier,
+            "components": {
+                "quality": (q_int, q_reasons),
+                "value": (tier, v_reason),
+                "type": company_type, "profile": profile_key,
+            },
+            "red_flags": flags,
+            "reasoning": reasoning,
+            "data_incomplete": 0,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        }
+
+    @classmethod
+    def _rate_legacy(cls, code: str, name: str, annual_data: List[Dict],
+                     pe_percentile: Optional[int], pb_percentile: Optional[int],
+                     price_52week_pct: Optional[float],
+                     news_signals: Dict,
+                     locale: str = "zh",
+                     signals: Dict = None) -> Dict:
+        """旧版通用评级（无 company_type 时回退）。"""
         # 数据完整度检测：关键字段有多少是实际有值的（只把 None/空字符串视为缺失，0 是合法值）
         _key_fields = ["roe", "net_margin", "debt_ratio", "net_profit"]
         _present = sum(

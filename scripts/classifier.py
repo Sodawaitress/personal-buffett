@@ -81,6 +81,13 @@ def _is_etf(code: str, name: str) -> bool:
 
 _FINANCIAL_KW  = {"银行", "保险", "券商", "信托", "金融", "证券", "资管",
                    "bank", "insurance", "financial"}
+# 金融细分（US-116：CAMELS只适用银行，券商/保险要各自尺子）
+_BANK_KW       = {"银行", "bank"}
+_SECURITIES_KW = {"券商", "证券", "投行", "securities", "broker"}
+_INSURANCE_KW  = {"保险", "险", "insurance"}
+# 结构不同的类型（US-116）：生物药看现金跑道/管线，房地产看NAV/负债三道红线
+_BIOTECH_KW    = {"生物", "创新药", "生物医药", "biotech", "生物制品", "基因"}
+_PROPERTY_KW   = {"房地产", "地产", "置业", "real estate", "property"}
 _CYCLICAL_KW   = {"钢铁", "煤炭", "化工", "地产", "建材", "有色", "铝", "铜",
                    "矿", "石油", "能源", "steel", "coal", "chemical", "property"}
 _UTILITY_KW    = {"电力", "水务", "燃气", "热力", "公用", "供电", "自来水",
@@ -112,6 +119,17 @@ def classify_stock(code: str) -> dict:
     """
     stock        = db.get_stock(code) or {}
     fundamentals = db.get_fundamentals(code) or {}
+
+    # US-116 验证层：crowd/manual 定过的分类，auto 不覆盖（尊重人工/众包采信结果）
+    _existing = db.get_stock_meta(code) or {}
+    if _existing.get("manual_override") or _existing.get("type_source") in ("crowd", "manual"):
+        return {
+            "company_type": _existing.get("company_type"),
+            "market_tier":  _existing.get("market_tier"),
+            "st_status":    _existing.get("st_status"),
+            "industry":     _existing.get("industry"),
+            "_protected":   True,
+        }
 
     name   = stock.get("name", "") or stock.get("name_cn", "")
     market = stock.get("market", "us")
@@ -152,6 +170,33 @@ def classify_stock(code: str) -> dict:
     except Exception:
         pb_current = None
 
+    # ── 财务签名（US-117：行为优先于行业关键词）──────────────
+    # Lynch 按行为分类：快成长=利润真在增长、困境反转=曾盈利现转亏、周期=随经济起落
+    _roe_hist = [_to_float(y.get("roe")) for y in annual]
+    _roe_hist = [r for r in _roe_hist if r is not None]
+    positive_roe_years = sum(1 for r in _roe_hist if r > 0)
+    profitable_years   = sum(1 for r in _roe_hist if r > 5)
+    never_profitable   = positive_roe_years == 0
+    was_profitable     = positive_roe_years >= 2
+    currently_losing   = latest_roe is not None and latest_roe < 0
+    # 营收近几年复合增速（行为信号：是不是真的在长）
+    rev_cagr_3y = None
+    _revs = []
+    for y in annual:
+        v = y.get("revenue")
+        if v is not None:
+            try:
+                s = str(v).strip()
+                mult = 1e4 if s.endswith("亿") else 1.0
+                _revs.append(float(s.rstrip("亿万")) * mult)
+            except (ValueError, TypeError):
+                _revs.append(None)
+        else:
+            _revs.append(None)
+    _revs = [r for r in _revs if r is not None]
+    if len(_revs) >= 2 and _revs[-1] > 0 and _revs[0] > 0:
+        rev_cagr_3y = ((_revs[0] / _revs[-1]) ** (1 / (len(_revs) - 1)) - 1) * 100
+
     # GEM 市场 + 财务恶化 → speculative（优先于 growth_tech）
     # 判据：GEM 板块 且 以下任一条件成立：
     #   - ROE < 0（当期亏损）
@@ -188,21 +233,45 @@ def classify_stock(code: str) -> dict:
         company_type = "speculative"
     elif _is_supply_chain:
         company_type = "supply_chain"
-    elif _match_kw(sector, _FINANCIAL_KW):
-        company_type = "financial"
+    elif _match_kw(sector, _FINANCIAL_KW) or _match_kw(name, _FINANCIAL_KW):
+        # 金融细分：银行/券商/保险 各自尺子（CAMELS只适用银行）
+        _nm_sec = f"{name} {sector}"
+        if _match_kw(_nm_sec, _BANK_KW):
+            company_type = "bank"
+        elif _match_kw(_nm_sec, _SECURITIES_KW):
+            company_type = "securities"
+        elif _match_kw(_nm_sec, _INSURANCE_KW):
+            company_type = "insurance"
+        else:
+            company_type = "financial"
     elif _match_kw(sector, _UTILITY_KW):
         company_type = "utility"
+    elif _match_kw(sector, _PROPERTY_KW) or _match_kw(name, _PROPERTY_KW):
+        # 房地产：看 NAV/预售/负债(三道红线)，不是通用周期（先于 cyclical，因"地产"也在周期词里）
+        company_type = "property"
     elif _match_kw(sector, _CYCLICAL_KW):
+        # 周期行业：随经济起落，亏是行业低谷（看周期位置，不是公司出问题）
         company_type = "cyclical"
-    elif market_tier in ("star", "gem") or _match_kw(sector, _GROWTH_KW):
+    elif (_match_kw(sector, _BIOTECH_KW) or _match_kw(name, _BIOTECH_KW)) and (never_profitable or currently_losing):
+        # 临床期生物药：看现金跑道/管线，Rule of 40 不适用（盈利的成熟药企不走这，落成长/价值）
+        company_type = "biotech"
+    elif never_profitable and currently_losing:
+        # 从没真正盈利过 + 当前亏损 → 未盈利初创
+        company_type = "pre_profit"
+    elif was_profitable and currently_losing:
+        # 曾经盈利 + 当前转亏 → 困境反转（看恢复趋势，不是周期）
+        company_type = "turnaround"
+    elif rev_cagr_3y is not None and rev_cagr_3y >= 18 and not currently_losing:
+        # 营收真在高速增长 + 当前盈利 → 真·快成长
         company_type = "growth_tech"
+    elif market_tier in ("star", "gem") or _match_kw(sector, _GROWTH_KW):
+        # 成长板块/行业仅作 fallback 提示：盈利才算成长，亏损不再无脑 growth
+        if currently_losing:
+            company_type = "turnaround" if was_profitable else "pre_profit"
+        else:
+            company_type = "growth_tech"
     elif neg_roe_years >= 2:
-        # 区分「成熟公司暂时亏损」vs「真正的未盈利初创」：
-        # 如果历史上有3年以上盈利记录（ROE > 5%），说明是周期性困境，不是初创
-        profitable_years = sum(
-            1 for y in annual
-            if _to_float(y.get("roe")) is not None and _to_float(y["roe"]) > 5
-        )
+        # 历史有3年以上盈利记录 → 周期性困境（成熟价值），否则未盈利初创
         company_type = "mature_value" if profitable_years >= 3 else "pre_profit"
     else:
         company_type = "mature_value"

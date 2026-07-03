@@ -14,11 +14,11 @@ def upsert_stock(code, name, market, name_cn=None, exchange=None, sector=None, c
             INSERT INTO stocks(code,name,name_cn,market,exchange,sector,currency,asset_type,last_fetched)
             VALUES(:code,:name,:name_cn,:market,:exchange,:sector,:currency,:asset_type,CURRENT_TIMESTAMP)
             ON CONFLICT(code) DO UPDATE SET
-              name=excluded.name, name_cn=COALESCE(excluded.name_cn,name_cn),
-              market=excluded.market, exchange=COALESCE(excluded.exchange,exchange),
-              sector=COALESCE(excluded.sector,sector),
+              name=excluded.name, name_cn=COALESCE(excluded.name_cn,stocks.name_cn),
+              market=excluded.market, exchange=COALESCE(excluded.exchange,stocks.exchange),
+              sector=COALESCE(excluded.sector,stocks.sector),
               currency=excluded.currency,
-              asset_type=COALESCE(excluded.asset_type,asset_type),
+              asset_type=COALESCE(excluded.asset_type,stocks.asset_type),
               last_fetched=excluded.last_fetched
             """,
             {"code": code, "name": name, "name_cn": name_cn, "market": market,
@@ -78,6 +78,16 @@ def remove_user_stock(user_id, code):
 def all_watched_codes():
     with get_conn() as c:
         return [r["stock_code"] for r in c.execute("SELECT DISTINCT stock_code FROM user_watchlist WHERE removed_at IS NULL")]
+
+
+def get_users_watching_code(code: str) -> list[int]:
+    """返回所有 watching/holding 该股票的 user_id 列表（未删除）。"""
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT user_id FROM user_watchlist WHERE stock_code=:code AND removed_at IS NULL",
+            {"code": code},
+        ).fetchall()
+        return [r["user_id"] for r in rows]
 
 
 def get_all_cn_watchlist_stocks():
@@ -297,7 +307,7 @@ def save_analyst_consensus(code, data: dict):
     with get_conn() as c:
         c.execute(
             """INSERT INTO analyst_consensus(code, fetched_at, data_json)
-               VALUES(:code, datetime('now'), :data)
+               VALUES(:code, CURRENT_TIMESTAMP, :data)
                ON CONFLICT(code) DO UPDATE SET fetched_at=excluded.fetched_at, data_json=excluded.data_json""",
             {"code": code, "data": json.dumps(data, ensure_ascii=False)},
         )
@@ -323,7 +333,7 @@ def save_industry_signal(industry_key: str, data: dict):
     with get_conn() as c:
         c.execute(
             """INSERT INTO industry_signals(industry_key, fetched_at, signal_json)
-               VALUES(:k, datetime('now'), :data)
+               VALUES(:k, CURRENT_TIMESTAMP, :data)
                ON CONFLICT(industry_key) DO UPDATE SET fetched_at=excluded.fetched_at, signal_json=excluded.signal_json""",
             {"k": industry_key, "data": json.dumps(data, ensure_ascii=False)},
         )
@@ -385,7 +395,7 @@ def upsert_fundamentals(code, annual, pe_current=None, pe_percentile_5y=None, pb
                 pe_percentile_5y=excluded.pe_percentile_5y,
                 pb_current=excluded.pb_current,
                 pb_percentile_5y=excluded.pb_percentile_5y,
-                signals_json=COALESCE(excluded.signals_json, signals_json),
+                signals_json=COALESCE(excluded.signals_json, stock_fundamentals.signals_json),
                 updated_at=excluded.updated_at
             """,
             {
@@ -397,6 +407,60 @@ def upsert_fundamentals(code, annual, pe_current=None, pe_percentile_5y=None, pb
                 "pb_pct": pb_percentile_5y,
                 "signals": json.dumps(signals, ensure_ascii=False) if signals else None,
             },
+        )
+
+
+def save_industry_benchmark(industry, metric, mean, std, n):
+    """写入/更新行业基准（US-116 v2 行业中性化）。"""
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO industry_benchmarks(industry, metric, mean, std, n, updated_at)
+               VALUES(:i,:m,:mean,:std,:n,CURRENT_TIMESTAMP)
+               ON CONFLICT(industry, metric) DO UPDATE SET
+                 mean=excluded.mean, std=excluded.std, n=excluded.n, updated_at=excluded.updated_at""",
+            {"i": industry, "m": metric, "mean": mean, "std": std, "n": n},
+        )
+
+
+def get_industry_benchmark(industry, metric):
+    """取某行业某指标的 mean/std/n；无则 None。"""
+    if not industry:
+        return None
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT mean, std, n FROM industry_benchmarks WHERE industry=:i AND metric=:m",
+            {"i": industry, "m": metric},
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def save_stock_industry(code, industry):
+    """写全市场 ticker→东财行业 映射（无外键，含未跟踪股）。"""
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO stock_industry_map(code, industry, updated_at)
+               VALUES(:code,:ind,CURRENT_TIMESTAMP)
+               ON CONFLICT(code) DO UPDATE SET industry=excluded.industry, updated_at=CURRENT_TIMESTAMP""",
+            {"code": code, "ind": industry},
+        )
+
+
+def get_stock_industry(code):
+    """取个股的东财行业（纯数字代码，去掉市场后缀）。"""
+    pure = str(code).split(".")[0].zfill(6)
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT industry FROM stock_industry_map WHERE code=:c", {"c": pure}
+        ).fetchone()
+        return row["industry"] if row else None
+
+
+def update_annual_json(code, annual):
+    """只更新 annual_json，不动 pe/pb/signals（US-116 #3：advanced 补字段后回写）。"""
+    with get_conn() as c:
+        c.execute(
+            "UPDATE stock_fundamentals SET annual_json=:a, updated_at=CURRENT_TIMESTAMP WHERE code=:code",
+            {"a": json.dumps(annual, ensure_ascii=False), "code": code},
         )
 
 
@@ -564,15 +628,17 @@ def get_news_sentiment_map(codes: list) -> dict:
     """
     if not codes:
         return {}
+    from datetime import datetime, timedelta
     placeholders = ", ".join(f":c{i}" for i in range(len(codes)))
     params = {f"c{i}": c for i, c in enumerate(codes)}
+    params["cutoff"] = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
     with get_conn() as conn:
         rows = conn.execute(
             f"""
             SELECT code, AVG(sentiment) AS avg_s
             FROM stock_news
             WHERE code IN ({placeholders})
-              AND fetched_date >= date('now', '-7 days')
+              AND fetched_date >= :cutoff
               AND sentiment IS NOT NULL
             GROUP BY code
             HAVING COUNT(*) >= 3

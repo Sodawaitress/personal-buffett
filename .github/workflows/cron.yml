@@ -7,72 +7,52 @@ on:
   workflow_dispatch:
 
 jobs:
-  trigger:
+  # 重活：pipeline 直接在 runner 里跑（7GB 内存，不会 OOM），写 Neon
+  # 迁 Neon 后 DB 在云上，pipeline 不必挤在 Fly 512MB 上
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run daily pipeline (all users' watchlist → Neon + push)
+        run: python -m scripts.stock_pipeline
+
+      - name: Backfill prediction returns
+        if: always()
+        continue-on-error: true
+        run: python -c "from scripts.backfill_returns import backfill_predictions; backfill_predictions()"
+
+  # 轻活：digest（快照+预测入库）+ precursor scan，仍触发 Fly（不 OOM，写 Neon）
+  light:
     runs-on: ubuntu-latest
     env:
       APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
-
     steps:
-      - name: Trigger daily digest (snapshot commit + prediction ingest)
+      - name: Trigger daily digest
         run: |
           HTTP=$(curl -s -o /tmp/digest.json -w "%{http_code}" \
             -X POST "${APP_URL}/api/trigger-digest" \
-            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}" \
-            -H "Content-Type: application/json")
-          echo "digest → HTTP $HTTP"
-          cat /tmp/digest.json
+            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
+          echo "digest → HTTP $HTTP"; cat /tmp/digest.json
           [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
 
-      - name: Trigger daily pipeline
-        run: |
-          HTTP=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
-            -X POST "${APP_URL}/api/trigger-pipeline" \
-            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}" \
-            -H "Content-Type: application/json")
-          echo "pipeline → HTTP $HTTP"
-          cat /tmp/pipeline.json
-          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
-
-      - name: Trigger precursor scan (A-share signals, independent of digest)
+      - name: Trigger precursor scan
         run: |
           HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
             -X POST "${APP_URL}/api/trigger-scan" \
-            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}" \
-            -H "Content-Type: application/json")
-          echo "scan → HTTP $HTTP"
-          cat /tmp/scan.json
-          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
-
-  backup:
-    runs-on: ubuntu-latest
-    # startsWith check was always false ('0 8 * * 1-5' ≠ '0 8 * * 5'); run on every weekday instead
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-    needs: trigger
-    env:
-      APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-    steps:
-      - name: Create remote backup
-        run: |
-          HTTP=$(curl -s -o /tmp/backup.json -w "%{http_code}" \
-            -X POST "${APP_URL}/api/trigger-backup" \
             -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
-          echo "backup → HTTP $HTTP"
-          cat /tmp/backup.json
-          [ "$HTTP" = "200" ]
-
-      - name: Setup flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Download backup from Fly volume
-        run: flyctl sftp get /data/radar.db.bak ./radar_backup.db --app personal-buffett
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Upload backup as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: radar-db-backup-${{ github.run_id }}
-          path: radar_backup.db
-          retention-days: 90
+          echo "scan → HTTP $HTTP"; cat /tmp/scan.json
+          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]

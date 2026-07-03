@@ -277,26 +277,59 @@ def _fetch_financials(code, market, log):
             try:
                 fin = ticker.financials
                 bs = ticker.balance_sheet
+                cf = ticker.cashflow
+                # US-116 #3：补存 Piotroski-9 + Altman Z'' 所需字段
+                def _bs(name, col):
+                    return bs.loc[name, col] if name in bs.index and col in bs.columns else None
+                def _cf(name, col):
+                    return cf.loc[name, col] if name in cf.index and col in cf.columns else None
+                def _fin(name, col):
+                    return fin.loc[name, col] if name in fin.index and col in fin.columns else None
+                def _yi(v):  # 元 → 亿，None 安全
+                    try:
+                        return round(float(v) / 1e8, 2) if v is not None and v == v else None
+                    except (ValueError, TypeError):
+                        return None
                 years = list(fin.columns)[:4]
                 for col in years:
                     try:
                         net_income = fin.loc["Net Income", col] if "Net Income" in fin.index else None
                         total_rev = fin.loc["Total Revenue", col] if "Total Revenue" in fin.index else None
-                        equity = bs.loc["Stockholders Equity", col] if "Stockholders Equity" in bs.index else None
-                        total_assets = bs.loc["Total Assets", col] if "Total Assets" in bs.index else None
+                        equity = _bs("Stockholders Equity", col)
+                        total_assets = _bs("Total Assets", col)
+                        cur_assets = _bs("Current Assets", col)
+                        cur_liab = _bs("Current Liabilities", col)
+                        retained = _bs("Retained Earnings", col)
+                        shares = _bs("Share Issued", col) or _bs("Ordinary Shares Number", col)
+                        cfo = _cf("Operating Cash Flow", col)
+                        ebit = _fin("EBIT", col)
+                        if ebit is None:
+                            ebit = _fin("Operating Income", col)
+                        gross_profit = _fin("Gross Profit", col)
 
                         roe = (net_income / equity * 100) if net_income and equity and equity > 0 else None
                         npm = (net_income / total_rev * 100) if net_income and total_rev and total_rev > 0 else None
                         dar = ((total_assets - equity) / total_assets * 100) if total_assets and equity and total_assets > 0 else None
+                        gm = (gross_profit / total_rev * 100) if gross_profit is not None and total_rev else None
 
                         annual.append(
                             {
                                 "year": str(col.year) if hasattr(col, "year") else str(col)[:4],
                                 "roe": round(roe, 2) if roe else None,
                                 "net_margin": round(npm, 2) if npm else None,
+                                "gross_margin": round(gm, 2) if gm is not None else None,
                                 "debt_ratio": round(dar, 2) if dar else None,
                                 "revenue": round(total_rev / 1e8, 2) if total_rev else None,
                                 "net_profit": round(net_income / 1e8, 2) if net_income else None,
+                                # US-116 #3 新字段（亿；shares 为原始股数）
+                                "total_assets": _yi(total_assets),
+                                "current_assets": _yi(cur_assets),
+                                "current_liabilities": _yi(cur_liab),
+                                "retained_earnings": _yi(retained),
+                                "equity": _yi(equity),
+                                "ebit": _yi(ebit),
+                                "cfo": _yi(cfo),
+                                "shares": float(shares) if shares is not None and shares == shares else None,
                             }
                         )
                     except Exception:
@@ -336,6 +369,7 @@ def _fetch_advanced(code, market, log):
             fundamentals = db.get_fundamentals(code)
             annual = fundamentals.get("annual", []) if fundamentals else []
             adv = fetch_cn_advanced(code, annual=annual)
+            db.update_annual_json(code, annual)  # US-116 #3：回写 advanced 补进 annual 的字段
             if adv:
                 db.upsert_signals(code, adv)
                 parts = []
