@@ -39,34 +39,18 @@
       <span class="home-date">{{ now[:10] }}</span>
     </div>
     <div class="masthead-right">
+      {# 静默新鲜度指示，无需手动刷新（页面加载自动后台同步） #}
       <span id="bg-refresh-status" class="bg-refresh-status"></span>
-      <button id="btn-fetch" onclick="triggerFetch()" class="btn-text home-refresh-btn" title="{{ t.btn_refresh }}">
-        <i class="bi bi-arrow-repeat"></i>
-      </button>
     </div>
   </div>
-
-  <div id="fetch-log" class="fetch-log" style="display:none"></div>
 
   {# ══════════════════════════════════
      三卡片行（横向滑动）
      ══════════════════════════════════ #}
   <div class="home-cards-row">
 
-    {# 卡片 1：今日简报 #}
-    <a href="{{ url_for('brief_page') }}" class="home-card home-card-brief">
-      <div class="hc-main">
-        <div class="hc-title">{{ t.home_card_brief }}</div>
-        <div class="hc-sub">{{ t.home_card_brief_sub if stocks else t.home_card_brief_none }}</div>
-      </div>
-      <div class="hc-right">
-        {% if stocks %}
-          {% set warn_count = stocks | selectattr('alert_level','eq','warn') | list | length %}
-          {% if warn_count > 0 %}<span class="hc-alert-badge">{{ warn_count }} ⚠</span>{% endif %}
-        {% endif %}
-        ›
-      </div>
-    </a>
+    {# 卡片 1「今日简报」已删除：泛泛的 LLM 日报意义不大，且对妈妈是信息过载。
+       预警数改由具体信号呈现，不再用合成日报。 #}
 
     {# 卡片 2：我的选股 #}
     <a href="{{ url_for('watchlist_page') }}" class="home-card home-card-watchlist">
@@ -115,15 +99,8 @@
       </form>
     </div>
 
-    {# 卡片 4：今日预言 #}
-    <a href="#" class="home-card home-card-quest">
-      <div class="hc-main">
-        <div class="hc-quest-kicker">{{ t.home_card_quest_kicker }}</div>
-        <div class="hc-title">{{ t.home_card_quest_title }}</div>
-        <div class="hc-quest-sub">{{ t.home_card_quest_sub }}</div>
-      </div>
-      <div class="hc-right hc-quest-icon">✒</div>
-    </a>
+    {# 卡片 4「今日预言」已隐藏：i18n key(quest_kicker/title/sub)从未定义，
+       整卡渲染为空文字只剩 ✒ 图标，对妈妈是阅读障碍。 #}
 
   </div>{# /home-cards-row #}
 
@@ -325,25 +302,8 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/search-widget.js') }}"></script>
 <script>
-// ── 刷新宏观数据 ──────────────────────────────────────
-async function triggerFetch() {
-  const btn = document.getElementById('btn-fetch');
-  const log = document.getElementById('fetch-log');
-  btn.disabled = true;
-  log.style.display = 'block';
-  log.textContent = 'Connecting…\n';
-  try {
-    const resp = await fetch('/fetch', { method: 'POST' });
-    const data = await resp.json();
-    log.textContent = data.stdout || '(no output)';
-    if (!data.ok) log.textContent += '\n' + data.stderr;
-    btn.disabled = false;
-    if (data.ok) setTimeout(() => location.reload(), 1500);
-  } catch(e) {
-    log.textContent = 'Failed: ' + e;
-    btn.disabled = false;
-  }
-}
+// 宏观数据由每日 pipeline + 页面加载的静默后台同步（runHomeLoader）自动更新，
+// 不再有手动「刷新」按钮，避免向妈妈暴露后台终端与 JSON 报错。
 
 function focusSearch(e) {
   document.getElementById('search-q').focus();

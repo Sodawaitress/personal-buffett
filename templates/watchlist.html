@@ -59,60 +59,63 @@
   </div>
   {% endif %}
 
-  {# ── 顶部工具栏 ── #}
-  <div class="wl-toolbar">
-    <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>
-    {% if holding or sold %}<a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>{% endif %}
-
-    {# 搜索框 #}
-    <div class="wl-search-wrap">
-      <input type="text" id="wl-search" class="wl-search-input" placeholder="{{ t.wl_search_placeholder }}" oninput="filterBySearch(this.value)" autocomplete="off">
-      <button class="wl-search-clear" id="wl-search-clear" onclick="clearSearch()" style="display:none">×</button>
+  {# ── 顶部工具栏（Option B：添加大号居中 · 搜索收图标 · 排序+筛选合成一个▾面板） ── #}
+  <div class="wl-toolbar-b">
+    <div class="wl-title-row">
+      <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>
+      {% if holding or sold %}<a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>{% endif %}
     </div>
 
-    <div class="wl-toolbar-controls">
-      {# 机构雷达扫描 #}
-      {% if has_cn_stocks %}
-      <button class="wl-icon-btn" id="precursor-scan-btn" onclick="startPrecursorScan()" title="{{ t.btn_inst_radar_title }}">{{ t.btn_inst_radar }}</button>
+    {# 添加：大号居中主按钮 #}
+    <button class="wl-add-hero" onclick="toggleAddPanel()">
+      <svg width="15" height="15" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2.2" pointer-events="none">
+        <line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/>
+      </svg>
+      {{ t.wl_add_btn }}
+    </button>
+
+    {# 次级控制行：搜索(收成图标，点开展开) + 机构雷达/列表 + 排序筛选▾ #}
+    <div class="wl-controls-row">
+      <div class="wl-search-wrap" id="wl-search-wrap">
+        <button class="wl-search-icon" onclick="toggleWlSearch()" title="{{ t.wl_search_placeholder }}" aria-label="{{ t.wl_search_placeholder }}">🔍</button>
+        <input type="text" id="wl-search" class="wl-search-input" placeholder="{{ t.wl_search_placeholder }}" oninput="filterBySearch(this.value)" autocomplete="off">
+        <button class="wl-search-clear" id="wl-search-clear" onclick="clearSearch()" style="display:none">×</button>
+      </div>
+
+      <div class="wl-controls-right">
+        {% if has_cn_stocks %}
+        <button class="wl-icon-btn" id="precursor-scan-btn" onclick="startPrecursorScan()" title="{{ t.btn_inst_radar_title }}">{{ t.btn_inst_radar }}</button>
+        {% endif %}
+        <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">{{ t.wl_view_toggle }}</button>
+        <button class="wl-icon-btn wl-sf-toggle" id="wl-sf-toggle" onclick="toggleSortFilterPanel()">{{ t.wl_sort_label }} / {{ t.wl_filter_label }} <span class="wl-sf-caret">▾</span></button>
+      </div>
+    </div>
+
+    {# 排序 + 筛选 合并面板（默认收起） #}
+    <div class="wl-sortfilter-panel" id="wl-sortfilter-panel">
+      <div class="wl-sf-group">
+        <span class="wl-sort-label">{{ t.wl_sort_label }}</span>
+        <button class="wl-sort-pill active" data-sort="default"    onclick="setSortPill(this,'default')">{{ t.wl_sort_default }}</button>
+        <button class="wl-sort-pill"        data-sort="grade"      onclick="setSortPill(this,'grade')">{{ t.wl_sort_grade }}</button>
+        <button class="wl-sort-pill"        data-sort="conclusion" onclick="setSortPill(this,'conclusion')">{{ t.wl_sort_conclusion }}</button>
+        <button class="wl-sort-pill"        data-sort="change"     onclick="setSortPill(this,'change')">{{ t.wl_sort_change }}</button>
+        <button class="wl-sort-pill"        data-sort="date"       onclick="setSortPill(this,'date')">{{ t.wl_sort_date }}</button>
+      </div>
+      {% if wl_markets | length > 1 %}
+      <div class="wl-sf-group" id="wl-filter-bar">
+        <span class="wl-sort-label">{{ t.wl_filter_label }}</span>
+        {% for m in wl_markets %}
+        <button class="wl-filter-chip" data-key="market" data-val="{{ m }}" onclick="applyWlFilter('market','{{ m }}',this)">{{ m | upper }}</button>
+        {% endfor %}
+        <span class="wl-filter-sep">|</span>
+        {% for g in ['A+','A','B+','B','B-','C','D'] %}
+        <button class="wl-filter-chip" data-key="grade" data-val="{{ g }}" onclick="applyWlFilter('grade','{{ g }}',this)">{{ g }}</button>
+        {% endfor %}
+        <button class="wl-filter-clear hidden" id="wl-filter-clear" onclick="clearWlFilters()">✕ {{ t.wl_filter_clear }}</button>
+      </div>
       {% endif %}
-
-      {# 视图切换（单按钮） #}
-      <button class="wl-icon-btn" id="view-toggle-btn" onclick="toggleView()">{{ t.wl_view_toggle }}</button>
-
-      {# 添加 #}
-      <button class="wl-icon-btn wl-add-btn" onclick="toggleAddPanel()">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" pointer-events="none">
-          <line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/>
-        </svg>
-        {{ t.wl_add_btn }}
-      </button>
     </div>
   </div>
-
-  {# ── 排序栏 ── #}
-  <div class="wl-sort-bar">
-    <span class="wl-sort-label">{{ t.wl_sort_label }}</span>
-    <button class="wl-sort-pill active" data-sort="default"    onclick="setSortPill(this,'default')">{{ t.wl_sort_default }}</button>
-    <button class="wl-sort-pill"        data-sort="grade"      onclick="setSortPill(this,'grade')">{{ t.wl_sort_grade }}</button>
-    <button class="wl-sort-pill"        data-sort="conclusion" onclick="setSortPill(this,'conclusion')">{{ t.wl_sort_conclusion }}</button>
-    <button class="wl-sort-pill"        data-sort="change"     onclick="setSortPill(this,'change')">{{ t.wl_sort_change }}</button>
-    <button class="wl-sort-pill"        data-sort="date"       onclick="setSortPill(this,'date')">{{ t.wl_sort_date }}</button>
-  </div>
-
-  {# ── 筛选栏 ── #}
-  {% if wl_markets | length > 1 %}
-  <div class="wl-filter-bar" id="wl-filter-bar">
-    <span class="wl-sort-label">{{ t.wl_filter_label }}</span>
-    {% for m in wl_markets %}
-    <button class="wl-filter-chip" data-key="market" data-val="{{ m }}" onclick="applyWlFilter('market','{{ m }}',this)">{{ m | upper }}</button>
-    {% endfor %}
-    <span class="wl-filter-sep">|</span>
-    {% for g in ['A+','A','B+','B','B-','C','D'] %}
-    <button class="wl-filter-chip" data-key="grade" data-val="{{ g }}" onclick="applyWlFilter('grade','{{ g }}',this)">{{ g }}</button>
-    {% endfor %}
-    <button class="wl-filter-clear hidden" id="wl-filter-clear" onclick="clearWlFilters()">✕ {{ t.wl_filter_clear }}</button>
-  </div>
-  {% endif %}
 
   {# 添加股票面板 #}
   <div id="add-panel" class="add-panel hidden">
@@ -506,6 +509,29 @@ document.addEventListener('click', e => {
     document.querySelectorAll('#sort-btn').forEach(b => b.classList.remove('active'));
   }
 });
+
+// ── Option B：搜索图标展开/收起 ─────────────────────────
+function toggleWlSearch() {
+  const wrap = document.getElementById('wl-search-wrap');
+  const inp  = document.getElementById('wl-search');
+  const expanded = wrap.classList.toggle('expanded');
+  if (expanded) {
+    inp.focus();
+  } else if (inp.value) {         // 收起时若有筛选词，清掉
+    inp.value = '';
+    filterBySearch('');
+    const clr = document.getElementById('wl-search-clear');
+    if (clr) clr.style.display = 'none';
+  }
+}
+
+// ── Option B：排序+筛选合并面板 展开/收起 ────────────────
+function toggleSortFilterPanel() {
+  const panel = document.getElementById('wl-sortfilter-panel');
+  const btn   = document.getElementById('wl-sf-toggle');
+  const open  = panel.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', open);
+}
 
 // ── 视图切换（单按钮） ─────────────────────────────────
 function toggleView() {

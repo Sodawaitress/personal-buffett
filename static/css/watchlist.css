@@ -2712,3 +2712,66 @@
   padding: 24px 0;
   line-height: 1.6;
 }
+
+/* ══════════════════════════════════════════════════════════
+   Option B 工具栏：添加大号居中 · 搜索收图标 · 排序+筛选合一
+   ══════════════════════════════════════════════════════════ */
+.wl-toolbar-b {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 14px;
+}
+.wl-title-row { display: flex; align-items: baseline; gap: 10px; }
+.wl-add-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 36px;
+  font-size: 16px;
+  font-weight: 700;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.wl-add-hero:hover { opacity: .88; }
+.wl-add-hero svg { stroke: #fff; }
+.wl-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+.wl-controls-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* 搜索：默认只见 🔍 图标，点开展开输入框 */
+.wl-search-icon {
+  background: none; border: none; cursor: pointer;
+  font-size: 15px; padding: 4px 6px; opacity: .55; line-height: 1;
+}
+.wl-search-icon:hover { opacity: .9; }
+.wl-search-wrap .wl-search-input {
+  width: 0; padding: 0; border-width: 0; opacity: 0;
+  transition: width .18s ease, opacity .18s ease, padding .18s ease;
+}
+.wl-search-wrap.expanded .wl-search-input {
+  width: 180px; padding: 5px 28px 5px 10px; border-width: 1px; opacity: 1;
+}
+.wl-search-wrap.expanded .wl-search-icon { opacity: .9; }
+
+/* 排序/筛选 折叠面板 */
+.wl-sf-toggle .wl-sf-caret { display: inline-block; transition: transform .15s; }
+.wl-sf-toggle.active .wl-sf-caret { transform: rotate(180deg); }
+.wl-sortfilter-panel { display: none; width: 100%; flex-direction: column; gap: 8px; padding-top: 4px; }
+.wl-sortfilter-panel.open { display: flex; }
+.wl-sf-group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+@media (max-width: 480px) {
+  .wl-add-hero { width: 100%; justify-content: center; }
+  .wl-search-wrap.expanded .wl-search-input { width: 130px; }
+}
