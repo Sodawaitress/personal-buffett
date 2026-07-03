@@ -2795,3 +2795,17 @@
   .wl-add-hero { width: 100%; justify-content: center; }
   .wl-search-wrap.expanded .wl-search-input { width: 130px; }
 }
+
+/* 首页添加：居中大号按钮 + 展开面板（与选股页一致） */
+.home-add-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 20px;
+}
+.home-add-panel {
+  width: 100%;
+  max-width: 520px;
+}
+.home-add-panel.hidden { display: none; }
