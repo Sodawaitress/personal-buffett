@@ -114,10 +114,7 @@ def register_dashboard_routes(app):
                         pass
 
             try:
-                subprocess.run(["python3", "scripts/fetch_home_fast.py"], cwd=root, capture_output=True, timeout=120)
-                if precursor_stale:
-                    _update("precursor")
-                    subprocess.run(["python3", "scripts/precursor_signals.py"], cwd=root, capture_output=True, timeout=600)
+                pass  # 重子进程已移除：512MB 机器上 akshare/pandas 会吃满内存拖垮整站（含登录），数据由每日 pipeline 保新鲜
             finally:
                 if job_id:
                     try:
@@ -129,8 +126,7 @@ def register_dashboard_routes(app):
                     except Exception:
                         pass
 
-        threading.Thread(target=_run, daemon=True).start()
-        return jsonify({"status": "started", "precursor_stale": precursor_stale})
+        return jsonify({"status": "skipped", "precursor_stale": precursor_stale})
 
     @app.route("/api/home/refresh/status")
     @login_required
