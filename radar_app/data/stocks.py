@@ -14,11 +14,11 @@ def upsert_stock(code, name, market, name_cn=None, exchange=None, sector=None, c
             INSERT INTO stocks(code,name,name_cn,market,exchange,sector,currency,asset_type,last_fetched)
             VALUES(:code,:name,:name_cn,:market,:exchange,:sector,:currency,:asset_type,CURRENT_TIMESTAMP)
             ON CONFLICT(code) DO UPDATE SET
-              name=excluded.name, name_cn=COALESCE(excluded.name_cn,name_cn),
-              market=excluded.market, exchange=COALESCE(excluded.exchange,exchange),
-              sector=COALESCE(excluded.sector,sector),
+              name=excluded.name, name_cn=COALESCE(excluded.name_cn,stocks.name_cn),
+              market=excluded.market, exchange=COALESCE(excluded.exchange,stocks.exchange),
+              sector=COALESCE(excluded.sector,stocks.sector),
               currency=excluded.currency,
-              asset_type=COALESCE(excluded.asset_type,asset_type),
+              asset_type=COALESCE(excluded.asset_type,stocks.asset_type),
               last_fetched=excluded.last_fetched
             """,
             {"code": code, "name": name, "name_cn": name_cn, "market": market,
@@ -395,7 +395,7 @@ def upsert_fundamentals(code, annual, pe_current=None, pe_percentile_5y=None, pb
                 pe_percentile_5y=excluded.pe_percentile_5y,
                 pb_current=excluded.pb_current,
                 pb_percentile_5y=excluded.pb_percentile_5y,
-                signals_json=COALESCE(excluded.signals_json, signals_json),
+                signals_json=COALESCE(excluded.signals_json, stock_fundamentals.signals_json),
                 updated_at=excluded.updated_at
             """,
             {
