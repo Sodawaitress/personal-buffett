@@ -45,9 +45,6 @@
         <span class="stock-code-tag" style="font-size:11px;opacity:.5">{{ stock.code }}</span>
       </div>
       <div class="stock-masthead-meta">
-        {% if analysis and analysis.conclusion %}
-        <span class="stock-masthead-conclusion">{{ analysis.conclusion }}</span>
-        {% endif %}
         {% if analysis and analysis.analysis_date %}
         <span class="stock-masthead-date">{{ analysis.analysis_date }}</span>
         {% endif %}

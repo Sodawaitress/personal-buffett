@@ -40,8 +40,8 @@
     "zh": "扫描中…"
   },
   "btn_inst_radar_title": {
-    "en": "Scan all A-Share stocks for institutional activity",
-    "zh": "扫描全部 A 股的机构调研 + 参与度，结果推送微信"
+    "en": "Scan all A-Share stocks for institutional activity — updates the signal board",
+    "zh": "扫描全部 A 股的机构调研 + 参与度，结果更新到信号榜单"
   },
   "btn_latest_report": {
     "en": "Latest Report",

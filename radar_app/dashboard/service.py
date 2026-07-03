@@ -9,7 +9,7 @@ from radar_app.dashboard.presenter import (
     present_intl_news,
     present_portfolio_brief,
 )
-from radar_app.data.stocks import get_news_sentiment_map
+from radar_app.data.stocks import get_news_sentiment_map, get_upcoming_events_for_user
 from radar_app.dashboard.query import (
     get_fomc_news_items,
     get_intl_stock_news,
@@ -59,6 +59,7 @@ def build_dashboard_context(user_id, region, locale="en"):
         "intl_news": present_intl_news(intl_news, market),
         "market": market,
         "portfolio_brief": present_portfolio_brief(get_portfolio_brief(user_id, date=today)),
+        "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),
         "now": now_label(),
         **get_reports_bundle(),
     }

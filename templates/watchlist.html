@@ -36,28 +36,7 @@
   </div>
   {% endif %}
 
-  {# ── US-38 近期催化剂事件横幅 ── #}
-  {% if upcoming_events %}
-  <div class="catalyst-banner">
-    <div class="catalyst-banner-title">{{ t.catalyst_title }}</div>
-    <div class="catalyst-banner-list">
-      {% set ev_type_labels = {
-        'share_unlock':       t.catalyst_share_unlock,
-        'earnings_report':    t.catalyst_earnings_report,
-        'major_announcement': t.catalyst_major_announcement,
-        'earnings_forecast':  t.catalyst_earnings_forecast,
-      } %}
-      {% for ev in upcoming_events %}
-      <a href="{{ url_for('stock_page', code=ev.code) }}" class="catalyst-item{% if ev.days_until == 0 %} catalyst-today{% elif ev.days_until <= 2 %} catalyst-soon{% endif %}">
-        <span class="catalyst-badge">{{ ev_type_labels.get(ev.event_type, ev.event_type) }}</span>
-        <span class="catalyst-name">{{ ev.display_name }}</span>
-        <span class="catalyst-when">{% if ev.days_until == 0 %}{{ t.catalyst_today }}{% elif ev.days_until == 1 %}{{ t.catalyst_tomorrow }}{% else %}{{ ev.days_until }}{{ t.catalyst_days_later }}{% endif %}</span>
-        <span class="catalyst-summary">{{ ev.summary[:40] }}{% if ev.summary|length > 40 %}…{% endif %}</span>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+  {# US-38 近期事件横幅已迁至首页（首页是时效信息流的主场；选股页专心管列表） #}
 
   {# ── 顶部工具栏（Option B：添加大号居中 · 搜索收图标 · 排序+筛选合成一个▾面板） ── #}
   <div class="wl-toolbar-b">
@@ -253,7 +232,7 @@
           {% if s.status != 'sold' %}
           <button onclick="triggerAnalysis('{{ s.code }}')" title="{{ t.js_quant_only_msg }}" class="btn-text" style="font-size:11px">{{ t.btn_analyse }}</button>
           {% endif %}
-          <button class="btn-text" style="font-size:11px;color:var(--ink-muted)"
+          <button class="btn-text wl-card-remove"
             hx-delete="/api/stock/{{ s.code }}/remove"
             hx-confirm="{{ t.confirm_remove }}"
             hx-target="closest .holding-card"

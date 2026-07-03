@@ -225,6 +225,10 @@
     "en": "Upcoming Events",
     "zh": "近期事件"
   },
+  "catalyst_empty": {
+    "en": "No major events coming up — we're watching for you 👀",
+    "zh": "近期无重大事件，已替你盯着 👀"
+  },
   "catalyst_share_unlock": {
     "en": "Share Unlock",
     "zh": "限售解禁"

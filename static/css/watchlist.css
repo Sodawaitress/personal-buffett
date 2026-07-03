@@ -297,7 +297,7 @@
   padding: 2px 7px;
   font-size: 11px;
   font-family: -apple-system, sans-serif;
-  color: var(--ink-muted);
+  color: var(--ink-faint);
   cursor: pointer;
   line-height: 1.6;
   transition: background .12s, color .12s;
@@ -620,6 +620,14 @@
   align-items: center;
   gap: 10px;
 }
+.holding-actions .btn-text {
+  font-size: 11px;
+  color: var(--ink-faint);
+  transition: color .12s;
+}
+.holding-card:hover .holding-actions .btn-text { color: var(--ink-muted); }
+.holding-actions .btn-text:hover { color: var(--ink); }
+.wl-card-remove:hover { color: #b3261e; }
 
 /* ── 列表模式 ── */
 .wl-list-view { overflow-x: auto; }
