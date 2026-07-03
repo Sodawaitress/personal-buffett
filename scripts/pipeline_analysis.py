@@ -443,6 +443,22 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
     except Exception:
         pass
 
+    # 兼容两种评级结构：旧版 components={moat,growth_management,valuation}；
+    # 新版类型感知 components={quality,value,...}（无 moat）。缺键不再 KeyError。
+    _comp = quant_result.get("components", {}) or {}
+    def _comp0(key):
+        v = _comp.get(key)
+        return v[0] if isinstance(v, (list, tuple)) and v else None
+    if "moat" in _comp:
+        _moat_field = f"{_comp0('moat')}/35"
+        _mgmt_field = f"{_comp0('growth_management')}/30"
+        _val_field  = f"{_comp0('valuation')}/15"
+    else:
+        _q = _comp0("quality")
+        _moat_field = f"{_q}/100" if _q is not None else "—"
+        _mgmt_field = "—"
+        _val_field  = str(_comp0("value") or "—")
+
     db.save_analysis(
         code=code,
         period="daily",
@@ -450,9 +466,9 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
         grade=quant_result["grade"],
         conclusion=quant_result["conclusion"],
         reasoning=quant_result["reasoning"],
-        moat=str(quant_result["components"]["moat"][0]) + "/35",
-        management=str(quant_result["components"]["growth_management"][0]) + "/30",
-        valuation=str(quant_result["components"]["valuation"][0]) + "/15",
+        moat=_moat_field,
+        management=_mgmt_field,
+        valuation=_val_field,
         quant_score=quant_result["score"],
         quant_components=_json.dumps(quant_result["components"], ensure_ascii=False),
         data_incomplete=quant_result.get("data_incomplete", 0),

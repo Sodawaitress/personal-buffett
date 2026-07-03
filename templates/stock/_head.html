@@ -76,15 +76,14 @@
           <span class="progress-label" id="plabel-{{ pending_job.id }}">{{ t.lbl_analysing }}</span>
         </div>
         {% else %}
-        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-ink btn-sm" title="{{ t.js_quant_only_msg }}">{{ t.btn_buffett_check }}</button>
+        <button onclick="triggerAnalysis('{{ stock.code }}')" class="btn-ink btn-sm" title="{{ t.btn_full_refresh }}">{{ t.btn_buffett_check }}</button>
         <div class="more-wrap" id="more-wrap-{{ stock.code }}">
           <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('{{ stock.code }}')" title="More">⋯</button>
           <div class="more-menu" id="more-menu-{{ stock.code }}">
-            <button onclick="triggerNewsRefresh('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">{{ t.btn_refresh_news }}</button>
             <button onclick="exportBundle('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">📋 导出分析包</button>
             {% if session.role == 'admin' %}
             <hr style="margin:4px 0;border-color:var(--rule-light)">
-            <button onclick="triggerFullUpdate('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">{{ t.btn_full_update }}</button>
+            <button onclick="triggerQuantOnly('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">⚡ {{ t.btn_quant_quick }}</button>
             {% endif %}
           </div>
         </div>
@@ -127,11 +126,9 @@
     {% if data_freshness_stale.price %}<span class="freshness-stale">{{ t.lbl_stale_quote }} {{ data_freshness.price }}</span>{% endif %}
     {% if data_freshness_stale.finance %}<span class="freshness-stale">{{ t.lbl_stale_finance }} {{ data_freshness.finance }}</span>{% endif %}
     {% if data_freshness_stale.analysis %}<span class="freshness-stale">{{ t.lbl_stale_analysis }} {{ data_freshness.analysis }}</span>{% endif %}
-    {% if session.role == 'admin' %}
     <span class="freshness-sep" style="margin-left:auto">
-      <a href="#" onclick="triggerFullUpdate('{{ stock.code }}');return false" style="font-size:11px;color:var(--ink-muted)">{{ t.btn_full_update }}</a>
+      <a href="#" onclick="triggerAnalysis('{{ stock.code }}');return false" style="font-size:11px;color:var(--ink-muted)">{{ t.btn_buffett_check }}</a>
     </span>
-    {% endif %}
   </div>
   {% endif %}
 

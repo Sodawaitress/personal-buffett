@@ -117,7 +117,18 @@ function pollJob(jobId) {
 }
 
 /* ── Analysis triggers ──────────────────────────────────────────────── */
+// 「重新分析」= 全套（数据 + 信号 + 新闻 + 巴菲特信）。用户手动点是罕见且有意的，给全套。
 async function triggerAnalysis(code) {
+  const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
+  const data = await resp.json();
+  if (data.job_id) {
+    _showPending(window._t.full_refresh_msg, data.job_id);
+    pollJob(data.job_id);
+  }
+}
+
+// 定量快刷（只刷数据+评级，不重生成 LLM 信）——admin 专用快捷入口，省 Groq。
+async function triggerQuantOnly(code) {
   const resp = await fetch(`/api/analyze-only/${code}`, { method: 'POST' });
   const data = await resp.json();
   if (data.job_id) {
@@ -126,14 +137,8 @@ async function triggerAnalysis(code) {
   }
 }
 
-async function triggerFullUpdate(code) {
-  const resp = await fetch(`/api/analyze/${code}`, { method: 'POST' });
-  const data = await resp.json();
-  if (data.job_id) {
-    _showPending(window._t.full_refresh_msg, data.job_id);
-    pollJob(data.job_id);
-  }
-}
+// 兼容旧调用点：全量更新 == 重新分析
+async function triggerFullUpdate(code) { return triggerAnalysis(code); }
 
 async function triggerNewsRefresh(code) {
   const resp = await fetch(`/api/refresh-news/${code}`, { method: 'POST' });

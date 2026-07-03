@@ -19,6 +19,10 @@
     "en": "Full Update",
     "zh": "全量更新"
   },
+  "btn_quant_quick": {
+    "en": "Quick data refresh",
+    "zh": "定量快刷"
+  },
   "btn_fund_check": {
     "en": "Re-analyse",
     "zh": "重新分析"
