@@ -1,3 +1,4 @@
 53ced35fe8f3616f818ab077dfdc4edb
 # generated_at (snapshot): 2026-07-02T10:27:31Z
 # note: recorded on 2026-07-03 Routine run；gate ① 已触发（snapshot 26.7h 陈旧）；若下次 Routine 仍看到同签名 = 服务器持续空跑
+# 2026-07-06 update: 再次看到同一签名 → 服务器持续冻结确认（连续第 3 次触发陈旧告警，且首次门控 ① + ② 同时失守，快照 98.7h 陈旧）；signature 保持不变，不写入新哈希；下次 Routine 若仍看到同签名 = 服务器已冻结 5 天以上，极端紧急
