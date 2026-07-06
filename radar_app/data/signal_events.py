@@ -424,6 +424,55 @@ def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict
     return bars[:4]  # 最多展示4条
 
 
+def _price_5d(code: str) -> float:
+    """近 5 交易日累计涨跌幅（%），按天去重防日内多行重复计。"""
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT fetched_at, change_pct FROM stock_prices WHERE code=:c ORDER BY fetched_at DESC LIMIT 20",
+            {"c": code},
+        ).fetchall()
+    seen, chgs = set(), []
+    for r in rows:
+        d = str(r["fetched_at"])[:10]
+        if d in seen or r["change_pct"] is None:
+            continue
+        seen.add(d)
+        chgs.append(r["change_pct"])
+        if len(chgs) >= 5:
+            break
+    return round(sum(chgs), 2) if chgs else 0.0
+
+
+def smart_money_vs_price(code: str, resonance: dict) -> str | None:
+    """机构/资金方向 vs 近 5 日价格。真背离=强信号(≥3同向)且价格明显反向，稀有才值钱。"""
+    d = resonance.get("direction")
+    if d not in ("bull", "bear") or resonance.get("resonance_count", 0) < 3:
+        return None
+    p5 = _price_5d(code)
+    if d == "bull" and p5 <= -2:     # 机构看多，价格反而明显在跌 → 还没被定价
+        return "lead_bull"
+    if d == "bear" and p5 >= 2:      # 机构看空，价格反而明显在涨 → 还没被定价
+        return "lead_bear"
+    return None
+
+
+def conclusion_text(resonance: dict, lead: str | None) -> str:
+    """一句人话结论：领先背离 / 共振 / 分歧。纯规则。"""
+    cnt = resonance.get("resonance_count", 0)
+    d = resonance.get("direction")
+    if lead == "lead_bull":
+        return "机构在动、股价还没反应 → 领先看多信号"
+    if lead == "lead_bear":
+        return "机构在撤、股价还没跌 → 领先看空信号"
+    if resonance.get("has_conflict") or d == "mixed":
+        return "多空分歧，暂看不清"
+    if d == "bull":
+        return f"聪明钱在悄悄建仓（{cnt}个信号同向）"
+    if d == "bear":
+        return f"机构在减持/流出（{cnt}个信号同向）"
+    return "多空分歧，暂看不清"
+
+
 def get_watchlist_signals(user_id: int) -> dict:
     """
     主入口：扫描该用户所有持有/观察中的A股，
@@ -454,6 +503,7 @@ def get_watchlist_signals(user_id: int) -> dict:
 
         resonance  = _calc_resonance(detected)
         divergence = _calc_divergence(precursor, raw_signals, signals_age_h)
+        lead       = smart_money_vs_price(code, resonance)
 
         entry = {
             "code":            code,
@@ -462,6 +512,9 @@ def get_watchlist_signals(user_id: int) -> dict:
             "signals":         detected,
             "resonance":       resonance,
             "divergence":      divergence,
+            "lead":            lead,
+            "conclusion":      conclusion_text(resonance, lead),
+            "confidence":      "high" if resonance["resonance_count"] >= 3 else "mid",
             "precursor_age":   _cache_age_label(precursor.get("fetched_at", "")),
         }
 
@@ -473,11 +526,11 @@ def get_watchlist_signals(user_id: int) -> dict:
                 entry["approaching_bars"] = bars
                 approaching.append(entry)
 
-    # 排序：先按信号总权重降序，权重相同时再按信号数降序
+    # 排序：领先背离置顶 → 信号总权重 → 信号数
     def _sort_key(item):
         sigs = item["resonance"]["dominant_signals"]
         total_weight = sum(s["weight"] for s in sigs)
-        return (total_weight, item["resonance"]["resonance_count"])
+        return (1 if item.get("lead") else 0, total_weight, item["resonance"]["resonance_count"])
 
     triggered.sort(key=_sort_key, reverse=True)
     approaching.sort(
