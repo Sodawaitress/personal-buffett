@@ -584,6 +584,7 @@ def present_stock_page(bundle):
         "market": market,
         "meta": bundle["meta"],
         "events": bundle["events"],
+        "material_events": bundle.get("material_events", []),
         "currency": MARKET_CURRENCY.get(market, "$"),
         "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
         "trading_params": compute_trading_params(bundle["price"], signals, market=market),

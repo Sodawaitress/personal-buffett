@@ -2171,3 +2171,28 @@
   .st-cell:nth-last-child(-n+2) { border-bottom: none; }
   .st-cell-last { border-right: none; }
 }
+
+/* US-118 重大动向卡（渐进披露） */
+.material-signals { margin-bottom: 16px; }
+.ms-sec-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 8px; }
+.matev { border: 1px solid var(--rule-light); border-left: 3px solid var(--ink-faint); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; background: var(--paper); }
+.matev-bull { border-left-color: #2f7d3a; }
+.matev-bear { border-left-color: #b3261e; }
+.matev-mixed { border-left-color: #c8781a; }
+.matev-head { display: flex; align-items: center; gap: 8px; }
+.matev-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--ink-faint); }
+.matev-dot-bull { background: #2f7d3a; }
+.matev-dot-bear { background: #b3261e; }
+.matev-dot-mixed { background: #c8781a; }
+.matev-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--ink); }
+.matev-tier { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.matev-tier-material { background: #fdecea; color: #b3261e; }
+.matev-tier-watch { background: #f0ede6; color: var(--ink-muted); }
+.matev-caret { font-size: 10px; color: var(--ink-faint); transition: transform .15s; }
+.matev.open .matev-caret { transform: rotate(180deg); }
+.matev-body { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule-light); }
+.matev.open .matev-body { display: block; }
+.matev-step { display: flex; gap: 8px; font-size: 13px; line-height: 1.7; margin-bottom: 4px; }
+.matev-step b { flex-shrink: 0; width: 68px; color: var(--ink-muted); font-weight: 600; font-size: 12px; }
+.matev-quote { margin-top: 8px; font-size: 12px; color: var(--ink-muted); font-style: italic; background: #f7f4ee; padding: 6px 10px; border-radius: 4px; }
+.matev-src { font-style: normal; color: var(--ink-faint); }

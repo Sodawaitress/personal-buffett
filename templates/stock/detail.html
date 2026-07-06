@@ -240,6 +240,36 @@
   <section id="market" class="detail-section">
     <div class="stock-page-body">
 
+      {# ── US-118 重大动向（渐进披露：折叠一行 → 点开 5 步认知全卡） ── #}
+      {% if material_events %}
+      <div class="material-signals">
+        <div class="ms-sec-label">{{ t.material_signals_label if t.material_signals_label else '重大动向' }}</div>
+        {% set dir_label = {'bull':'利多 📈','bear':'利空 📉','mixed':'双刃 ⚖️','neutral':'中性 ➖'} %}
+        {% for ev in material_events %}
+        <div class="matev matev-{{ ev.direction }}" onclick="this.classList.toggle('open')">
+          <div class="matev-head">
+            <span class="matev-dot matev-dot-{{ ev.direction }}"></span>
+            <span class="matev-title">{{ ev.explain or ev.title }}</span>
+            <span class="matev-tier matev-tier-{{ ev.tier }}">{{ '重大' if ev.tier == 'material' else '关注' }}</span>
+            <span class="matev-caret">▾</span>
+          </div>
+          <div class="matev-body">
+            <div class="matev-step"><b>发生了什么</b><span>{{ ev.title }}</span></div>
+            {% if ev.ar_z is not none %}
+            <div class="matev-step"><b>市场反应</b><span>
+              {% if ev.ar_z >= 0.5 %}市场认了：{{ '%+.2f'|format(ev.ar) }}%（跑赢大盘）⬆
+              {% elif ev.ar_z <= -0.5 %}市场在卖：{{ '%+.2f'|format(ev.ar) }}%（跑输大盘）⬇
+              {% else %}与大盘接近（{{ '%+.2f'|format(ev.ar) }}%）{% endif %}</span></div>
+            {% endif %}
+            <div class="matev-step"><b>对你</b><span>{{ dir_label.get(ev.direction, '中性 ➖') }} · {{ ev.explain }}</span></div>
+            {% if ev.watch %}<div class="matev-step"><b>盯</b><span>{{ ev.watch }}</span></div>{% endif %}
+            {% if ev.evidence_quote %}<div class="matev-quote">「{{ ev.evidence_quote }}」<span class="matev-src">— {{ ev.source }} {{ ev.event_date }}</span></div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       {# ── 新闻×机构背离摘要卡 ── #}
       {% if divergence_card %}
       {% set dc = divergence_card %}
