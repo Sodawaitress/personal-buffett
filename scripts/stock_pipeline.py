@@ -286,6 +286,17 @@ def main():
     except Exception as e:
         print(f"  ⚠️ 催化剂日历失败（不影响推送）: {e}")
 
+    print("  📰 重大新闻扫描(US-118)...")
+    try:
+        from scripts.material_news_scan import run_material_scan_all
+        with _db.get_conn() as _c:
+            _mrows = _c.execute("SELECT DISTINCT stock_code FROM user_watchlist WHERE status != 'sold'").all()
+        _mcodes = [r["stock_code"] for r in _mrows if r["stock_code"]]
+        mres = run_material_scan_all(_mcodes, days=3)
+        print(f"  ✅ 重大新闻：存 {mres['saved']} 条（{mres['material']} 重大）")
+    except Exception as e:
+        print(f"  ⚠️ 重大新闻扫描失败（不影响推送）: {e}")
+
     print("\n📨 Step 3/3：推送...")
 
     # ── Admin：全量报告 → Bear + Discord + 全局 Server酱 ──

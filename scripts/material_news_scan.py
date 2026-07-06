@@ -3,6 +3,7 @@ US-118 编排层：检测(量化) → 解读(LLM) → 存 stock_events(source='n
 只存通过漏斗且未弃答/未冲突的事件；按 code+日期+摘要去重。
 """
 import json
+import time
 
 from radar_app.data.core import get_conn
 from scripts.news_materiality import scan_material_news
@@ -29,6 +30,7 @@ def run_material_scan(code: str, name: str = "", market: str = "", days: int = 7
     saved = alerted = 0
     for item in items:
         interp = interpret_event(item, code, name, market)
+        time.sleep(1)  # Groq 30 RPM 限速
         if interp["abstained"] or interp["conflict"]:
             continue  # 弃答/方向矛盾不存
         summary = (interp["explain"] or item["title"])[:120]
