@@ -32,6 +32,20 @@ _NOISE_KEYWORDS = ["评级", "研报", "目标价", "推荐", "买入评级", "r
 _CN_STOPWORDS = set("的了和与及或在为对将把被于之股公司集团有限")
 
 
+def _parse_date(s) -> str:
+    """把 publish_time 归一成 ISO 日期。兼容 ISO('2026-07-04..') 和 RFC('Fri, 15 May 2026..')。"""
+    if not s:
+        return ""
+    s = str(s).strip()
+    if len(s) >= 10 and s[:4].isdigit() and s[4] == "-":
+        return s[:10]
+    try:
+        from email.utils import parsedate_to_datetime
+        return parsedate_to_datetime(s).strftime("%Y-%m-%d")
+    except Exception:
+        return ""
+
+
 def _norm_title(title: str) -> str:
     """标题归一化：去标点/空格/常见后缀，用于近似去重。"""
     t = re.sub(r"[\s\W_]+", "", (title or "").lower())
@@ -182,9 +196,9 @@ def scan_material_news(code: str, name: str = "", market: str = "cn", days: int 
             nrow = c.execute("SELECT COALESCE(name_cn, name) nm FROM stocks WHERE code=:c", {"c": code}).fetchone()
             name = (nrow["nm"] if nrow else "") or ""
         rows = c.execute(
-            "SELECT title, source, publish_time FROM stock_news "
-            "WHERE code=:code AND COALESCE(publish_time, fetched_date) >= :cut "
-            "ORDER BY COALESCE(publish_time, fetched_date) ASC",
+            "SELECT title, source, publish_time, fetched_date FROM stock_news "
+            "WHERE code=:code AND fetched_date >= :cut "
+            "ORDER BY fetched_date ASC",
             {"code": code, "cut": cutoff},
         ).fetchall()
 
@@ -192,7 +206,7 @@ def scan_material_news(code: str, name: str = "", market: str = "cn", days: int 
     events = []  # 每个 = {title, source, date, sources:set, tokens}
     for r in rows:
         title = r["title"] or ""
-        d = str(r["publish_time"] or "")[:10]
+        d = _parse_date(r["publish_time"]) or _parse_date(r["fetched_date"])
         toks = _token_set(title)
         matched = None
         for ev in events:

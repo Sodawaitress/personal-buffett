@@ -490,55 +490,75 @@ def _stock_card(code: str, quotes: dict, news_data: dict) -> str:
     return "\n".join(lines)
 
 
+_GRADE_ORDER = ["A+", "A", "B+", "B", "B-", "C+", "C", "D", "D-"]
+
+def _grade_rank(g):
+    try:
+        return _GRADE_ORDER.index(g)
+    except ValueError:
+        return 99
+
+def _stock_name(code):
+    s = _db.get_stock(code) or {}
+    return s.get("name_cn") or s.get("name") or code
+
+def _early_warnings_for(codes):
+    """每股取一条 is_early 的重大动向。"""
+    import json
+    out = []
+    for code in codes:
+        for e in (_db.get_stock_events(code) or []):
+            if e.get("source") != "news_material":
+                continue
+            try:
+                d = json.loads(e.get("detail_json") or "{}")
+            except Exception:
+                continue
+            if d.get("is_early"):
+                out.append((code, d))
+                break
+    return out
+
+def _grade_changes_for(codes):
+    out = []
+    for code in codes:
+        hist = _db.get_analysis_history(code, period="daily", limit=2) or []
+        if len(hist) >= 2:
+            new_g, old_g = hist[0].get("grade"), hist[1].get("grade")
+            if new_g and old_g and new_g != old_g:
+                out.append((code, old_g, new_g))
+    return out
+
 def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
                              date_str: str) -> str:
     """
-    为某用户生成微信推送内容。
-    - 持仓股：每只一张卡片（价格 + 评级 + 分析摘要 + 最多2条新闻）
-    - 关注股中建议买入（A/B+/结论买入）：另起一节
-    任何用户均可使用，无硬编码。
+    今天该注意的：早期预警 + 评级变化，人话、排好序。
+    无重大变化则不推（不打扰）。任何用户通用，无硬编码。
     """
-    quotes    = data.get("quotes", {})
-    news_data = data.get("news", {})
-    holdings  = _db.get_user_holdings(user_id)
-    buy_watch = _get_buy_watching(user_id)
-
-    sections = []
-    total_stocks = len(holdings) + len(buy_watch)
-    failed_stocks = []
-
-    if holdings:
-        cards = []
-        for c in holdings:
-            score = _score_report(c)
-            if score >= PUSH_QUALITY_THRESHOLD:
-                cards.append(_stock_card(c, quotes, news_data))
-            else:
-                failed_stocks.append(c)
-                print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
-        if cards:
-            sections.append("## 📊 今日持仓\n\n" + "\n\n".join(cards))
-
-    if buy_watch:
-        cards = []
-        for c in buy_watch:
-            score = _score_report(c)
-            if score >= PUSH_QUALITY_THRESHOLD:
-                cards.append(_stock_card(c, quotes, news_data))
-            else:
-                failed_stocks.append(c)
-                print(f"    ⚠️ {c} 质量评分 {score}/100，跳过推送")
-        if cards:
-            sections.append("## ⭐ 建议关注（评级买入）\n\n" + "\n\n".join(cards))
-
-    if not sections:
-        # 有自选股但全部质量不达标 → 发告知消息，不静默跳过
-        if total_stocks > 0:
-            return (f"股票日报 {date_str}\n\n"
-                    f"今日 {total_stocks} 只自选股数据获取质量不足（可能是网络超时或 AI 分析失败），"
-                    f"请稍后在网页端查看最新数据。")
+    holdings = _db.get_user_holdings(user_id) or []
+    watching = _db.get_user_watching(user_id) or []
+    codes = list(dict.fromkeys(list(holdings) + list(watching)))
+    if not codes:
         return ""
 
-    header = f"股票日报 {date_str}\n持仓 {len(holdings)} 只 · 买入候选 {len(buy_watch)} 只\n"
-    return header + "\n\n---\n\n".join(sections)
+    early   = _early_warnings_for(codes)
+    changes = _grade_changes_for(codes)
+    if not early and not changes:
+        return ""  # 无重大变化，不打扰
+
+    lines = [f"📌 今天该注意的 · {date_str}", ""]
+    if early:
+        lines.append(f"🔔 早期预警（{len(early)}）")
+        for code, d in early[:6]:
+            tail = "（市场还没反应，你早）" if d.get("market_status") == "not_priced" else ""
+            lines.append(f"· {_stock_name(code)}：{d.get('explain') or d.get('title', '')}{tail}")
+        lines.append("")
+    if changes:
+        lines.append(f"📊 评级变化（{len(changes)}）")
+        for code, old_g, new_g in changes[:8]:
+            arrow = "↑" if _grade_rank(new_g) < _grade_rank(old_g) else "↓"
+            lines.append(f"· {_stock_name(code)}：{old_g} → {new_g} {arrow}")
+        lines.append("")
+    lines.append("详情见网页。")
+    return "\n".join(lines)
 
