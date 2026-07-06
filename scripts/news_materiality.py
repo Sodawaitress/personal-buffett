@@ -14,7 +14,9 @@ from radar_app.data.core import get_conn
 # ── 事件类型关键词（多标签，各带权重 0–1）────────────────────────────
 _EVENT_KEYWORDS = {
     "sanction_natsec": (["制裁", "国家安全", "实体清单", "涉军", "1260h", "出口管制", "关税", "232",
-                          "sanction", "entity list", "national security", "tariff", "export control"], 1.0),
+                          "限制政策", "封锁", "禁令", "脱钩", "欧美限制", "加征",
+                          "sanction", "entity list", "national security", "tariff", "export control",
+                          "restrict", "blacklist", "decoupl"], 1.0),
     "regulation":      (["监管", "立案", "调查", "处罚", "问询", "退市", "证监会", "regulat", "probe", "investigation"], 0.9),
     "mna":             (["并购", "收购", "重组", "要约", "控制权", "merger", "acquisition", "takeover"], 0.85),
     "earnings":        (["业绩", "预告", "预增", "预减", "扭亏", "财报", "净利", "营收", "earnings", "guidance", "profit"], 0.75),
@@ -50,8 +52,20 @@ def _jaccard(a: set, b: set) -> float:
 
 # ── 价格序列 & 市场反应 ──────────────────────────────────────────────
 
+_series_cache: dict = {}
+
+def _trading_idx(series, date_str: str):
+    """返回 series 中第一个 >= date_str 的下标（周末/节假日新闻映射到下一交易日）。"""
+    for i, (d, _, _) in enumerate(series):
+        if d >= date_str:
+            return i
+    return None
+
+
 def _price_series(code: str):
-    """返回按日期升序的 [(date_str, change_pct, volume)]（去重同日取最新）。"""
+    """返回按日期升序的 [(date_str, change_pct, volume)]（去重同日取最新，带缓存）。"""
+    if code in _series_cache:
+        return _series_cache[code]
     with get_conn() as c:
         rows = c.execute(
             "SELECT fetched_at, change_pct, volume FROM stock_prices "
@@ -65,6 +79,7 @@ def _price_series(code: str):
     for d in sorted(seen):
         chg, vol = seen[d]
         series.append((d, chg, vol))
+    _series_cache[code] = series
     return series
 
 
@@ -93,7 +108,7 @@ def abnormal_return_z(code: str, date_str: str, market: str = "cn"):
     z = AR / 该股近 20 日 change_pct 标准差。返回 (ar, z)。数据不足返回 (None, None)。
     """
     series = _price_series(code)
-    idx = next((i for i, (d, _, _) in enumerate(series) if d == date_str), None)
+    idx = _trading_idx(series, date_str)  # 周末新闻映射到下一交易日
     if idx is None or idx < 5:
         return None, None
     own = series[idx][1]
@@ -102,7 +117,7 @@ def abnormal_return_z(code: str, date_str: str, market: str = "cn"):
     hist = [chg for _, chg, _ in series[max(0, idx - 20):idx] if chg is not None]
     if len(hist) < 5:
         return None, None
-    mkt = _market_mean_change(market, date_str)
+    mkt = _market_mean_change(market, series[idx][0])
     ar = own - mkt
     mean = sum(hist) / len(hist)
     var = sum((x - mean) ** 2 for x in hist) / len(hist)
@@ -113,7 +128,7 @@ def abnormal_return_z(code: str, date_str: str, market: str = "cn"):
 def volume_z(code: str, date_str: str):
     """当日成交量对近 20 日均量的 z 分。数据不足返回 None。"""
     series = _price_series(code)
-    idx = next((i for i, (d, _, _) in enumerate(series) if d == date_str), None)
+    idx = _trading_idx(series, date_str)
     if idx is None or idx < 5:
         return None
     vol = series[idx][2]
@@ -190,11 +205,14 @@ def scan_material_news(code: str, name: str = "", market: str = "cn", days: int 
     results = []
     for ev in events:
         title = ev["title"]
-        rel = relevance(title, name, code)
-        if rel < 0.5 or _is_noise(title):
-            continue  # 低相关/纯噪音直接丢
         etypes = event_types(title)
         ew = max([w for _, w in etypes], default=0.3)
+        rel = relevance(title, name, code)
+        # 已在该股新闻源里=基线相关；纯噪音丢；低相关只在非高危事件时才丢
+        if _is_noise(title):
+            continue
+        if rel < 0.5 and ew < 0.8:
+            continue
         agg = len(ev["sources"])
         ar, ar_z = abnormal_return_z(code, ev["date"], market)
         vz = volume_z(code, ev["date"])
