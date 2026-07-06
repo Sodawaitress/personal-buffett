@@ -2344,3 +2344,21 @@ footer small {
 .catalyst-name  { font-weight: 600; }
 .catalyst-when  { font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 .catalyst-summary { font-size: 11px; color: var(--ink-faint); }
+
+/* US-119 榜单卡重设计（结论领头 · 渐进披露 · ⚡领先） */
+.sr-card2 { cursor: pointer; }
+.sr-card2-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sr-card2 .sr-name { font-weight: 700; font-size: 15px; color: var(--ink); }
+.sr-card2 .sr-code { font-size: 11px; color: var(--ink-faint); }
+.sr-conclusion { font-size: 14px; font-weight: 600; color: var(--ink); margin-top: 5px; line-height: 1.5; }
+.sr-card-lead .sr-conclusion { color: #b3261e; }
+.sr-early { font-size: 10px; font-weight: 700; color: #b3261e; background: #fdecea; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.sr-conf { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.sr-conf-high { background: #e8f3ea; color: #2f7d3a; }
+.sr-conf-mid { background: #f0ede6; color: var(--ink-muted); }
+.sr-caret { margin-left: auto; font-size: 10px; color: var(--ink-faint); transition: transform .15s; }
+.sr-card2.open .sr-caret { transform: rotate(180deg); }
+.sr-card2-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule-light); }
+.sr-card2.open .sr-card2-detail { display: block; }
+.sr-detail-link { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--ink-muted); }
+.sr-card-lead { border-left-color: #b3261e !important; }
