@@ -38,6 +38,7 @@ def run_material_scan(code: str, name: str = "", market: str = "", days: int = 7
             "title": item["title"], "source": item["source"],
             "score": item["score"], "tier": item["tier"],
             "ar": item["ar"], "ar_z": item["ar_z"], "vol_z": item["vol_z"],
+            "market_status": item.get("market_status"), "is_early": item.get("is_early", 0),
             "aggregate_volume": item["aggregate_volume"], "event_types": item["event_types"],
             "direction": interp["direction"], "explain": interp["explain"],
             "evidence_quote": interp["evidence_quote"], "watch": interp["watch"],

@@ -2196,3 +2196,4 @@
 .matev-step b { flex-shrink: 0; width: 68px; color: var(--ink-muted); font-weight: 600; font-size: 12px; }
 .matev-quote { margin-top: 8px; font-size: 12px; color: var(--ink-muted); font-style: italic; background: #f7f4ee; padding: 6px 10px; border-radius: 4px; }
 .matev-src { font-style: normal; color: var(--ink-faint); }
+.matev-early { font-size: 10px; font-weight: 700; color: #b3261e; background: #fdecea; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }

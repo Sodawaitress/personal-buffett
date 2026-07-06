@@ -17,11 +17,14 @@ _EVENT_KEYWORDS = {
                           "限制政策", "封锁", "禁令", "脱钩", "欧美限制", "加征",
                           "sanction", "entity list", "national security", "tariff", "export control",
                           "restrict", "blacklist", "decoupl"], 1.0),
+    "distress":        (["停产", "减产", "停工", "亏损", "资产减值", "计提", "债务违约", "违约", "破产",
+                          "重整失败", "重大诉讼", "被起诉", "查封", "冻结", "halt", "default", "impairment", "lawsuit"], 1.0),
     "regulation":      (["监管", "立案", "调查", "处罚", "问询", "退市", "证监会", "regulat", "probe", "investigation"], 0.9),
     "mna":             (["并购", "收购", "重组", "要约", "控制权", "merger", "acquisition", "takeover"], 0.85),
-    "earnings":        (["业绩", "预告", "预增", "预减", "扭亏", "财报", "净利", "营收", "earnings", "guidance", "profit"], 0.75),
-    "unlock":          (["解禁", "限售", "减持", "增持", "回购", "质押", "解押", "unlock", "lockup", "buyback", "pledge"], 0.7),
-    "operational":     (["中标", "订单", "投产", "停产", "合同", "扩产", "涨价", "降价", "contract", "order", "capacity"], 0.6),
+    "earnings":        (["业绩", "预告", "预增", "预减", "扭亏", "财报", "净利", "营收", "earnings", "guidance", "profit"], 0.7),
+    "unlock":          (["解禁", "限售", "减持", "增持", "回购", "unlock", "lockup", "buyback"], 0.6),
+    "operational":     (["中标", "订单", "投产", "合同", "扩产", "涨价", "降价", "contract", "order", "capacity"], 0.55),
+    "pledge":          (["质押", "解押", "pledge"], 0.4),
 }
 # 低价值（拉低而非过滤，避免误杀）
 _NOISE_KEYWORDS = ["评级", "研报", "目标价", "推荐", "买入评级", "rating", "price target", "analyst"]
@@ -214,29 +217,40 @@ def scan_material_news(code: str, name: str = "", market: str = "cn", days: int 
         if rel < 0.5 and ew < 0.8:
             continue
         agg = len(ev["sources"])
-        ar, ar_z = abnormal_return_z(code, ev["date"], market)
-        vz = volume_z(code, ev["date"])
 
-        # 材料度：|AR|z + 量能z + 跨源 + 类别，tanh 归一 0–100
-        ar_part  = min(abs(ar_z or 0) / 3.0, 1.0) * 40
-        vol_part = min(max(vz or 0, 0) / 3.0, 1.0) * 20
-        agg_part = min((agg - 1) / 3.0, 1.0) * 15
-        cat_part = ew * 25
-        raw = ar_part + vol_part + agg_part + cat_part
-        score = round(100 * math.tanh(raw / 60), 1)
-
+        # ── 重要性 = 新闻本身的分量(前瞻，发布即可算)：事件类型主导 + 多源确认 ──
+        # AR 不进分数（那是事后确认），只当"是否已被定价"的背景标签。
+        raw = ew * 55 + min(agg - 1, 3) / 3.0 * 20 + 10
+        score = round(100 * math.tanh(raw / 55), 1)
         tier = "material" if score >= 70 else ("watch" if score >= 40 else "drop")
         if tier == "drop":
             continue
+
+        # ── AR 当背景标签：市场是否已反应 ──
+        ar, ar_z = abnormal_return_z(code, ev["date"], market)
+        vz = volume_z(code, ev["date"])
+        if ar_z is None:
+            market_status = "unknown"
+        elif abs(ar_z) >= 1.0:
+            market_status = "reacted"      # 已被定价，晚了
+        elif abs(ar_z) < 0.5:
+            market_status = "not_priced"   # 尚未反应 → 你早
+        else:
+            market_status = "mild"
+        # 早期预警：重要 + 市场还没反应
+        is_early = 1 if (tier == "material" and market_status == "not_priced") else 0
+
         results.append({
             "title": title, "source": ev["source"], "date": ev["date"],
             "relevance": rel, "aggregate_volume": agg,
             "event_types": [t for t, _ in etypes],
             "ar": ar, "ar_z": ar_z, "vol_z": vz,
+            "market_status": market_status, "is_early": is_early,
             "score": score, "tier": tier,
         })
 
-    results.sort(key=lambda x: x["score"], reverse=True)
+    # 排序：早期预警优先，再按重要性
+    results.sort(key=lambda x: (x["is_early"], x["score"]), reverse=True)
     return results
 
 

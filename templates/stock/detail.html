@@ -249,18 +249,18 @@
         <div class="matev matev-{{ ev.direction }}" onclick="this.classList.toggle('open')">
           <div class="matev-head">
             <span class="matev-dot matev-dot-{{ ev.direction }}"></span>
+            {% if ev.is_early %}<span class="matev-early">🔔 早期预警</span>{% endif %}
             <span class="matev-title">{{ ev.explain or ev.title }}</span>
             <span class="matev-tier matev-tier-{{ ev.tier }}">{{ '重大' if ev.tier == 'material' else '关注' }}</span>
             <span class="matev-caret">▾</span>
           </div>
           <div class="matev-body">
             <div class="matev-step"><b>发生了什么</b><span>{{ ev.title }}</span></div>
-            {% if ev.ar_z is not none %}
             <div class="matev-step"><b>市场反应</b><span>
-              {% if ev.ar_z >= 0.5 %}市场认了：{{ '%+.2f'|format(ev.ar) }}%（跑赢大盘）⬆
-              {% elif ev.ar_z <= -0.5 %}市场在卖：{{ '%+.2f'|format(ev.ar) }}%（跑输大盘）⬇
-              {% else %}与大盘接近（{{ '%+.2f'|format(ev.ar) }}%）{% endif %}</span></div>
-            {% endif %}
+              {% if ev.market_status == 'not_priced' %}⚡ 市场尚未反应——你在早期（当天{{ '%+.2f'|format(ev.ar) if ev.ar is not none else '—' }}%）
+              {% elif ev.market_status == 'reacted' %}市场已反应：{{ '%+.2f'|format(ev.ar) }}%（{{ '跑赢' if ev.ar_z >= 0 else '跑输' }}大盘）{{ '⬆' if ev.ar_z >= 0 else '⬇' }}
+              {% elif ev.market_status == 'mild' %}市场温和反应（{{ '%+.2f'|format(ev.ar) }}%）
+              {% else %}暂无当日行情{% endif %}</span></div>
             <div class="matev-step"><b>对你</b><span>{{ dir_label.get(ev.direction, '中性 ➖') }} · {{ ev.explain }}</span></div>
             {% if ev.watch %}<div class="matev-step"><b>盯</b><span>{{ ev.watch }}</span></div>{% endif %}
             {% if ev.evidence_quote %}<div class="matev-quote">「{{ ev.evidence_quote }}」<span class="matev-src">— {{ ev.source }} {{ ev.event_date }}</span></div>{% endif %}
