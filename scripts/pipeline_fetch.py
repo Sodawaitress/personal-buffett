@@ -84,6 +84,23 @@ def _fetch_1a_quote(code, market, log):
             except Exception:
                 pass
 
+            # A股价格云端兜底：sina 从 GHA/Fly 时常拉不到 → 用 yfinance(雅虎 .SS/.SZ，云端可达)
+            if not price_saved and pure[:1] in ("0", "3", "6", "9"):
+                try:
+                    import yfinance as yf
+                    suffix = "SS" if prefix == "sh" else "SZ"
+                    hist = yf.Ticker(f"{pure}.{suffix}").history(period="5d")
+                    if len(hist):
+                        price = round(float(hist.iloc[-1]["Close"]), 2)
+                        prev = round(float(hist.iloc[-2]["Close"]), 2) if len(hist) >= 2 else None
+                        chg = round((price - prev) / prev * 100, 2) if prev else None
+                        vol = round(float(hist.iloc[-1]["Volume"]) * price / 1e8, 2) if hist.iloc[-1]["Volume"] else None
+                        db.upsert_price(code, price, change_pct=chg, volume=vol)
+                        log(f"       ¥{price} ({chg:+.2f}%) [yfinance兜底]" if chg is not None else f"       ¥{price} [yfinance兜底]")
+                        price_saved = True
+                except Exception as e_yf:
+                    log(f"       ⚠️ yfinance兜底失败: {e_yf}")
+
             # 场外基金：Sina API 无数据时改用 AKShare 净值
             if not price_saved:
                 try:
