@@ -1,0 +1,26 @@
+name: Hourly Validate (temp)
+
+# 临时验证：每小时轻量刷新 A股价格 + 报新鲜度，观察 yfinance 兜底是否稳定。
+# 稳定后删除本文件，恢复只靠每天的 cron.yml。不跑 LLM、不推送、不重叠。
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # 每小时
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Refresh A-share prices (yfinance fallback) + report freshness
+        run: python -m scripts.hourly_price_refresh
