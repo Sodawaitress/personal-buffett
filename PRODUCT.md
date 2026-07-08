@@ -4684,3 +4684,32 @@ prior art（[多信号共振=置信](https://www.mql5.com/en/blogs/post/767676) 
 - LLM 解读（纯规则文案，信号本身已够）
 - 改数据源/重算信号（数据已同源准确，本 US 只重组呈现）
 
+---
+
+## US-120 · 股票擂台赛（质量分排行榜 + 升降）
+
+### 背景
+妈妈想要一个"擂台赛"：自选股按我们的**质量分**排名、高分自动置顶，还要**排名变化 / 分数变化**，像积分榜一样有升有降。我们已有 `quant_score`（每日分析产出），且有 42 天历史 → 排名/升降可算。
+"实时" = 每日分析后刷新（分数来自分析非逐笔行情），榜单天天有升降。
+
+### Scope
+1. **数据层 `radar_app/data/analysis.py`（或 stocks.py）**
+   - `get_leaderboard(user_id, baseline_days=7)` → 按最新 `quant_score` 降序的 ranked list：
+     `{rank, code, name, grade, score, score_change(vs 上次), rank_change(vs baseline_days 前的排名，↑N/↓N/0/None=新)}`
+   - 基线排名：取 baseline_days 前那天各股 quant_score 重新排一次，对比得 rank_change
+2. **前端**
+   - 我的选股页新增「擂台」视图（与 卡片/列表 并列的 `toggleView` 第三态）：名次徽章(🥇🥈🥉+数字) + 名称 + 分数 + 分数变化(+N绿/−N红) + 排名变化(↑N/↓N/NEW/—)
+   - 首页：Top 3 小窥卡（可选），点进「擂台」全榜
+   - 游戏化：前三奖牌、升降箭头(绿升红降)、NEW 标
+
+### Acceptance Criteria
+- [ ] `get_leaderboard` 按 quant_score 降序，返回 rank/score/score_change/rank_change
+- [ ] rank_change 对比 baseline_days 前正确（新上榜=NEW，无变化=—）
+- [ ] 我的选股页「擂台」视图：奖牌 + 分数 + 升降，高分置顶
+- [ ] 无分数的股票排在最后或不计入（NR 不占名次）
+- [ ] 每日分析后榜单自动更新
+
+### 不做
+- 逐笔实时（分数来自每日分析）
+- 跨用户 PK（只排自己的自选股）
+
