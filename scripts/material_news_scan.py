@@ -62,9 +62,15 @@ def run_material_scan(code: str, name: str = "", market: str = "", days: int = 7
     return {"scanned": len(items), "saved": saved, "material": alerted}
 
 
-def run_material_scan_all(codes: list[str], days: int = 7) -> dict:
-    total = {"saved": 0, "material": 0}
+def run_material_scan_all(codes: list[str], days: int = 7, max_minutes: float = 25) -> dict:
+    """带时间预算：超过 max_minutes 就停(防 Groq 限流把每日 pipeline 拖过 120 分钟上限被杀)。"""
+    total = {"saved": 0, "material": 0, "stopped_early": False}
+    deadline = time.time() + max_minutes * 60
     for code in codes:
+        if time.time() > deadline:
+            total["stopped_early"] = True
+            print(f"  material_scan: 达到 {max_minutes} 分钟预算，提前停止(剩余下次跑)")
+            break
         try:
             r = run_material_scan(code, days=days)
             total["saved"] += r["saved"]

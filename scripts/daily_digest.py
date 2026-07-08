@@ -28,15 +28,27 @@ def _get_all_watchlist_rows() -> list:
     from radar_app.data.core import get_conn
     with get_conn() as c:
         rows = c.execute("""
-            SELECT w.stock_code, s.market, s.name_cn, w.status, w.buy_price, w.added_at,
-                   GROUP_CONCAT(w.user_id) AS watched_by
+            SELECT w.stock_code, s.market, s.name_cn, w.status, w.buy_price, w.added_at, w.user_id
             FROM user_watchlist w
             LEFT JOIN stocks s ON s.code = w.stock_code
             WHERE w.removed_at IS NULL
-            GROUP BY w.stock_code
-            ORDER BY MIN(w.added_at)
+            ORDER BY w.added_at ASC
         """).fetchall()
-    return [dict(r) for r in rows] if rows else []
+    # 按 stock_code 去重(保留最早添加的那条)+ 聚合 watched_by —— Python 做，避开 SQLite/Postgres 方言差异
+    by_code: dict = {}
+    for r in rows or []:
+        d = dict(r)
+        code = d["stock_code"]
+        uid = str(d.pop("user_id", ""))
+        if code not in by_code:
+            by_code[code] = {**d, "watched_by": [uid]}
+        else:
+            by_code[code]["watched_by"].append(uid)
+    out = []
+    for d in by_code.values():
+        d["watched_by"] = ",".join(x for x in d["watched_by"] if x)
+        out.append(d)
+    return out
 
 
 def _build_snapshot() -> dict:
