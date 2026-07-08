@@ -28,7 +28,7 @@ def main():
     print(f"✅ 已更新 {n}/{len(cn)} 只 A股价格")
     with get_conn() as c:
         r = dict(c.execute(
-            "SELECT MAX(fetched_at) m, COUNT(DISTINCT code) n FROM stock_prices p "
+            "SELECT MAX(p.fetched_at) m, COUNT(DISTINCT p.code) n FROM stock_prices p "
             "JOIN stocks s ON s.code = p.code WHERE s.market = 'cn'"
         ).fetchone())
     print(f"📊 A股价格库最新: {r['m']} ({r['n']} 只)")
