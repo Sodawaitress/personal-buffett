@@ -74,6 +74,29 @@ def fetch_quotes(cn_stocks: list = None):
             print(f"    {sign} {name}({code}) {price} ({change:+.2f}%)")
     except Exception as e:
         print(f"    ⚠️ 行情: {e}")
+
+    # 云端兜底：sina 从 GHA/Fly 常整批失败 → 缺的用 yfinance(雅虎 .SS/.SZ 云端可达)
+    missing = [c for c in codes if c not in quotes and c[:1] in ("0", "3", "6", "9")]
+    if missing:
+        try:
+            import yfinance as yf
+        except Exception:
+            yf = None
+        for c in (missing if yf else []):
+            try:
+                suffix = "SS" if c.startswith(("6", "9")) else "SZ"
+                hist = yf.Ticker(f"{c}.{suffix}").history(period="5d")
+                if len(hist):
+                    price = round(float(hist.iloc[-1]["Close"]), 2)
+                    prev = round(float(hist.iloc[-2]["Close"]), 2) if len(hist) >= 2 else None
+                    change = round((price - prev) / prev * 100, 2) if prev else 0.0
+                    vol = hist.iloc[-1]["Volume"]
+                    amount = round(float(vol) * price / 1e8, 2) if vol else 0.0
+                    quotes[c] = {"name": name_map.get(c, c), "code": c, "price": price,
+                                 "change": change, "amount": amount, "turnover": 0.0}
+                    print(f"    🌐 {name_map.get(c, c)}({c}) {price} ({change:+.2f}%) [yfinance]")
+            except Exception:
+                pass
     return quotes
 
 
