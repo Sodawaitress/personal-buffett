@@ -297,6 +297,11 @@ def main():
     except Exception as e:
         print(f"  ⚠️ 重大新闻扫描失败（不影响推送）: {e}")
 
+    if os.environ.get("SKIP_PUSH"):
+        print("\n📨 Step 3/3：SKIP_PUSH 已设，跳过推送(验证运行)")
+        print("✅ pipeline 结束(无推送)")
+        return
+
     print("\n📨 Step 3/3：推送...")
 
     # ── Admin：全量报告 → Bear + Discord + 全局 Server酱 ──

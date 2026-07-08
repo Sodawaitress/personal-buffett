@@ -1,19 +1,22 @@
-name: Hourly Validate (temp)
+name: Validate Full Pipeline (temp)
 
-# 临时验证：每小时轻量刷新 A股价格 + 报新鲜度，观察 yfinance 兜底是否稳定。
-# 稳定后删除本文件，恢复只靠每天的 cron.yml。不跑 LLM、不推送、不重叠。
+# 临时验证：每 3 小时跑一次完整 pipeline(真家伙)，但 SKIP_PUSH 不推送。
+# 观察重量 pipeline 今天是否稳定：跑得完不超时 / A股价格刷新 / 快照提交。
+# 稳定后删除本文件，恢复只靠每天的 cron.yml。3h > 60min 运行，不重叠。
 
 on:
   schedule:
-    - cron: '0 * * * *'   # 每小时
+    - cron: '0 */3 * * *'   # 每 3 小时
   workflow_dispatch:
 
 jobs:
-  refresh:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 120
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      SKIP_PUSH: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,5 +25,5 @@ jobs:
           cache: 'pip'
       - name: Install deps
         run: pip install -r requirements.txt
-      - name: Refresh A-share prices (yfinance fallback) + report freshness
-        run: python -m scripts.hourly_price_refresh
+      - name: Run full pipeline (no push)
+        run: python -m scripts.stock_pipeline
