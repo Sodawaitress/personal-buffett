@@ -26,10 +26,10 @@
 
 ## 进度清单
 
-### 第 1 步：合并到 main（不碰任何 schedule）
-- [ ] 合并 `us-121-microservices` → main (--no-ff)
-- [ ] push main
-- [ ] 确认旧 cron.yml / validate.yml schedule 未被改动（旧系统照跑）
+### 第 1 步：合并到 main（不碰任何 schedule）✅ 完成 2026-07-09
+- [x] 合并 `us-121-microservices` → main (--no-ff) — merge commit 2708ae9
+- [x] push main
+- [x] 确认旧 cron.yml schedule 完好、5 个新服务 schedule=0（休眠）
 
 ### 第 2 步：并行观察（3–5 天，手动触发新服务）
 每天核对：
@@ -61,4 +61,5 @@ FROM service_runs ORDER BY id DESC LIMIT 20;
 ## 运行日志
 （每次云端触发 / 观察结果记这里）
 
-- 2026-07-09：分支 6 commit 完成，本地全部 smoke 测通过。准备合并 main。
+- 2026-07-09：分支 6 commit 完成，本地全部 smoke 测通过。
+- 2026-07-09：合并 main（2708ae9）。首次云端触发 fetch-svc（budget 8min，run 28997189956）观察中。
