@@ -3,14 +3,43 @@ import time
 import requests
 
 from scripts.config import GROQ_API_KEY
+from scripts.groq_ratelimit import throttle
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = "llama-3.3-70b-versatile"
 
 
+def _retry_after_seconds(resp) -> float:
+    """从 429 响应头算等待秒数：优先 retry-after，其次 token/请求 reset。兜底 30s。"""
+    for header in ("retry-after", "x-ratelimit-reset-tokens", "x-ratelimit-reset-requests"):
+        raw = resp.headers.get(header)
+        if not raw:
+            continue
+        try:
+            return max(float(raw), 1.0) + 2
+        except (TypeError, ValueError):
+            # 形如 "1m26.4s" / "185ms"
+            secs, num = 0.0, ""
+            for ch in raw:
+                if ch.isdigit() or ch == ".":
+                    num += ch
+                elif ch == "m" and num:
+                    secs += float(num) * 60; num = ""
+                elif ch == "s" and num:
+                    secs += float(num); num = ""
+            if secs:
+                return secs + 2
+    return 30.0
+
+
 def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
     if not GROQ_API_KEY:
         return ""
+
+    # 主动配速：按 TPM 12,000 精确投放，绝大多数情况下根本不会撞 429。
+    waited = throttle(system, user_msg, max_tokens)
+    if waited > 1:
+        print(f"    ⏳ 配速等待 {waited:.1f}s（TPM 预算）")
 
     req_timeout = 90 if max_tokens > 500 else 45
     for attempt in range(3):
@@ -32,23 +61,13 @@ def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
                 },
                 timeout=req_timeout,
             )
+            # 429 是配速兜底（估算偏差时才触发），按响应头精确等待，不再盲睡 65s。
             if resp.status_code == 429:
                 if attempt >= 2:
                     print("    ⚠️ Groq 限流重试耗尽，切换备用方案")
                     return ""
-                retry_after = resp.headers.get("retry-after") or resp.headers.get("x-ratelimit-reset-tokens")
-                try:
-                    wait = max(int(float(retry_after)), 10) + 5
-                except (TypeError, ValueError):
-                    wait = 65
-                limit_type = ""
-                remaining_tokens = resp.headers.get("x-ratelimit-remaining-tokens", "?")
-                remaining_reqs = resp.headers.get("x-ratelimit-remaining-requests", "?")
-                if remaining_tokens == "0" or remaining_tokens == 0:
-                    limit_type = " (TPM 耗尽)"
-                elif remaining_reqs == "0" or remaining_reqs == 0:
-                    limit_type = " (RPM 耗尽)"
-                print(f"    ⏳ Groq 限流{limit_type}，等待 {wait}s 后重试（第{attempt+1}次）...")
+                wait = _retry_after_seconds(resp)
+                print(f"    ⏳ Groq 限流兜底，等待 {wait:.1f}s 后重试（第{attempt+1}次）...")
                 time.sleep(wait)
                 continue
             resp.raise_for_status()

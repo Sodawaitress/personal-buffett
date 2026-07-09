@@ -4,18 +4,13 @@
 LLM 读取所有持仓的最新分析 + 宏观数据，生成一份个性化的巴菲特视角总结。
 """
 
-import sys, os, json, requests
+import sys, os, json
 try:
     from scripts._bootstrap import bootstrap_paths
 except ImportError:
     from _bootstrap import bootstrap_paths
 
 bootstrap_paths()
-
-from scripts.config import GROQ_API_KEY
-
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL    = "llama-3.3-70b-versatile"
 
 SYSTEM_BRIEF = """你是一位按巴菲特视角行事的私人投资顾问，为一位中国普通投资者服务。
 
@@ -35,28 +30,9 @@ SYSTEM_BRIEF = """你是一位按巴菲特视角行事的私人投资顾问，�
 
 
 def _call_groq(system: str, user_msg: str, max_tokens: int = 400) -> str:
-    if not GROQ_API_KEY:
-        return ""
-    try:
-        resp = requests.post(
-            GROQ_URL,
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-            json={
-                "model": MODEL,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user",   "content": user_msg},
-                ],
-                "max_tokens":  max_tokens,
-                "temperature": 0.3,
-            },
-            timeout=30,
-        )
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"  ⚠️ portfolio_brief Groq: {e}")
-        return ""
+    # 委托共享实现：统一走 TPM 令牌桶配速 + 重试。
+    from scripts.buffett_groq import _call_groq as _shared
+    return _shared(system, user_msg, max_tokens)
 
 
 def _parse_response(text: str) -> tuple[str, str]:
