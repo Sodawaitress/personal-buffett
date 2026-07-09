@@ -142,9 +142,14 @@ def _fetch_1c1_news(code, market, log):
     try:
         if market in ("cn", "hk"):
             import akshare as ak
+            from scripts.stock_fetch import fetch_with_fallback
 
-            try:
-                df = ak.stock_news_em(symbol=code.split(".")[0])
+            # 东财是 akshare 里按股新闻的唯一源，海外超时多为瞬时 → 退避重试一次
+            _em = lambda: ak.stock_news_em(symbol=code.split(".")[0])
+            df = fetch_with_fallback(
+                [("东财", _em), ("东财·重试", _em)], label="新闻", log=log,
+            )
+            if df is not None:
                 for _, row in df.head(20).iterrows():
                     db.upsert_stock_news(
                         code,
@@ -155,8 +160,6 @@ def _fetch_1c1_news(code, market, log):
                         today,
                     )
                     count += 1
-            except Exception:
-                pass
         else:
             import yfinance as yf
 
@@ -237,25 +240,39 @@ def _fetch_1c1_news(code, market, log):
         log(f"       ⚠️ 新闻获取失败: {e}")
 
 
+def _em_fund_flow(code):
+    """东财主力资金（首选源），归一为 {date, net(亿), ratio}。"""
+    import akshare as ak
+
+    pure = code.split(".")[0]
+    df = ak.stock_individual_fund_flow(stock=pure, market="sh" if pure.startswith(("6", "9")) else "sz")
+    if df is None or df.empty:
+        return None
+    row = df.iloc[-1]
+    return {
+        "date": str(row.get("日期", datetime.now(CN_TZ).strftime("%Y-%m-%d")))[:10],
+        "net": round(float(row.get("主力净流入-净额", 0)) / 1e8, 2),
+        "ratio": float(row.get("主力净流入-净占比", 0)),
+    }
+
+
 def _fetch_fund_flow(code, market, log):
     if market != "cn":
         return
     log("  [3/4] 爬取主力资金…")
-    try:
-        import akshare as ak
+    from scripts.stock_fetch import fetch_with_fallback, fetch_cn_fund_flow_sina
 
-        pure = code.split(".")[0]
-        df = ak.stock_individual_fund_flow(stock=pure, market="sh" if pure.startswith(("6", "9")) else "sz")
-        if df is not None and not df.empty:
-            row = df.iloc[-1]
-            date = str(row.get("日期", datetime.now(CN_TZ).strftime("%Y-%m-%d")))[:10]
-            net = float(row.get("主力净流入-净额", 0)) / 1e8
-            ratio = float(row.get("主力净流入-净占比", 0))
-            db.upsert_fund_flow(code, date, net, ratio)
-            arrow = "↑" if net >= 0 else "↓"
-            log(f"       {arrow} 主力净{'+' if net >= 0 else ''}{net:.2f}亿 ({ratio:+.1f}%)")
-    except Exception as e:
-        log(f"       ⚠️ 资金流向获取失败: {e}")
+    ff = fetch_with_fallback(
+        [("东财", lambda: _em_fund_flow(code)),
+         ("新浪", lambda: fetch_cn_fund_flow_sina(code))],
+        label="主力资金", log=log,
+    )
+    if ff:
+        db.upsert_fund_flow(code, ff["date"], ff["net"], ff["ratio"])
+        arrow = "↑" if ff["net"] >= 0 else "↓"
+        log(f"       {arrow} 主力净{'+' if ff['net'] >= 0 else ''}{ff['net']:.2f}亿 ({ff['ratio']:+.1f}%)")
+    else:
+        log("       ⚠️ 资金流向两源均失败")
 
 
 def _fetch_financials(code, market, log):

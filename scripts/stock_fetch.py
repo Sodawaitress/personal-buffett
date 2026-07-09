@@ -349,6 +349,76 @@ def fetch_cn_technicals(code: str) -> dict:
         return {}
 
 
+def _is_empty(result) -> bool:
+    """None / 空 DataFrame / 空 list/dict/str 都算空。"""
+    if result is None:
+        return True
+    empty_attr = getattr(result, "empty", None)
+    if empty_attr is not None:
+        return bool(empty_attr)
+    try:
+        return len(result) == 0
+    except TypeError:
+        return False
+
+
+def fetch_with_fallback(providers, label="", log=None, gap=2.0):
+    """按优先级依次尝试数据源，第一个返回非空结果的胜出（US-122 第二批）。
+
+    参考 akshare-one 的 _fetch_data_with_fallback：源按优先级排，抛异常或返回空即
+    降级到下一个。源之间 sleep(gap) 给海外瞬时超时留恢复窗口（同源重试传两次即可）。
+    providers: [(name, callable)]，callable 无参、返回数据或抛异常。全失败返回 None。
+    """
+    for i, (name, fn) in enumerate(providers):
+        if i > 0 and gap > 0:
+            time.sleep(gap)
+        try:
+            result = fn()
+            if _is_empty(result):
+                if log:
+                    log(f"       ↻ {label}·{name} 空数据，降级")
+                continue
+            if log and i > 0:
+                log(f"       ✓ {label} 由备源 {name} 补上")
+            return result
+        except Exception as e:
+            if log:
+                log(f"       ↻ {label}·{name} 失败（{e}），降级")
+    return None
+
+
+def fetch_cn_fund_flow_sina(code: str) -> dict:
+    """新浪主力资金流向（东财 stock_individual_fund_flow 的备源，海外可达）。
+
+    接口 MoneyFlow.ssi_ssfx_flzjtj 返回 netamount=主力净额(元)、各级流入流出。
+    返回 {date, net(亿), ratio(净占比%)}；失败返回 {}。
+    """
+    import requests as req
+
+    pure = code.split(".")[0]
+    prefix = "sh" if pure.startswith(("6", "9")) else "sz"
+    try:
+        r = req.get(
+            "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssi_ssfx_flzjtj",
+            params={"daima": f"{prefix}{pure}"},
+            headers={"Referer": "https://finance.sina.com.cn"},
+            timeout=12,
+        )
+        d = r.json()
+        if not d or "netamount" not in d:
+            return {}
+        net_yuan = float(d["netamount"])
+        total = sum(float(d.get(k, 0)) for k in ("r0", "r1", "r2", "r3"))  # 各级资金总和
+        ratio = round(net_yuan / total * 100, 2) if total else 0.0
+        return {
+            "date": datetime.now(CN_TZ).strftime("%Y-%m-%d"),
+            "net": round(net_yuan / 1e8, 2),
+            "ratio": ratio,
+        }
+    except Exception:
+        return {}
+
+
 # ── 新闻源配置 ────────────────────────────────────────
 # 摩根大通研究报告 RSS
 # 注意: JPMorgan 官方 RSS 已下线，改用 Google News 聚合 (见 INTL_QUERIES)
