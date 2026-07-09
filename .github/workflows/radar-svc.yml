@@ -1,0 +1,37 @@
+name: radar-svc (US-121)
+
+# 机构雷达服务：龙虎榜/北向/解禁/大宗/增减持/前兆信号（调研·融券·参与度）。A股专属，AKShare 密集。
+# 从 Neon 读价格/资金,前兆信号写回 DB(详情页读)。独立服务：AKShare 慢/挂只影响雷达。
+# 暂时仅手动触发。全链路验证后再加 schedule。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run radar-svc
+        run: python -m scripts.svc_radar
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ radar-svc 失败" \
+              --data-urlencode "desp=机构雷达服务跑挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          fi
