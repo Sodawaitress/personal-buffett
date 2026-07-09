@@ -120,6 +120,32 @@ def _is_stale(code: str, step: str, force: bool) -> bool:
     return age > _CACHE_TTL[step]
 
 
+def run_fetch_layers(code: str, market: str, log, force: bool = True):
+    """只抓数据（1a 行情 / 1c1 新闻 / 1b 财务 / 分类 / 1c2 资金 / 1c3 技术面），不跑 AI。
+    run_pipeline 与 fetch-svc 共用，保证两条路径抓取行为一致。"""
+
+    def _maybe_run(step, fn, args, label, timeout):
+        if _is_stale(code, step, force):
+            _run_with_timeout(fn, args, label, log, timeout)
+        else:
+            log(f"  ⏭ {label} 缓存新鲜，跳过")
+
+    _maybe_run("price", _fetch_1a_quote, [code, market, log], "1a·行情", T_PRICE)
+    _maybe_run("news", _fetch_1c1_news, [code, market, log], "1c1·新闻", T_NEWS)
+    _maybe_run("fundamentals", _fetch_1b_financials, [code, market, log], "1b·财务", T_FINANCE)
+
+    try:
+        from scripts.classifier import classify_stock
+
+        meta = classify_stock(code)
+        log(f"  ✦ 重新分类: {meta.get('company_type')} / tier={meta.get('market_tier')}")
+    except Exception as _ce:
+        log(f"  ⚠️ 重新分类失败: {_ce}")
+
+    _maybe_run("fund_flow", _fetch_1c2_capital, [code, market, log], "1c2·资金信号", T_BASIC)
+    _maybe_run("technicals", _fetch_1c3_technicals, [code, market, log], "1c3·技术面", T_PRICE)
+
+
 def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force: bool = True):
     logs = []
 
@@ -128,31 +154,12 @@ def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force
         snippet = "\n".join(logs)[-500:]
         db.update_job(job_id, status="running", log=snippet)
 
-    def _maybe_run(step, fn, args, label, timeout):
-        if _is_stale(code, step, force):
-            _run_with_timeout(fn, args, label, log, timeout)
-        else:
-            log(f"  ⏭ {label} 缓存新鲜，跳过")
-
     try:
         db.update_job(job_id, status="running")
         mode = "全量" if force else "缓存优先"
         log(f"▶ pipeline 开始: {code} ({market}) [{mode}]")
 
-        _maybe_run("price", _fetch_1a_quote, [code, market, log], "1a·行情", T_PRICE)
-        _maybe_run("news", _fetch_1c1_news, [code, market, log], "1c1·新闻", T_NEWS)
-        _maybe_run("fundamentals", _fetch_1b_financials, [code, market, log], "1b·财务", T_FINANCE)
-
-        try:
-            from scripts.classifier import classify_stock
-
-            meta = classify_stock(code)
-            log(f"  ✦ 重新分类: {meta.get('company_type')} / tier={meta.get('market_tier')}")
-        except Exception as _ce:
-            log(f"  ⚠️ 重新分类失败: {_ce}")
-
-        _maybe_run("fund_flow", _fetch_1c2_capital, [code, market, log], "1c2·资金信号", T_BASIC)
-        _maybe_run("technicals", _fetch_1c3_technicals, [code, market, log], "1c3·技术面", T_PRICE)
+        run_fetch_layers(code, market, log, force)
         _run_with_timeout(_run_analysis, [code, market, log, user_id], "AI分析", log, T_AI)
 
         log("✅ 完成")
