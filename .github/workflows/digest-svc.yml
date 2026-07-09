@@ -1,0 +1,38 @@
+name: digest-svc (US-121)
+
+# 快照服务：从 Neon 汇总自选股 → 构建快照 JSON commit 到 GitHub + 回填预测收益。
+# 纯 DB 驱动、无 LLM。独立于 analyze-svc：读 DB 最新价即可提交快照。
+# 暂时仅手动触发（cron.yml 旧 light job 仍走 Fly，避免双跑）。验证后再加 schedule。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GITHUB_TOKEN: ${{ secrets.SNAPSHOT_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run digest-svc
+        run: python -m scripts.svc_digest
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ digest-svc 失败" \
+              --data-urlencode "desp=快照/回填服务跑挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          fi
