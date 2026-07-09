@@ -12,6 +12,7 @@ venv/
 notebooks/
 /tmp/stock_raw.json
 /tmp/stock_report.md
+prod_snap.db
 
 ._*
 deploy/oracle/run/
