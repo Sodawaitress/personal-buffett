@@ -1,0 +1,46 @@
+name: push-svc (US-121)
+
+# 推送服务：读 DB 最新报告 → Bear/Discord/Server酱 + 各用户个人日报（无重大变化不打扰）。
+# 独立于 analyze-svc：analyze 挂了也能把已有最新报告推出去。
+# 暂时仅手动触发；skip_push=1 只生成不推送（验证用）。全链路验证后再加 schedule。
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_push:
+        description: '1=只生成不真推送（验证用，不打扰妈妈）'
+        required: false
+        default: '1'
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+      PYTHONUNBUFFERED: "1"
+      SKIP_PUSH: ${{ github.event.inputs.skip_push || '1' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run push-svc
+        run: python -m scripts.svc_push
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ push-svc 失败" \
+              --data-urlencode "desp=推送服务跑挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          fi

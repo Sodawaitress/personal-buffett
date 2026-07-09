@@ -36,24 +36,9 @@ def _classify(title: str) -> str:
 
 
 def _call_groq(system: str, user_msg: str, max_tokens: int = 600) -> str:
-    from scripts.config import GROQ_API_KEY
-    import requests
-    if not GROQ_API_KEY:
-        return ""
-    try:
-        r = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-            json={"model": "llama-3.3-70b-versatile",
-                  "messages": [{"role":"system","content":system},
-                                {"role":"user","content":user_msg}],
-                  "max_tokens": max_tokens, "temperature": 0.3},
-            timeout=30,
-        )
-        return r.json()["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"  ⚠️ Groq: {e}")
-        return ""
+    # 委托共享实现：统一走 TPM 令牌桶配速 + 重试（三份重复实现原本各自绕过配速，共用同一 12k TPM 会互撞 429）。
+    from scripts.buffett_groq import _call_groq as _shared
+    return _shared(system, user_msg, max_tokens)
 
 
 SYSTEM_PERIOD = """你是沃伦·巴菲特，为投资者撰写周期性持仓回顾。

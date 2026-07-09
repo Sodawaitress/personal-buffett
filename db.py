@@ -9,6 +9,7 @@ from radar_app.data.jobs import *  # noqa: F401,F403
 from radar_app.data.market import *  # noqa: F401,F403
 from radar_app.data.notifications import *  # noqa: F401,F403
 from radar_app.data.portfolio import *  # noqa: F401,F403
+from radar_app.data.services import *  # noqa: F401,F403
 from radar_app.data.stocks import *  # noqa: F401,F403
 from radar_app.data.users import *  # noqa: F401,F403
 
