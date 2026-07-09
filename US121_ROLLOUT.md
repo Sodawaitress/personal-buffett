@@ -65,4 +65,7 @@ FROM service_runs ORDER BY id DESC LIMIT 20;
 - 2026-07-09：合并 main（2708ae9）。首次云端触发 fetch-svc。
 - 2026-07-09 云端 bug #1：Neon 无 service_runs 表（svc 漏 init_db）→ 修：各 svc 启动 init_db（1097273）。
 - 2026-07-09 云端 bug #2（根因）：_run_with_timeout 用 ThreadPoolExecutor，超时后 shutdown(wait=True) 仍等卡死的 AKShare 线程 → fetch-svc 云端 14min 不停被取消。修：改 daemon 线程+join(timeout)，超时真生效（1b81a25）。**大概率也是旧 monolith 撞 2h 的元凶之一。**
-- 待办：重跑 fetch-svc 验证 bug#2 已修（预算真能停）。
+- 2026-07-09 ✅ fetch-svc 重跑成功（run 28997948757）：预算真生效「达6min提前停,已6只」,软超时真中断「后台线程已抛下」,干净完成。bug#2 已修实锤。
+- 2026-07-09 ⚠️ 重要发现：云端 ~60s/只（6只/6min）。AKShare 从 GitHub 美国 runner 极慢,1b/1c2 频繁撞步超时。131只一轮跑不完。**旧 monolith 老毛病(撞2h另一半原因)**。
+  - 待议方案：①提高预算+多次跑靠缓存跳过(但news/fund_flow TTL=0每次重抓) ②China/Aliyun self-hosted runner ③AKShare走代理 ④接受轮转覆盖(配合选择性分析)
+- 待办：触发 analyze-svc(走Groq不走AKShare,不受此影响)验证;throughput 单独解决。
