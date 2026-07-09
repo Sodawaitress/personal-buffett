@@ -80,6 +80,34 @@ def all_watched_codes():
         return [r["stock_code"] for r in c.execute("SELECT DISTINCT stock_code FROM user_watchlist WHERE removed_at IS NULL")]
 
 
+def fetch_priority_codes():
+    """按抓取优先级排序的自选股 code 列表（US-122）。
+
+    Tier 0 持仓(holding) > Tier 2 观察(watching) > Tier 3 仅已卖出(sold)。
+    同 tier 内按价格最后抓取时间升序（最陈旧先抓，从没抓过的最先）——
+    staleness 本身就是轮转游标，预算内先喂饱前排，长尾自然轮到。
+    NULLS FIRST 显式写：Postgres 默认 NULLS LAST 会把从没抓过的排到最后。
+    """
+    with get_conn() as c:
+        rows = c.execute(
+            """
+            SELECT w.stock_code AS code,
+                   MIN(CASE w.status
+                           WHEN 'holding'  THEN 0
+                           WHEN 'watching' THEN 2
+                           WHEN 'sold'     THEN 3
+                           ELSE 2 END) AS tier,
+                   MAX(p.fetched_at) AS last_fetch
+            FROM user_watchlist w
+            LEFT JOIN stock_prices p ON p.code = w.stock_code
+            WHERE w.removed_at IS NULL
+            GROUP BY w.stock_code
+            ORDER BY tier ASC, last_fetch ASC NULLS FIRST
+            """
+        ).fetchall()
+        return [r["code"] for r in rows]
+
+
 def get_users_watching_code(code: str) -> list[int]:
     """返回所有 watching/holding 该股票的 user_id 列表（未删除）。"""
     with get_conn() as c:

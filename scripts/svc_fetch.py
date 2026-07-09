@@ -25,11 +25,13 @@ BUDGET_MIN = float(os.environ.get("FETCH_BUDGET_MIN", "40"))
 # 默认尊重缓存 TTL：财务 7 天 / 技术面 24h 直接跳过，同日已抓的新闻·资金也跳过，
 # 让预算内多轮续跑真正靠缓存变快。整库重建时设 FORCE_FETCH=1 强制全量重抓。
 FORCE = os.environ.get("FORCE_FETCH", "0") == "1"
+# 每只之间温柔停顿，避免对东财突发请求触发海外封 IP（US-122，prior art 反面教训）。
+GAP_SEC = float(os.environ.get("FETCH_GAP_SEC", "1.5"))
 
 
 def main():
     db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
-    codes = db.all_watched_codes()
+    codes = db.fetch_priority_codes()  # 持仓→观察→已卖出，同级按 staleness 轮转（US-122）
     mode = "全量强抓" if FORCE else "缓存优先(续跑)"
     print(f"📡 fetch-svc 启动：{len(codes)} 只自选股，预算 {BUDGET_MIN} 分钟，{mode}")
     deadline = time.time() + BUDGET_MIN * 60
@@ -57,6 +59,8 @@ def main():
                 run.tick()
             except Exception as e:
                 print(f"  ⚠️ {code} 抓取失败（跳过）: {e}")
+            if GAP_SEC > 0:
+                time.sleep(GAP_SEC)
 
     print(f"✅ fetch-svc 完成：{done}/{len(codes)} 只")
 

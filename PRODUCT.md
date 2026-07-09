@@ -4778,3 +4778,37 @@ prior art（[多信号共振=置信](https://www.mql5.com/en/blogs/post/767676) 
 - 在线实时推理 / 流式特征（模型尚未训练，远期事）
 - 付费升级 Groq（暂缓，先验证免费+选择性够不够）
 
+---
+
+## US-122 · fetch-svc throughput（优先级轮转 + 温柔串行，不花钱）
+
+### 背景
+US-121 拆出 fetch-svc 后暴露真瓶颈：**数据在中国（东财/新浪/THS），GitHub runner 在美国**，跨太平洋 + 东财对海外 IP 地域限流 → 云端 **~60s/只**，131 只一轮 40min 预算跑不完。这也是旧 monolith 撞 2h 的另一半原因。修超时（US-121）只让失败得干净，不让它变快——geography 改不了。
+
+**Prior art（2026-07-10 搜 GitHub）**：不花钱的人做法高度一致 —— 请求更少、串行、按优先级、狠缓存、容忍尾部滞后。关键反面教训：**东财对海外高并发封 IP 极狠**（akshare issue #6061「异步高并发导致东财大量封IP」/#7011/#7001，push2his.eastmoney.com 15s 超时）。→ **禁用并发抓取，串行 + 温柔配速才是正解。** 付费方案（akshare-proxy 走中国网关要 TOKEN / self-hosted 中国 runner）已否决（用户定：现在不花钱）。
+
+### 决策：B 方案（不花钱，纯技术）
+不买机器、不搞 self-hosted runner、不上付费代理。靠 fetch-svc 预算内**按优先级增量轮转** + analyze-svc 只读 DB 永不碰 AKShare + 选择性分析。接受尾部（sold/冷门 watching）A股信号滞后 1–2 天——而**优先级保证滞后的是不重要的那批**。
+
+### Scope
+1. **优先级轮转队列**（核心）：fetch-svc 不再从头遍历 `all_watched_codes()`，改用 `fetch_priority_codes()` 排序：
+   - Tier 0 = 任一用户**持仓**（holding）
+   - Tier 2 = **观察**（watching）
+   - Tier 3 = 仅**已卖出**（sold，无人 holding/watching）
+   - 同 tier 内按 **价格最后抓取时间升序（最陈旧先抓，NULL 最先）** → **staleness 本身即游标**，无需额外状态表；预算内先喂饱前排，长尾自然轮转。
+2. **温柔串行配速**（替换并发）：每只之间留 `FETCH_GAP_SEC`（默认小）gap，避免对东财突发请求触发封 IP。**串行是 prior art 证明的正解，不是妥协。**
+3. **多源 fallback**（第二批，免费）：某只东财超时 → 自动降级 sina / eastmoney_direct 再试一次，提升单轮成功率。参考 akshare-one 分源逻辑，不装该包。
+4. **PG 兼容**：`ORDER BY ... last_fetch ASC NULLS FIRST` 显式写 NULLS FIRST（Postgres 默认 NULLS LAST，会把从没抓过的排最后 = 永远抓不到）。
+
+### Acceptance Criteria
+- [ ] `fetch_priority_codes()` 返回按 tier→staleness 排序的 code 列表；持仓永远排在观察前、观察排在已卖出前
+- [ ] fetch-svc 用它取代 `all_watched_codes()`；预算用尽时，被跳过的一定是低优先级/最近才抓过的
+- [ ] 同一天连跑两轮：第二轮靠 TTL 缓存 + staleness 排序，只补上一轮没抓到的长尾，不重抓已新鲜的（依赖 US-121 的 force=False）
+- [ ] 每只之间有可配 gap，日志无东财封 IP / 大面积 15s 超时
+- [ ] PG 与 SQLite 下排序行为一致（NULLS FIRST 显式）
+
+### 不做
+- 并发 / 异步抓取 AKShare（东财封 IP，prior art 反面教训）
+- 付费代理 / self-hosted 中国 runner（用户定：不花钱）
+- 额外游标/队列状态表（用 stock_prices.fetched_at 的 staleness 当游标即可）
+
