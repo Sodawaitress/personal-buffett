@@ -129,13 +129,17 @@ def _is_stale(code: str, step: str, force: bool) -> bool:
     return age > _CACHE_TTL[step]
 
 
-def run_fetch_layers(code: str, market: str, log, force: bool = True):
+def run_fetch_layers(code: str, market: str, log, force: bool = True) -> int:
     """只抓数据（1a 行情 / 1c1 新闻 / 1b 财务 / 分类 / 1c2 资金 / 1c3 技术面），不跑 AI。
-    run_pipeline 与 fetch-svc 共用，保证两条路径抓取行为一致。"""
+    run_pipeline 与 fetch-svc 共用，保证两条路径抓取行为一致。
+    返回实际执行（未被缓存跳过）的层数——调用方据此决定要不要对东财配速。"""
+    ran = 0
 
     def _maybe_run(step, fn, args, label, timeout):
+        nonlocal ran
         if _is_stale(code, step, force):
             _run_with_timeout(fn, args, label, log, timeout)
+            ran += 1
         else:
             log(f"  ⏭ {label} 缓存新鲜，跳过")
 
@@ -153,6 +157,7 @@ def run_fetch_layers(code: str, market: str, log, force: bool = True):
 
     _maybe_run("fund_flow", _fetch_1c2_capital, [code, market, log], "1c2·资金信号", T_BASIC)
     _maybe_run("technicals", _fetch_1c3_technicals, [code, market, log], "1c3·技术面", T_PRICE)
+    return ran
 
 
 def run_pipeline(job_id: int, code: str, market: str, user_id: int = None, force: bool = True):

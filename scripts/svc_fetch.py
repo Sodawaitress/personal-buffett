@@ -53,13 +53,16 @@ def main():
                 print(f"  {msg}")
 
             print(f"▶ {code} ({market})")
+            ran = 0
             try:
-                run_fetch_layers(code, market, log, force=FORCE)
+                ran = run_fetch_layers(code, market, log, force=FORCE)
                 done += 1
                 run.tick()
             except Exception as e:
                 print(f"  ⚠️ {code} 抓取失败（跳过）: {e}")
-            if GAP_SEC > 0:
+            # gap 只为防东财突发封 IP → 仅当 A股且这轮真跑了层（非全缓存命中）才睡，
+            # 否则同日第二轮全缓存时会白白空睡几分钟，拖垮轮转
+            if GAP_SEC > 0 and market == "cn" and ran > 0:
                 time.sleep(GAP_SEC)
 
     print(f"✅ fetch-svc 完成：{done}/{len(codes)} 只")
