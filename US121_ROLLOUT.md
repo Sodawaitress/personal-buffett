@@ -87,4 +87,9 @@ FROM service_runs ORDER BY id DESC LIMIT 20;
   - 方案A（推荐）：阿里云香港 VPS ~$5/月挂 GitHub self-hosted runner，只跑 A股 fetch-svc，60s/只→1-3s/只，131只一轮跑完。代价：一台机器要维护，港区免ICP。
   - 方案B：不碰服务器，只做第1+2层，靠轮转覆盖+选择性分析，尾部A股信号可能滞后1-2天。零成本零运维。
   - 方案C：AKShare 走 HK 代理——AKShare 打太多端点，代理覆盖不全、易碎，不推荐。
-  - **状态：等用户拍板 A / B。**
+  - **状态：用户拍板 B（不花钱）。→ 见 US-122。**
+
+### US-122 优先级轮转 · 实现完成待云端验证（2026-07-10）
+- `fetch_priority_codes()`（stocks.py）：持仓→观察→已卖出，同级按 stock_prices.fetched_at staleness 升序（NULLS FIRST，PG 兼容）。本地实测 137 只，9 只持仓排最前，持仓内最陈旧的 TWH.NZ 排第一 ✓。
+- `svc_fetch.py` 换用它 + `FETCH_GAP_SEC=1.5s` 温柔串行（避东财封 IP）。commit 见 US-122。
+- **待验证**：云端手动触发 fetch-svc → 看日志是否持仓先抓、预算耗尽时跳过的是长尾、gap 生效无封 IP。同日连跑两轮看第二轮是否只补长尾（依赖 US-121 force=False）。
