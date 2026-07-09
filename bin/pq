@@ -1,0 +1,29 @@
+#!/bin/bash
+# pq — 查/改生产数据库（Fly.io /data/radar.db）
+# 用法: pq "SELECT * FROM users"
+#       pq "DELETE FROM supply_chain_scan_log WHERE ticker='SNDK'"
+# 在 Claude Code 会话里: ! bin/pq "SQL"
+
+if [ -z "$1" ]; then
+  echo "用法: pq \"SQL\""
+  exit 1
+fi
+
+SQL=$(echo "$1" | sed "s/\"/\\\\\"/g")
+
+flyctl ssh console -a personal-buffett --command "python3 -c \"
+import sqlite3, json
+c = sqlite3.connect('/data/radar.db')
+c.row_factory = sqlite3.Row
+rows = c.execute(\\\"$SQL\\\").fetchall()
+c.commit()
+if rows:
+    keys = rows[0].keys()
+    print(' | '.join(keys))
+    print('-' * 60)
+    for r in rows:
+        print(' | '.join(str(r[k]) for k in keys))
+else:
+    print('(no rows)')
+c.close()
+\""

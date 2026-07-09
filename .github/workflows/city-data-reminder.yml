@@ -1,0 +1,50 @@
+name: Annual City Data Reminder
+
+on:
+  schedule:
+    # 每年 6 月 1 日 09:00 UTC（NBS 年报通常 5 月发布，6 月 Numbeo 会更新）
+    - cron: '0 9 1 6 *'
+  workflow_dispatch:
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open reminder issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const year = new Date().getFullYear();
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `[年度维护] 更新城市生活成本数据 ${year}`,
+              body: [
+                '## 每年 6 月做一次',
+                '',
+                '### 1. 重跑 Numbeo 抓取（Major 城市）',
+                '```bash',
+                'python3 scripts/fetch_city_costs.py --force',
+                '```',
+                '',
+                '### 2. 检查小城市数据是否有变化',
+                '打开 `scripts/fetch_city_costs.py`，核对 `LIFESTYLE_CITIES` 里：',
+                '- 大理 / 丽江 / 西双版纳：参考云南统计公报',
+                '- 三亚：参考海南统计年鉴',
+                '',
+                '### 3. 更新年份',
+                '`REPORT_YEAR = ' + year + '`（如已是当前年可跳过）',
+                '',
+                '### 4. 同步更新前端 fallback',
+                '把新数据同步到 `frontend/src/hooks/useCityData.ts` 的 `FALLBACK_CITIES`',
+                '',
+                '### 5. 提交并部署',
+                '```bash',
+                'git add -p && git commit -m "chore(data): update city costs ' + year + '"',
+                'flyctl deploy --remote-only',
+                '```',
+              ].join('\n'),
+              labels: ['maintenance'],
+            });
