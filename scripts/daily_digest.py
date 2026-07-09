@@ -134,12 +134,16 @@ def _build_snapshot() -> dict:
             snap["precursor"] = None
 
         try:
+            # 跨方言：DATE('now','-1 day') 是 SQLite 专用，在 Neon/Postgres 抛错 → 被下面
+            # except 吞掉 → 每只 price=None → fresh=0 → 撞 50% 闸 → 快照冻结(07-02 真因)。
+            # 改为 Python 算 cutoff 传参，ISO 文本字典序=时间序，两方言通用。
+            price_cutoff = (date.today() - timedelta(days=1)).isoformat()
             with get_conn() as c:
                 pr = c.execute(
                     "SELECT price, change_pct, fetched_at FROM stock_prices "
-                    "WHERE code=:code AND DATE(fetched_at) >= DATE('now','-1 day') "
+                    "WHERE code=:code AND fetched_at >= :cutoff "
                     "ORDER BY fetched_at DESC LIMIT 1",
-                    {"code": code}
+                    {"code": code, "cutoff": price_cutoff}
                 ).fetchone()
                 if pr:
                     snap["price"] = {
@@ -155,12 +159,12 @@ def _build_snapshot() -> dict:
         try:
             with get_conn() as c:
                 rows = c.execute(
-                    "SELECT title, sentiment, published_at FROM stock_news WHERE code=:code ORDER BY published_at DESC LIMIT 5",
+                    "SELECT title, sentiment, publish_time FROM stock_news WHERE code=:code ORDER BY publish_time DESC LIMIT 5",
                     {"code": code}
                 ).fetchall()
                 if rows:
                     snap["news"] = [
-                        {"title": r["title"], "sentiment": r["sentiment"], "date": str(r["published_at"] or "")[:10]}
+                        {"title": r["title"], "sentiment": r["sentiment"], "date": str(r["publish_time"] or "")[:10]}
                         for r in rows
                     ]
         except Exception:
