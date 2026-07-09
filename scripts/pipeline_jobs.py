@@ -1,7 +1,6 @@
 import json as _json
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timezone, timedelta
 
 import db
@@ -35,14 +34,24 @@ _CACHE_TTL = {
 
 
 def _run_with_timeout(fn, args, label: str, log, timeout: int = T_BASIC):
-    with ThreadPoolExecutor(max_workers=1) as ex:
-        future = ex.submit(fn, *args)
+    # daemon 线程 + join(timeout)：超时就真的抛下它继续（daemon 不阻塞进程退出）。
+    # 旧写法用 `with ThreadPoolExecutor`，超时后 __exit__ 的 shutdown(wait=True) 仍会等卡死的
+    # 网络线程 → 软超时形同虚设，云端遇无 socket 超时的 AKShare 调用会永久挂起。
+    err = {}
+
+    def _worker():
         try:
-            future.result(timeout=timeout)
-        except FuturesTimeoutError:
-            log(f"  ⏱ {label} 超时（>{timeout}s），跳过")
+            fn(*args)
         except Exception as e:
-            log(f"  ⚠️ {label} 失败: {e}")
+            err["e"] = e
+
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        log(f"  ⏱ {label} 超时（>{timeout}s），跳过（后台线程已抛下）")
+    elif "e" in err:
+        log(f"  ⚠️ {label} 失败: {err['e']}")
 
 
 def _is_cn_trading_day(date_cn: str) -> bool:
