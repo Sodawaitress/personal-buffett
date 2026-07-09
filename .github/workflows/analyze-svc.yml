@@ -1,0 +1,50 @@
+name: analyze-svc (US-121)
+
+# 分析服务：选择性跑 LLM 巴菲特信（持仓/重大新闻/轮转），数据从 Neon 读。
+# TPM 令牌桶配速 + 时间预算,永不撞 120min 天花板。
+# 独立于 fetch-svc / push-svc：本服务挂了价格仍新鲜、旧报告仍可推。
+# 暂时仅手动触发（cron.yml 旧 monolith 仍在跑,避免双跑）。全链路验证后再加 schedule。
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_min:
+        description: '时间预算（分钟），超了提前停下次续'
+        required: false
+        default: '50'
+      rotation_days:
+        description: '轮转天数：非持仓/无重大新闻的股票距上次分析 ≥N 天才重跑'
+        required: false
+        default: '3'
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      PYTHONUNBUFFERED: "1"
+      ANALYZE_BUDGET_MIN: ${{ github.event.inputs.budget_min || '50' }}
+      ANALYZE_ROTATION_DAYS: ${{ github.event.inputs.rotation_days || '3' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run analyze-svc
+        run: python -m scripts.svc_analyze
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ analyze-svc 失败" \
+              --data-urlencode "desp=分析服务跑挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          fi
