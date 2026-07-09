@@ -636,6 +636,19 @@ _SCHEMA_SQL = """
             report_year        INTEGER,
             fetched_at         TEXT NOT NULL
         );
+
+        -- US-121 微服务可观测性：每个服务每次运行记一行（append-only）
+        CREATE TABLE IF NOT EXISTS service_runs (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            service_name    TEXT NOT NULL,
+            started_at      TEXT NOT NULL,
+            finished_at     TEXT,
+            status          TEXT NOT NULL DEFAULT 'running',   -- running | done | failed
+            duration_s      REAL,
+            items_processed INTEGER DEFAULT 0,
+            stopped_early   INTEGER DEFAULT 0,
+            error           TEXT
+        );
 """
 
 
