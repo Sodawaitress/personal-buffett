@@ -5,8 +5,8 @@ name: Validate Full Pipeline (temp)
 # 稳定后删除本文件，恢复只靠每天的 cron.yml。3h > 60min 运行，不重叠。
 
 on:
-  schedule:
-    - cron: '0 */3 * * *'   # 每 3 小时
+  # schedule 已停：完整 pipeline 串行架构必撞 2h timeout，每 3h 白烧一次 CI。
+  # 手动触发保留，待 US-121 microservices 拆分后再评估。
   workflow_dispatch:
 
 jobs:
@@ -17,6 +17,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       SKIP_PUSH: "1"
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
