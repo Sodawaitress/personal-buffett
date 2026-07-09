@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ t.brand }}</title>
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #faf9f7;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── 顶栏 ── */
+    .land-top {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 32px;
+      position: absolute;
+      top: 0; right: 0;
+    }
+    .land-top a {
+      font-size: 13px;
+      color: #6b7280;
+      text-decoration: none;
+    }
+    .land-top a:hover { color: #111827; }
+    .land-top-sep { color: #d1d5db; }
+
+    /* ── 中心区 ── */
+    .land-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      padding-top: 60px;
+    }
+
+    .land-brand {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .land-tagline {
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      color: #111827;
+      text-align: center;
+      line-height: 1.3;
+      max-width: 520px;
+      margin-bottom: 40px;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── 搜索框 ── */
+    .land-search-wrap {
+      width: 100%;
+      max-width: 560px;
+    }
+    .land-input-row {
+      position: relative;
+    }
+
+    .land-search-box {
+      width: 100%;
+      padding: 16px 20px 16px 48px;
+      font-size: 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .land-search-box:focus {
+      border-color: #111827;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .land-search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    /* ── 市场选择器 ── */
+    .search-type-seg {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .seg-btn {
+      font-size: 12px;
+      padding: 5px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      background: #fff;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .seg-btn:hover { border-color: #111827; color: #111827; }
+    .seg-btn.active { background: #111827; color: #fff; border-color: #111827; }
+
+    /* ── 搜索下拉（覆盖变量适配 landing 配色） ── */
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0; right: 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      overflow: hidden;
+      z-index: 100;
+      display: none;
+    }
+    .search-dropdown.open { display: block; }
+    .search-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; cursor: pointer;
+      border-bottom: 1px solid #f3f4f6; font-size: 14px;
+    }
+    .search-item:last-child { border-bottom: none; }
+    .search-item:hover, .search-item.kbd-active { background: #f9fafb; }
+    .search-item-code { font-weight: 600; color: #374151; min-width: 64px; }
+    .search-item-name { flex: 1; color: #111827; }
+    .market-tag { font-size: 11px; color: #9ca3af; }
+    .search-empty { padding: 16px; font-size: 13px; color: #9ca3af; text-align: center; }
+    .search-loading { padding: 12px 16px; font-size: 13px; color: #9ca3af; }
+
+    /* ── 快捷入口 ── */
+    .land-shortcuts {
+      margin-top: 36px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .land-shortcut {
+      font-size: 13px;
+      color: #6b7280;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 6px 16px;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .land-shortcut:hover { border-color: #111827; color: #111827; }
+
+    /* ── 行动面板 ── */
+    .land-action-panel {
+      margin-top: 16px;
+      background: #fff;
+      border: 1.5px solid #111827;
+      border-radius: 14px;
+      overflow: hidden;
+      animation: fadeSlideIn 0.18s ease;
+      display: none;
+    }
+    .land-action-panel.open { display: block; }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .land-action-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .land-action-stock {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .land-action-code {
+      font-size: 12px;
+      font-weight: 700;
+      background: #111827;
+      color: #fff;
+      border-radius: 5px;
+      padding: 3px 8px;
+    }
+    .land-action-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .land-action-market {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .lap-added-tag {
+      font-size: 11px;
+      color: #16a34a;
+      font-weight: 500;
+      transition: opacity 0.3s;
+    }
+    .land-action-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #9ca3af;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0 0 8px;
+    }
+    .land-action-close:hover { color: #111827; }
+    .land-action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .land-action-primary {
+      display: block;
+      width: 100%;
+      padding: 18px 20px;
+      background: #111827;
+      color: #fff;
+      border: none;
+      font-size: 17px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s;
+    }
+    .land-action-primary:hover { background: #1f2937; }
+    .land-action-secondary {
+      display: flex;
+      gap: 0;
+      border-top: 1px solid #f3f4f6;
+    }
+    .land-action-sec-btn {
+      flex: 1;
+      padding: 14px 18px;
+      background: #fff;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.1s;
+    }
+    .land-action-sec-btn:first-child { border-right: 1px solid #f3f4f6; }
+    .land-action-sec-btn:hover { background: #f9fafb; }
+
+    /* ── 底部 ── */
+    .land-footer {
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="land-top">
+    <a href="{{ url_for('watchlist_page') }}">{{ t.nav_watchlist }}</a>
+    <span class="land-top-sep">·</span>
+    <a href="{{ url_for('dashboard') }}">{{ t.nav_dashboard }}</a>
+    <span class="land-top-sep">·</span>
+    <form method="post" action="{{ url_for('set_locale') }}" style="display:inline">
+      <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
+      <button type="submit" style="background:none;border:none;font-size:13px;color:#6b7280;cursor:pointer;padding:0">
+        {{ 'EN' if locale == 'en' else '中文' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="land-center">
+
+    <div class="land-brand">{{ t.brand }}</div>
+
+    <h1 class="land-tagline">{{ t.tagline }}</h1>
+
+    <div class="land-search-wrap">
+      <div class="search-type-seg" id="land-search-type-seg">
+        {% if locale == 'zh' %}
+        <button type="button" class="seg-btn active" data-type="cn"   onclick="setLandingType('cn',this)">A股</button>
+        <button type="button" class="seg-btn"        data-type="fund" onclick="setLandingType('fund',this)">基金</button>
+        <button type="button" class="seg-btn"        data-type="intl" onclick="setLandingType('intl',this)">海外</button>
+        {% else %}
+        <button type="button" class="seg-btn active" data-type="intl" onclick="setLandingType('intl',this)">Global</button>
+        <button type="button" class="seg-btn"        data-type="cn"   onclick="setLandingType('cn',this)">A-share</button>
+        <button type="button" class="seg-btn"        data-type="fund" onclick="setLandingType('fund',this)">Fund</button>
+        {% endif %}
+      </div>
+      <div class="land-input-row">
+        <span class="land-search-icon">🔍</span>
+        <input
+          id="land-search"
+          class="land-search-box"
+          type="text"
+          placeholder="{{ '输入公司名或股票代码…' if locale == 'zh' else 'Company name or ticker…' }}"
+          autocomplete="off"
+          autofocus
+        >
+        <div id="land-dropdown" class="search-dropdown"></div>
+      </div>
+      {# 行动面板：选中股票后出现（已自动加入观察）#}
+      <div id="land-action-panel" class="land-action-panel">
+        <div class="land-action-header">
+          <div class="land-action-stock">
+            <span class="land-action-code" id="lap-code"></span>
+            <span class="land-action-name" id="lap-name"></span>
+            <span class="land-action-market" id="lap-market"></span>
+            <span class="lap-added-tag" id="lap-added-tag"></span>
+          </div>
+          <button class="land-action-close" onclick="closeActionPanel()">×</button>
+        </div>
+        <button class="land-action-primary" onclick="_lapGo('value')">
+          {{ '算算它值多少钱' if locale == 'zh' else 'Estimate fair value' }}
+          <span>→</span>
+        </button>
+        <div class="land-action-secondary">
+          <button class="land-action-sec-btn" onclick="_lapGo('detail')">
+            {{ '查看详情' if locale == 'zh' else 'Full data' }}
+          </button>
+          <button class="land-action-sec-btn" onclick="window.location.href='/watchlist'">
+            {{ '我的选股' if locale == 'zh' else 'My watchlist' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="land-shortcuts">
+      <a href="{{ url_for('watchlist_page') }}" class="land-shortcut">📋 {{ t.nav_watchlist }}</a>
+      <a href="{{ url_for('dashboard') }}" class="land-shortcut">📊 {{ '今日简报' if locale == 'zh' else 'Dashboard' }}</a>
+      <a href="{{ url_for('accuracy') }}" class="land-shortcut">🎯 {{ '预测追踪' if locale == 'zh' else 'Predictions' }}</a>
+    </div>
+
+  </div>
+
+  <div class="land-footer">{{ t.brand }} · {{ '专注公司研究' if locale == 'zh' else 'Company Research' }}</div>
+
+  <script src="{{ url_for('static', filename='js/search-widget.js') }}"></script>
+  <script>
+  let _landingType = '{{ "cn" if locale == "zh" else "intl" }}';
+
+  function setLandingType(type, btn) {
+    _landingType = type;
+    document.querySelectorAll('#land-search-type-seg .seg-btn')
+      .forEach(b => b.classList.toggle('active', b === btn));
+    const inp = document.getElementById('land-search');
+    if (inp && inp.value.trim()) inp.dispatchEvent(new Event('input', {bubbles: true}));
+    else inp && inp.focus();
+  }
+
+  let _lapCode = '', _lapName = '';
+
+  function showActionPanel(code, name, market) {
+    _lapCode = code;
+    _lapName = name;
+    document.getElementById('lap-code').textContent   = code;
+    document.getElementById('lap-name').textContent   = name;
+    document.getElementById('lap-market').textContent = (market || '').toUpperCase();
+    document.getElementById('land-search').value      = name;
+    const tag = document.getElementById('lap-added-tag');
+    tag.textContent = '';
+    document.getElementById('land-action-panel').classList.add('open');
+
+    // 点击即意味着有兴趣 → 静默加入观察
+    fetch('/api/watchlist/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code, name})
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok && !d.already) {
+        tag.textContent = '{{ "已加入观察 ✓" if locale == "zh" else "Added ✓" }}';
+        setTimeout(() => { tag.textContent = ''; }, 3000);
+      }
+    })
+    .catch(() => {});
+  }
+
+  function _lapGo(dest) {
+    const enc = encodeURIComponent(_lapCode);
+    if (dest === 'value')  { window.location.href = '/stock/' + enc + '/value'; return; }
+    if (dest === 'detail') { window.location.href = '/stock/' + enc; return; }
+  }
+
+  function _showToast(msg) {
+    let t = document.getElementById('land-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'land-toast';
+      t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);' +
+        'background:#111827;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;' +
+        'font-weight:500;z-index:9999;transition:opacity 0.3s;white-space:nowrap;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+  }
+
+  function closeActionPanel() {
+    document.getElementById('land-action-panel').classList.remove('open');
+    const inp = document.getElementById('land-search');
+    inp.value = '';
+    inp.focus();
+  }
+
+  // 用户重新开始搜索时，自动收起 panel
+  document.getElementById('land-search').addEventListener('focus', () => {
+    const panel = document.getElementById('land-action-panel');
+    if (panel.classList.contains('open')) {
+      panel.classList.remove('open');
+      document.getElementById('land-search').value = '';
+    }
+  });
+
+  SearchWidget.bind(
+    'land-search',
+    'land-dropdown',
+    () => _landingType,
+    (code, name, market) => showActionPanel(code, name, market),
+    '{{ locale }}'
+  );
+  </script>
+
+</body>
+</html>

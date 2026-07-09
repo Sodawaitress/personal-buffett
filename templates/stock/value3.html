@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}{{ stock_name }} · 还能挣多少年{% endblock %}
+{% block styles %}
+<style>
+.vf-wrap { max-width:600px; margin:40px auto; padding:0 20px 80px;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+.vf-crumb { font-size:13px; color:#9ca3af; margin-bottom:24px; }
+.vf-crumb a { color:#6b7280; text-decoration:none; }
+.vf-crumb a:hover { color:#111; }
+.vf-steps { display:flex; gap:6px; margin-bottom:32px; }
+.vf-step  { height:4px; flex:1; border-radius:2px; background:#e5e7eb; }
+.vf-step.done   { background:#16a34a; }
+.vf-step.active { background:#111; }
+.vf-headline { font-size:24px; font-weight:800; color:#111; margin-bottom:6px; }
+.vf-sub { font-size:14px; color:#6b7280; margin-bottom:28px; line-height:1.6; }
+
+/* 护城河卡片 */
+.moat-card { background:#1a1a1a; border-radius:12px; padding:20px; margin-bottom:24px; }
+.moat-label { font-size:11px; font-weight:600; color:#6b7280;
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+.moat-text { font-size:14px; color:#d1d5db; line-height:1.7; }
+.moat-grade { display:inline-block; font-size:13px; font-weight:700;
+  padding:3px 10px; border-radius:6px; margin-top:12px; }
+.grade-A { background:#14532d; color:#86efac; }
+.grade-B { background:#1e3a5f; color:#93c5fd; }
+.grade-C { background:#422006; color:#fcd34d; }
+.grade-D { background:#450a0a; color:#fca5a5; }
+
+/* 历史 PE 参考 */
+.pe-ref { background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;
+  padding:14px 18px; margin-bottom:24px; font-size:13px; }
+.pe-ref-row { display:flex; justify-content:space-between; align-items:center;
+  padding:4px 0; }
+.pe-ref-label { color:#6b7280; }
+.pe-ref-val { font-weight:600; color:#111; }
+
+/* 年数选择 */
+.years-opts { display:flex; flex-direction:column; gap:10px; margin-bottom:32px; }
+.year-btn {
+  border:2px solid #e5e7eb; border-radius:12px; padding:16px 18px;
+  background:#fff; cursor:pointer; text-align:left; transition:all .15s;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.year-btn:hover { border-color:#6b7280; }
+.year-btn.selected { border-color:#111; background:#111; }
+.year-btn.selected .yb-left  { color:#fff; }
+.year-btn.selected .yb-right { color:#9ca3af; }
+.yb-left  { font-size:15px; font-weight:600; color:#111; }
+.yb-sub   { font-size:12px; color:#9ca3af; margin-top:2px; }
+.yb-right { font-size:13px; color:#374151; text-align:right; }
+.yb-pe    { font-weight:700; font-size:16px; }
+
+/* PE 对比条 */
+.pe-compare { margin-top:14px; display:none; }
+.pe-compare.show { display:block; }
+.pe-bar-wrap { position:relative; height:6px; background:#e5e7eb;
+  border-radius:3px; margin:6px 0; }
+.pe-bar-fill { height:100%; border-radius:3px; background:#111; }
+.pe-bar-cur  { position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:12px; height:12px; border-radius:50%;
+  background:#ef4444; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.pe-bar-label { display:flex; justify-content:space-between;
+  font-size:11px; color:#9ca3af; }
+
+/* Nav */
+.vf-nav { margin-top:24px; display:flex; gap:10px; justify-content:flex-end; }
+.vf-btn-back { background:#f3f4f6; color:#374151; border:none;
+  border-radius:8px; padding:12px 20px; font-size:14px; font-weight:500; cursor:pointer; }
+.vf-btn-next { background:#1a1a1a; color:#fff; border:none;
+  border-radius:8px; padding:14px 28px; font-size:16px; font-weight:600; cursor:pointer;
+  opacity:.4; pointer-events:none; transition:all .15s; }
+.vf-btn-next.enabled { opacity:1; pointer-events:auto; }
+.vf-btn-next.enabled:hover { background:#333; }
+
+/* 摘要条 */
+.recap-bar { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;
+  padding:10px 14px; margin-bottom:20px; font-size:13px; color:#15803d; display:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vf-wrap">
+
+  <div class="vf-crumb">
+    <a href="{{ url_for('index') }}">首页</a> /
+    <a href="{{ url_for('stock_page', code=code) }}">{{ stock_name }}</a> /
+    算算它值多少钱
+  </div>
+
+  <div class="vf-steps">
+    <div class="vf-step done"></div>
+    <div class="vf-step done"></div>
+    <div class="vf-step active"></div>
+    <div class="vf-step"></div>
+  </div>
+
+  <div id="recap-bar" class="recap-bar"></div>
+
+  <div class="vf-headline">还能挣多少年的钱？</div>
+  <div class="vf-sub">护城河决定了这笔生意能持续多久——这就是 PE 倍数的人话版。</div>
+
+  <!-- 护城河摘要（动态加载）-->
+  <div id="moat-loading" style="text-align:center;color:#9ca3af;padding:20px 0">加载中…</div>
+  <div id="moat-section" style="display:none">
+    <div class="moat-card">
+      <div class="moat-label">巴菲特分析 · 护城河评估</div>
+      <div class="moat-text" id="moat-text">—</div>
+      <div id="moat-grade"></div>
+    </div>
+
+    <!-- 历史 PE 参考（有数据才显示）-->
+    <div id="pe-ref-wrap"></div>
+  </div>
+
+  <!-- 年数选择 -->
+  <div class="years-opts" id="years-opts">
+    <button class="year-btn" onclick="selectYears(this,5,8,12)">
+      <div>
+        <div class="yb-left">5年以内</div>
+        <div class="yb-sub">商业模式面临结构性威胁，护城河正在被侵蚀</div>
+      </div>
+      <div class="yb-right">合理 PE<br><span class="yb-pe">8x ~ 12x</span></div>
+    </button>
+    <button class="year-btn" onclick="selectYears(this,10,12,16)">
+      <div>
+        <div class="yb-left">10年左右</div>
+        <div class="yb-sub">行业在演变，护城河存在但不确定</div>
+      </div>
+      <div class="yb-right">合理 PE<br><span class="yb-pe">12x ~ 16x</span></div>
+    </button>
+    <button class="year-btn" onclick="selectYears(this,20,16,22)">
+      <div>
+        <div class="yb-left">15 ~ 20年</div>
+        <div class="yb-sub">护城河较强，短期风险可控</div>
+      </div>
+      <div class="yb-right">合理 PE<br><span class="yb-pe">16x ~ 22x</span></div>
+    </button>
+    <button class="year-btn" onclick="selectYears(this,30,22,35)">
+      <div>
+        <div class="yb-left">30年以上</div>
+        <div class="yb-sub">茅台级别的永久性护城河——极少数公司</div>
+      </div>
+      <div class="yb-right">合理 PE<br><span class="yb-pe">22x ~ 35x</span></div>
+    </button>
+  </div>
+
+  <!-- PE 与历史对比 -->
+  <div class="pe-compare" id="pe-compare">
+    <div style="font-size:13px;color:#6b7280;margin-bottom:8px" id="pe-compare-label"></div>
+    <div class="pe-bar-wrap">
+      <div class="pe-bar-fill" id="pe-bar-fill"></div>
+      <div class="pe-bar-cur"  id="pe-bar-cur"></div>
+    </div>
+    <div class="pe-bar-label" id="pe-bar-labels"></div>
+  </div>
+
+  <div class="vf-nav">
+    <button class="vf-btn-back" onclick="window.location.href='/stock/{{ code }}/value/2'">← 上一步</button>
+    <button class="vf-btn-next" id="btn-next" onclick="gotoP4()">下一步：算价格 →</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CODE   = '{{ code }}';
+const KEY_P1 = 'vf_p1_' + CODE;
+const KEY_P2 = 'vf_p2_' + CODE;
+const KEY_P3 = 'vf_p3_' + CODE;
+
+let _p1 = {}, _p2 = {}, _moat = {};
+let _choice = null;  // {years, pe_low, pe_high}
+
+try { _p1 = JSON.parse(localStorage.getItem(KEY_P1)||'{}'); } catch(e){}
+try { _p2 = JSON.parse(localStorage.getItem(KEY_P2)||'{}'); } catch(e){}
+
+// 步骤摘要
+if (_p1.conviction) {
+  const labels = ['','太乐观了','可能高了','差不多','可能低了','太保守了'];
+  const bar = document.getElementById('recap-bar');
+  const demandLabel = {expanding:'需求扩张',stable:'需求平稳',contracting:'需求收缩'}[_p2.demand] || _p2.demand || '已记录';
+  bar.textContent = `✓ 第1步：增长「${labels[_p1.conviction]}」${Math.round((_p1.adjusted_growth||0)*100)}%/年  ·  ✓ 第2步：${demandLabel}`;
+  bar.style.display = '';
+}
+
+// 加载护城河
+fetch('/api/value/' + CODE + '/moat-summary')
+  .then(r => r.json())
+  .then(d => {
+    _moat = d;
+    document.getElementById('moat-loading').style.display = 'none';
+    document.getElementById('moat-section').style.display = '';
+
+    // 护城河文字
+    const mt = d.moat_text || d.reasoning || '暂无分析数据，请先运行分析。';
+    document.getElementById('moat-text').textContent = mt;
+
+    // 评级标签
+    if (d.grade) {
+      const g = d.grade[0].toUpperCase();
+      const cls = g === 'A' ? 'grade-A' : g === 'B' ? 'grade-B' : g === 'C' ? 'grade-C' : 'grade-D';
+      document.getElementById('moat-grade').innerHTML =
+        `<span class="moat-grade ${cls}">当前评级 ${d.grade}</span>`;
+    }
+
+    // 历史 PE 参考
+    if (d.pe_history) {
+      const ph = d.pe_history;
+      document.getElementById('pe-ref-wrap').innerHTML = `
+        <div class="pe-ref">
+          <div style="font-size:12px;font-weight:600;color:#9ca3af;margin-bottom:8px">
+            历史 PE 参考（近 ${ph.count} 条价格记录）
+          </div>
+          <div class="pe-ref-row">
+            <span class="pe-ref-label">历史最低 PE</span>
+            <span class="pe-ref-val">${ph.low}x</span>
+          </div>
+          <div class="pe-ref-row">
+            <span class="pe-ref-label">历史中位 PE</span>
+            <span class="pe-ref-val">${ph.median}x</span>
+          </div>
+          <div class="pe-ref-row">
+            <span class="pe-ref-label">历史最高 PE</span>
+            <span class="pe-ref-val">${ph.high}x</span>
+          </div>
+        </div>`;
+    }
+  })
+  .catch(() => {
+    document.getElementById('moat-loading').textContent = '护城河数据加载失败，可直接选择年数。';
+  });
+
+function selectYears(btn, years, peLow, peHigh) {
+  document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  _choice = {years, pe_low: peLow, pe_high: peHigh};
+  document.getElementById('btn-next').classList.add('enabled');
+
+  // PE 对比条（如果有历史 PE 和当前 PE）
+  const ph  = _moat.pe_history;
+  const cur = _p1.pe_current;
+  if (ph && cur) {
+    const maxPE = Math.max(ph.high, peHigh, cur) * 1.1;
+    const pct   = v => Math.min(Math.round(v / maxPE * 100), 100);
+    document.getElementById('pe-compare-label').textContent =
+      `你选的合理区间 ${peLow}x ~ ${peHigh}x，历史中位 ${ph.median}x，当前 PE ${cur.toFixed(1)}x`;
+    document.getElementById('pe-bar-fill').style.width  = pct(peHigh) + '%';
+    document.getElementById('pe-bar-cur').style.left    = pct(cur)    + '%';
+    document.getElementById('pe-bar-labels').innerHTML  =
+      `<span>0x</span><span>${peHigh}x 上限</span><span>${maxPE.toFixed(0)}x</span>`;
+    document.getElementById('pe-compare').classList.add('show');
+  }
+}
+
+function gotoP4() {
+  if (!_choice) return;
+  localStorage.setItem(KEY_P3, JSON.stringify(_choice));
+  const btn = document.getElementById('btn-next');
+  btn.textContent = '✓';
+  btn.style.background = '#16a34a';
+  btn.disabled = true;
+  setTimeout(() => { window.location.href = '/stock/{{ code }}/value/4'; }, 220);
+}
+</script>
+{% endblock %}

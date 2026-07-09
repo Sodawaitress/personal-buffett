@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock_name }} · 价值发现{% endblock %}
+
+{% block content %}
+<div class="value-flow">
+
+  <div class="vf-topbar">
+    <a href="/stock/{{ code }}" class="vf-back">← {{ stock_name }}</a>
+    <div class="vf-step-dots">
+      <span class="vf-dot active">1</span>
+      <span class="vf-dot">2</span>
+      <span class="vf-dot">3</span>
+      <span class="vf-dot">4</span>
+    </div>
+  </div>
+
+  <div class="vf-page" id="vf-p1">
+    <div class="vf-label">第 1 步 / 共 4 步</div>
+    <h1 class="vf-question">这家公司赚多少？</h1>
+    <p class="vf-hint">市场凭什么给这个价格？让数据说话。</p>
+
+    {# § 1 历史盈利 #}
+    <div class="vf-card" id="eps-loading">
+      <div class="vf-spinner"></div> 加载中…
+    </div>
+
+    <div id="eps-sections" style="display:none">
+
+      <div class="vf-card">
+        <div class="vf-section-label">近三年每股盈利（年度）</div>
+        <div id="eps-rows"></div>
+        <div class="vf-avg-row">
+          <span>三年均值</span>
+          <span id="eps-avg-display" class="vf-avg-num"></span>
+        </div>
+      </div>
+
+      <div class="vf-card vf-card-q" id="eps-quarterly" style="display:none">
+        <div class="vf-section-label">近四季度（单季 EPS）</div>
+        <div class="vf-q-bars" id="eps-q-rows"></div>
+        <div class="vf-q-sum">四季合计 <strong id="eps-q-sum">—</strong></div>
+      </div>
+
+      {# § 2 市场在赌什么 #}
+      <div class="vf-card vf-card-dark" id="market-bets">
+        <div class="vf-section-label" style="color:#9ca3af">市场在赌什么</div>
+
+        {# PE 仪表盘 #}
+        <div class="vf-pe-row">
+          <div class="vf-pe-label">当前 PE</div>
+          <div class="vf-pe-big" id="mb-pe">—</div>
+        </div>
+        <div class="vf-pe-gauge-wrap" id="mb-gauge-wrap" style="display:none">
+          <div class="vf-pe-gauge">
+            <div class="vf-pe-gauge-fill" id="mb-gauge-fill"></div>
+            <div class="vf-pe-gauge-dot" id="mb-gauge-dot"></div>
+          </div>
+          <div class="vf-pe-gauge-labels">
+            <span id="mb-pe-lo">低</span>
+            <span>52周 PE 区间</span>
+            <span id="mb-pe-hi">高</span>
+          </div>
+        </div>
+
+        <div class="vf-divider"></div>
+
+        {# 增长率对比 #}
+        <div class="vf-growth-grid" id="mb-growth-grid">
+          <div class="vf-growth-col vf-growth-market">
+            <div class="vf-growth-val" id="mb-implied">—</div>
+            <div class="vf-growth-lbl">市场押注增长</div>
+          </div>
+          <div class="vf-growth-col" id="mb-hist-col" style="display:none">
+            <div class="vf-growth-val" id="mb-cagr">—</div>
+            <div class="vf-growth-lbl">公司过去3年</div>
+          </div>
+          <div class="vf-growth-col" id="mb-ind-col" style="display:none">
+            <div class="vf-growth-val" id="mb-ind">—</div>
+            <div class="vf-growth-lbl" id="mb-ind-lbl">行业平均</div>
+          </div>
+        </div>
+
+        <div class="vf-market-note" id="mb-note"></div>
+
+        {# 分析师预期 #}
+        <div id="mb-analyst" style="display:none">
+          <div class="vf-divider"></div>
+          <div class="vf-analyst-row">
+            <span class="vf-analyst-lbl">分析师共识 EPS</span>
+            <span class="vf-analyst-val" id="mb-analyst-val">—</span>
+            <span class="vf-analyst-n" id="mb-analyst-n"></span>
+          </div>
+        </div>
+      </div>
+
+      {# § 3 你的判断 #}
+      <div class="vf-card vf-card-judge">
+        <div class="vf-section-label">你的判断</div>
+        <p class="vf-judge-q" id="judge-question">市场预期它每年增长 <strong id="judge-pct">—</strong>，你信吗？</p>
+
+        <div class="vf-conviction-wrap">
+          <div class="vf-conviction-btns" id="conviction-btns">
+            <button class="vf-cv-btn" data-score="1" onclick="_setConviction(1)">
+              <span class="vf-cv-icon">📉</span>
+              <span class="vf-cv-lbl">太乐观了</span>
+              <span class="vf-cv-sub">实际增长会慢得多</span>
+            </button>
+            <button class="vf-cv-btn" data-score="2" onclick="_setConviction(2)">
+              <span class="vf-cv-icon">↘</span>
+              <span class="vf-cv-lbl">可能高了</span>
+              <span class="vf-cv-sub">略微乐观</span>
+            </button>
+            <button class="vf-cv-btn active" data-score="3" onclick="_setConviction(3)">
+              <span class="vf-cv-icon">✓</span>
+              <span class="vf-cv-lbl">差不多</span>
+              <span class="vf-cv-sub">我认同这个预期</span>
+            </button>
+            <button class="vf-cv-btn" data-score="4" onclick="_setConviction(4)">
+              <span class="vf-cv-icon">↗</span>
+              <span class="vf-cv-lbl">可能低了</span>
+              <span class="vf-cv-sub">略微保守</span>
+            </button>
+            <button class="vf-cv-btn" data-score="5" onclick="_setConviction(5)">
+              <span class="vf-cv-icon">📈</span>
+              <span class="vf-cv-lbl">太保守了</span>
+              <span class="vf-cv-sub">实际增长会快得多</span>
+            </button>
+          </div>
+          <div class="vf-conviction-explain" id="conviction-explain"></div>
+        </div>
+      </div>
+
+    </div>{# end eps-sections #}
+
+    <div class="vf-nav" id="p1-nav" style="display:none">
+      <button class="vf-btn-next" id="btn-next" onclick="gotoP2()">下一步：消费市场 →</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.value-flow {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.vf-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; }
+.vf-back { font-size:14px; color:#888; text-decoration:none; }
+.vf-back:hover { color:#111; }
+.vf-step-dots { display:flex; gap:8px; }
+.vf-dot {
+  width:28px; height:28px; border-radius:50%;
+  background:#eee; color:#aaa;
+  font-size:12px; font-weight:600;
+  display:flex; align-items:center; justify-content:center;
+}
+.vf-dot.active { background:#1a1a1a; color:#fff; }
+
+.vf-label { font-size:11px; color:#999; margin-bottom:8px; letter-spacing:.5px; text-transform:uppercase; }
+.vf-question { font-size:28px; font-weight:700; margin:0 0 8px; line-height:1.2; }
+.vf-hint { font-size:15px; color:#666; margin:0 0 24px; }
+
+.vf-card { background:#f8f8f8; border-radius:12px; padding:20px; margin-bottom:14px; }
+.vf-card-q { background:#f0f0ee; }
+.vf-card-dark { background:#111827; color:#fff; }
+.vf-card-judge { background:#fff; border:1.5px solid #e5e7eb; }
+.vf-section-label {
+  font-size:11px; font-weight:600; color:#999;
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px;
+}
+.vf-divider { height:1px; background:#1f2937; margin:16px 0; }
+
+/* EPS bars */
+.eps-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.eps-year { font-size:13px; color:#888; width:44px; flex-shrink:0; }
+.eps-bar-wrap { flex:1; background:#e8e8e8; border-radius:3px; height:6px; }
+.eps-bar { background:#1a1a1a; height:6px; border-radius:3px; transition:width .4s; }
+.eps-val { font-size:14px; font-weight:600; width:72px; text-align:right; }
+.vf-avg-row {
+  display:flex; justify-content:space-between; align-items:center;
+  border-top:1px solid #e0e0e0; margin-top:12px; padding-top:12px;
+  font-size:14px; color:#555;
+}
+.vf-avg-num { font-size:18px; font-weight:700; color:#1a1a1a; }
+.vf-trend { display:inline-block; font-size:12px; padding:2px 8px; border-radius:20px; margin-left:8px; }
+.vf-trend.up   { background:#e6f4ea; color:#2e7d32; }
+.vf-trend.down { background:#fdecea; color:#c62828; }
+.vf-trend.stable { background:#f0f0f0; color:#555; }
+
+/* Quarterly */
+.vf-q-bars { display:flex; gap:8px; align-items:flex-end; height:64px; margin-bottom:8px; }
+.vf-q-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.vf-q-bar-wrap { width:100%; display:flex; align-items:flex-end; height:44px; }
+.vf-q-bar { width:100%; border-radius:3px 3px 0 0; background:#555; min-height:3px; }
+.vf-q-val { font-size:11px; font-weight:600; color:#444; }
+.vf-q-label { font-size:10px; color:#888; text-align:center; }
+.vf-q-sum { font-size:12px; color:#888; }
+
+/* PE gauge */
+.vf-pe-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.vf-pe-label { font-size:13px; color:#9ca3af; }
+.vf-pe-big { font-size:28px; font-weight:700; color:#fff; }
+.vf-pe-gauge-wrap { margin-bottom:4px; }
+.vf-pe-gauge {
+  position:relative; height:6px; background:#374151;
+  border-radius:3px; margin-bottom:6px;
+}
+.vf-pe-gauge-fill { position:absolute; left:0; top:0; height:100%; background:#374151; border-radius:3px; }
+.vf-pe-gauge-dot {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:14px; height:14px; border-radius:50%;
+  background:#f59e0b; border:2px solid #111827;
+}
+.vf-pe-gauge-labels { display:flex; justify-content:space-between; font-size:11px; color:#6b7280; }
+
+/* Growth grid */
+.vf-growth-grid { display:flex; gap:0; margin:4px 0 8px; }
+.vf-growth-col { flex:1; text-align:center; padding:12px 8px; border-radius:8px; }
+.vf-growth-market { background:#1f2937; border-radius:8px; }
+.vf-growth-val { font-size:22px; font-weight:700; color:#f59e0b; margin-bottom:4px; }
+.vf-growth-market .vf-growth-val { color:#f59e0b; }
+.vf-growth-col:not(.vf-growth-market) .vf-growth-val { color:#9ca3af; font-size:18px; }
+.vf-growth-lbl { font-size:11px; color:#6b7280; }
+.vf-growth-market .vf-growth-lbl { color:#9ca3af; }
+
+.vf-market-note { font-size:13px; color:#6b7280; margin-top:8px; line-height:1.5; }
+
+/* Analyst */
+.vf-analyst-row { display:flex; align-items:center; gap:10px; }
+.vf-analyst-lbl { font-size:13px; color:#9ca3af; flex:1; }
+.vf-analyst-val { font-size:18px; font-weight:700; color:#d1d5db; }
+.vf-analyst-n { font-size:11px; color:#6b7280; }
+
+/* Conviction */
+.vf-judge-q { font-size:15px; color:#374151; margin:0 0 18px; line-height:1.5; }
+.vf-conviction-btns { display:flex; gap:6px; margin-bottom:14px; }
+.vf-cv-btn {
+  flex:1; border:1.5px solid #e5e7eb; border-radius:10px;
+  background:#fff; padding:10px 4px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  transition:border-color .15s, background .15s;
+}
+.vf-cv-btn:hover { border-color:#9ca3af; background:#f9fafb; }
+.vf-cv-btn.active { border-color:#111827; background:#f8f8f8; }
+.vf-cv-icon { font-size:16px; }
+.vf-cv-lbl { font-size:11px; font-weight:600; color:#374151; text-align:center; }
+.vf-cv-btn.active .vf-cv-lbl { color:#111827; }
+.vf-cv-sub { font-size:10px; color:#9ca3af; text-align:center; }
+.vf-conviction-explain {
+  font-size:13px; color:#555; padding:12px 14px;
+  background:#f3f4f6; border-radius:8px; line-height:1.6;
+  min-height:44px;
+}
+
+/* Spinner */
+.vf-spinner {
+  display:inline-block; width:16px; height:16px;
+  border:2px solid #ddd; border-top-color:#555;
+  border-radius:50%; animation:spin .7s linear infinite;
+  margin-right:8px; vertical-align:middle;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Nav */
+.vf-nav { margin-top:24px; text-align:right; }
+.vf-btn-next {
+  background:#1a1a1a; color:#fff; border:none;
+  border-radius:8px; padding:14px 28px;
+  font-size:16px; font-weight:600; cursor:pointer;
+  transition:background .2s, transform .1s;
+}
+.vf-btn-next:hover { background:#333; }
+.vf-btn-next:active { transform:scale(.97); }
+
+/* Success state */
+.vf-success {
+  margin-top:16px;
+  animation: fadeUp .35s ease;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.vf-success-check {
+  width:52px; height:52px; border-radius:50%;
+  background:#16a34a; color:#fff;
+  font-size:24px; display:flex; align-items:center; justify-content:center;
+  margin:0 auto 14px;
+}
+.vf-success-title {
+  text-align:center; font-size:18px; font-weight:700;
+  color:#111; margin-bottom:8px;
+}
+.vf-success-summary {
+  text-align:center; font-size:13px; color:#6b7280;
+  margin-bottom:24px; line-height:1.6;
+}
+.vf-next-preview {
+  border:1.5px solid #e5e7eb; border-radius:12px;
+  padding:20px; background:#fafafa;
+}
+.vf-next-label {
+  font-size:11px; font-weight:600; color:#9ca3af;
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;
+}
+.vf-next-title { font-size:18px; font-weight:700; color:#111; margin-bottom:8px; }
+.vf-next-desc { font-size:14px; color:#6b7280; line-height:1.6; margin-bottom:16px; }
+.vf-btn-coming {
+  width:100%; padding:12px; border-radius:8px;
+  background:#f3f4f6; color:#9ca3af;
+  border:none; font-size:14px; font-weight:500;
+  cursor:not-allowed;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CODE   = {{ code | tojson }};
+const KEY_P1 = `vf_p1_${CODE}`;
+
+let _data       = null;
+let _conviction = 3;
+
+const _EXPLAIN = {
+  1: '你认为市场太乐观——这家公司实际增长会远低于预期，股票被高估了。在估值里我们会用更保守的增长率。',
+  2: '你觉得市场略微乐观，实际增长可能达不到市场预期。估值会稍微保守。',
+  3: '你基本认同市场的判断，用市场共识增长率做基准估值。',
+  4: '你觉得市场略微保守，这家公司可能增长得更快。估值会稍乐观。',
+  5: '你认为市场大幅低估了这家公司的增长潜力。估值会用更乐观的增长率。',
+};
+
+// ── 加载数据 ──────────────────────────────────────────────────
+async function loadEarnings() {
+  try {
+    const res  = await fetch(`/api/value/${CODE}/earnings`);
+    const data = await res.json();
+    if (!data.ok || !data.rows?.length) {
+      document.getElementById('eps-loading').innerHTML =
+        '<span style="color:#888;font-size:14px">暂无盈利数据。</span>';
+      return;
+    }
+    _data = data;
+    render(data);
+    loadAnalyst(data.currency);
+  } catch(e) {
+    document.getElementById('eps-loading').innerHTML =
+      '<span style="color:#888;font-size:14px">加载失败，请刷新重试。</span>';
+  }
+}
+
+async function loadAnalyst(currency) {
+  try {
+    const res  = await fetch(`/api/analyst/${CODE}`);
+    const d    = await res.json();
+    const eps  = d.eps_next_year || d.eps_current_year;
+    if (!eps) return;
+    document.getElementById('mb-analyst-val').textContent = (currency || '') + parseFloat(eps).toFixed(2);
+    const n = d.analyst_count;
+    if (n) document.getElementById('mb-analyst-n').textContent = n + ' 家机构';
+    document.getElementById('mb-analyst').style.display = '';
+  } catch(e) {}
+}
+
+// ── 渲染 ─────────────────────────────────────────────────────
+function render(d) {
+  document.getElementById('eps-loading').style.display = 'none';
+  document.getElementById('eps-sections').style.display = '';
+
+  const cur = d.currency || '';
+  const rows = d.rows || [];
+  const maxE = Math.max(...rows.map(r => Math.abs(r.eps)), .01);
+
+  // 年度条
+  document.getElementById('eps-rows').innerHTML = rows.map(r => {
+    const pct = Math.round(Math.abs(r.eps) / maxE * 100);
+    return `<div class="eps-row">
+      <span class="eps-year">${r.year}</span>
+      <div class="eps-bar-wrap"><div class="eps-bar" style="width:${pct}%${r.eps<0?';background:#e57373':''}"></div></div>
+      <span class="eps-val">${cur}${r.eps.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('eps-avg-display').innerHTML =
+    `${cur}${(d.avg||0).toFixed(2)}/股`;
+
+  // 季度
+  const qrows = d.quarterly || [];
+  if (qrows.length >= 2) {
+    const maxQ = Math.max(...qrows.map(r => Math.abs(r.eps)), .01);
+    function qLabel(s) {
+      const dt = new Date(s); if (isNaN(dt)) return s;
+      const m = dt.getMonth()+1;
+      return ['Q1','Q1','Q1','Q2','Q2','Q2','Q3','Q3','Q3','Q4','Q4','Q4'][m-1] + "'" + String(dt.getFullYear()).slice(2);
+    }
+    document.getElementById('eps-q-rows').innerHTML = qrows.map(r => {
+      const pct = Math.round(Math.abs(r.eps)/maxQ*100);
+      return `<div class="vf-q-col">
+        <span class="vf-q-val">${cur}${r.eps.toFixed(2)}</span>
+        <div class="vf-q-bar-wrap"><div class="vf-q-bar" style="height:${pct}%${r.eps<0?';background:#e57373':''}"></div></div>
+        <span class="vf-q-label">${qLabel(r.quarter)}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('eps-q-sum').textContent = cur + qrows.reduce((a,r)=>a+r.eps,0).toFixed(2);
+    document.getElementById('eps-quarterly').style.display = '';
+  }
+
+  // 市场在赌什么
+  const pe = d.pe_current;
+  document.getElementById('mb-pe').textContent = pe ? pe + 'x' : '—';
+
+  // PE 仪表盘
+  if (d.pe_52w_low && d.pe_52w_high && pe && d.pe_52w_low !== d.pe_52w_high) {
+    const lo = d.pe_52w_low, hi = d.pe_52w_high;
+    const pct = Math.min(Math.max((pe - lo) / (hi - lo), 0), 1) * 100;
+    document.getElementById('mb-pe-lo').textContent = lo + 'x';
+    document.getElementById('mb-pe-hi').textContent = hi + 'x';
+    document.getElementById('mb-gauge-dot').style.left = pct + '%';
+    document.getElementById('mb-gauge-wrap').style.display = '';
+  }
+
+  // 增长率对比
+  const ig = d.implied_growth;
+  document.getElementById('mb-implied').textContent = ig != null ? Math.round(ig*100) + '%' : '—';
+
+  if (d.eps_cagr != null) {
+    document.getElementById('mb-cagr').textContent = Math.round(d.eps_cagr*100) + '%';
+    document.getElementById('mb-hist-col').style.display = '';
+  }
+  if (d.industry_growth_est != null && d.industry_name) {
+    document.getElementById('mb-ind').textContent = Math.round(d.industry_growth_est*100) + '%';
+    document.getElementById('mb-ind-lbl').textContent = (d.industry_name || '行业') + '均值';
+    document.getElementById('mb-ind-col').style.display = '';
+  }
+
+  // 市场解读小结
+  let note = '';
+  if (ig != null && d.eps_cagr != null) {
+    const diff = ig - d.eps_cagr;
+    if (diff > 0.15)
+      note = `市场押注的增长（${Math.round(ig*100)}%）远高于公司过去3年实际增速（${Math.round(d.eps_cagr*100)}%），隐含了大量乐观预期。`;
+    else if (diff > 0.05)
+      note = `市场预期略高于历史增速，认为公司未来会加速增长。`;
+    else if (diff > -0.05)
+      note = `市场预期与历史增速基本吻合，估值相对理性。`;
+    else
+      note = `市场预期低于历史增速，认为增长会放缓，或股票已被低估。`;
+  }
+
+  // 季节性特征识别
+  const qrows2 = d.quarterly || [];
+  if (qrows2.length >= 3) {
+    const qVals  = qrows2.map(r => r.eps).filter(v => v > 0);
+    const qTotal = qVals.reduce((a,b) => a+b, 0);
+    const qAvg   = qTotal / qVals.length;
+    const qMax   = Math.max(...qVals);
+    const qMaxQ  = qrows2.find(r => r.eps === qMax);
+    if (qMax > qAvg * 2.5 && qMaxQ) {
+      function _ql(s) {
+        const dt = new Date(s); if (isNaN(dt)) return s;
+        const m = dt.getMonth()+1;
+        return ['Q1','Q1','Q1','Q2','Q2','Q2','Q3','Q3','Q3','Q4','Q4','Q4'][m-1];
+      }
+      const peakQ   = _ql(qMaxQ.quarter);
+      const peakPct = Math.round(qMax / qTotal * 100);
+      const minVal  = Math.min(...qVals);
+      const minPct  = Math.round(minVal / qTotal * 100);
+      note += (note ? '\n\n' : '') +
+        `季节性特征：这家公司的利润分布不均匀——${peakQ} 贡献约 ${peakPct}%，` +
+        `最淡的季度只有约 ${minPct}%。` +
+        `看单季度数据时要先对照历史同期，旺季不及预期才是真正的信号。`;
+    }
+  }
+
+  const noteEl = document.getElementById('mb-note');
+  noteEl.innerHTML = note.replace(/\n\n/g, '<br><br>');
+
+  // 更新判断问题里的增长率
+  if (ig != null) {
+    document.getElementById('judge-pct').textContent = Math.round(ig*100) + '%/年';
+  }
+
+  _setConviction(3);
+  document.getElementById('p1-nav').style.display = '';
+}
+
+// ── 打分 ─────────────────────────────────────────────────────
+function _setConviction(score) {
+  _conviction = score;
+  document.querySelectorAll('.vf-cv-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.score) === score);
+  });
+  document.getElementById('conviction-explain').textContent = _EXPLAIN[score] || '';
+}
+
+// ── 下一步 ───────────────────────────────────────────────────
+function gotoP2() {
+  const ig      = _data?.implied_growth ?? 0.10;
+  const mult    = [0, 0.5, 0.75, 1.0, 1.25, 1.5][_conviction];
+  const adjG    = ig * mult;
+  const cur     = _data?.currency ?? '';
+  const epsBase = _data?.rows?.slice(-1)[0]?.eps ?? _data?.avg;
+
+  localStorage.setItem(KEY_P1, JSON.stringify({
+    conviction: _conviction, implied_growth: ig, adjusted_growth: adjG,
+    eps_base: epsBase, currency: cur, market: _data?.market ?? '',
+    pe_current: _data?.pe_current,
+  }));
+
+  // 按钮短暂变绿，立即跳转
+  const btn = document.getElementById('btn-next');
+  btn.textContent = '✓';
+  btn.style.background = '#16a34a';
+  btn.disabled = true;
+  setTimeout(() => {
+    window.location.href = '/stock/{{ code }}/value/2';
+  }, 220);
+}
+
+// ── 恢复 ────────────────────────────────────────────────────
+function restoreSaved() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY_P1) || 'null');
+    if (s?.conviction) _setConviction(s.conviction);
+  } catch(e) {}
+}
+
+loadEarnings().then(restoreSaved);
+</script>
+{% endblock %}

@@ -1,0 +1,729 @@
+{% extends "base.html" %}
+{% block title %}{{ stock_name }} · 消费市场在不在买{% endblock %}
+
+{% block styles %}
+<style>
+/* ── 基础布局 ──────────────────────────────────────────────── */
+.vf-wrap { max-width:600px; margin:40px auto; padding:0 20px 80px;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+.vf-crumb { font-size:13px; color:#9ca3af; margin-bottom:24px; }
+.vf-crumb a { color:#6b7280; text-decoration:none; }
+.vf-crumb a:hover { color:#111; }
+.vf-steps { display:flex; gap:6px; margin-bottom:32px; }
+.vf-step  { height:4px; flex:1; border-radius:2px; background:#e5e7eb; }
+.vf-step.done   { background:#16a34a; }
+.vf-step.active { background:#111; }
+.vf-headline { font-size:24px; font-weight:800; color:#111; margin-bottom:4px; }
+.vf-sub { font-size:14px; color:#6b7280; margin-bottom:28px; line-height:1.6; }
+
+/* ── 摘要条 ────────────────────────────────────────────────── */
+.recap-bar { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;
+  padding:10px 14px; margin-bottom:20px; font-size:13px; color:#15803d; display:none; }
+
+/* ── 区块标题 ──────────────────────────────────────────────── */
+.section-label { font-size:11px; font-weight:700; color:#9ca3af;
+  text-transform:uppercase; letter-spacing:.6px; margin:0 0 10px; }
+
+/* ── 业务构成卡片 ───────────────────────────────────────────── */
+.biz-card { background:#f9fafb; border:1.5px solid #e5e7eb; border-radius:14px;
+  padding:20px; margin-bottom:20px; }
+.biz-name { font-size:16px; font-weight:700; color:#111; margin-bottom:4px; }
+.biz-sector { font-size:12px; color:#9ca3af; margin-bottom:10px; }
+.biz-summary { font-size:13px; color:#374151; line-height:1.7; margin-bottom:14px; }
+.biz-driver { font-size:13px; background:#fff; border-left:3px solid #111;
+  padding:8px 12px; color:#374151; border-radius:0 6px 6px 0; margin-bottom:14px; }
+
+/* 收入条形图 */
+.revenue-bars { display:flex; flex-direction:column; gap:7px; }
+.rev-row { display:flex; align-items:center; gap:10px; }
+.rev-label { font-size:12px; color:#374151; width:80px; flex-shrink:0; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; }
+.rev-bar-wrap { flex:1; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+.rev-bar-fill { height:100%; background:#111; border-radius:4px; transition:width .5s; }
+.rev-pct { font-size:12px; color:#6b7280; width:36px; text-align:right; flex-shrink:0; }
+
+/* ── 信号卡 ────────────────────────────────────────────────── */
+.sig-card { border:1.5px solid #e5e7eb; border-radius:12px; padding:18px;
+  margin-bottom:12px; background:#fff; }
+.sig-head { display:flex; align-items:flex-start; justify-content:space-between;
+  gap:10px; margin-bottom:8px; }
+.sig-title { font-size:14px; font-weight:600; color:#111; }
+.sig-tag { font-size:11px; font-weight:600; padding:3px 9px; border-radius:12px;
+  white-space:nowrap; flex-shrink:0; }
+.sig-tag.bull { background:#dcfce7; color:#15803d; }
+.sig-tag.bear { background:#fee2e2; color:#b91c1c; }
+.sig-tag.neut { background:#f3f4f6; color:#6b7280; }
+.sig-body { font-size:13px; color:#374151; line-height:1.6; }
+.sig-meta { font-size:11px; color:#9ca3af; margin-top:6px; }
+
+/* 信息稀缺度特殊样式 */
+.scarcity-row { display:flex; justify-content:space-between; align-items:center;
+  font-size:13px; color:#374151; padding:5px 0; }
+.scarcity-row:not(:last-child) { border-bottom:1px solid #f3f4f6; }
+.scarcity-val { font-weight:600; }
+
+/* ── 共识条 ────────────────────────────────────────────────── */
+.consensus-bar { border:1.5px solid #e5e7eb; border-radius:10px;
+  padding:14px 16px; margin-bottom:14px; background:#f9fafb; }
+.consensus-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.cons-chip { font-size:12px; font-weight:600; padding:3px 10px; border-radius:12px; }
+.cons-bull { background:#dcfce7; color:#15803d; }
+.cons-neut { background:#f3f4f6; color:#6b7280; }
+.cons-bear { background:#fee2e2; color:#b91c1c; }
+.consensus-verdict { font-size:13px; color:#374151; margin-top:8px; line-height:1.5; }
+
+/* ── 可选区块（折叠） ─────────────────────────────────────── */
+.optional-section { border:1.5px dashed #d1d5db; border-radius:12px;
+  margin-bottom:14px; overflow:hidden; }
+.optional-header { display:flex; align-items:center; justify-content:space-between;
+  padding:13px 16px; cursor:pointer; user-select:none; }
+.optional-header:hover { background:#fafafa; }
+.optional-badge { font-size:10px; font-weight:700; color:#9ca3af;
+  background:#f3f4f6; border-radius:8px; padding:2px 7px;
+  text-transform:uppercase; letter-spacing:.5px; }
+.optional-title { font-size:13px; font-weight:500; color:#6b7280; }
+.optional-icon { font-size:12px; color:#9ca3af; transition:transform .2s; }
+.optional-icon.open { transform:rotate(180deg); }
+.optional-body { display:none; padding:0 12px 12px; }
+.optional-body.open { display:block; }
+
+/* B层问卷 */
+.b-q { font-size:13px; font-weight:600; color:#374151; margin:12px 0 8px; }
+.b-opts { display:flex; flex-direction:column; gap:6px; }
+.b-opt { display:flex; align-items:flex-start; gap:8px; cursor:pointer;
+  padding:8px 10px; border-radius:8px; border:1.5px solid #e5e7eb; transition:border-color .12s; }
+.b-opt:hover { border-color:#9ca3af; }
+.b-opt.selected { border-color:#111; background:#f9fafb; }
+.b-opt input[type=radio] { margin-top:2px; flex-shrink:0; }
+.b-opt-label { font-size:13px; color:#374151; line-height:1.4; }
+.b-opt-score { font-size:11px; color:#9ca3af; margin-top:2px; }
+
+/* 观察文本框 */
+.obs-label { font-size:13px; font-weight:600; color:#374151; margin:14px 0 4px; }
+.obs-hint  { font-size:12px; color:#9ca3af; margin-bottom:8px; line-height:1.5; }
+.obs-input { width:100%; border:1.5px solid #e5e7eb; border-radius:8px;
+  padding:10px 12px; font-size:13px; line-height:1.6; resize:vertical;
+  min-height:68px; font-family:inherit; color:#111; box-sizing:border-box; }
+.obs-input:focus { outline:none; border-color:#6b7280; }
+.obs-btn { margin-top:8px; padding:7px 14px; border-radius:8px;
+  background:#f3f4f6; color:#374151; border:none; font-size:13px;
+  font-weight:500; cursor:pointer; }
+.obs-btn:hover { background:#e5e7eb; }
+.obs-result { margin-top:8px; font-size:13px; color:#374151; display:none; }
+
+/* 套利评分卡 */
+.arb-card { background:#1a1a1a; border-radius:10px; padding:16px; margin-top:12px; display:none; }
+.arb-score-row { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+.arb-num   { font-size:42px; font-weight:800; color:#fff; line-height:1; }
+.arb-label { font-size:16px; font-weight:600; }
+.arb-bar-wrap { height:5px; background:#374151; border-radius:3px; margin:8px 0; }
+.arb-bar-fill { height:100%; border-radius:3px; transition:width .4s; }
+.arb-breakdown { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.arb-part { font-size:11px; color:#9ca3af; background:#27272a; padding:2px 8px; border-radius:6px; }
+
+/* ── AI 信号猎手指南 ─────────────────────────────────────── */
+.guide-section { margin-bottom:20px; }
+.guide-btn { width:100%; padding:12px 18px; border-radius:10px;
+  background:#f9fafb; border:1.5px solid #e5e7eb; color:#374151;
+  font-size:14px; font-weight:500; cursor:pointer; text-align:left;
+  display:flex; align-items:center; gap:10px; transition:border-color .15s; }
+.guide-btn:hover { border-color:#9ca3af; }
+.guide-btn .guide-icon { font-size:18px; }
+.guide-result { display:none; margin-top:10px; border:1.5px solid #dbeafe;
+  border-radius:10px; padding:14px 16px; background:#eff6ff; }
+.guide-title { font-size:11px; font-weight:700; color:#1e40af;
+  text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px; }
+.guide-item { display:flex; gap:10px; padding:7px 0;
+  border-bottom:1px solid #dbeafe; font-size:13px; }
+.guide-item:last-child { border-bottom:none; }
+.guide-channel { font-weight:600; color:#1e3a8a; flex-shrink:0; min-width:72px; }
+.guide-what { color:#1d4ed8; flex:1; }
+.guide-signal { color:#6b7280; font-size:12px; font-style:italic; white-space:nowrap; }
+
+/* ── 综合判断 ──────────────────────────────────────────────── */
+.judge-q { font-size:17px; font-weight:700; color:#111; margin:24px 0 14px; line-height:1.4; }
+.judge-opts { display:flex; flex-direction:column; gap:10px; }
+.judge-btn { border:2px solid #e5e7eb; border-radius:12px;
+  padding:14px 18px; background:#fff; cursor:pointer;
+  text-align:left; transition:all .15s; }
+.judge-btn:hover { border-color:#6b7280; }
+.judge-btn.selected { border-color:#111; background:#111; }
+.judge-btn.selected .jb-title { color:#fff; }
+.judge-btn.selected .jb-sub   { color:#9ca3af; }
+.jb-title { font-size:15px; font-weight:600; color:#111; }
+.jb-sub   { font-size:12px; color:#9ca3af; margin-top:2px; }
+
+/* 验证锚点 */
+.verify-box { border:1.5px solid #dbeafe; border-radius:10px; padding:14px 16px;
+  margin-top:12px; background:#eff6ff; display:none; }
+.verify-title { font-size:12px; font-weight:700; color:#1e40af;
+  text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px; }
+.verify-item { font-size:13px; color:#1e3a8a; padding:3px 0 3px 16px; position:relative; }
+.verify-item::before { content:'→'; position:absolute; left:0; color:#93c5fd; }
+
+/* ── Nav ───────────────────────────────────────────────────── */
+.vf-nav { margin-top:24px; display:flex; gap:10px; justify-content:flex-end; }
+.vf-btn-back { background:#f3f4f6; color:#374151; border:none;
+  border-radius:8px; padding:12px 20px; font-size:14px; font-weight:500; cursor:pointer; }
+.vf-btn-next { background:#1a1a1a; color:#fff; border:none;
+  border-radius:8px; padding:14px 28px; font-size:16px; font-weight:600; cursor:pointer;
+  opacity:.4; pointer-events:none; transition:all .15s; }
+.vf-btn-next.enabled { opacity:1; pointer-events:auto; }
+.vf-btn-next.enabled:hover { background:#333; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vf-wrap">
+
+  <div class="vf-crumb">
+    <a href="{{ url_for('index') }}">首页</a> /
+    <a href="{{ url_for('stock_page', code=code) }}">{{ stock_name }}</a> /
+    算算它值多少钱
+  </div>
+
+  <div class="vf-steps">
+    <div class="vf-step done"></div>
+    <div class="vf-step active"></div>
+    <div class="vf-step"></div>
+    <div class="vf-step"></div>
+  </div>
+
+  <div id="recap-bar" class="recap-bar"></div>
+
+  <div class="vf-headline">消费市场在不在买？</div>
+  <div class="vf-sub">这个信息，市场消化了多少？你比机构早在哪里？</div>
+
+  <!-- 加载态 -->
+  <div id="content-loading" style="text-align:center;color:#9ca3af;padding:40px 0">加载中…</div>
+
+  <div id="content-area" style="display:none">
+
+    <!-- § 业务构成 -->
+    <div id="biz-section"></div>
+
+    <!-- § 可量化消费信号 -->
+    <div class="section-label">可量化的消费信号</div>
+    <div id="signals-section"></div>
+
+    <!-- § 信号共识 -->
+    <div id="consensus-section"></div>
+
+    <!-- § 可选：你的亲身观察 -->
+    <div class="optional-section">
+      <div class="optional-header" onclick="toggleOptional(this)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="optional-badge">可选</span>
+          <span class="optional-title">补充你的亲身观察，获得社交套利评分</span>
+        </div>
+        <span class="optional-icon" id="optional-icon">▼</span>
+      </div>
+      <div class="optional-body" id="optional-body">
+
+        <div class="b-q">你怎么发现这个投资机会的？</div>
+        <div class="b-opts" id="b-discovery">
+          <label class="b-opt" onclick="selectB('discovery','daily_life',this)">
+            <input type="radio" name="discovery" value="daily_life">
+            <div><div class="b-opt-label">日常生活中亲眼看到——产品排队、朋友推荐、随处可见</div>
+            <div class="b-opt-score">最强信号 · +15分</div></div>
+          </label>
+          <label class="b-opt" onclick="selectB('discovery','friend',this)">
+            <input type="radio" name="discovery" value="friend">
+            <div><div class="b-opt-label">朋友/家人口口相传</div>
+            <div class="b-opt-score">强信号 · +10分</div></div>
+          </label>
+          <label class="b-opt" onclick="selectB('discovery','social_media',this)">
+            <input type="radio" name="discovery" value="social_media">
+            <div><div class="b-opt-label">抖音/小红书/微博等社交媒体刷到</div>
+            <div class="b-opt-score">中等信号 · +8分</div></div>
+          </label>
+          <label class="b-opt" onclick="selectB('discovery','finance_news',this)">
+            <input type="radio" name="discovery" value="finance_news">
+            <div><div class="b-opt-label">财经媒体/研报里看到的</div>
+            <div class="b-opt-score">弱信号 · +3分（已被定价）</div></div>
+          </label>
+        </div>
+
+        <div class="b-q">你身边有多少人知道这个？</div>
+        <div class="b-opts" id="b-awareness">
+          <label class="b-opt" onclick="selectB('awareness','nobody',this)">
+            <input type="radio" name="awareness" value="nobody">
+            <div><div class="b-opt-label">几乎没人在谈——这是我注意到的冷门发现</div>
+            <div class="b-opt-score">+15分（信息还没扩散）</div></div>
+          </label>
+          <label class="b-opt" onclick="selectB('awareness','small_circle',this)">
+            <input type="radio" name="awareness" value="small_circle">
+            <div><div class="b-opt-label">小圈子里开始传了，但大多数人还不知道</div>
+            <div class="b-opt-score">+10分</div></div>
+          </label>
+          <label class="b-opt" onclick="selectB('awareness','friends_know',this)">
+            <input type="radio" name="awareness" value="friends_know">
+            <div><div class="b-opt-label">朋友圈里基本都知道了</div>
+            <div class="b-opt-score">+5分</div></div>
+          </label>
+          <label class="b-opt" onclick="selectB('awareness','everyone',this)">
+            <input type="radio" name="awareness" value="everyone">
+            <div><div class="b-opt-label">到处都是，路人皆知</div>
+            <div class="b-opt-score">+0分（可能已经定价）</div></div>
+          </label>
+        </div>
+
+        <div class="obs-label">你亲眼看到了什么？</div>
+        <div class="obs-hint">越具体越强——「超市货架空了三次」比「感觉不错」有价值十倍。</div>
+        <textarea class="obs-input" id="obs-input"
+          placeholder="直接描述你观察到的现象，或直接跳过…"></textarea>
+        <button class="obs-btn" onclick="classifyObs()">AI 判断这个观察的信号强度 →</button>
+        <div class="obs-result" id="obs-result"></div>
+
+        <!-- 套利评分 -->
+        <div class="arb-card" id="arb-card">
+          <div class="arb-score-row">
+            <div class="arb-num" id="arb-num">—</div>
+            <div class="arb-label" id="arb-label-text" style="color:#9ca3af"></div>
+          </div>
+          <div class="arb-bar-wrap">
+            <div class="arb-bar-fill" id="arb-bar-fill" style="width:0%;background:#6b7280"></div>
+          </div>
+          <div class="arb-breakdown" id="arb-breakdown"></div>
+          <div style="font-size:11px;color:#6b7280;margin-top:8px">
+            A层自动 + B层观察 + C层洞察 · 越高 = 信息越早 = 机会越大
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- § AI 信号猎手指南 -->
+    <div class="guide-section">
+      <div class="section-label">AI 信号猎手指南</div>
+      <button class="guide-btn" id="guide-btn" onclick="loadSignalGuide()">
+        <span class="guide-icon">🔍</span>
+        <span id="guide-btn-text">生成针对 {{ stock_name }} 的信号搜索方向 →</span>
+      </button>
+      <div class="guide-result" id="guide-result"></div>
+    </div>
+
+    <!-- § 综合判断 -->
+    <div class="judge-q">综合来看，这家公司的业务需求是？</div>
+    <div class="judge-opts">
+      <button class="judge-btn" onclick="selectJudge(this,'expanding')">
+        <div class="jb-title">↑ 需求在扩张</div>
+        <div class="jb-sub">产品在获得更多用户，市场在增长</div>
+      </button>
+      <button class="judge-btn" onclick="selectJudge(this,'stable')">
+        <div class="jb-title">→ 需求平稳</div>
+        <div class="jb-sub">没有明显增减，维持现有规模</div>
+      </button>
+      <button class="judge-btn" onclick="selectJudge(this,'contracting')">
+        <div class="jb-title">↓ 需求在收缩</div>
+        <div class="jb-sub">市场在萎缩，或产品正在失去用户</div>
+      </button>
+    </div>
+
+    <div class="verify-box" id="verify-box">
+      <div class="verify-title">3~6 个月后，来验证你的判断</div>
+      <div id="verify-list"></div>
+    </div>
+
+  </div><!-- /content-area -->
+
+  <div class="vf-nav">
+    <button class="vf-btn-back" onclick="window.location.href='/stock/{{ code }}/value'">← 上一步</button>
+    <button class="vf-btn-next" id="btn-next" onclick="gotoP3()">下一步：还能挣多少年的钱 →</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CODE   = '{{ code }}';
+const NAME   = '{{ stock_name }}';
+const KEY_P1 = 'vf_p1_' + CODE;
+const KEY_P2 = 'vf_p2_' + CODE;
+const KEY_HIST = 'vf_p2_hist_' + CODE;
+
+let _p1 = {}, _demand = null;
+let _bDiscovery = null, _bAwareness = null, _cAdjustment = 0;
+let _autoScoreA = 0;
+
+try { _p1 = JSON.parse(localStorage.getItem(KEY_P1)||'{}'); } catch(e){}
+
+// Step 1 摘要条
+if (_p1.conviction) {
+  const labels = ['','太乐观了','可能高了','差不多','可能低了','太保守了'];
+  const bar = document.getElementById('recap-bar');
+  bar.textContent = `✓ 第1步：增长预期「${labels[_p1.conviction]}」${Math.round((_p1.adjusted_growth||0)*100)}%/年`;
+  bar.style.display = '';
+}
+
+// ── 加载信号 ─────────────────────────────────────────────────
+fetch('/api/value/' + CODE + '/market-timing')
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('content-loading').style.display = 'none';
+    document.getElementById('content-area').style.display   = '';
+    renderBiz(d.biz);
+    renderSignals(d.signals || []);
+    renderConvergence(d.convergence || null);
+  })
+  .catch(() => {
+    document.getElementById('content-loading').textContent = '信号加载失败，可直接填写观察后继续。';
+    document.getElementById('content-area').style.display = '';
+  });
+
+// ── § 业务构成 ────────────────────────────────────────────────
+function renderBiz(biz) {
+  if (!biz) return;
+  const sector  = biz.sector || biz.biz_model || '';
+  const summary = biz.summary || '';
+  const rb      = biz.revenue_breakdown || [];
+
+  let revenueHtml = '';
+  if (rb.length) {
+    const bars = rb.map(r => `
+      <div class="rev-row">
+        <div class="rev-label" title="${r.name}">${r.name}</div>
+        <div class="rev-bar-wrap">
+          <div class="rev-bar-fill" style="width:${Math.min(r.pct,100)}%"></div>
+        </div>
+        <div class="rev-pct">${r.pct}%</div>
+      </div>`).join('');
+    revenueHtml = `<div style="margin-top:10px"><div class="section-label" style="margin-bottom:8px">主要收入构成</div><div class="revenue-bars">${bars}</div></div>`;
+  }
+
+  document.getElementById('biz-section').innerHTML = `
+    <div class="biz-card">
+      <div class="section-label">这家公司做什么</div>
+      <div class="biz-name">${NAME}</div>
+      ${sector ? `<div class="biz-sector">${sector}</div>` : ''}
+      ${summary ? `<div class="biz-summary">${summary}</div>` : ''}
+      ${revenueHtml}
+    </div>`;
+}
+
+// ── § 可量化消费信号 ──────────────────────────────────────────
+function _tagCls(dir) {
+  return dir === 'bull' ? 'bull' : dir === 'bear' ? 'bear' : 'neut';
+}
+
+function renderSignals(signals) {
+  if (!signals.length) {
+    document.getElementById('signals-section').innerHTML =
+      '<div style="color:#9ca3af;font-size:13px;padding:8px 0">暂无可量化信号，可直接填写你的观察。</div>';
+    return;
+  }
+  let html = '';
+  let autoA = 0;
+
+  signals.forEach(sig => {
+    const dir    = sig.dir || 'neut';
+    const tCls   = _tagCls(dir);
+    const interp = sig.interp || '';
+
+    if (sig.type === 'gtrends') {
+      const chg  = sig.change_pct != null ? (sig.change_pct > 0 ? `↑ +${sig.change_pct}%` : `↓ ${sig.change_pct}%`) : '';
+      const tag  = dir === 'bull' ? `${chg} 热度上升` : dir === 'bear' ? `${chg} 热度下降` : '→ 平稳';
+      const warn = sig.geo === 'CN' ? `<div class="sig-meta">⚠ Google 在中国访问受限，建议同时参考百度指数</div>` : '';
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">Google 搜索热度「${sig.keyword}」</div>
+          <span class="sig-tag ${tCls}">${tag}</span></div>
+        <div class="sig-body">${interp}</div>${warn}</div>`;
+    }
+
+    if (sig.type === 'autocomplete') {
+      const words = (sig.display_words || []).map(w => `「${w}」`).join(' ');
+      const tag   = dir === 'bear' ? `⚠ 含 ${sig.neg_count} 个负面词` : '→ 中性联想';
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">大众搜索联想词</div>
+          <span class="sig-tag ${tCls}">${tag}</span></div>
+        <div class="sig-body">${interp || words}</div>
+        <div class="sig-meta">当搜索品牌时，用户最常联想到什么</div></div>`;
+    }
+
+    if (sig.type === 'wikipedia') {
+      const chg = sig.change_pct != null ? (sig.change_pct > 0 ? `↑ +${sig.change_pct}%` : `↓ ${sig.change_pct}%`) : '';
+      const tag = dir === 'bull' ? `${chg} 关注上升` : dir === 'bear' ? `${chg} 关注下降` : '→ 平稳';
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">Wikipedia 页面关注度</div>
+          <span class="sig-tag ${tCls}">${tag}</span></div>
+        <div class="sig-body">${interp}</div>
+        <div class="sig-meta">学术研究证实：页面浏览量↑ 与股票回报正相关</div></div>`;
+    }
+
+    if (sig.type === 'appstore') {
+      const rank = sig.top100_rank;
+      const tag  = rank ? (rank <= 20 ? `Top #${rank} 🔥` : `#${rank}`) : '未进 Top100';
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">App Store · ${sig.name || 'App'}</div>
+          <span class="sig-tag ${tCls}">${tag}</span></div>
+        <div class="sig-body">${interp}</div></div>`;
+    }
+
+    if (sig.type === 'reddit') {
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">Reddit r/${sig.subreddit}</div>
+          <span class="sig-tag ${tCls}">${sig.sentiment || ''}</span></div>
+        <div class="sig-body">${interp}</div></div>`;
+    }
+
+    if (sig.type === 'github') {
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">GitHub 开发者生态</div>
+          <span class="sig-tag ${tCls}">${sig.total >= 1000 ? '生态活跃' : sig.total >= 100 ? '有一定采用' : '生态较少'}</span></div>
+        <div class="sig-body">${interp}</div>
+        <div class="sig-meta">开发者采用量是科技公司增长的领先指标</div></div>`;
+    }
+
+    if (sig.type === 'hackernews') {
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">HackerNews 科技圈讨论</div>
+          <span class="sig-tag ${tCls}">${sig.total >= 500 ? '高关注' : sig.total >= 50 ? '有讨论' : '关注较少'}</span></div>
+        <div class="sig-body">${interp}</div></div>`;
+    }
+
+    if (sig.type === 'steam') {
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">Steam 实时在线人数</div>
+          <span class="sig-tag ${tCls}">${sig.ccu >= 10000 ? '玩家活跃' : '玩家有限'}</span></div>
+        <div class="sig-body">${interp}</div></div>`;
+    }
+
+    if (sig.type === 'em_hot_rank') {
+      const rankStr = sig.off_chart ? '榜外（极冷门）' : `#${sig.rank}`;
+      const tag     = dir === 'bull' ? '冷门·信息早' : dir === 'bear' ? '热门·已定价' : '中热度';
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">东财社区热度</div>
+          <span class="sig-tag ${tCls}">${tag}</span></div>
+        <div class="sig-body">${interp}</div>
+        <div class="sig-meta">排名越靠后 = 市场关注越少 = 信息套利窗口越大</div></div>`;
+    }
+
+    if (sig.type === 'undiscovered') {
+      autoA = sig.total_a || 0;
+      const stageColor = ['极早期','早期'].includes(sig.stage) ? '#15803d'
+                        : sig.stage === '扩散中' ? '#92400e' : '#6b7280';
+      html += `<div class="sig-card">
+        <div class="sig-head"><div class="sig-title">信息定价程度</div>
+          <span class="sig-tag ${tCls}" style="color:${stageColor}">${sig.stage}</span></div>
+        <div style="margin-top:4px">
+          <div class="scarcity-row"><span>近7天新闻</span><span class="scarcity-val">${sig.news_7d} 篇</span></div>
+          <div class="scarcity-row"><span>机构分析师覆盖</span>
+            <span class="scarcity-val">${sig.analyst_cnt != null ? sig.analyst_cnt + ' 家' : '暂无'}</span></div>
+        </div>
+        <div class="sig-meta" style="margin-top:8px">新闻越少、覆盖越少 = 信息越早 = 套利窗口越宽</div></div>`;
+    }
+  });
+
+  document.getElementById('signals-section').innerHTML = html;
+  _autoScoreA = autoA;
+  updateArbScore();
+}
+
+// ── 汇聚度卡片（后端计算，前端展示）─────────────────────────────
+function renderConvergence(conv) {
+  if (!conv || conv.level === 'none') return;
+  const colorMap = {green:'#15803d', yellow:'#92400e', red:'#b91c1c', gray:'#6b7280'};
+  const bgMap    = {green:'#f0fdf4', yellow:'#fefce8', red:'#fef2f2', gray:'#f9fafb'};
+  const bdMap    = {green:'#bbf7d0', yellow:'#fef08a', red:'#fecaca', gray:'#e5e7eb'};
+  const c = conv.color || 'gray';
+  const dot = conv.level === 'high' ? '🟢' : conv.level === 'emerging' ? '🟡' : '⚫';
+
+  const chips = [
+    conv.bull ? `<span class="cons-chip cons-bull">↑ 看多 ${conv.bull}</span>` : '',
+    conv.neut ? `<span class="cons-chip cons-neut">→ 中性 ${conv.neut}</span>` : '',
+    conv.bear ? `<span class="cons-chip cons-bear">↓ 看空 ${conv.bear}</span>` : '',
+  ].filter(Boolean).join('');
+
+  const hint = conv.level === 'high'
+    ? '多个独立数据源同向确认——置信度高，信号可信。'
+    : conv.level === 'emerging'
+    ? '信号开始出现，但尚未被多个来源确认。加入你的亲身观察会更准。'
+    : '信号分散，单一数据源不足以判断。建议填写 B层 亲身观察。';
+
+  document.getElementById('consensus-section').innerHTML = `
+    <div style="border:1.5px solid ${bdMap[c]};border-radius:12px;padding:16px;
+      background:${bgMap[c]};margin-bottom:20px">
+      <div style="font-size:14px;font-weight:700;color:${colorMap[c]};margin-bottom:6px">
+        ${dot} ${conv.label}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${chips}</div>
+      <div style="font-size:13px;color:#374151">${hint}</div>
+      ${conv.level !== 'high' ? `<div style="font-size:11px;color:#9ca3af;margin-top:6px">
+        3+ 个信号同向才是高置信度（TickerTrends 核心原则）</div>` : ''}
+    </div>`;
+}
+
+// ── 可选区块折叠 ──────────────────────────────────────────────
+function toggleOptional(header) {
+  const body = document.getElementById('optional-body');
+  const icon = document.getElementById('optional-icon');
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  icon.classList.toggle('open', !open);
+}
+
+// ── B层：问卷 ─────────────────────────────────────────────────
+const _DISC = {daily_life:15, friend:10, social_media:8, finance_news:3};
+const _AWAR = {nobody:15, small_circle:10, friends_know:5, everyone:0};
+
+function selectB(dim, val, el) {
+  document.querySelectorAll(`#b-${dim} .b-opt`).forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  if (dim === 'discovery') _bDiscovery = val;
+  if (dim === 'awareness')  _bAwareness  = val;
+  updateArbScore();
+}
+
+function updateArbScore() {
+  const bScore = (_DISC[_bDiscovery]||0) + (_AWAR[_bAwareness]||0);
+  const total  = Math.max(0, Math.min(100, _autoScoreA + bScore + _cAdjustment));
+  if (_autoScoreA === 0 && bScore === 0) return;
+
+  const label = total >= 85 ? {t:'极早期', c:'#22c55e'} :
+                total >= 65 ? {t:'早期',   c:'#4ade80'} :
+                total >= 45 ? {t:'扩散中', c:'#facc15'} :
+                total >= 25 ? {t:'进主流', c:'#fb923c'} :
+                              {t:'已公开', c:'#f87171'};
+
+  document.getElementById('arb-num').textContent = total;
+  const lbl = document.getElementById('arb-label-text');
+  lbl.textContent = label.t; lbl.style.color = label.c;
+  document.getElementById('arb-bar-fill').style.cssText = `width:${total}%;background:${label.c}`;
+  document.getElementById('arb-breakdown').innerHTML = [
+    `<span class="arb-part">A层自动 ${_autoScoreA}分</span>`,
+    bScore ? `<span class="arb-part">B层观察 +${bScore}分</span>` : '',
+    _cAdjustment !== 0 ? `<span class="arb-part">C层洞察 ${_cAdjustment>0?'+':''}${_cAdjustment}分</span>` : '',
+  ].filter(Boolean).join('');
+  document.getElementById('arb-card').style.display = '';
+}
+
+// ── C层：AI 判断独家观察 ──────────────────────────────────────
+function classifyObs() {
+  const text = document.getElementById('obs-input').value.trim();
+  const res  = document.getElementById('obs-result');
+  if (!text) {
+    res.innerHTML = '<span style="color:#9ca3af;font-size:12px">请先填写你的现场观察。</span>';
+    res.style.display = '';
+    return;
+  }
+  const btn = document.querySelector('.obs-btn');
+  btn.textContent = '判断中…'; btn.disabled = true;
+
+  fetch('/api/value/' + CODE + '/classify-observation', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  })
+  .then(r => r.json())
+  .then(d => {
+    btn.textContent = 'AI 判断这个观察的信号强度 →'; btn.disabled = false;
+    if (d.ok) {
+      const adj = d.adjustment || 0;
+      const cls = d.signal_type === 'strong' ? 'bull' :
+                  (d.signal_type === 'reverse' || d.signal_type === 'contradiction') ? 'bear' : 'neut';
+      const label = {strong:'强信号 ↑', neutral:'中性', contradiction:'矛盾信号', reverse:'反向信号 ↓'}[d.signal_type] || '中性';
+      res.innerHTML = `
+        <span class="sig-tag ${cls}">${label}</span>
+        <span style="margin-left:8px;font-size:13px;color:#374151">${adj>0?'+':''}${adj}分</span>
+        ${d.reasoning ? `<div style="margin-top:6px;font-size:12px;color:#6b7280">${d.reasoning}</div>` : ''}`;
+      res.style.display = '';
+      _cAdjustment = adj;
+      updateArbScore();
+    }
+  })
+  .catch(() => { btn.textContent = 'AI 判断这个观察的信号强度 →'; btn.disabled = false; });
+}
+
+// ── AI 信号猎手指南 ───────────────────────────────────────────
+function loadSignalGuide() {
+  const btn    = document.getElementById('guide-btn');
+  const result = document.getElementById('guide-result');
+  const btnTxt = document.getElementById('guide-btn-text');
+  btnTxt.textContent = '生成中…'; btn.disabled = true;
+
+  fetch('/api/value/' + CODE + '/signal-guide', {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      btn.style.display = 'none';
+      if (!d.ok || !d.guides || !d.guides.length) {
+        result.innerHTML = '<div style="color:#9ca3af;font-size:13px">暂时无法生成，请稍后重试。</div>';
+        result.style.display = '';
+        return;
+      }
+      const rows = d.guides.map(g => `
+        <div class="guide-item">
+          <div class="guide-channel">${g.channel}</div>
+          <div class="guide-what">${g.what}</div>
+          <div class="guide-signal">${g.signal || ''}</div>
+        </div>`).join('');
+      result.innerHTML = `
+        <div class="guide-title">针对 ${NAME} 的社交信号猎手清单</div>
+        ${rows}
+        <div style="font-size:11px;color:#93c5fd;margin-top:10px">
+          信号原则：越早发现 = 信息定价越少 = 胜算越大
+        </div>`;
+      result.style.display = '';
+    })
+    .catch(() => {
+      btnTxt.textContent = '生成针对 ${NAME} 的信号搜索方向 →';
+      btn.disabled = false;
+    });
+}
+
+// ── 综合判断 + 验证锚点 ──────────────────────────────────────
+const _VERIFY = {
+  expanding: [
+    '再次检查 Google Trends，看搜索量是否还在上升',
+    '如果是 App：查 App Store 排名是否保持或提升',
+    '看最新季报：营收增速是否和你预期一致',
+    '问一下身边的人：还有人在用/购买这个产品吗',
+  ],
+  stable: [
+    '检查最新季报：营收是否真的平稳，没有开始下滑',
+    '关注竞争对手：是否有新玩家进入这个市场',
+    '看行业整体：如果行业开始分化，这家公司站在哪边',
+  ],
+  contracting: [
+    '确认是暂时性还是结构性：产品是被替代了，还是消费周期到了',
+    '看管理层表态：有没有转型计划或成本削减措施',
+    '检查竞争对手增速：行业在萎缩还是只有这家在输',
+  ],
+};
+
+function selectJudge(btn, choice) {
+  document.querySelectorAll('.judge-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  _demand = choice;
+  document.getElementById('btn-next').classList.add('enabled');
+
+  const items = (_VERIFY[choice] || []).map(v => `<div class="verify-item">${v}</div>`).join('');
+  const vb = document.getElementById('verify-box');
+  document.getElementById('verify-list').innerHTML = items;
+  vb.style.display = '';
+}
+
+function gotoP3() {
+  if (!_demand) return;
+  const bScore = (_DISC[_bDiscovery]||0) + (_AWAR[_bAwareness]||0);
+  const total  = Math.max(0, Math.min(100, _autoScoreA + bScore + _cAdjustment));
+  const p2 = {
+    demand:      _demand,
+    arb_score:   total || null,
+    discovery:   _bDiscovery,
+    awareness:   _bAwareness,
+    obs:         document.getElementById('obs-input')?.value?.trim() || null,
+  };
+  // 保存历史
+  try {
+    const hist = JSON.parse(localStorage.getItem(KEY_HIST)||'[]');
+    hist.push({...p2, ts: Date.now()});
+    if (hist.length > 5) hist.shift();
+    localStorage.setItem(KEY_HIST, JSON.stringify(hist));
+  } catch(e){}
+  localStorage.setItem(KEY_P2, JSON.stringify(p2));
+
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = '✓'; nextBtn.style.background = '#16a34a'; nextBtn.disabled = true;
+  setTimeout(() => { window.location.href = '/stock/{{ code }}/value/3'; }, 220);
+}
+</script>
+{% endblock %}
