@@ -37,6 +37,7 @@ def _build_market_data() -> dict:
 
 
 def main():
+    db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     data = _build_market_data()
     print(f"🏦 radar-svc 启动：{len(data['quotes'])} 只 A股")
     with db.service_run("radar-svc") as run:

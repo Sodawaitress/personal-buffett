@@ -27,6 +27,7 @@ SKIP_PUSH = bool(os.environ.get("SKIP_PUSH"))
 
 
 def main():
+    db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     date_str = datetime.now(CN_TZ).strftime("%Y-%m-%d")
     print(f"📨 push-svc 启动 {date_str}" + ("（SKIP_PUSH：只生成不推送）" if SKIP_PUSH else ""))
 

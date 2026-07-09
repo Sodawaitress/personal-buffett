@@ -25,6 +25,7 @@ BUDGET_MIN = float(os.environ.get("FETCH_BUDGET_MIN", "40"))
 
 
 def main():
+    db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     codes = db.all_watched_codes()
     print(f"📡 fetch-svc 启动：{len(codes)} 只自选股，预算 {BUDGET_MIN} 分钟")
     deadline = time.time() + BUDGET_MIN * 60

@@ -18,6 +18,7 @@ import db
 
 
 def main():
+    db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     print("📸 digest-svc 启动")
     with db.service_run("digest-svc") as run:
         # 快照 + commit

@@ -28,6 +28,7 @@ _PRIORITY = {"held": 0, "material": 1, "never": 2, "bad_date": 2, "rotation": 3}
 
 
 def main():
+    db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     codes = db.all_watched_codes()
     picked = db.select_codes_to_analyze(codes, rotation_days=ROTATION_DAYS)
     picked.sort(key=lambda cr: _PRIORITY.get(cr[1], 9))
