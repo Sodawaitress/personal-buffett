@@ -69,3 +69,22 @@ FROM service_runs ORDER BY id DESC LIMIT 20;
 - 2026-07-09 ⚠️ 重要发现：云端 ~60s/只（6只/6min）。AKShare 从 GitHub 美国 runner 极慢,1b/1c2 频繁撞步超时。131只一轮跑不完。**旧 monolith 老毛病(撞2h另一半原因)**。
   - 待议方案：①提高预算+多次跑靠缓存跳过(但news/fund_flow TTL=0每次重抓) ②China/Aliyun self-hosted runner ③AKShare走代理 ④接受轮转覆盖(配合选择性分析)
 - 待办：触发 analyze-svc(走Groq不走AKShare,不受此影响)验证;throughput 单独解决。
+
+---
+
+## Throughput 治本设计（2026-07-10）
+
+### 诊断：昨天修的是 bug，今天暴露的是性能瓶颈，两码事
+修好超时 = 失败得干净，**不等于跑得快**。三个事实叠加：
+1. **自伤 bug**：`svc_fetch.py` 调 `run_fetch_layers(force=True)` → `_is_stale` 直接 return True，**每只每次全量重抓**，7天TTL财务/24h技术面全被无视。「靠缓存跳过」的设想被这一行废掉。
+2. news/fund_flow 的 `_CACHE_TTL=0`（pipeline_jobs.py:27-28）→ 交易日永远重抓，正是 AKShare 最慢且 A股专属的两层。
+3. **根因是地理**：数据在中国（东财/新浪/THS），runner 在美国 GitHub，跨太平洋+地域限流 = 60s/只。Python 改不了 15000km。
+
+### 三层治本
+- **第1层 · 免费改** ✅ 2026-07-10：`svc_fetch.py` 改 `force=FORCE`（默认 False，`FORCE_FETCH=1` 可整库重建）。财务/技术面按 TTL 跳过，同日已抓的新闻·资金也跳 → 预算内多轮续跑真正靠缓存变快。
+- **第2层 · 架构**（大部分已建）：fetch 带预算增量轮转 + analyze 只读DB永不碰AKShare。第1层生效后同日第二轮不重抓，即兑现「当日已抓就跳」。
+- **第3层 · 基建（待拍板）**：A股采集搬到离数据近处。美股/港股/NZ 走 yfinance 从美国本来就快，不动。
+  - 方案A（推荐）：阿里云香港 VPS ~$5/月挂 GitHub self-hosted runner，只跑 A股 fetch-svc，60s/只→1-3s/只，131只一轮跑完。代价：一台机器要维护，港区免ICP。
+  - 方案B：不碰服务器，只做第1+2层，靠轮转覆盖+选择性分析，尾部A股信号可能滞后1-2天。零成本零运维。
+  - 方案C：AKShare 走 HK 代理——AKShare 打太多端点，代理覆盖不全、易碎，不推荐。
+  - **状态：等用户拍板 A / B。**
