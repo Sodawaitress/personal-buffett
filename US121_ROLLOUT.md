@@ -62,4 +62,7 @@ FROM service_runs ORDER BY id DESC LIMIT 20;
 （每次云端触发 / 观察结果记这里）
 
 - 2026-07-09：分支 6 commit 完成，本地全部 smoke 测通过。
-- 2026-07-09：合并 main（2708ae9）。首次云端触发 fetch-svc（budget 8min，run 28997189956）观察中。
+- 2026-07-09：合并 main（2708ae9）。首次云端触发 fetch-svc。
+- 2026-07-09 云端 bug #1：Neon 无 service_runs 表（svc 漏 init_db）→ 修：各 svc 启动 init_db（1097273）。
+- 2026-07-09 云端 bug #2（根因）：_run_with_timeout 用 ThreadPoolExecutor，超时后 shutdown(wait=True) 仍等卡死的 AKShare 线程 → fetch-svc 云端 14min 不停被取消。修：改 daemon 线程+join(timeout)，超时真生效（1b81a25）。**大概率也是旧 monolith 撞 2h 的元凶之一。**
+- 待办：重跑 fetch-svc 验证 bug#2 已修（预算真能停）。
