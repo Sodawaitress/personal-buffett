@@ -220,7 +220,7 @@ flyctl logs -a personal-buffett --no-tail | grep -E "(gunicorn|seed_demo|Error|s
 - 新功能写进 PRODUCT.md 对应 US 再实现，不擅自加功能
 - 每个 User Story 确认后才实现
 - 硬编码股票数据（BUFFETT_PROFILES、NZ_PROFILES）逐步迁移到 DB，不新增硬编码
-- LLM 调用走 Groq API（groq_client），30 RPM 限制，注意加 sleep
+- LLM 调用走 Groq API（`scripts/buffett_groq.py` 的 `_call_groq`，模型 `llama-3.3-70b-versatile`）。实测限速（2026-07-09）：**RPM 1000 / TPM 12,000**。瓶颈是 **TPM 不是 RPM**（一封信 ~2500–5000 tok，每分钟仅 ~3–4 封）。并发无用（TPM 账号级硬上限）；Batch API 免费档不可用（403 not_available_for_plan）。提速靠选择性分析 + token-bucket 配速，详见 US-121
 
 ---
 

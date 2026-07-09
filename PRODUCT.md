@@ -4713,3 +4713,68 @@ prior art（[多信号共振=置信](https://www.mql5.com/en/blogs/post/767676) 
 - 逐笔实时（分数来自每日分析）
 - 跨用户 PK（只排自己的自选股）
 
+---
+
+## US-121 · Pipeline microservices 化（模块解耦 + 失败隔离）
+
+### 背景
+`scripts/stock_pipeline.main()` 是一根串到底的 monolith：抓数据 → LLM 分析 → 机构雷达 → 写库 → 催化剂 → 重大新闻 → 推送，全在**一个进程、单线程、内存 `data` dict 传递**里跑完。自选股已聚合到 100+ 只，无时间预算封顶，2026-07-08 完整验证跑满 **120min 被 GitHub Actions 强杀**（validate run 28980988255），价格、digest 快照、推送**全部陪葬** —— 一损俱损。
+
+**代码审计发现（2026-07-09）：**
+- 项目已有**第二条 daily 路径**：`pipeline_jobs.run_daily_all()` → 每股 `run_pipeline(code)`，已是 **DB 驱动、分层（1a–1c3 fetch + AI）、每步 `_run_with_timeout` 超时、带缓存新鲜度判断（`_is_stale`/`_data_age_minutes`）**。但没有调度在跑它（cron 跑的是旧 monolith）。→ **重构复用它作为单股单元，不从零写。**
+- `run_daily_all` 仍是**纯串行、无全局预算** → 换到它一样超时，必须叠加下面的配速/选择性。
+
+**根因诊断（实测限速，2026-07-09）：**
+- Groq `llama-3.3-70b-versatile` 本 key 真实限速 = **RPM 1000 / TPM 12,000**。CLAUDE.md 旧写的「30 RPM」**过时错误** —— 请求数根本不是瓶颈。
+- **真凶是 TPM=12,000**。一封信 ≈ 2500–5000 tokens（system prompt + 上下文 + ≤900 输出）→ **每分钟仅 ~3–4 封**。100 只 + portfolio_brief/news_interpret/supply_chain 全挤同一 12k TPM，且现有 `_call_groq` 撞 429 就 `sleep(65s)` 空等 → 2h+。
+- **关键结论：并发（semaphore/GHA 矩阵分片）救不了 LLM** —— TPM 是账号级全局硬上限，开并发只会瞬间 429。（矩阵分片只对 per-IP 的 AKShare/yfinance 抓取有效，对 Groq 无效。）
+- **Groq Batch API 已实测对本 key 不可用**（`403 not_available_for_plan`，免费档）。付费档才解锁（且便宜 50%、异步、不占标准限速）。
+
+**LLM 提速杠杆（按性价比，非并发）：**
+1. **选择性分析（最大、免费）**：不再每天全量重跑。只分析「有重大新闻/信号变化 + 持仓股 + 每天轮转 1/3 观察股」，token 需求砍 3–5×。合「less is more」。
+2. **Token-bucket 精确配速（免费）**：按 12k TPM 精确投放，替掉「盲发→429→空睡 65s」，把空转时间榨干。
+3. **Token 瘦身（免费，中等）**：精简 user_msg 上下文、压 max_tokens。
+4. **升级 Groq 付费档（花钱，治本）**：TPM 暴涨 + 解锁 Batch API。→ 决策见下方「Groq 档位」，当前定为**先免费+选择性，验证后再评估付费**（方案 3）。
+
+**架构定调（不上 Kafka）**：瓶颈是**外部 API 限速**不是内部吞吐；负载是**批处理**不是流；模型训练从**历史表批量读**不从 Kafka 读。业界共识：< 5 万 jobs/秒先用 Postgres。故「消息总线」用现成 **Neon Postgres**，服务间**只经 DB 通信**（`SELECT ... FOR UPDATE SKIP LOCKED` 领任务，天然幂等/可续/可并发），不互相调用、不传内存 dict。DB 表按 **append-only** 设计，形态与 Kafka log 同构 → 未来撞「秒级实时 / 日均百万事件 / 5+ 消费者回放」阈值可无痛迁移，且 append-only 特征表本身就是 ML 训练集。
+
+### Scope
+1. **服务边界（独立 GitHub Actions workflow，各自 schedule/timeout/失败告警）**
+   | 服务 | 职责 | 成本 | 时间预算 |
+   |------|------|------|----------|
+   | `fetch-svc` | 复用 `run_pipeline` 的 1a–1c3（去 AI 步）：行情+新闻+资金+技术面+财务 → DB；+宏观+量化Layer2+催化剂 | 轻 ~15min | — |
+   | `analyze-svc` | 从 DB 挑「待分析股」(选择性规则)→ token-bucket 配速跑 LLM 信 → 写 DB；断点续跑 | 🔴 重 | `max_minutes` 封顶 |
+   | `radar-svc` | 机构雷达 + 前兆信号（AKShare 密集，可选 GHA 矩阵分片） | 🔴 重 | `max_minutes` 封顶 |
+   | `material-svc` | 重大新闻扫描（复用现有 25min 封顶） | 中 | 已有 |
+   | `digest-svc` | 快照 commit + 回填收益 | 轻 | — |
+   | `push-svc` | 妈妈/Discord/Server酱 推送（读 DB 最新报告） | 轻 | — |
+2. **选择性分析规则**（analyze-svc 核心，`should_analyze(code)`）：满足任一即入队 —— ①持仓股 ②近 24h 有重大新闻/信号变化 ③距上次分析 ≥ N 天（轮转，保证每只至少几天刷新一次）。其余读缓存。
+3. **Token-bucket 配速器**：`_call_groq` 前置一个按 TPM 12,000 计的令牌桶（预估请求 token 数，桶不够就精确 sleep 到补足），替掉现有「撞 429 睡 65s」。
+4. **调度：方案 A 错峰独立**（不用 `workflow_run` 链式）。各服务读 DB「最新可用」，慢的那天用稍旧数据下次自愈。示例：fetch 16:00 / analyze 16:20 / radar 17:00 / material 17:30 / digest 18:00 / push 18:30（CST）。
+5. **解耦重构（主体工作量）**：analyze/radar 改为**自己从 DB 读输入、写输出**，去掉 `main()` 的内存 dict 流水线（复用 `run_pipeline` 已是此形态）。
+6. **每服务三铁律**：① 幂等 ② 时间预算封顶 + 断点续跑 ③ 只经 DB 通信。
+7. **可观测性**：新增 `service_runs` 表（append-only）：`service_name / started_at / finished_at / status / duration_s / items_processed / stopped_early / error`。
+8. **失败告警按服务独立**：各 workflow `if: failure()` 推管理员，标明哪个服务挂了。
+9. **旧 `cron.yml` / `validate.yml` 退役**：拆分上线验证稳定后删除。
+
+### Groq 档位决策
+当前定：**方案 3 — 先免费档 + 选择性分析，跑 2 周观察够不够用，冷门股刷新太慢再评估升级付费档**（付费档同时解锁 Batch API，届时 analyze-svc 可改「submit/collect 两段式」）。可回退、不预付费。
+
+### Acceptance Criteria
+- [ ] 各服务为独立 workflow，可单独 `workflow_dispatch`，各有独立 timeout + 失败告警
+- [ ] `analyze-svc` 用选择性规则挑股（持仓/有变化/轮转），非全量；有 `max_minutes` 预算 + 断点续跑
+- [ ] token-bucket 配速：一次 analyze 全程**不再出现 429 空睡 65s**，跑完时间可预测（目标 < 40min）
+- [ ] analyze/radar 不依赖内存 `data` dict，从 DB 读写（复用 `run_pipeline`）
+- [ ] `service_runs` 表记录每次运行，可一眼看出哪个服务掉链子 / stopped_early
+- [ ] 杀掉任一重服务（如 analyze-svc）：价格仍新鲜、digest 仍能 commit 快照、push 仍能发已有报告（**分开失败**验证）
+- [ ] 所有服务数据表 append-only，无破坏性覆盖
+- [ ] 旧 monolith `stock_pipeline.main()` 退役或仅作手动全量入口
+
+### 不做
+- Kafka / Redis / 独立消息队列中间件（Neon DB + SKIP LOCKED 即够，到阈值再议）
+- **并发调 LLM 提速**（TPM 账号级硬上限，并发无效反而 429）
+- 服务独立部署 / 容器化（仍是 GitHub Actions job，非常驻服务）
+- `workflow_run` 链式 DAG（选错峰独立，保最大失败隔离）
+- 在线实时推理 / 流式特征（模型尚未训练，远期事）
+- 付费升级 Groq（暂缓，先验证免费+选择性够不够）
+
