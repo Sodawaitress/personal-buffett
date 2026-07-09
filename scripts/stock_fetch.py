@@ -317,7 +317,6 @@ def fetch_cn_technicals(code: str) -> dict:
         def _vwap(n):
             if len(closes) < n:
                 return None
-            cv = sum(closes[-n][i] * volumes[-n:][i] for i in range(n)) if False else None
             c_slice = closes[-n:]
             v_slice = volumes[-n:]
             total_v = sum(v_slice)
