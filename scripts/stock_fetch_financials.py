@@ -360,6 +360,7 @@ def _analyze_moat_direction(annual: list) -> str:
 
 # ── A股特有风险/机会信号（质押 + 融资 + 机构持仓 + FCF质量）────
 _pledge_cache = {}   # {date_str: DataFrame}，避免重复拉全量
+_margin_cache = {}   # {(market, date_str): DataFrame}，融资明细是市场级数据，跨股复用
 
 def fetch_cn_signals(code: str, annual: list = None) -> dict:
     """
@@ -372,14 +373,22 @@ def fetch_cn_signals(code: str, annual: list = None) -> dict:
     result = {}
     pure = code.split(".")[0]
     is_sh = pure.startswith(("6", "9"))   # 上交所 vs 深交所
+    from scripts.stock_fetch import _call_with_timeout  # 懒导入避免循环依赖
 
     # ── 1. 大股东质押比例 ──────────────────────────────
     try:
         global _pledge_cache
         today_key = datetime.now().strftime("%Y%m%d")
         if today_key not in _pledge_cache:
-            _pledge_cache[today_key] = ak.stock_gpzy_pledge_ratio_em()
+            # 8s 快速失败：东财海外常卡死，别让整层干等 30s（US-122）。
+            # 失败也缓存 None，否则 130 只股票每只重付 8s。
+            try:
+                _pledge_cache[today_key] = _call_with_timeout(ak.stock_gpzy_pledge_ratio_em, 8)
+            except Exception:
+                _pledge_cache[today_key] = None
         df_pledge = _pledge_cache[today_key]
+        if df_pledge is None:
+            raise RuntimeError("质押数据不可用")
         row = df_pledge[df_pledge['股票代码'] == pure]
         if not row.empty:
             ratio = float(row.iloc[0]['质押比例'])
@@ -406,11 +415,20 @@ def fetch_cn_signals(code: str, annual: list = None) -> dict:
                 continue
             date_str = d.strftime("%Y%m%d")
             try:
+                mkey = ("sse" if is_sh else "szse", date_str)
+                if mkey not in _margin_cache:
+                    _fn = ak.stock_margin_detail_sse if is_sh else ak.stock_margin_detail_szse
+                    try:
+                        _margin_cache[mkey] = _call_with_timeout(lambda: _fn(date=date_str), 8)
+                    except Exception:
+                        _margin_cache[mkey] = None  # 失败也缓存，别让每只股票重试同一死日期
+                df_m = _margin_cache[mkey]
+                if df_m is None:
+                    attempts += 1
+                    continue
                 if is_sh:
-                    df_m = ak.stock_margin_detail_sse(date=date_str)
                     row_m = df_m[df_m['标的证券代码'] == pure]
                 else:
-                    df_m = ak.stock_margin_detail_szse(date=date_str)
                     row_m = df_m[df_m['标的证券代码'] == pure] if '标的证券代码' in df_m.columns else df_m[df_m.iloc[:,0].astype(str)==pure]
                 if not row_m.empty:
                     bal = float(row_m.iloc[0]['融资余额'])
@@ -458,7 +476,7 @@ def fetch_cn_signals(code: str, annual: list = None) -> dict:
         df_inst = None
         for q in quarters_to_try:
             try:
-                df_inst = ak.stock_institute_hold_detail(stock=pure, quarter=q)
+                df_inst = _call_with_timeout(lambda: ak.stock_institute_hold_detail(stock=pure, quarter=q), 8)
                 if df_inst is not None and not df_inst.empty:
                     break
             except Exception:
