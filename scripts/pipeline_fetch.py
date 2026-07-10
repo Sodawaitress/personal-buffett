@@ -147,7 +147,7 @@ def _fetch_1c1_news(code, market, log):
             # 东财是 akshare 里按股新闻的唯一源，海外超时多为瞬时 → 退避重试一次
             _em = lambda: ak.stock_news_em(symbol=code.split(".")[0])
             df = fetch_with_fallback(
-                [("东财", _em), ("东财·重试", _em)], label="新闻", log=log,
+                [("东财", _em), ("东财·重试", _em)], label="新闻", log=log, per_timeout=10,
             )
             if df is not None:
                 for _, row in df.head(20).iterrows():
@@ -265,7 +265,7 @@ def _fetch_fund_flow(code, market, log):
     ff = fetch_with_fallback(
         [("东财", lambda: _em_fund_flow(code)),
          ("新浪", lambda: fetch_cn_fund_flow_sina(code))],
-        label="主力资金", log=log,
+        label="主力资金", log=log, per_timeout=8,  # 东财卡住8s即让位新浪，留足30s层预算
     )
     if ff:
         db.upsert_fund_flow(code, ff["date"], ff["net"], ff["ratio"])

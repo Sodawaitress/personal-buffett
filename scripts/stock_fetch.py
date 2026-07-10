@@ -361,18 +361,44 @@ def _is_empty(result) -> bool:
         return False
 
 
-def fetch_with_fallback(providers, label="", log=None, gap=2.0):
+def _call_with_timeout(fn, timeout):
+    """daemon 线程跑 fn，超时抛 TimeoutError（卡住的线程被抛下，不阻塞进程）。
+    与 pipeline_jobs._run_with_timeout 同款——避开 ThreadPoolExecutor 超时后仍等
+    卡死网络线程的坑（US-121 bug#2）。"""
+    import threading
+
+    box = {}
+
+    def _worker():
+        try:
+            box["r"] = fn()
+        except Exception as e:
+            box["e"] = e
+
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        raise TimeoutError(f">{timeout}s")
+    if "e" in box:
+        raise box["e"]
+    return box.get("r")
+
+
+def fetch_with_fallback(providers, label="", log=None, gap=2.0, per_timeout=None):
     """按优先级依次尝试数据源，第一个返回非空结果的胜出（US-122 第二批）。
 
     参考 akshare-one 的 _fetch_data_with_fallback：源按优先级排，抛异常或返回空即
     降级到下一个。源之间 sleep(gap) 给海外瞬时超时留恢复窗口（同源重试传两次即可）。
+    per_timeout 给每个源单独封顶——首选源卡住就快速失败，保证备源一定有机会跑
+    （否则外层层超时会先杀掉整层，备源永远轮不到）。
     providers: [(name, callable)]，callable 无参、返回数据或抛异常。全失败返回 None。
     """
     for i, (name, fn) in enumerate(providers):
         if i > 0 and gap > 0:
             time.sleep(gap)
         try:
-            result = fn()
+            result = _call_with_timeout(fn, per_timeout) if per_timeout else fn()
             if _is_empty(result):
                 if log:
                     log(f"       ↻ {label}·{name} 空数据，降级")
