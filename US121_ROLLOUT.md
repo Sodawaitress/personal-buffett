@@ -93,3 +93,15 @@ FROM service_runs ORDER BY id DESC LIMIT 20;
 - `fetch_priority_codes()`（stocks.py）：持仓→观察→已卖出，同级按 stock_prices.fetched_at staleness 升序（NULLS FIRST，PG 兼容）。本地实测 137 只，9 只持仓排最前，持仓内最陈旧的 TWH.NZ 排第一 ✓。
 - `svc_fetch.py` 换用它 + `FETCH_GAP_SEC=1.5s` 温柔串行（避东财封 IP）。commit 见 US-122。
 - **待验证**：云端手动触发 fetch-svc → 看日志是否持仓先抓、预算耗尽时跳过的是长尾、gap 生效无封 IP。同日连跑两轮看第二轮是否只补长尾（依赖 US-121 force=False）。
+
+### US-122 云端验证通过（2026-07-10，三轮实测）
+| 指标 | 第1轮(3a86a6f) | 第2轮(+fallback) | 第3轮(+signals硬化) |
+|------|------|------|------|
+| 覆盖 | 50/134 | 52/134 | **124/134** |
+| 1c2 资金超时 | ~31 | 31 | **1** |
+| 主力资金成功 | 0（全 Connection aborted） | 49（新浪救） | 61（44 靠新浪） |
+- **优先级轮转**：持仓（跨市场）按 staleness 排最前 ✓；第2轮美股价格刚更新排底部被跳过、自动轮到 A股长尾 ✓。失败的 fund_flow 未入库→仍判陈旧→下轮自动重试→新浪修好（优雅副作用）。
+- **主力资金 fallback**：东财海外基本全挂（RemoteDisconnected），新浪 `MoneyFlow.ssi_ssfx_flzjtj` 补上，A股资金信号 0%→96%。
+- **signals 快速失败+跨股缓存**：投行信号 3 个东财调用（质押/融资/机构持仓）原 hang 满 30s×31 只 → 8s 快速失败 + 融资明细按(市场,日期)跨股缓存 + 失败也缓存 None → cn 每只 30s→~4s，覆盖 50→124（2.5×）。
+- **结论**：整个 watchlist 现在 ~1.3 轮刷完（原来撞预算永远跑不完）。B 方案（不花钱纯技术）达标。
+- **待办**：US-121 第3步——给 fetch-svc 加 schedule（收盘后），观察一天再逐个切其余服务。
