@@ -555,16 +555,6 @@ function _renderRadarSignals(data) {
   return html;
 }
 
-function _divergenceChip(item) {
-  const d = item.divergence;
-  if (!d) return '';
-  const icons   = {trap: '🔴', mixed: '🟡', supported: '🟢', resonance: '✅'};
-  const icon    = icons[d.level] || '⚪';
-  const score   = d.total >= 0 ? `+${d.total}` : `${d.total}`;
-  const bd      = d.breakdown || {};
-  const tip     = `背离分 ${score} | 融券 ${bd.short >= 0 ? '+' : ''}${bd.short ?? '-'} 机构质量 ${bd.inst_quality >= 0 ? '+' : ''}${bd.inst_quality ?? '-'} 调研一致性 ${bd.survey_consistency >= 0 ? '+' : ''}${bd.survey_consistency ?? '-'} | ${d.action}`;
-  return `<span class="sr-diverg-chip sr-diverg-${d.level}" title="${tip}">${icon} 背离 ${score}</span>`;
-}
 
 function _renderTriggeredCard(item) {
   const dir      = item.resonance.direction;
