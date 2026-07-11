@@ -8,6 +8,20 @@
 
   <div class="stock-page-body">
 
+    {# ── US-119 层1：一句结论（与首页榜单同款措辞，点榜单进来讲同一个故事） ── #}
+    {% if signal_conclusion %}
+    <div class="sig-verdict sig-verdict-{{ signal_conclusion.direction }}{{ ' sig-verdict-lead' if signal_conclusion.lead }}">
+      {% if signal_conclusion.lead %}<span class="sig-verdict-early">⚡ {{ t.sig_lead_badge }}</span>{% endif %}
+      <span class="sig-verdict-text">{{ signal_conclusion.conclusion }}</span>
+      <span class="sig-verdict-conf sig-conf-{{ signal_conclusion.confidence }}">{{ t.sig_conf_high if signal_conclusion.confidence == 'high' else t.sig_conf_mid }}</span>
+    </div>
+    {% endif %}
+
+    {# ── 完整研判（背离摘要 + 综合研判，重叠内容折叠进这里，US-119 层1） ── #}
+    {% if divergence_card or (resonance and resonance.direction != 'unknown') %}
+    <details class="sig-fold"{% if not signal_conclusion %} open{% endif %}>
+      <summary class="sig-fold-summary">{{ t.sig_fold_label }}</summary>
+
     {# ── 背离摘要卡（最高置信度结论，有数据时第一眼看到）── #}
     {% if divergence_card %}
     {% set dc = divergence_card %}
@@ -44,6 +58,9 @@
       <div class="resonance-hero-diverg">⚠ {{ resonance.divergence_text }}</div>
       {% endif %}
     </div>
+    {% endif %}
+
+    </details>
     {% endif %}
 
     {# ── 三列信号地图 ── #}

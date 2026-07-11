@@ -554,6 +554,15 @@ def present_stock_page(bundle):
     signal_contexts = _build_signal_contexts(precursor, signals, price_change) if market == "cn" else {}
     news_labeled = _label_news(bundle["news"], inst_dir)
 
+    # US-119 层1：与首页榜单同款结论（点榜单进详情讲同一个故事），仅 A股
+    signal_conclusion = None
+    if market == "cn":
+        try:
+            from radar_app.data.signal_events import get_signal_conclusion
+            signal_conclusion = get_signal_conclusion(bundle["code"])
+        except Exception:
+            signal_conclusion = None
+
     current_price_val = (bundle["price"] or {}).get("price") if bundle["price"] else None
     position_insight = _build_position_insight(
         bundle.get("watchlist_entry"),
@@ -598,6 +607,8 @@ def present_stock_page(bundle):
             "finance": age_minutes(fund.get("updated_at") if fund else None, now_utc) > 7 * 1440,
             "analysis": age_minutes(bundle["analysis"].get("analysis_date") if bundle["analysis"] else None, now_utc) > 3 * 1440,
         },
+        # US-119 层1 结论（与首页一致）
+        "signal_conclusion": signal_conclusion,
         # US-92 extras
         "divergence_card": divergence_card,
         "signal_contexts": signal_contexts,

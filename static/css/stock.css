@@ -2197,3 +2197,31 @@
 .matev-quote { margin-top: 8px; font-size: 12px; color: var(--ink-muted); font-style: italic; background: #f7f4ee; padding: 6px 10px; border-radius: 4px; }
 .matev-src { font-style: normal; color: var(--ink-faint); }
 .matev-early { font-size: 10px; font-weight: 700; color: #b3261e; background: #fdecea; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+
+/* ── US-119 层1 结论横幅（详情页§2，与首页榜单同款语气） ─────── */
+.sig-verdict {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-radius: 10px; margin-bottom: 14px;
+  border: 1px solid var(--rule-light); background: var(--paper);
+  border-left: 4px solid var(--ink-faint);
+}
+.sig-verdict-bull { border-left-color: var(--green); }
+.sig-verdict-bear { border-left-color: var(--red); }
+.sig-verdict-lead { border-left-color: #d97706; background: linear-gradient(90deg, rgba(217,119,6,.07), transparent 55%); }
+.sig-verdict-text { font-size: 15px; font-weight: 600; color: var(--ink); }
+.sig-verdict-early {
+  font-size: 12px; font-weight: 700; color: #b45309;
+  background: rgba(217,119,6,.12); border-radius: 5px; padding: 2px 7px;
+}
+.sig-verdict-conf { font-size: 11px; padding: 1px 7px; border-radius: 4px; margin-left: auto; }
+.sig-conf-high { color: #15803d; background: rgba(21,128,61,.10); }
+.sig-conf-mid  { color: var(--ink-muted); background: var(--rule-light); }
+
+/* ── US-119 完整研判折叠（层1 重叠块收纳） ── */
+.sig-fold { margin-bottom: 14px; }
+.sig-fold-summary {
+  cursor: pointer; font-size: 12px; color: var(--ink-muted);
+  padding: 6px 2px; list-style: none; user-select: none;
+}
+.sig-fold-summary::-webkit-details-marker { display: none; }
+.sig-fold[open] .sig-fold-summary { color: var(--ink); }

@@ -3,6 +3,22 @@
     "en": "+ Add to watchlist",
     "zh": "+ 加自选"
   },
+  "sig_lead_badge": {
+    "en": "Leading",
+    "zh": "领先"
+  },
+  "sig_conf_high": {
+    "en": "High confidence",
+    "zh": "高置信"
+  },
+  "sig_conf_mid": {
+    "en": "Medium",
+    "zh": "中"
+  },
+  "sig_fold_label": {
+    "en": "Full read-through ▾",
+    "zh": "完整研判 ▾"
+  },
   "btn_analyse": {
     "en": "↻",
     "zh": "↻"

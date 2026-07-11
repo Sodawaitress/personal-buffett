@@ -473,6 +473,27 @@ def conclusion_text(resonance: dict, lead: str | None) -> str:
     return "多空分歧，暂看不清"
 
 
+def get_signal_conclusion(code: str) -> dict | None:
+    """单只股票的结论包（US-119 层1）：与首页榜单同一模型/措辞，保证点榜单进详情讲同一个故事。
+    返回 {conclusion, lead, direction, resonance_count, confidence, signals} 或 None（无信号）。"""
+    precursor = _parse_precursor_cache(code)
+    fund_flow = get_fund_flow(code)
+    raw_signals, signals_age_h = _get_fundamentals_with_age(code)
+    detected = _detect_signals(code, precursor, fund_flow, raw_signals, signals_age_h)
+    if not detected:
+        return None
+    resonance = _calc_resonance(detected)
+    lead = smart_money_vs_price(code, resonance)
+    return {
+        "conclusion":      conclusion_text(resonance, lead),
+        "lead":            lead,
+        "direction":       resonance["direction"],
+        "resonance_count": resonance["resonance_count"],
+        "confidence":      "high" if resonance["resonance_count"] >= 3 else "mid",
+        "signals":         detected,
+    }
+
+
 def get_watchlist_signals(user_id: int) -> dict:
     """
     主入口：扫描该用户所有持有/观察中的A股，
