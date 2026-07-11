@@ -4703,11 +4703,11 @@ prior art（[多信号共振=置信](https://www.mql5.com/en/blogs/post/767676) 
    - 游戏化：前三奖牌、升降箭头(绿升红降)、NEW 标
 
 ### Acceptance Criteria
-- [ ] `get_leaderboard` 按 quant_score 降序，返回 rank/score/score_change/rank_change
-- [ ] rank_change 对比 baseline_days 前正确（新上榜=NEW，无变化=—）
-- [ ] 我的选股页「擂台」视图：奖牌 + 分数 + 升降，高分置顶
-- [ ] 无分数的股票排在最后或不计入（NR 不占名次）
-- [ ] 每日分析后榜单自动更新
+- [x] `get_leaderboard` 按 quant_score 降序，返回 rank/score/score_change/rank_change
+- [x] rank_change 对比 baseline_days 前正确（新上榜=NEW，无变化=—）
+- [x] 我的选股页「擂台」视图：奖牌 + 分数 + 升降，高分置顶
+- [x] 无分数的股票排在最后或不计入（NR 不占名次）
+- [x] 每日分析后榜单自动更新（读 analysis_results 最新 quant_score，无需额外触发）
 
 ### 不做
 - 逐笔实时（分数来自每日分析）

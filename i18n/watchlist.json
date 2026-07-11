@@ -213,6 +213,34 @@
     "en": "List",
     "zh": "列表"
   },
+  "wl_view_arena": {
+    "en": "Arena",
+    "zh": "擂台"
+  },
+  "wl_arena_title": {
+    "en": "Quality Score Arena",
+    "zh": "质量分擂台"
+  },
+  "wl_arena_sub": {
+    "en": "Ranked by quality score · updates after each daily analysis",
+    "zh": "按质量分排名 · 每日分析后更新"
+  },
+  "wl_arena_empty": {
+    "en": "No scored stocks yet — run an analysis first.",
+    "zh": "还没有评分的股票——先跑一次分析。"
+  },
+  "wl_arena_new": {
+    "en": "NEW",
+    "zh": "新"
+  },
+  "wl_arena_nr": {
+    "en": "NR",
+    "zh": "未评"
+  },
+  "wl_arena_load_fail": {
+    "en": "Failed to load leaderboard.",
+    "zh": "榜单加载失败。"
+  },
   "notif_banner_text": {
     "en": " stocks rated D for 6 consecutive times. Review recommended.",
     "zh": " 只股票已连续 6 次评为 D 级，建议审视是否继续跟踪"

@@ -2851,3 +2851,35 @@
 .card-menu-remove {
   color: #b3261e; border-top: 1px solid var(--rule-light); margin-top: 4px;
 }
+
+/* ── 擂台赛榜单（US-120） ───────────────────────────── */
+.wl-arena-view { max-width: 640px; margin: 0 auto; }
+.arena-head { display: flex; align-items: baseline; gap: 10px; margin: 4px 2px 14px; flex-wrap: wrap; }
+.arena-title { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.arena-sub { font-size: 12px; color: var(--ink-muted); }
+.arena-row {
+  display: grid; grid-template-columns: 40px 1fr auto auto; align-items: center; gap: 10px;
+  padding: 11px 14px; border: 1px solid var(--rule-light); border-radius: 8px;
+  margin-bottom: 7px; text-decoration: none; background: var(--paper);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.arena-row:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.08); }
+.arena-row.rank-1 { border-color: var(--gold); background: linear-gradient(90deg, rgba(212,175,55,.10), transparent 60%); }
+.arena-row.rank-2 { border-left: 3px solid #b8b8b8; }
+.arena-row.rank-3 { border-left: 3px solid #cd7f32; }
+.arena-row.nr { opacity: .6; }
+.arena-medal { font-size: 20px; text-align: center; color: var(--ink-muted); font-weight: 600; }
+.arena-name { font-size: 14px; color: var(--ink); display: flex; align-items: center; gap: 7px; min-width: 0; }
+.arena-name > .arena-grade {
+  font-size: 10px; color: var(--ink-faint); border: 1px solid var(--rule-light);
+  border-radius: 3px; padding: 0 4px; flex-shrink: 0;
+}
+.arena-score { font-family: var(--serif); font-size: 16px; color: var(--ink); display: flex; align-items: baseline; gap: 5px; }
+.arena-schg { font-size: 11px; font-family: -apple-system, sans-serif; }
+.arena-schg.up { color: var(--green); }
+.arena-schg.down { color: var(--red); }
+.arena-rank { min-width: 42px; text-align: right; font-size: 12px; }
+.arena-rchg.up { color: var(--green); }
+.arena-rchg.down { color: var(--red); }
+.arena-rchg.flat { color: var(--ink-faint); }
+.arena-rchg.new { color: var(--accent); font-weight: 600; }

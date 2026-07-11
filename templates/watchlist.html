@@ -379,6 +379,16 @@
     <div id="wl-list-empty" style="display:none;text-align:center;padding:2rem;color:var(--ink-muted);font-size:.9rem">{{ t.wl_no_match }}</div>
   </div>
 
+  {# ── 擂台模式（质量分排行榜 + 升降，US-120） ── #}
+  <div class="wl-arena-view" id="wl-arena-view" style="display:none">
+    <div class="arena-head">
+      <span class="arena-title">🏆 {{ t.wl_arena_title }}</span>
+      <span class="arena-sub">{{ t.wl_arena_sub }}</span>
+    </div>
+    <div id="wl-arena-body"></div>
+    <div id="wl-arena-empty" style="display:none;text-align:center;padding:2rem;color:var(--ink-muted);font-size:.9rem">{{ t.wl_arena_empty }}</div>
+  </div>
+
   {% else %}
   <div class="empty-hero">
     <div class="empty-hero-inner">
@@ -467,6 +477,10 @@ const T = {
   instRadarDone:    "{{ t.inst_radar_done }}",
   instRadarFailed:  "{{ t.inst_radar_failed }}",
   unknownError:     "{{ t.error }}",
+  viewArena:        "{{ t.wl_view_arena }}",
+  arenaNew:         "{{ t.wl_arena_new }}",
+  arenaNR:          "{{ t.wl_arena_nr }}",
+  arenaLoadFail:    "{{ t.wl_arena_load_fail }}",
 };
 // ── 全局状态 ──────────────────────────────────────────
 let _selectMode = false;
@@ -510,20 +524,68 @@ function toggleSortFilterPanel() {
   if (btn) btn.classList.toggle('active', open);
 }
 
-// ── 视图切换（单按钮） ─────────────────────────────────
+// ── 视图切换（卡片→列表→擂台 三态循环，US-120） ──────────
+const _VIEW_CYCLE = ['card', 'list', 'arena'];
 function toggleView() {
-  setView(_currentView === 'card' ? 'list' : 'card');
+  const i = _VIEW_CYCLE.indexOf(_currentView);
+  setView(_VIEW_CYCLE[(i + 1) % _VIEW_CYCLE.length]);
 }
 function setView(v) {
   if (v === 'list' && window.innerWidth < 480) v = 'card';
   _currentView = v;
   const sections = document.getElementById('wl-sections');
   const listView = document.getElementById('wl-list-view');
-  if (sections) sections.style.display = v === 'list' ? 'none' : '';
-  if (listView) listView.style.display = v === 'list' ? ''     : 'none';
+  const arena    = document.getElementById('wl-arena-view');
+  if (sections) sections.style.display = v === 'card'  ? '' : 'none';
+  if (listView) listView.style.display = v === 'list'  ? '' : 'none';
+  if (arena)    arena.style.display    = v === 'arena' ? '' : 'none';
+  // 按钮显示「下一个」视图名
+  const next = _VIEW_CYCLE[(_VIEW_CYCLE.indexOf(v) + 1) % _VIEW_CYCLE.length];
   const btn = document.getElementById('view-toggle-btn');
-  if (btn) btn.textContent = v === 'list' ? T.viewCards : T.viewList;
+  if (btn) btn.textContent = next === 'card' ? T.viewCards : next === 'list' ? T.viewList : T.viewArena;
+  if (v === 'arena') loadArena();
   localStorage.setItem('wl-view', v);
+}
+
+// ── 擂台榜单渲染（懒加载） ─────────────────────────────
+let _arenaLoaded = false;
+function loadArena() {
+  if (_arenaLoaded) return;
+  _arenaLoaded = true;
+  const body = document.getElementById('wl-arena-body');
+  const empty = document.getElementById('wl-arena-empty');
+  fetch('/api/leaderboard').then(r => r.json()).then(list => {
+    const ranked = list.filter(x => x.rank !== null);
+    const nr = list.filter(x => x.rank === null);
+    if (!ranked.length && !nr.length) { empty.style.display = ''; return; }
+    const medal = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '#' + r;
+    const scoreChg = x => {
+      if (x.score_change === null || x.score_change === 0) return '';
+      const up = x.score_change > 0;
+      return `<span class="arena-schg ${up ? 'up' : 'down'}">${up ? '+' : ''}${x.score_change}</span>`;
+    };
+    const rankChg = x => {
+      if (x.rank_change === 'NEW') return `<span class="arena-rchg new">${T.arenaNew}</span>`;
+      if (x.rank_change === null || x.rank_change === 0) return `<span class="arena-rchg flat">—</span>`;
+      const up = x.rank_change > 0;
+      return `<span class="arena-rchg ${up ? 'up' : 'down'}">${up ? '▲' : '▼'}${Math.abs(x.rank_change)}</span>`;
+    };
+    const rows = ranked.map(x => `
+      <a class="arena-row rank-${x.rank <= 3 ? x.rank : 'n'}" href="/stock/${encodeURIComponent(x.code)}">
+        <span class="arena-medal">${medal(x.rank)}</span>
+        <span class="arena-name">${x.name}<span class="arena-grade">${x.grade || ''}</span></span>
+        <span class="arena-score">${x.score}${scoreChg(x)}</span>
+        <span class="arena-rank">${rankChg(x)}</span>
+      </a>`).join('');
+    const nrRows = nr.map(x => `
+      <a class="arena-row nr" href="/stock/${encodeURIComponent(x.code)}">
+        <span class="arena-medal">—</span>
+        <span class="arena-name">${x.name}</span>
+        <span class="arena-score">${T.arenaNR}</span>
+        <span class="arena-rank"></span>
+      </a>`).join('');
+    body.innerHTML = rows + nrRows;
+  }).catch(() => { empty.textContent = T.arenaLoadFail; empty.style.display = ''; });
 }
 
 // ── 内联状态栏 ────────────────────────────────────────

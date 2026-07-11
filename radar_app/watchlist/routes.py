@@ -144,6 +144,12 @@ def register_watchlist_routes(app):
         db.dismiss_notification(notif_id, session['user_id'])
         return jsonify({'ok': True})
 
+    @app.route('/api/leaderboard')
+    @login_required
+    def api_leaderboard():
+        """US-120 股票擂台赛榜单（按 quant_score 降序 + 升降）。"""
+        return jsonify(db.get_leaderboard(session['user_id']))
+
     @app.route('/api/watchlist/add', methods=['POST'])
     @login_required
     def api_watchlist_add():

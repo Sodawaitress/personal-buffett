@@ -1,7 +1,99 @@
 """Analysis and report queries."""
 
+from datetime import date, timedelta
+
 from radar_app.data.core import get_conn
 from radar_app.data.market import get_stock_news
+
+
+def get_leaderboard(user_id, baseline_days=7):
+    """US-120 股票擂台赛：用户自选股按最新 quant_score 降序排名 + 升降。
+
+    返回 list[dict]：{rank, code, name, grade, score, score_change, rank_change}
+      - score_change: 最新分 − 上一次分析的分（None=只有一条记录）
+      - rank_change:  正=上升N名 / 负=下降N名 / 0=不变 / "NEW"=baseline无分 / None=无分(NR)
+    无 quant_score 的股票排最后（NR，不占名次）。已卖出(sold)不计入。
+    """
+    cutoff = (date.today() - timedelta(days=baseline_days)).isoformat()
+    with get_conn() as c:
+        rows = c.execute(
+            """
+            SELECT ar.code, ar.analysis_date, ar.quant_score, ar.grade,
+                   COALESCE(s.name_cn, s.name, ar.code) AS name
+            FROM analysis_results ar
+            JOIN user_watchlist w ON w.stock_code = ar.code
+            JOIN stocks s ON s.code = ar.code
+            WHERE ar.period = 'daily'
+              AND w.user_id = :uid AND w.removed_at IS NULL AND w.status != 'sold'
+              AND ar.quant_score IS NOT NULL
+            ORDER BY ar.code, ar.analysis_date DESC
+            """,
+            {"uid": user_id},
+        ).fetchall()
+
+    # 每只股票按日期倒序的记录归组
+    by_code = {}
+    for r in rows:
+        by_code.setdefault(r["code"], []).append(r)
+
+    scored = []       # 有分的：算当前分/变化/baseline分
+    for code, recs in by_code.items():
+        latest = recs[0]
+        prev = recs[1] if len(recs) > 1 else None
+        # baseline = cutoff 当天或之前最近一次分析
+        baseline = next((x for x in recs if x["analysis_date"] <= cutoff), None)
+        scored.append({
+            "code": code,
+            "name": latest["name"],
+            "grade": latest["grade"],
+            "score": latest["quant_score"],
+            "score_change": (latest["quant_score"] - prev["quant_score"]) if prev else None,
+            "_baseline_score": baseline["quant_score"] if baseline else None,
+        })
+
+    # 当前排名：分数降序（同分按 code 稳定）
+    scored.sort(key=lambda x: (-x["score"], x["code"]))
+    # baseline 排名：只排有 baseline 分的
+    base_ranked = sorted(
+        [x for x in scored if x["_baseline_score"] is not None],
+        key=lambda x: (-x["_baseline_score"], x["code"]),
+    )
+    base_rank = {x["code"]: i + 1 for i, x in enumerate(base_ranked)}
+
+    out = []
+    for i, x in enumerate(scored):
+        cur = i + 1
+        if x["code"] in base_rank:
+            rc = base_rank[x["code"]] - cur   # 正=名次前移(上升)
+        else:
+            rc = "NEW"
+        out.append({
+            "rank": cur, "code": x["code"], "name": x["name"],
+            "grade": x["grade"], "score": x["score"],
+            "score_change": x["score_change"], "rank_change": rc,
+        })
+
+    # 无分的股票（NR，排最后不占名次）
+    with get_conn() as c:
+        nr = c.execute(
+            """
+            SELECT w.stock_code AS code, COALESCE(s.name_cn, s.name, w.stock_code) AS name
+            FROM user_watchlist w JOIN stocks s ON s.code = w.stock_code
+            WHERE w.user_id = :uid AND w.removed_at IS NULL AND w.status != 'sold'
+              AND w.stock_code NOT IN (
+                  SELECT DISTINCT code FROM analysis_results
+                  WHERE period='daily' AND quant_score IS NOT NULL
+              )
+            """,
+            {"uid": user_id},
+        ).fetchall()
+    for r in nr:
+        out.append({
+            "rank": None, "code": r["code"], "name": r["name"],
+            "grade": None, "score": None, "score_change": None, "rank_change": None,
+        })
+
+    return out
 
 
 def save_analysis(code, period, analysis_date, **kwargs):
