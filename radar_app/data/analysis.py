@@ -42,12 +42,15 @@ def get_leaderboard(user_id, baseline_days=7):
         prev = recs[1] if len(recs) > 1 else None
         # baseline = cutoff 当天或之前最近一次分析
         baseline = next((x for x in recs if x["analysis_date"] <= cutoff), None)
+        # 近 8 次分数走势（时间正序），给前端画 sparkline——「轨迹>快照」
+        spark = [r["quant_score"] for r in recs[:8]][::-1]
         scored.append({
             "code": code,
             "name": latest["name"],
             "grade": latest["grade"],
             "score": latest["quant_score"],
             "score_change": (latest["quant_score"] - prev["quant_score"]) if prev else None,
+            "spark": spark,
             "_baseline_score": baseline["quant_score"] if baseline else None,
         })
 
@@ -71,6 +74,7 @@ def get_leaderboard(user_id, baseline_days=7):
             "rank": cur, "code": x["code"], "name": x["name"],
             "grade": x["grade"], "score": x["score"],
             "score_change": x["score_change"], "rank_change": rc,
+            "spark": x["spark"],
         })
 
     # 无分的股票（NR，排最后不占名次）

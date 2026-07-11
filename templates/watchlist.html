@@ -570,10 +570,25 @@ function loadArena() {
       const up = x.rank_change > 0;
       return `<span class="arena-rchg ${up ? 'up' : 'down'}">${up ? '▲' : '▼'}${Math.abs(x.rank_change)}</span>`;
     };
+    // 迷你走势图：近几次 quant_score，自适应内联 SVG，末点方向决定色
+    const sparkline = (s) => {
+      if (!s || s.length < 2) return '<span class="arena-spark"></span>';
+      const W = 52, H = 18, pad = 2;
+      const lo = Math.min(...s), hi = Math.max(...s), span = (hi - lo) || 1;
+      const pts = s.map((v, i) => {
+        const x = pad + i * (W - 2 * pad) / (s.length - 1);
+        const y = pad + (H - 2 * pad) * (1 - (v - lo) / span);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+      const dir = s[s.length - 1] >= s[0] ? 'up' : 'down';
+      return `<span class="arena-spark"><svg viewBox="0 0 ${W} ${H}" class="spark ${dir}" preserveAspectRatio="none">`
+           + `<polyline points="${pts}" fill="none" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg></span>`;
+    };
     const rows = ranked.map(x => `
       <a class="arena-row rank-${x.rank <= 3 ? x.rank : 'n'}" href="/stock/${encodeURIComponent(x.code)}">
         <span class="arena-medal">${medal(x.rank)}</span>
         <span class="arena-name">${x.name}<span class="arena-grade">${x.grade || ''}</span></span>
+        ${sparkline(x.spark)}
         <span class="arena-score">${x.score}${scoreChg(x)}</span>
         <span class="arena-rank">${rankChg(x)}</span>
       </a>`).join('');
@@ -581,6 +596,7 @@ function loadArena() {
       <a class="arena-row nr" href="/stock/${encodeURIComponent(x.code)}">
         <span class="arena-medal">—</span>
         <span class="arena-name">${x.name}</span>
+        <span class="arena-spark"></span>
         <span class="arena-score">${T.arenaNR}</span>
         <span class="arena-rank"></span>
       </a>`).join('');

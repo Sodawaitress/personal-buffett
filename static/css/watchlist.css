@@ -2858,11 +2858,17 @@
 .arena-title { font-family: var(--serif); font-size: 18px; color: var(--ink); }
 .arena-sub { font-size: 12px; color: var(--ink-muted); }
 .arena-row {
-  display: grid; grid-template-columns: 40px 1fr auto auto; align-items: center; gap: 10px;
+  display: grid; grid-template-columns: 40px 1fr 54px auto auto; align-items: center; gap: 10px;
   padding: 11px 14px; border: 1px solid var(--rule-light); border-radius: 8px;
   margin-bottom: 7px; text-decoration: none; background: var(--paper);
   transition: transform .08s ease, box-shadow .08s ease;
 }
+.arena-spark { display: inline-flex; align-items: center; height: 18px; }
+.arena-spark .spark { width: 52px; height: 18px; }
+.arena-spark .spark.up   { color: var(--green); }
+.arena-spark .spark.down { color: var(--red); }
+.arena-spark polyline { stroke: currentColor; }
+@media (max-width: 520px) { .arena-row { grid-template-columns: 34px 1fr auto auto; } .arena-spark { display: none; } }
 .arena-row:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.08); }
 .arena-row.rank-1 { border-color: var(--gold); background: linear-gradient(90deg, rgba(212,175,55,.10), transparent 60%); }
 .arena-row.rank-2 { border-left: 3px solid #b8b8b8; }
