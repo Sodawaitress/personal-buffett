@@ -2231,3 +2231,9 @@
   font-size: 12px; color: var(--ink-muted); margin: 4px 2px 8px;
   padding-left: 8px; border-left: 2px solid #d97706;
 }
+
+/* ── US-119 realign：机构调研/参与度 = 核心领先信号，视觉突出 ── */
+.sigctx-card.sigctx-core {
+  border-width: 2px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.sigctx-card.sigctx-core .sigctx-title { font-weight: 700; }

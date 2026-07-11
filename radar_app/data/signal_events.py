@@ -456,17 +456,25 @@ def smart_money_vs_price(code: str, resonance: dict) -> str | None:
     return None
 
 
+_RESEARCH_KEYS = {"survey_visit", "survey_active", "participation_spike"}
+
+
 def conclusion_text(resonance: dict, lead: str | None) -> str:
-    """一句人话结论：领先背离 / 共振 / 分歧。纯规则。"""
+    """一句人话结论。以「机构在研究/参与」为主轴——机构调研+参与度是最早的领先信号
+    （研究→参与→资金→价格），比资金流入和价格都早。纯规则。"""
     cnt = resonance.get("resonance_count", 0)
     d = resonance.get("direction")
+    dom_keys = {s.get("key") for s in resonance.get("dominant_signals", [])}
+    has_research = bool(dom_keys & _RESEARCH_KEYS)
     if lead == "lead_bull":
-        return "机构在动、股价还没反应 → 领先看多信号"
+        return "机构在悄悄研究/建仓、股价还没反应 → 最早的领先信号"
     if lead == "lead_bear":
         return "机构在撤、股价还没跌 → 领先看空信号"
     if resonance.get("has_conflict") or d == "mixed":
         return "多空分歧，暂看不清"
     if d == "bull":
+        if has_research:
+            return f"机构在专程研究、悄悄参与这家公司（{cnt}个信号同向·最早的领先信号）"
         return f"聪明钱在悄悄建仓（{cnt}个信号同向）"
     if d == "bear":
         return f"机构在减持/流出（{cnt}个信号同向）"

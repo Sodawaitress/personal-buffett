@@ -17,27 +17,41 @@
     </div>
     {% endif %}
 
-    {# ── 完整研判（背离摘要 + 综合研判，重叠内容折叠进这里，US-119 层1） ── #}
-    {% if divergence_card or (resonance and resonance.direction != 'unknown') %}
-    <details class="sig-fold"{% if not signal_conclusion %} open{% endif %}>
-      <summary class="sig-fold-summary">{{ t.sig_fold_label }}</summary>
-
-    {# ── 背离摘要卡（最高置信度结论，有数据时第一眼看到）── #}
-    {% if divergence_card %}
-    {% set dc = divergence_card %}
-    <div class="diverg-summary-card diverg-card-{{ dc.type }}">
-      <div class="diverg-summary-icon">
-        {% if dc.type == 'danger' %}⚠{% elif dc.type == 'opportunity' %}💡{% elif dc.type == 'consistent' %}✓{% else %}◎{% endif %}
+    {# ══ 层2 核心：机构调研 + 机构参与度 = 最早的领先信号（US-119 realign 置顶主角）══ #}
+    {% if market == "cn" and signal_contexts %}
+    <div class="sigctx-lead-hint">{{ t.sig_lead_framework }}</div>
+    <div class="sigctx-row">
+      {% set sv = signal_contexts.get('survey', {}) %}
+      {% if sv and sv.get('intensity', 'none') != 'none' %}
+      <div class="sigctx-card sigctx-core sigctx-{{ sv.get('direction','neutral') }}">
+        <div class="sigctx-head">
+          <span class="sigctx-title">{{ t.sigctx_survey_title }}</span>
+          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (sv.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
+        </div>
+        <div class="sigctx-body">{{ sv.get('full_desc','') }}</div>
+        {% if sv.get('modifiers') %}<div class="sigctx-mods">{% for m in sv.modifiers[:2] %}<span class="sigctx-mod">{{ m }}</span>{% endfor %}</div>{% endif %}
+        {% if sv.get('_kcard') %}<button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
       </div>
-      <div class="diverg-summary-body">
-        <div class="diverg-summary-headline">{{ dc.headline }}</div>
-        <div class="diverg-summary-note">{{ dc.note }}</div>
-        {% if dc.action %}<div class="diverg-summary-action">{{ dc.action }}</div>{% endif %}
+      {% endif %}
+      {% set pc = signal_contexts.get('participation', {}) %}
+      {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+      <div class="sigctx-card sigctx-core sigctx-{{ pc.get('direction','neutral') }}">
+        <div class="sigctx-head">
+          <span class="sigctx-title">{{ t.sigctx_participation_title }}</span>
+          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (pc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
+        </div>
+        <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
+        {% if pc.get('_kcard') %}<button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
       </div>
+      {% endif %}
     </div>
     {% endif %}
 
-    {# ── 综合研判（结论先行）── #}
+    {# ── 层3 辅助信号（折叠，US-119）：综合研判 + 三列地图 + 行业 ── #}
+    <details class="sig-fold">
+      <summary class="sig-fold-summary">{{ t.sig_aux_label }}</summary>
+
+    {# ── 综合研判（共振评分，辅助）── #}
     {% if resonance and resonance.direction != 'unknown' %}
     <div class="resonance-hero resonance-{{ resonance.direction }}">
       <div class="resonance-hero-top">
@@ -54,18 +68,8 @@
       {% if resonance.strongest_combo %}
       <div class="resonance-hero-combo">{{ resonance.strongest_combo }}</div>
       {% endif %}
-      {% if resonance.divergence_text %}
-      <div class="resonance-hero-diverg">⚠ {{ resonance.divergence_text }}</div>
-      {% endif %}
     </div>
     {% endif %}
-
-    </details>
-    {% endif %}
-
-    {# ── 层3 辅助信号（折叠，US-119）：三列地图 + 行业 ── #}
-    <details class="sig-fold">
-      <summary class="sig-fold-summary">{{ t.sig_aux_label }}</summary>
 
     {# ── 三列信号地图 ── #}
     {% set cur_sym = market_currency.get(market, "$") %}
@@ -363,46 +367,7 @@
 
     </details>{# /层3 辅助折叠 #}
 
-    {# ── 层2 特色信号：机构调研 + 参与度（最早的领先信号，US-119）── #}
-    {% if market == "cn" and signal_contexts %}
-    <div class="sigctx-lead-hint">{{ t.sig_lead_framework }}</div>
-    <div class="sigctx-row">
-      {% set mc = signal_contexts.get('margin', {}) %}
-      {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
-      <div class="sigctx-card sigctx-{{ mc.get('direction','neutral') }}">
-        <div class="sigctx-head">
-          <span class="sigctx-title">{{ t.sigctx_margin_title }}</span>
-          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (mc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
-        </div>
-        <div class="sigctx-body">{{ mc.get('full_desc','') }}</div>
-        {% if mc.get('_kcard') %}<button class="kcard-btn" data-slug="short_selling" data-params="{{ mc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
-      </div>
-      {% endif %}
-      {% set sv = signal_contexts.get('survey', {}) %}
-      {% if sv and sv.get('intensity', 'none') != 'none' %}
-      <div class="sigctx-card sigctx-{{ sv.get('direction','neutral') }}">
-        <div class="sigctx-head">
-          <span class="sigctx-title">{{ t.sigctx_survey_title }}</span>
-          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (sv.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
-        </div>
-        <div class="sigctx-body">{{ sv.get('full_desc','') }}</div>
-        {% if sv.get('modifiers') %}<div class="sigctx-mods">{% for m in sv.modifiers[:2] %}<span class="sigctx-mod">{{ m }}</span>{% endfor %}</div>{% endif %}
-        {% if sv.get('_kcard') %}<button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
-      </div>
-      {% endif %}
-      {% set pc = signal_contexts.get('participation', {}) %}
-      {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
-      <div class="sigctx-card sigctx-{{ pc.get('direction','neutral') }}">
-        <div class="sigctx-head">
-          <span class="sigctx-title">{{ t.sigctx_participation_title }}</span>
-          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (pc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
-        </div>
-        <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
-        {% if pc.get('_kcard') %}<button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
+    {# ── 融券方向已并入层3 三列地图列B；调研/参与度已提到层2 顶部（US-119 realign）── #}
 
     {# ── US-94: 分析师共识（A股）── #}
     {% if market == "cn" %}
@@ -440,27 +405,6 @@
         <p class="intention-error">{{ t.inst_radar_load_error }}</p>
       </div>
     </div>
-    {% endif %}
-
-    {# ── 消息-机构背离警告 ── #}
-    {% if market == "cn" and divergence and news %}
-      {% set pos_ct2 = news | selectattr("sentiment", "equalto", "positive") | list | length %}
-      {% set neg_ct2 = news | selectattr("sentiment", "equalto", "negative") | list | length %}
-      {% set news_bull = pos_ct2 > neg_ct2 %}
-      {% if news_bull and divergence.total <= -2 %}
-      <div class="diverg-news-warning {{ 'diverg-warn-trap' if divergence.total <= -3 else 'diverg-warn-mixed' }}">
-        <span class="diverg-warn-icon">⚠</span>
-        <span class="diverg-warn-body">
-          <strong>消息面偏正面，但机构行为背离（背离分 {{ ("+" ~ divergence.total) if divergence.total >= 0 else divergence.total }}）</strong>
-          {% if divergence.total <= -3 %} — 符合「消息出货」特征，机构可能正在利用正面消息减仓。
-          {% else %} — 消息与机构方向不完全一致，保持谨慎。
-          {% endif %}
-          {% if market == "cn" %}
-          <a href="#intention-root" class="diverg-warn-link">查看机构雷达 ↑</a>
-          {% endif %}
-        </span>
-      </div>
-      {% endif %}
     {% endif %}
 
     {# ── 新闻列表 ── #}
