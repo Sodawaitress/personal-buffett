@@ -19,6 +19,14 @@
     "en": "Full read-through ▾",
     "zh": "完整研判 ▾"
   },
+  "sig_aux_label": {
+    "en": "All signal details ▾",
+    "zh": "全部信号明细 ▾"
+  },
+  "sig_lead_framework": {
+    "en": "Research → Participation → Money → Price — surveys & institutional interest move first, the earliest lead signals",
+    "zh": "研究 → 参与 → 资金 → 价格：调研和机构参与度动得最早，是最前面的领先信号"
+  },
   "btn_analyse": {
     "en": "↻",
     "zh": "↻"

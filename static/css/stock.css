@@ -2225,3 +2225,9 @@
 }
 .sig-fold-summary::-webkit-details-marker { display: none; }
 .sig-fold[open] .sig-fold-summary { color: var(--ink); }
+
+/* ── US-119 层2 领先指标框架提示 ── */
+.sigctx-lead-hint {
+  font-size: 12px; color: var(--ink-muted); margin: 4px 2px 8px;
+  padding-left: 8px; border-left: 2px solid #d97706;
+}

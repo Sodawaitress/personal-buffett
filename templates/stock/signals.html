@@ -63,6 +63,10 @@
     </details>
     {% endif %}
 
+    {# ── 层3 辅助信号（折叠，US-119）：三列地图 + 行业 ── #}
+    <details class="sig-fold">
+      <summary class="sig-fold-summary">{{ t.sig_aux_label }}</summary>
+
     {# ── 三列信号地图 ── #}
     {% set cur_sym = market_currency.get(market, "$") %}
     {% set tech = (signals or {}).get("technicals", {}) %}
@@ -357,8 +361,11 @@
     </div>
     {% endif %}
 
-    {# ── 前兆信号叉乘情境（A股）── #}
+    </details>{# /层3 辅助折叠 #}
+
+    {# ── 层2 特色信号：机构调研 + 参与度（最早的领先信号，US-119）── #}
     {% if market == "cn" and signal_contexts %}
+    <div class="sigctx-lead-hint">{{ t.sig_lead_framework }}</div>
     <div class="sigctx-row">
       {% set mc = signal_contexts.get('margin', {}) %}
       {% if mc and mc.get('tier', 'neutral') != 'neutral' %}
