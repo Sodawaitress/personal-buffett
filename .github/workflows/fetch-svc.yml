@@ -2,9 +2,13 @@ name: fetch-svc (US-121)
 
 # 数据抓取服务：只抓行情/新闻/财务/资金/技术面 → Neon，不跑 LLM。
 # 独立于 analyze-svc：本服务保证价格永远新鲜，挂了也不拖累分析/推送。
-# 暂时仅手动触发（cron.yml 旧 monolith 仍在跑，避免双跑）。全链路验证后再加 schedule。
+# US-121 第3步（2026-07-12）：并行双跑观察——加 schedule 但旧 monolith(cron.yml 08:00 UTC)
+# 仍当家、照常推妈妈。本服务只写 DB 不推送，先自证稳定一周再考虑切换。
 
 on:
+  schedule:
+    # 07:00 UTC = 15:00 CST（A股收盘），早于旧 monolith(08:00 UTC) 1h，错峰不与其抢东财
+    - cron: '0 7 * * 1-5'
   workflow_dispatch:
     inputs:
       budget_min:

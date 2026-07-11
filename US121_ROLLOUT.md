@@ -42,7 +42,7 @@
 - [ ] 观察日志（记在下方「运行日志」）
 
 ### 第 3 步：确认稳了逐个切（一次一个，先不碰妈妈的）
-- [ ] fetch-svc 加 schedule（收盘后），观察一天
+- [x] fetch-svc 加 schedule（2026-07-12）：`0 7 * * 1-5`（07:00 UTC=15:00 CST 收盘，早于旧 monolith 08:00 UTC 1h 错峰）。旧 monolith 仍当家推妈妈，本服务只写 DB。观察一周稳定性。
 - [ ] analyze-svc 加 schedule（fetch 后错峰）
 - [ ] digest-svc / radar-svc 加 schedule
 - [ ] push-svc 加 schedule（**最后切，碰妈妈**）
