@@ -291,6 +291,14 @@ def fetch_inst_participation_trend(code: str) -> dict:
         df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
         df = df.sort_values(date_col).tail(30)
 
+        # 日频序列（供交互式折线图，US-119）：[{"d":"07-10","v":59.6}, ...]
+        series = []
+        for _, r in df.iterrows():
+            v = _safe_float(r[part_col], None)
+            d = r[date_col]
+            if v is not None and pd.notna(d):
+                series.append({"d": d.strftime("%m-%d"), "v": round(v, 1)})
+
         vals = df[part_col].apply(lambda x: _safe_float(x, None)).dropna().tolist()
         if len(vals) < 5:
             return {"valid": False, "desc": "数据不足"}
@@ -340,6 +348,7 @@ def fetch_inst_participation_trend(code: str) -> dict:
             "spike":     spike,
             "trend":     trend,
             "desc":      desc,
+            "series":    series,
             "valid":     True,
         }
     except Exception as e:

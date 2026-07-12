@@ -2277,3 +2277,20 @@
 @media (prefers-color-scheme: dark) { .svchart { --sv-accent: #fbbf24; } }
 :root[data-theme="dark"] .svchart { --sv-accent: #fbbf24; }
 :root[data-theme="light"] .svchart { --sv-accent: #d97706; }
+
+/* ── US-119 参与度日频折线（鼠标移动值跟随）── */
+.pchart { position: relative; height: 56px; margin: 10px 0 4px; --pc-accent: #0d9488; }
+.pchart-svg { width: 100%; height: 56px; overflow: visible; display: block; }
+.pchart-line { fill: none; stroke: var(--pc-accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.pchart-avg { stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; opacity: .6; }
+.pchart-cursor line { stroke: var(--ink-faint); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.pchart-cursor circle { fill: var(--pc-accent); }
+.pchart-tip {
+  position: absolute; top: -8px; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-size: 11px;
+  padding: 3px 8px; border-radius: 5px; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 3px 10px rgba(0,0,0,.18);
+}
+@media (prefers-color-scheme: dark) { .pchart { --pc-accent: #2dd4bf; } }
+:root[data-theme="dark"] .pchart { --pc-accent: #2dd4bf; }
+:root[data-theme="light"] .pchart { --pc-accent: #0d9488; }

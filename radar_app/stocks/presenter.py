@@ -511,6 +511,7 @@ def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: flo
     if partic_ctx:
         partic_ctx["evidence"] = f"参与度 {pt_latest:g} · 30日均 {pt_avg:g}"
         partic_ctx["source"] = "东财机构参与度"
+        partic_ctx["series"] = partic.get("series") or []  # 日频序列供折线图（旧缓存无则空）
 
     return {"margin": margin_ctx, "survey": survey_ctx, "participation": partic_ctx}
 

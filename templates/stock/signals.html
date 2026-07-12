@@ -55,6 +55,20 @@
           <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (pc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
         </div>
         <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
+        {% if pc.get('series') and pc.series | length >= 5 %}
+        {# 日频折线图：鼠标移动值跟随（US-119 实时交互图）#}
+        {% set _pv = pc.series | map(attribute='v') | list %}
+        {% set _vmin = _pv | min %}{% set _vmax = _pv | max %}{% set _rng = (_vmax - _vmin) or 1 %}
+        {% set _n = pc.series | length %}
+        <div class="pchart" data-series="{{ pc.series | tojson | forceescape }}">
+          <svg class="pchart-svg" viewBox="0 0 300 56" preserveAspectRatio="none">
+            <line class="pchart-avg" x1="0" x2="300" y1="{{ (54 - ((pc.avg_30d if pc.avg_30d is defined else (_vmin+_vmax)/2) - _vmin) / _rng * 50) | round(1) }}" y2="{{ (54 - ((pc.avg_30d if pc.avg_30d is defined else (_vmin+_vmax)/2) - _vmin) / _rng * 50) | round(1) }}"/>
+            <polyline class="pchart-line" points="{% for p in pc.series %}{{ (loop.index0 / (_n-1) * 300) | round(1) }},{{ (54 - (p.v - _vmin) / _rng * 50) | round(1) }} {% endfor %}"/>
+            <g class="pchart-cursor" style="display:none"><line y1="0" y2="56"/><circle r="3"/></g>
+          </svg>
+          <div class="pchart-tip"></div>
+        </div>
+        {% endif %}
         {% if pc.get('evidence') %}<div class="sigctx-evidence">{{ pc.evidence }}<span class="sigctx-src">{{ t.sigctx_source_prefix }}{{ pc.source }}</span></div>{% endif %}
         {% if pc.get('_kcard') %}<button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
       </div>
@@ -532,6 +546,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, { threshold: 0.1 });
   obs.observe(root);
+});
+
+// ── 参与度日频折线：鼠标移动，值跟随（US-119 实时交互图）──
+document.querySelectorAll('.pchart').forEach(el => {
+  let series;
+  try { series = JSON.parse(el.dataset.series); } catch (e) { return; }
+  if (!series || series.length < 2) return;
+  const svg = el.querySelector('.pchart-svg');
+  const cursor = el.querySelector('.pchart-cursor');
+  const cLine = cursor.querySelector('line');
+  const cDot = cursor.querySelector('circle');
+  const tip = el.querySelector('.pchart-tip');
+  const pts = el.querySelector('.pchart-line').getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number));
+  function move(clientX) {
+    const r = svg.getBoundingClientRect();
+    const rel = (clientX - r.left) / r.width;               // 0..1
+    let i = Math.round(rel * (series.length - 1));
+    i = Math.max(0, Math.min(series.length - 1, i));
+    const [px, py] = pts[i];
+    cursor.style.display = '';
+    cLine.setAttribute('x1', px); cLine.setAttribute('x2', px);
+    cDot.setAttribute('cx', px); cDot.setAttribute('cy', py);
+    tip.style.display = '';
+    tip.style.left = (px / 300 * 100) + '%';
+    tip.textContent = series[i].d + '  ·  ' + series[i].v;
+  }
+  el.addEventListener('mousemove', e => move(e.clientX));
+  el.addEventListener('touchmove', e => { if (e.touches[0]) move(e.touches[0].clientX); }, { passive: true });
+  el.addEventListener('mouseleave', () => { cursor.style.display = 'none'; tip.style.display = 'none'; });
 });
 </script>
 {% endif %}
