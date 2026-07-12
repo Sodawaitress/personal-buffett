@@ -23,9 +23,11 @@ from scripts.config import CN_TZ
 # ── 工具 ─────────────────────────────────────────────────────────────
 
 def _cn_codes():
+    # 机构雷达喂所有用户的详情页，universe 该是全部自选 A股，
+    # 不能用 get_active（仅开了每日推送的用户）——生产没人开推送时会返回 0 只、整服务空跑。
     try:
         import db
-        return [code for code, _ in db.get_active_watchlist_stocks()]
+        return [code for code, _ in db.get_all_cn_watchlist_stocks()]
     except Exception:
         return []
 

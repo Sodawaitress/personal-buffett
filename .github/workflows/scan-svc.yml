@@ -1,9 +1,10 @@
 name: scan-svc (precursor)
 
 # 按需触发机构前兆信号扫描（调研 + 融券 + 参与度），写 Neon。
-# 关键：东财数据从美国 GHA runner 抓不到（US-122 地理限流），必须在 Fly 悉尼机器上跑。
-# 用 flyctl ssh 在现有机器执行命令——不走 /api/trigger-scan（HTTP handler 里跑长任务是
-# Fly 官方反模式），也不碰旧 monolith。以后一键 `gh workflow run scan-svc.yml` 即可，不用等日更。
+# 关键：东财数据从美国 GHA runner 抓不到（US-122 地理限流），扫描必须在 Fly 悉尼跑。
+# 做法：curl Fly 的 /api/trigger-scan（cron.yml 每天在用、已验证可靠）——端点里起后台线程跑
+# run_precursor_scan(全部A股)，detached 不受客户端连接影响（ssh -C 跑长任务会断，实测过）。
+# 以后一键 `gh workflow run scan-svc.yml`，不用等日更、不碰旧 monolith。
 
 on:
   workflow_dispatch:
@@ -11,10 +12,14 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 5
     env:
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
     steps:
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: Run precursor scan on Fly (syd)
-        run: flyctl ssh console -a personal-buffett -C "python -m scripts.precursor_scan"
+      - name: Trigger precursor scan on Fly (syd)
+        run: |
+          HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
+            -X POST "${APP_URL}/api/trigger-scan" \
+            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
+          echo "scan → HTTP $HTTP"; cat /tmp/scan.json || true
+          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
