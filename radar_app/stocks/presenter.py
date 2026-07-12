@@ -418,8 +418,9 @@ def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: flo
 
     sh_change  = short_s.get("change_pct", 0) or 0
 
-    pt_latest  = partic.get("latest_pct", 0) or 0
-    pt_avg     = partic.get("avg_30d_pct", 0) or 0
+    # 缓存里存的键是 latest / avg_30d（不是 *_pct）——之前读错键导致永远 0（US-119 修）
+    pt_latest  = partic.get("latest", 0) or 0
+    pt_avg     = partic.get("avg_30d", 0) or 0
     pt_trend   = partic.get("trend", "中性") or "中性"
     pt_spike   = bool(partic.get("spike"))
 
@@ -508,7 +509,7 @@ def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: flo
         survey_ctx["evidence"] = _ev
         survey_ctx["source"] = "东财机构调研"
     if partic_ctx:
-        partic_ctx["evidence"] = f"参与度 {pt_latest:g}% vs 30日均 {pt_avg:g}%"
+        partic_ctx["evidence"] = f"参与度 {pt_latest:g} · 30日均 {pt_avg:g}"
         partic_ctx["source"] = "东财机构参与度"
 
     return {"margin": margin_ctx, "survey": survey_ctx, "participation": partic_ctx}
