@@ -370,6 +370,38 @@ def _build_divergence_card(news_dir: str, inst_dir: str, divergence: dict) -> di
     }
 
 
+def _build_survey_chart(precursor: dict) -> list:
+    """机构调研近 6 个月按月聚合，供交互式柱状图（US-119）。
+    返回 [{month:'2026-07', label:'7月', count:家数, visits:次数, methods:[...]}]，无数据返回 []。"""
+    survey = (precursor or {}).get("survey") or {}
+    events = survey.get("events") or []
+    if not events:
+        return []
+    now = datetime.now(CN_TZ)
+    # 近 6 个月的桶（含本月），时间正序
+    buckets = {}
+    order = []
+    for i in range(5, -1, -1):
+        y, m = now.year, now.month - i
+        while m <= 0:
+            m += 12
+            y -= 1
+        key = f"{y}-{m:02d}"
+        buckets[key] = {"month": key, "label": f"{m}月", "count": 0, "visits": 0, "methods": []}
+        order.append(key)
+    for e in events:
+        key = str(e.get("date", ""))[:7]
+        if key in buckets:
+            b = buckets[key]
+            b["count"] += int(e.get("n_inst", 0) or 0)
+            b["visits"] += 1
+            meth = e.get("method")
+            if meth and meth not in b["methods"]:
+                b["methods"].append(meth)
+    rows = [buckets[k] for k in order]
+    return rows if any(r["count"] or r["visits"] for r in rows) else []
+
+
 def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: float) -> dict:
     """Compute cross-product signal contexts from precursor cache."""
     if not _SIGNAL_CTX_OK or not precursor:
@@ -415,17 +447,21 @@ def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: flo
     except Exception:
         survey_ctx = {}
 
-    try:
-        partic_ctx = describe_participation_context(
-            latest=pt_latest,
-            avg_30d=pt_avg,
-            trend=pt_trend,
-            spike=pt_spike,
-            price_change_pct=price_change_pct,
-            margin_change_pct=sh_change,
-        )
-    except Exception:
+    # 参与度数据源当前为空（latest/avg 全 0）→ 不拿空数据当信号（US-119 realign）
+    if pt_latest <= 0 and pt_avg <= 0:
         partic_ctx = {}
+    else:
+        try:
+            partic_ctx = describe_participation_context(
+                latest=pt_latest,
+                avg_30d=pt_avg,
+                trend=pt_trend,
+                spike=pt_spike,
+                price_change_pct=price_change_pct,
+                margin_change_pct=sh_change,
+            )
+        except Exception:
+            partic_ctx = {}
 
     # Raw params for knowledge card popups
     sv_events_list = survey.get("events") or []
@@ -460,6 +496,20 @@ def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: flo
             "short_increasing": sh_change > 0,
             "trend": pt_trend,
         }
+
+    # US-119 realign：亮原始数据 + 来源（让用户能验证"数据对不对"，Fintel 同理）
+    if survey_ctx:
+        _last = sv_events_list[0].get("date", "")[:10] if sv_events_list else ""
+        _ev = f"本月 {sv_count} 家调研（月均 {sv_avg:g}）"
+        if _last:
+            _ev += f" · 最近 {_last}"
+            if sv_n_inst:
+                _ev += f"（{sv_n_inst}家）"
+        survey_ctx["evidence"] = _ev
+        survey_ctx["source"] = "东财机构调研"
+    if partic_ctx:
+        partic_ctx["evidence"] = f"参与度 {pt_latest:g}% vs 30日均 {pt_avg:g}%"
+        partic_ctx["source"] = "东财机构参与度"
 
     return {"margin": margin_ctx, "survey": survey_ctx, "participation": partic_ctx}
 
@@ -552,6 +602,7 @@ def present_stock_page(bundle):
     price_change = ((bundle["price"] or {}).get("change_pct") or 0) if bundle["price"] else 0
     precursor = get_precursor_cache(bundle["code"]) if market == "cn" else {}
     signal_contexts = _build_signal_contexts(precursor, signals, price_change) if market == "cn" else {}
+    survey_chart = _build_survey_chart(precursor) if market == "cn" else []
     news_labeled = _label_news(bundle["news"], inst_dir)
 
     # US-119 层1：与首页榜单同款结论（点榜单进详情讲同一个故事），仅 A股
@@ -609,6 +660,7 @@ def present_stock_page(bundle):
         },
         # US-119 层1 结论（与首页一致）
         "signal_conclusion": signal_conclusion,
+        "survey_chart": survey_chart,
         # US-92 extras
         "divergence_card": divergence_card,
         "signal_contexts": signal_contexts,

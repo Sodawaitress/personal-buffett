@@ -2237,3 +2237,43 @@
   border-width: 2px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
 }
 .sigctx-card.sigctx-core .sigctx-title { font-weight: 700; }
+
+/* ── US-119 realign：核心卡的数据证据 + 来源（让用户能验证数据对不对）── */
+.sigctx-evidence {
+  font-size: 11px; color: var(--ink-muted); margin-top: 6px;
+  padding-top: 6px; border-top: 1px dashed var(--rule-light);
+}
+.sigctx-src { color: var(--ink-faint); }
+
+/* ── US-119 机构调研 · 交互式月度柱状图（鼠标移到柱子看详情）── */
+.svchart {
+  display: flex; align-items: flex-end; gap: 4px;
+  margin: 10px 0 4px; height: 64px;
+  --sv-accent: #d97706;   /* 琥珀，呼应"领先"主题；单序列 magnitude */
+}
+.svchart-col {
+  flex: 1 1 0; position: relative; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  cursor: default; outline: none;
+}
+.svchart-barwrap { width: 100%; height: 46px; display: flex; align-items: flex-end; justify-content: center; }
+.svchart-bar {
+  width: 62%; min-height: 2px; background: var(--sv-accent);
+  border-radius: 4px 4px 0 0; transition: opacity .1s;
+}
+.svchart-bar.is-zero { height: 2px !important; background: var(--rule); border-radius: 0; opacity: .5; }
+.svchart-col:hover .svchart-bar:not(.is-zero),
+.svchart-col:focus .svchart-bar:not(.is-zero) { opacity: .82; }
+.svchart-x { font-size: 10px; color: var(--ink-faint); margin-top: 4px; }
+.svchart-tip {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  margin-bottom: 6px; z-index: 20; white-space: nowrap;
+  background: var(--ink); color: var(--paper);
+  font-size: 11px; line-height: 1.4; padding: 5px 9px; border-radius: 6px;
+  opacity: 0; pointer-events: none; transition: opacity .1s;
+  box-shadow: 0 3px 10px rgba(0,0,0,.18);
+}
+.svchart-col:hover .svchart-tip, .svchart-col:focus .svchart-tip { opacity: 1; }
+@media (prefers-color-scheme: dark) { .svchart { --sv-accent: #fbbf24; } }
+:root[data-theme="dark"] .svchart { --sv-accent: #fbbf24; }
+:root[data-theme="light"] .svchart { --sv-accent: #d97706; }

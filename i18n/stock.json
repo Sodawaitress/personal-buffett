@@ -23,6 +23,22 @@
     "en": "All signal details ▾",
     "zh": "全部信号明细 ▾"
   },
+  "sigctx_source_prefix": {
+    "en": " · source: ",
+    "zh": " · 来源："
+  },
+  "sigctx_survey_history": {
+    "en": "Institutional surveys · last 6 months",
+    "zh": "近 6 个月机构调研记录"
+  },
+  "sigctx_n_inst": {
+    "en": " firms",
+    "zh": " 家"
+  },
+  "sigctx_n_visit": {
+    "en": " visits",
+    "zh": " 次"
+  },
   "sig_lead_framework": {
     "en": "Research → Participation → Money → Price — surveys & institutional interest move first, the earliest lead signals",
     "zh": "研究 → 参与 → 资金 → 价格：调研和机构参与度动得最早，是最前面的领先信号"

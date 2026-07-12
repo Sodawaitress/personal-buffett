@@ -18,29 +18,44 @@
     {% endif %}
 
     {# ══ 层2 核心：机构调研 + 机构参与度 = 最早的领先信号（US-119 realign 置顶主角）══ #}
-    {% if market == "cn" and signal_contexts %}
+    {% set _pc0 = (signal_contexts or {}).get('participation', {}) %}
+    {% set _has_core = survey_chart or (_pc0.get('signal_strength', 0) > 0) %}
+    {% if market == "cn" and _has_core %}
     <div class="sigctx-lead-hint">{{ t.sig_lead_framework }}</div>
     <div class="sigctx-row">
+      {# ── 机构调研：一句话 + 交互式月度柱状图（鼠标移到柱子看详情）── #}
+      {% if survey_chart %}
       {% set sv = signal_contexts.get('survey', {}) %}
-      {% if sv and sv.get('intensity', 'none') != 'none' %}
-      <div class="sigctx-card sigctx-core sigctx-{{ sv.get('direction','neutral') }}">
+      {% set _hassig = sv.get('signal_strength', 0) > 0 %}
+      {% set maxc = (survey_chart | map(attribute='count') | max) or 1 %}
+      <div class="sigctx-card sigctx-core sigctx-{{ sv.get('direction','neutral') if _hassig else 'neutral' }}">
         <div class="sigctx-head">
           <span class="sigctx-title">{{ t.sigctx_survey_title }}</span>
-          <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (sv.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
+          {% if _hassig %}<span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < sv.signal_strength %}sdot-on{% endif %}"></span>{% endfor %}</span>{% endif %}
         </div>
-        <div class="sigctx-body">{{ sv.get('full_desc','') }}</div>
-        {% if sv.get('modifiers') %}<div class="sigctx-mods">{% for m in sv.modifiers[:2] %}<span class="sigctx-mod">{{ m }}</span>{% endfor %}</div>{% endif %}
+        <div class="sigctx-body">{{ sv.full_desc if _hassig else t.sigctx_survey_history }}</div>
+        <div class="svchart" role="img" aria-label="{{ t.sigctx_survey_title }}">
+          {% for b in survey_chart %}
+          <div class="svchart-col" tabindex="0">
+            <div class="svchart-barwrap"><div class="svchart-bar{{ ' is-zero' if not b.count }}" style="height:{{ (b.count / maxc * 100) | round }}%"></div></div>
+            <div class="svchart-x">{{ b.label }}</div>
+            <div class="svchart-tip">{{ b.label }}：{{ b.count }}{{ t.sigctx_n_inst }} / {{ b.visits }}{{ t.sigctx_n_visit }}{% if b.methods %}<br>{{ b.methods | join('、') }}{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="sigctx-evidence"><span class="sigctx-src">{{ t.sigctx_source_prefix }}{{ sv.get('source', '') }}</span></div>
         {% if sv.get('_kcard') %}<button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
       </div>
       {% endif %}
       {% set pc = signal_contexts.get('participation', {}) %}
-      {% if pc and pc.get('direction', 'neutral') != 'neutral' %}
+      {% if pc and pc.get('signal_strength', 0) > 0 %}
       <div class="sigctx-card sigctx-core sigctx-{{ pc.get('direction','neutral') }}">
         <div class="sigctx-head">
           <span class="sigctx-title">{{ t.sigctx_participation_title }}</span>
           <span class="sigctx-strength">{% for i in range(3) %}<span class="sdot {% if i < (pc.get('signal_strength',0)) %}sdot-on{% endif %}"></span>{% endfor %}</span>
         </div>
         <div class="sigctx-body">{{ pc.get('full_desc','') }}</div>
+        {% if pc.get('evidence') %}<div class="sigctx-evidence">{{ pc.evidence }}<span class="sigctx-src">{{ t.sigctx_source_prefix }}{{ pc.source }}</span></div>{% endif %}
         {% if pc.get('_kcard') %}<button class="kcard-btn" data-slug="inst_participation" data-params="{{ pc._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
       </div>
       {% endif %}
