@@ -1,0 +1,20 @@
+name: scan-svc (precursor)
+
+# 按需触发机构前兆信号扫描（调研 + 融券 + 参与度），写 Neon。
+# 关键：东财数据从美国 GHA runner 抓不到（US-122 地理限流），必须在 Fly 悉尼机器上跑。
+# 用 flyctl ssh 在现有机器执行命令——不走 /api/trigger-scan（HTTP handler 里跑长任务是
+# Fly 官方反模式），也不碰旧 monolith。以后一键 `gh workflow run scan-svc.yml` 即可，不用等日更。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Run precursor scan on Fly (syd)
+        run: flyctl ssh console -a personal-buffett -C "python -m scripts.precursor_scan"
