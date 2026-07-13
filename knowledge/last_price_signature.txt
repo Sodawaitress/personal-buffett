@@ -1,6 +1,5 @@
-1e5d1e434e8dc85e0c4a82b887bcec8e
-# generated_at (snapshot): 2026-07-10T10:43:11Z
-# note: recorded on 2026-07-10 Routine run；✅ 服务器恢复！停摆整整 8 天（07-02 10:27 UTC → 07-10 10:43 UTC = 严格 192h），signature 从 53ced35fe8f3616f818ab077dfdc4edb 变更为 1e5d1e434e8dc85e0c4a82b887bcec8e
-# 07-10 update: 三重门控全部通过（gate ① 快照 2.4h fresh；gate ② signature 变更；gate ③ WebSearch 抽检 DUOL 精确匹配、BYD 三天涨幅内容差在容差内）；5 条在飞预言批量结算（3 严重错 1 边界 1 对）；07-13-15 静默期方案自动作废；恢复推送已按"三段标准"（🎉恢复公告 + 停摆期回顾 + 批量预言结算 + 妈妈耐心致谢）发出
-# 07-10 update 续: 服务器恢复路径推测为 Fly.io/GHA/AKShare 三方之一自动恢复（改进日志中无周宇端修复动作痕迹）；下次遇停摆建议先跑手动 pipeline 触发（flyctl ssh console 执行 stock_pipeline.py --force）而非被动等待
-# 07-10 update 续 2: 停摆期最痛教训为"5 次现场参观 300476 + 4 次特定对象 300054 教科书信号被大盘系统性 override"——已作为 US 提案写入改进日志（增加机构信号在系统性回调期打折扣 + 中期止盈机制 + 信号有效性阶梯三个改进方向）
+eec3101ece64c18a7ac4a8ffb77ed20f
+# generated_at (snapshot): 2026-07-13T10:48:48Z
+# note: recorded on 2026-07-13 Routine run；服务器持续正常（07-10 恢复后首个完整周一交易日）；三重门控全部通过（gate ① 快照 2.33h fresh；gate ② signature 从 1e5d1e434e8dc85e0c4a82b887bcec8e 变为 eec3101ece64c18a7ac4a8ffb77ed20f；gate ③ WebSearch 抽检 601012/000938 在合理容差内）；本次五选核心样本 000990 诚志股份（业绩暴增 1259-1573% + 融券极端 +80.8% 双触发）+ 300454 深信服（融券极端 +329.1% 单触发）；2 条 07-10 在飞预言（603893/300394）尚在 Day 1/10 窗口未结算；今日新增 2 条预言（000990 up @¥8.75 / 002130 sideways @¥16.33）
+# 07-13 update: 融券极端规则本次单 Routine 触发 2 次（自 07-10 以来首次），反映业绩预告季+融券异动共舞的市场特征；数据缺失+机构活跃特殊规则触发 1 次（000990 网站 C 评级被独立 override）；框架规则再次成功阻止 narrative 单边化
+# 07-13 update 续: Run2 观察发现 300394 天孚通信 07-13 snapshot 中 price 字段 null（stocks_with_fresh_price 96/189 = 51%），建议 Fly.io pipeline 对未刷新价格股票单独告警日志；改进建议已写入 improvement_log 深度对比章节

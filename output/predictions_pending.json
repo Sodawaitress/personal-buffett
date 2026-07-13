@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-07-13",
+    "code": "000990",
+    "name": "诚志股份",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "上半年净利同比预增1259%-1573%（清洁能源产品价格反弹）+ 55天前3次机构调研含5/13特定对象16家，但融券余量单月+80.8%显示多空对峙",
+    "price_at_prediction": 8.75
+  },
+  {
+    "date": "2026-07-13",
+    "code": "002130",
+    "name": "沃尔核材",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "A级买入+quant 74 moat 74/100全数据齐全，今日-7.32%属概念板块调整型技术性下杀，基本面未变，¥16支撑观察企稳",
+    "price_at_prediction": 16.33
+  }
+]
