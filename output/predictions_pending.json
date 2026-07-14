@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-07-14",
+    "code": "688008",
+    "name": "澜起科技",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "存储/DDR5内存接口链领涨 +6.81%，30天3次特定对象调研兑现+回购注销，已进入业绩确认阶段抢跑窗口关闭",
+    "price_at_prediction": 270.00
+  },
+  {
+    "date": "2026-07-14",
+    "code": "000963",
+    "name": "华东医药",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "子公司DR10624注射液临床获批+医药板块细胞免疫治疗概念+3.63%配合走强，融券-29.8%空头温和退场，估值便宜",
+    "price_at_prediction": 29.94
+  }
+]

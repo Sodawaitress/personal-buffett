@@ -1,6 +1,7 @@
-1e5d1e434e8dc85e0c4a82b887bcec8e
-# generated_at (snapshot): 2026-07-10T10:43:11Z
-# note: recorded on 2026-07-10 Routine run；✅ 服务器恢复！停摆整整 8 天（07-02 10:27 UTC → 07-10 10:43 UTC = 严格 192h），signature 从 53ced35fe8f3616f818ab077dfdc4edb 变更为 1e5d1e434e8dc85e0c4a82b887bcec8e
-# 07-10 update: 三重门控全部通过（gate ① 快照 2.4h fresh；gate ② signature 变更；gate ③ WebSearch 抽检 DUOL 精确匹配、BYD 三天涨幅内容差在容差内）；5 条在飞预言批量结算（3 严重错 1 边界 1 对）；07-13-15 静默期方案自动作废；恢复推送已按"三段标准"（🎉恢复公告 + 停摆期回顾 + 批量预言结算 + 妈妈耐心致谢）发出
-# 07-10 update 续: 服务器恢复路径推测为 Fly.io/GHA/AKShare 三方之一自动恢复（改进日志中无周宇端修复动作痕迹）；下次遇停摆建议先跑手动 pipeline 触发（flyctl ssh console 执行 stock_pipeline.py --force）而非被动等待
-# 07-10 update 续 2: 停摆期最痛教训为"5 次现场参观 300476 + 4 次特定对象 300054 教科书信号被大盘系统性 override"——已作为 US 提案写入改进日志（增加机构信号在系统性回调期打折扣 + 中期止盈机制 + 信号有效性阶梯三个改进方向）
+b5781bc1e292175ce3b07529cc39fbce
+# generated_at (snapshot): 2026-07-14T09:45:27Z
+# note: 07-14 recorded on Routine run；三重门控全部通过（gate ① 3.4h fresh；gate ② signature 从 1e5d1e434e8dc85e0c4a82b887bcec8e 变更为 b5781bc1e292175ce3b07529cc39fbce；gate ③ WebSearch 抽检 002594/688008 通过，300394 因 Web 返回历史缓存视为"无有效反证"通过）
+# 07-14 update: 恢复后第 3 个交易日，正常运转态首次五选（07-10 后 07-11/12 周末跳过，07-13 周一 Routine 未触发）；写入 2 条新预言（688008 sideways / 000963 up）+ 延续 2 条在飞预言中期观察（603893/300394，均未达 ±8% 触发线但已在弱侧）
+# 07-14 update 续: 07-10 归因 3 教训（弱势市场里最强信号也不给 up）首次实操应用于 300394（7/9 40 家现场参观最强信号 → 未给 up，改 sideways）
+# 07-14 update 续 2: 融券极端规则第 5 次真实拦截 A 级 candidates（603338 银轮 +360.2%、002602 世纪华通 +603.2% 均入"今日不推名单"）；分级融券提示（30-80% 轻提示 / >80% 硬提示）作为 US 提案写入改进日志
+# 07-14 update 续 3: "止盈锚点必备段落"格式（当前操作 + 加仓触发点 + 止盈触发点）在延续预言的操作提示中首次落地，作为未来五选的标准格式
