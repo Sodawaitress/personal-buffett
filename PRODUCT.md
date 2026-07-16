@@ -2612,6 +2612,8 @@ CREATE TABLE IF NOT EXISTS user_notifications (
 
 ## US-71 · ETF/基金分析框架 + 国内基金搜索
 
+> **实现状态（2026-07-12 审计）**：⚠️ 大部分已实现。`scripts/fund_rater.py`（BROAD_ETF/SECTOR_ETF/BROAD_OEF/ACTIVE_OEF 四类评分）+ `scripts/fund_fetch.py` 已落地；国内基金搜索接线待核。
+
 **As a** 用户
 **I want** 搜索沪深300ETF（510300）或科创50ETF（588000）并获得合适的分析
 **So that** 不被硬套股票估值框架给出 D 评级
@@ -2951,6 +2953,8 @@ US-66 的意向分解决了"综合判断"问题，但所有 7 个信号都是**�
 
 ## US-69 机构前兆信号主动扫描
 
+> **实现状态（2026-07-12 审计）**：✅ 已实现。`scripts/precursor_scan.py` 每交易日扫全 A 股前兆信号写入 `stock_precursor_cache`；`.github/workflows/scan-svc.yml` 一键触发。
+
 ### 背景
 
 机构雷达 Tab 目前在用户点进去时才实时抓取前兆信号（调研/融券/参与度），每次等 50 秒，且只能看单只股票。用户真正需要的是：**每天主动告诉我哪几只股票机构最近在悄悄动**，不需要自己逐个点进去查。
@@ -3036,6 +3040,8 @@ CREATE TABLE IF NOT EXISTS stock_precursor_cache (
 ---
 
 ## US-70 自动优先 · 操作系统重构
+
+> **实现状态（2026-07-12 审计）**：⚠️ 部分实现（注：编号与上方 line 2590「US-70 国际化修复」重复，属文档 bug，勿混淆）。优先级抓取 `fetch_priority_codes`（US-122）、`precursor_scan` / `svc_fetch` 分服务已落地；统一 morning job + 首页「今日机构动向」区块未全做。
 
 ### 背景
 
@@ -3138,6 +3144,23 @@ CREATE TABLE IF NOT EXISTS stock_precursor_cache (
 ---
 
 ## US-75 · 预言家日报：信号时间线 + 预测锚点
+
+> **实现状态（2026-07-12 更新）**：✅ 核心已实现（预言家线 v1，待部署）。`prophet_daily_score`（buffett_signals.py，纯规则，7 测试）+ `_build_prophet_series`（presenter.py）+ `get_precursor_history`（market.py）→ signals.html §2 顶部一条累积轨迹线（原生 SVG + JS 十字光标 + 调研/参与度异动注释点，`.prophet-*` CSS，7 双语 key）。已有基础：预测锚点管道（`signal_predictions` + `/api/predict`，US-92）、调研月度柱状图、参与度日频序列（US-119）。未做：147 AC 的滚动叙事/多面板全家桶（按下方"不做"清单刻意留白）。
+
+> **实现方案（2026-07-12 定，先做数据+一条预言家线，不追 147 AC 全量）**
+>
+> **方法论根**：Smart Money Flow Index（SMFI）原理——机构脚印**累积成一条指数、天生领先、背离时信号最强**。不照抄 SMFI 的日内首末小时算法（A股拿不到可靠日内、且是指数级）。落到本项目 = 把已收集的前兆脚印按日累积成一条轨迹，用户的眼睛自动往后延（"历史+现在=用户补完未来"，不做预测模型）。
+>
+> **数据脊梁已在，不用 backfill**：`precursor_history`（生产已积累 42 个交易日，2026-05-18 起，核心 30+ 只覆盖 30–37 天）。每日快照存 `survey_json`/`short_json`/`participation_json` 三件 = 调研 / 融券 / 参与度——正是"最早领先信号"主角三件套。主力资金、机构增减持**未按日历史化**，不进轨迹（诚实，不硬凑）。**日快照 point-in-time 不可 backfill**——线只能从 5-18 起、随时间自然长到 90，新股票天数少就显示短线 + "积累中"。
+>
+> **窗口修正**：原 spec 的"固定 90 天"改为"自 2026-05-18 起累积、上限 90 天、显示已有的"。30–40 天的线对领先指标已够信号（看的是累积轨迹和背离，不是绝对长度）。
+>
+> **落地三块**：
+> 1. **数据**　`build_prophet_series(code)`：读 `precursor_history` 近 90 天日快照 → 每日前兆合成分 + 事件注释点（复用现成规则：`compute_intention_score` 的信号解析 / `signal_events.py` 的背离检测，纯规则，不引 LLM）。
+> 2. **渲染**　presenter 注入 series → `signals.html` 新增预言家线：**原生 SVG polyline + JS 十字光标**（复用 US-119 参与度图已验证的写法，**不引 Chart.js/D3/任何库**；参考 mitjafelicijan/sparklines、fnando/sparkline 的 hover-callback 思路）。背离段用色标。
+> 3. **注释**　调研 spike / 参与度 breakout 在线上打带文字的注释点（NYT 注释时间线做法，非中立图；一句人话复用 `describe_survey_context` / `describe_participation_context`）。
+>
+> **不做**：预测模型、147 AC 里的多信号面板/滚动叙事全家桶。先出"一条会说话的预言家线"，验证后再扩。
 
 ### 背景与设计哲学
 
@@ -4472,6 +4495,8 @@ yfinance 查询是否上市公司（name → ticker 匹配）
 
 ## US-99 Flask API 层规范化（SPA 前置）
 
+> **实现状态（2026-07-12 审计）**：✅ 基本完成。`openapi.yaml`（30 个 `/api` 端点）+ `scripts/audit_routes.py`（路由分类）+ `flask-cors`（radar_app/extensions.py 已配置）+ `{ok,data}` 统一信封（`radar_app/shared/response.py` helper，9 个路由模块采用）。`app.py` 已是 6 行 shim、拆成 11 个 blueprint（**非单体**）。剩：SPA 去模板化（模板仍 SSR，frontend/ 只是 Next.js 脚手架）。
+
 **背景：** 当前 Flask 路由混合 SSR HTML 响应和 JSON API 响应，无统一约定，无文档，无 CORS。  
 在迁移 React/Next.js 前端之前，需要先把后端 API 整理成 SPA 可直接消费的状态。
 
@@ -4507,6 +4532,8 @@ yfinance 查询是否上市公司（name → ticker 匹配）
 ---
 
 ## US-101 多跳 BOM 供应链溯源
+
+> **实现状态（2026-07-12 审计）**：✅ 已实现。`run_multihop_scan(ticker, market, company_name, max_depth=2)` + `get_supply_chain_tree`（scripts/supply_chain_mapper.py），`hop_depth`/`upstream_path`/`tier1_code` 三列已迁移，Hop 2 对 Tier-1 供应商续溯并缓存，接进 `/api/supply-chain/scan` + `/api/supply-chain/<code>` 路由。
 
 **背景：** 现有实现只做单跳——直接从目标公司 10-K / 年报提取 Tier-1 供应商。
 Serenity 方法论的核心洞察是：真正的瓶颈往往不在 Tier-1，而在更上游。
@@ -4812,3 +4839,231 @@ US-121 拆出 fetch-svc 后暴露真瓶颈：**数据在中国（东财/新浪/T
 - 付费代理 / self-hosted 中国 runner（用户定：不花钱）
 - 额外游标/队列状态表（用 stock_prices.fetched_at 的 staleness 当游标即可）
 
+---
+
+## US-123 · 日报改造：删数字堆砌，只推有用信号（Server酱）
+
+### 背景
+
+现在每天推的「股票日报」（Bear 文档 + Server酱）是数字堆砌的空壳：由旧 monolith `stock_pipeline.main()` 生成，它自己在 GHA 美国 runner 上现抓 A 股 → 抓不到（US-122 的地理问题）→ 评级表/行情表/个股动态全空。而且 `reports` 表停在 2026-07-10，push-svc 每天重复推这份旧空报告。讽刺的是 fetch-svc / svc_analyze 明明把新鲜行情（183 只）和评级（42 只带 quant_score）存进了 DB，但 `generate_report` 不读 DB、坚持自抓。
+
+用户定：**这份数字日报不要了，直接删**。要的是**真有用的日报**——只说"今天该注意什么、什么意思"，没料就不推。
+
+### 现有地基（复用）
+
+per-user 的 `build_user_push_content`（stock_report.py）已经是有用日报的雏形：「今天该注意的 = 早期预警（重大新闻人话解读）+ 评级变化」，读新鲜 DB、说人话、无料不推（返回 ""）。只是 `get_users_with_daily_push()` 目前 0 用户，这条路径推给没人。
+
+### Scope
+
+1. **删数字堆砌**：`svc_push.py` 移除 admin 路径（`db.get_report()` → `save_to_bear("股票日报…")` + `send_discord_chunks` + 全局 `send_serverchan`）。Bear「股票日报」文档、Discord 该报告、空壳推送全停。monolith 的 daily `generate_report`/`save_report` 是否保留由网站 /report 页决定（本 US 只管推送，不动网站归档）。
+
+2. **有用日报**：增强 `build_user_push_content`，在「早期预警 + 评级变化」基础上加三块（全部读 Neon DB，GHA 美国 runner 可跑，不碰东财）：
+   - **机构领先信号**：`get_signal_conclusion(code)` 取 lead / high-confidence 的，人话一句（与首页榜单/详情页同源模型）
+   - **催化剂预警**：`get_upcoming_events_for_user(uid, 7)`，7 天内解禁/业绩/重大公告
+   - **预言线方向**：US-75 prophet 轨迹方向（机构在悄悄建仓/离场），取 rising/falling 有信号的，跳过 flat
+   - 保持「无料不推」门禁：五块全空则返回 ""
+
+3. **路由**：`svc_push` 用增强版 digest 为 admin（user_id=4，zhouhooper）生成，发到 `SERVERCHAN_KEY`（GHA secret），**只走 Server酱**（不 Bear、不 Discord）。per-user 循环也用增强版（未来 mom 启用 notify_daily 即生效）。
+
+### Acceptance Criteria
+
+- [ ] Bear 不再出现「股票日报」数字堆砌文档；Discord 不再收该报告
+- [ ] admin 每天经 Server酱 收到增强版「今天该注意的」，含机构领先信号 / 催化剂 / 预言线方向（有则显示）
+- [ ] 当五块都无料时，当天不推（不打扰）
+- [ ] 报告内容来自 DB 新鲜数据（评级/信号/催化剂），不依赖 monolith 自抓 → A 股海外抓不到也不影响
+- [ ] 人话、排好序、无内部噪音（符合 less-is-more）
+
+### 不做
+
+- 不重建数字堆砌报告的 DB 版（用户明确不要"一个数字的堆砌"）
+- 不动网站 /report 归档页（另议 → 见 US-124）
+- 不加新推送渠道（只 Server酱）
+
+---
+
+## US-124 · /report 归档也改用有用日报（彻底删数字堆砌）
+
+### 背景
+
+US-123 删了数字堆砌的**推送**，但网站 `/report` 页仍渲染 `reports` 表里的数字堆砌 md（monolith `generate_report` 生成、`save_report` 存库）。用户定：这份也换。
+
+现状核实：日 md 唯一真消费者就是 `/report` 页（`dashboard/query.py` 的 `latest_report` 等键没有任何模板在用）；`generate_report`（数字堆砌那个，stock_report.py）只被 `stock_pipeline.py:241` 一处调用。周/月/季 digest 是另一套（periodic_digest.py 自己的 generate_report），有用，不动。
+
+### Scope
+
+1. **reports 表日 md = 有用 digest**：`stock_pipeline.main()` 不再 `generate_report(data, ai_analysis)`；改存 admin 的 `build_user_push_content`（去掉"详情见网页。"尾行，因为本就在网页上）。空态存占位「今天没有需要特别注意的变动」。
+2. **一次计算两处复用**：同一份 admin digest 既 `save_report`（网页）又 `send_serverchan`（推送），不重复算。
+3. **删数字堆砌函数**：物理删除 `stock_report.generate_report`（200+ 行，仅此一处调用）——数字堆砌彻底退场。institutional_section 的 `run_institutional_radar(data)` 调用保留（可能有副作用），只是不再拼进报告。
+4. `/report` 模板不动（它只 `marked.parse(report.md)`，存什么渲染什么）。周/月/季 digest tab 不动。/report/accuracy 预测追踪不动。
+
+### Acceptance Criteria
+
+- [ ] `/report` 当天页显示「今天该注意的」信号 digest，不再是空评级表 + 数字堆砌
+- [ ] 无料的日子 /report 显示占位文案，不报错、不空白
+- [ ] `stock_report.generate_report` 已删除，全仓无残留调用
+- [ ] 周/月/季 digest、预测准确率页照常
+- [ ] push 与 /report 内容同源（同一份 digest）
+
+### 不做
+
+- 不给有用 digest 做"as-of-当天"历史快照（现算即可；past 日期可能重算出不同信号——可接受，另议持久化）
+- 不动周/月/季 digest 与 accuracy 页
+
+---
+
+## US-125 · 自选股排序：最新在前 + 差评沉底（多邻国式掉落）+ 修复擂台可见性
+
+### 背景
+
+三个连在一起的问题：① 加新股票时它跑到列表**最底**（现 `ORDER BY added_at ASC`），反直觉——刚加的最想看，应在最前。② 分析出来"不咋好"的应该沉到后面，让顶部留给有戏的。③ US-120 擂台其实**做了但看不见**：藏在"卡片→列表→擂台"循环图标按钮的第三下点击；且 `setView`（watchlist.html:534）在屏幕 <480px 时把"列表"强制退回"卡片"，导致手机端循环卡在 card↔card、**擂台永远到不了**（妈妈用手机 = 100% 看不到）。三件本质是同一个"按质量排名 + 动效"的故事，合并做。
+
+### 设计（分两段，解决"新"与"烂"打架）
+
+- **待定时按新**：刚加 / 分析中的钉在最前（recency 优先）。
+- **盖棺后按质量**：分析回来后落位——好的留上面，**差评（grade D / D-）沉底**，并播一次"掉下去"动画（多邻国联赛榜归位那种，克制、快、一次性、尊重 `prefers-reduced-motion`）。
+- 主列表 = 时间线（新在前）+ 差评沉底；**擂台 = 纯分数榜**（US-120），两个不同镜头，不合并。
+
+### Scope
+
+1. **最新在前**：`get_user_watchlist`（stocks.py:52）`ORDER BY w.added_at` → `DESC`。
+2. **差评沉底**：presenter 加 `is_poor = grade in (D, D-)`；service `build_watchlist_context` 在分组前对 stocks 做稳定排序 `sort(key=is_poor)`（差评到底、组内保持新在前）。持仓/观察/卖出三区各自继承。
+3. **掉落动画**：`pollJob`（watchlist.html:957）分析完成时若 `grade` 为差评 → 给卡片加 `.wl-sink` 动画类，播完再 reload（落到 server 排好的底部）；`prefers-reduced-motion` 时跳过动画直接 reload。`.wl-sink` keyframe 在 watchlist.css。
+4. **修复擂台可见性**：视图循环改为**宽度感知**——`<480px` 用 `['card','arena']`（跳过 list），否则 `['card','list','arena']`；`setView` 不再把 list 静默退回 card 而是走可达的循环。按钮已显示"下一个视图名"（擂台/列表/卡片），修好可达性后手机端也能进擂台。
+
+### Acceptance Criteria
+
+- [ ] 新加股票出现在对应分区**最前**
+- [ ] grade D/D- 的股票排在分区**末尾**，非差评组内仍新在前
+- [ ] 分析完成且为差评时，卡片播一次"掉下去"动画再落位；`prefers-reduced-motion` 下无动画
+- [ ] 手机（<480px）能通过视图按钮进入**擂台**
+- [ ] 擂台仍是纯分数榜（US-120 不变）
+
+### 不做
+
+- 主列表不按分数重排（那是擂台的活）
+- 不做拖拽手动排序
+
+
+---
+
+## US-126 · 首页重构：极简 · 添加优先 · 事件收进顶栏
+
+### 背景
+
+用户看着现有首页觉得杂：近期事件占一个大黄框、我的选股卡片和顶栏导航重复、信号预警铺开占屏。要一个极简首页：正文第一眼是"添加"，然后是行业专栏。
+
+### Scope（index.html）
+
+1. **近期事件 → 顶栏一行提示**：`catalyst-banner` 大框改成 masthead 里一行紧凑提示；**无事件则整行不渲染**（删掉"近期无重大事件"占位框）。
+2. **删我的选股卡片**：移除 `home-cards-row` 里的"我的选股"卡（顶栏已有"我的选股"入口，不重复）。
+3. **添加放正文第一**：`home-add-block` 成为正文第一块。
+4. **今日信号折叠**：`signal-radar-section` 包进 `<details>`，默认收起（用户想看再展开）。
+5. **新闻保留**：news-section-wrap 照旧放最下面（用户没让删）。
+
+### Acceptance Criteria
+- [ ] 有近期事件时顶栏显示一行；无事件时不显示任何事件区
+- [ ] 首页正文第一块是"添加"
+- [ ] 我的选股卡片不在首页（仍可从顶栏进）
+- [ ] 今日信号默认折叠，可展开
+- [ ] 新闻区照常
+
+---
+
+## US-127 · 行业分析专栏（精选库）
+
+### 背景
+
+Claude 手工研究 + 设计的"上市奶茶六强"页非常受用户认可（"太漂亮了，行业知识齐全"）。用户要把它变成首页**固定栏目**。
+
+**关键决策（用户与 Claude 共识）**：做**精选库**，不是自动信息流。价值在"内容真、研究透"（北极星：教真知识）；自动 LLM 生成必然滑向套话，会毁掉这个栏目。因此每篇是一次真研究协作（用户点行业 → Claude 搜+写），慢慢长成书架。奶茶是第 1 篇。
+
+### 架构（轻量，不建 DB 表）
+
+- `radar_app/research/articles.py`：文章 registry（slug/title/subtitle/cover/date/template），按 date 倒序。
+- `templates/research/<slug>.html`：自包含文章页（Claude 产出的 artifact 直接落成模板文件，版本化）。
+- `radar_app/research/routes.py`：`/research`（归档列表）+ `/research/<slug>`（渲染文章，含"← 返回"）。
+- 首页：`添加` 之后放一张 **featured 卡片**（最新一篇：cover + 标题 + 副标题 + "阅读"），点进 `/research/<slug>`。
+
+### Scope
+1. registry + `milk-tea-2026` 文章模板（落地奶茶页）。
+2. `/research` 归档 + `/research/<slug>` 详情路由（登录后可看）。
+3. 首页 featured 卡片（dashboard context 注入 `featured_research`）。
+4. i18n：栏目标题 / 阅读 / 归档等 key。
+
+### Acceptance Criteria
+- [ ] `/research/milk-tea-2026` 打开是完整奶茶页，有返回入口
+- [ ] `/research` 列出所有文章（现 1 篇）
+- [ ] 首页"添加"下方有 featured 卡片，点进文章
+- [ ] 新增一篇 = 加一个 registry 条目 + 一个模板文件，无需改代码逻辑
+- [ ] 双语
+
+### 不做
+- 不自动生成文章（精选，人工研究）
+- 不建 DB 表（registry 足够，文章即内容文件）
+- 不做评论/点赞等社交
+
+---
+
+# EPIC-A · 短线生命周期（两轴：🧬进化 × 🎂年龄）· 数据补齐才有完整阶段
+
+**一句话**：用"一只会成长会老、也会进化会退化的生物"把一家公司串成人话——🧬进化(长期变强/变弱)× 🎂年龄(短线五阶段:胚胎→幼年→壮年→老年→迟暮)。比喻只是串联法，**每个阶段下必须挂真信号**。数据不补齐，阶段就不完整、会虚假。
+
+**为什么拆成一个数据一个 US**（用户定，2026-07-14）：每个数据源单独写 US、单独做、单独验证，才不会做得虚、假。先 EPIC 后逐个 US。
+
+**现状盘点（哪些阶段已有真数据 / 哪些缺）**：
+- 🎂 幼年/壮年/老年/迟暮：**基本有**（机构调研/参与度/融券/主力资金/北向/融资余额/机构增减持/估值分位/价格动能）→ 引擎已跑准(US-129)。
+- 🥚 胚胎期：**几乎全缺**（另类数据：招聘/招投标/供应链/电商/搜索/卫星）→ US-130~135。
+- 🧬 进化轴：**偏弱**（护城河方向/多年ROE趋势数据稀，多显示"稳"）→ US-137。
+- 老年"接盘"判断精度：缺**龙虎榜席位性质**（机构/游资/散户）→ US-136。
+
+## US-129 · 短线生命周期 · 阶段引擎 + 页面
+- ✅ 引擎已做（`radar_app/stocks/lifecycle.py`：`build_lifecycle(code)` 两轴、规则透明、每判断挂真信号；生产实测比亚迪=幼年/中芯=老年/赣锋=迟暮，准）。
+- ⬜ 页面：`/stock/<code>/lifecycle`（纯文字 v1，不用图不选动物），接进详情页；左滑历史留 v2。
+- AC：页面显示【进化状态 + 生命阶段 + 一句人话 + 挂的真信号】；无信号股票老实显示"看不清"。
+
+## US-130 · 招聘数据信号（🥚胚胎期）
+- **prior art**：Wolfe Research《Alpha Insights from Global Job Postings》(日频全球招聘选股)；学术《Job postings and aggregate stock returns》；Moderna 招聘砍半→股价−68%(相关0.86)。**信号真、验证过。**
+- **数据源**：中国上市公司招聘大数据(前程无忧/BOSS/智联/猎聘/看准，2014-2025 756万条数据集存在)。**难点：无免费实时API，需爬取/买数据集，反爬麻烦**——本 US 先做可行性：找一个能稳定拿到"某公司在招岗位数"的免费/低成本源。
+- **信号**：某公司招聘岗位数环比↑ = 扩张前兆（比财报早1-2季）。
+- AC：能对至少 N 只自选股取到"招聘活跃度趋势"，喂进胚胎期；拿不到就诚实标"无数据"，不硬编。
+
+## US-131 · 招投标/中标信号（🥚胚胎期）
+- **数据源**：中国政府采购网/招标公告；上市公司重大中标公告（可能从东财公告/`stock_notice_report` 拿）。
+- **信号**：拿下大订单 = 收入前兆。
+- AC：能抓到自选股近90天中标/大订单公告，标注金额，喂胚胎期。
+
+## US-132 · 供应链订单流信号（🥚胚胎期，扩 US-96/97）
+- **底子**：已有 `supply_chain_links` + chokepoint。
+- **信号**：上游给某公司供货/订单变多 = 下游需求前兆。
+- AC：在已有供应链图上加"订单/供货变化"维度（数据源待调研）。
+
+## US-133 · 电商/App 销量信号（🥚胚胎期）
+- **数据源**：App Store 排名(已有US-114底子)、电商销量(爬取，脆)、DAU。
+- **信号**：消费品真实卖得好不好，比财报早3-6月。
+- AC：消费类自选股能显示 App 排名/销量趋势。
+
+## US-134 · 搜索热度/注意力信号（🐷老年·接盘期，**非胚胎**——2026-07-14 验证更正）
+- **验证更正**：prior art（Da-Engelberg-Gao 2011《In Search of Attention》）证明搜索量飙升=散户注意力爆棚→涨2周→**反转**。注意力高峰是"大家都注意到了"的**晚期**，是**卖出/见顶**信号，**不是胚胎期**。呼应"散户听说了=晚期"。
+- **数据源**：A股用东财人气榜（`_fetch_em_hot_rank`，US-114 已有底子，东财源需在可达处跑）；全球用 Google Trends(pytrends，全球可达但中国人不用Google搜A股→对A股无用)。
+- **信号**：注意力异常飙升(ASV=相对过去1年均值的%变化) → 接盘期预警。
+- AC：老年/接盘判断能吃"注意力飙升"，作为卖出侧信号。
+
+## US-135 · 卫星数据信号（🥚胚胎期 · 仅大宗/工业）
+- **数据源**：免费 Sentinel-2(10m)/Landsat(30m)；需图像处理（重工程）。
+- **适用**：矿区/油罐/港口/工厂开工/建设进度——大宗、工业股。数车流需商业高分卫星(收费)，不做。
+- AC：至少对1类大宗/工业股跑通"开工率/库存"代理指标。（重，排后）
+
+## US-136 · 龙虎榜席位性质（🐷老年/接盘期精度）
+- **数据源**：龙虎榜买卖前5席位（东财/交易所），识别 机构专用/游资/北向/拉萨天团(散户)。
+- **信号**：机构席位=早/聪明钱；游资=中/炒作；拉萨(散户)=晚/接盘（反向）。
+- AC：龙虎榜信号能区分席位类型，喂进壮年/老年判断。
+
+## US-137 · 进化轴数据补强（🧬长期）
+- **问题**：进化轴多显示"稳"，因护城河方向/多年ROE趋势数据稀。
+- **做法**：扩多年财务(A股 tail 扩到10年；非A股 SEC EDGAR 长历史)；接 US-114 深研的分类/护城河质量判断。
+- AC：进化轴能对多数A股给出"变强/变弱/稳"且有多年趋势依据，而非默认"稳"。
+
+## 不做（整个 EPIC）
+- 不硬编码任何公司数据（拿不到就诚实标"无数据"）。
+- 不拼数据量/速度（卫星高分、信用卡panel、专家网络、HFT）——散户拼不过也不拼。
+- 每个 US 动手前先搜 prior art（用户铁律）。
