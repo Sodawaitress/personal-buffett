@@ -313,6 +313,11 @@ def save_precursor_cache(code: str, survey: dict, short_selling: dict,
                 "score": score, "is_active": int(is_active),
             },
         )
+        # 只保留每只最新一行——历史归 precursor_history 管，这张是 latest 缓存
+        c.execute(
+            "DELETE FROM stock_precursor_cache WHERE code=:code AND fetched_at < :keep",
+            {"code": code, "keep": fetched_at},
+        )
         # 同时写入 precursor_history（每日快照，INSERT OR IGNORE 不覆盖历史）
         today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
         try:
@@ -407,6 +412,33 @@ def get_precursor_cache(code: str) -> dict:
             pass
 
     return rec
+
+
+def get_precursor_history(code: str, days: int = 90) -> list:
+    """预言家线数据源（US-75）：近 N 天每日前兆快照，时间正序。
+    Returns: [{date, survey, short, participation}]，JSON 已解析，无则空 list。"""
+    cut = (datetime.now(CN_TZ) - timedelta(days=days)).strftime("%Y-%m-%d")
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT snapshot_date, survey_json, short_json, participation_json "
+            "FROM precursor_history WHERE code=:code AND snapshot_date>=:cut "
+            "ORDER BY snapshot_date ASC",
+            {"code": code, "cut": cut},
+        ).fetchall()
+    out = []
+    for r in rows:
+        def _load(v):
+            try:
+                return json.loads(v) if v else {}
+            except Exception:
+                return {}
+        out.append({
+            "date": r["snapshot_date"],
+            "survey": _load(r["survey_json"]),
+            "short": _load(r["short_json"]),
+            "participation": _load(r["participation_json"]),
+        })
+    return out
 
 
 def get_precursor_summary(user_id: int, limit: int = 3) -> list:

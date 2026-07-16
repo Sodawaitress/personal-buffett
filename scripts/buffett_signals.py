@@ -523,3 +523,28 @@ def label_news_vs_institution(sentiment: str, inst_direction: str) -> str:
         ("negative", "bearish"): "consistent",
     }
     return matrix.get((sentiment, inst_direction), "none")
+
+
+def prophet_daily_score(participation: dict, survey_inst_today: int = 0) -> dict:
+    """一天的机构脚印增量——供预言家线累积（US-75）。正=机构在进，负=在退。
+    只有"当日真·观测"进累积：① 参与度 z 分（当日相对 30 日均值的偏离）
+    ② 当天实际发生的调研加成（按 event 日期匹配，不是快照里的滚动窗口）。
+    融券是 30 日滚动值、无法归因到某一天，不进累积（留在层3情境卡）。
+    纯规则。Returns: {value, event_inst, spike}
+    """
+    participation = participation or {}
+    p = 0.0
+    latest = participation.get("latest")
+    avg = participation.get("avg_30d")
+    sd = participation.get("stdev") or 0
+    if latest is not None and avg is not None and sd > 0:
+        p = max(-2.0, min(2.0, (latest - avg) / sd))
+
+    survey_inst_today = int(survey_inst_today or 0)
+    bump = min(1.5, 0.3 * survey_inst_today) if survey_inst_today > 0 else 0.0
+
+    return {
+        "value": round(p + bump, 3),
+        "event_inst": survey_inst_today,
+        "spike": bool(participation.get("spike")),
+    }

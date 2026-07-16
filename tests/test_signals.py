@@ -7,6 +7,7 @@ from buffett_signals import (
     describe_survey_context,
     describe_participation_context,
     label_news_vs_institution,
+    prophet_daily_score,
 )
 
 
@@ -169,6 +170,42 @@ def test_label_neutral_sentiment_returns_none():
 def test_label_missing_direction_returns_none():
     assert label_news_vs_institution("positive", "") == "none"
     assert label_news_vs_institution("positive", None) == "none"
+
+
+# ── prophet_daily_score (US-75) ──────────────────────────────────────────────
+
+def test_prophet_participation_above_avg_positive():
+    r = prophet_daily_score({"latest": 30, "avg_30d": 22, "stdev": 4}, 0)
+    assert r["value"] == 2.0  # z=2 clamped
+    assert r["event_inst"] == 0
+
+def test_prophet_participation_below_avg_negative():
+    r = prophet_daily_score({"latest": 18, "avg_30d": 25, "stdev": 3.5}, 0)
+    assert r["value"] < 0
+
+def test_prophet_survey_bump_added():
+    base = prophet_daily_score({"latest": 22, "avg_30d": 22, "stdev": 3}, 0)["value"]
+    with_survey = prophet_daily_score({"latest": 22, "avg_30d": 22, "stdev": 3}, 5)["value"]
+    assert with_survey > base
+    assert with_survey == round(base + min(1.5, 0.3 * 5), 3)
+
+def test_prophet_survey_bump_capped():
+    r = prophet_daily_score({"latest": 22, "avg_30d": 22, "stdev": 3}, 100)
+    assert r["value"] == 1.5  # bump capped at 1.5, z=0
+    assert r["event_inst"] == 100
+
+def test_prophet_empty_is_zero():
+    r = prophet_daily_score({}, 0)
+    assert r["value"] == 0.0
+    assert r["spike"] is False
+
+def test_prophet_missing_stdev_no_crash():
+    r = prophet_daily_score({"latest": 30, "avg_30d": 22, "stdev": 0}, 0)
+    assert r["value"] == 0.0  # sd=0 → no z contribution
+
+def test_prophet_spike_flag_passthrough():
+    r = prophet_daily_score({"latest": 22, "avg_30d": 22, "stdev": 3, "spike": True}, 0)
+    assert r["spike"] is True
 
 
 if __name__ == "__main__":
