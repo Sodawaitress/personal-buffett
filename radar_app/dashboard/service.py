@@ -44,6 +44,14 @@ def _build_brief_stocks(user_id, locale="en"):
     return stocks
 
 
+def _latest_research():
+    try:
+        from radar_app.research.articles import latest_article
+        return latest_article()
+    except Exception:
+        return None
+
+
 def build_dashboard_context(user_id, region, locale="en"):
     stocks = _build_index_stocks(user_id, locale)
     market = get_market_snapshot()
@@ -60,6 +68,7 @@ def build_dashboard_context(user_id, region, locale="en"):
         "market": market,
         "portfolio_brief": present_portfolio_brief(get_portfolio_brief(user_id, date=today)),
         "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),
+        "featured_research": _latest_research(),
         "now": now_label(),
         **get_reports_bundle(),
     }

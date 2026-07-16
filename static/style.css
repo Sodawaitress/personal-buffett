@@ -2362,3 +2362,146 @@ footer small {
 .sr-card2.open .sr-card2-detail { display: block; }
 .sr-detail-link { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--ink-muted); }
 .sr-card-lead { border-left-color: #b3261e !important; }
+
+/* ══ US-126 首页重构 + US-127 行业专栏 ══ */
+
+/* 近期事件 · 顶栏一行 */
+.home-event-line {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px;
+  padding: 8px 2px 14px; font-size: 13px; border-bottom: 1px solid var(--rule-light); margin-bottom: 22px;
+}
+.home-event-line .hel-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold);
+}
+.home-event-line .hel-item { color: var(--ink-muted); text-decoration: none; }
+.home-event-line .hel-item b { color: var(--ink); font-weight: 600; }
+.home-event-line .hel-item:hover { color: var(--gold); }
+.home-event-line .hel-today b { color: var(--red); }
+
+/* 行业专栏 · 预览（嵌真文章显示一半，底部渐隐 + 阅读全文） */
+.research-preview {
+  position: relative; height: 560px; overflow: hidden; margin: 24px 0 8px;
+  border: 1px solid var(--rule-light); border-radius: 14px; background: var(--paper);
+}
+.research-preview .rp-frame {
+  width: 100%; height: 1600px; border: 0; display: block; pointer-events: none; background: var(--paper);
+}
+.research-preview .rp-overlay {
+  position: absolute; inset: 0; z-index: 2; text-decoration: none;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 26px;
+  background: linear-gradient(to bottom,
+    transparent 0%, transparent 52%,
+    color-mix(in srgb, var(--paper) 78%, transparent) 74%,
+    var(--paper) 96%);
+}
+.research-preview .rp-more {
+  background: var(--ink); color: var(--paper); padding: 11px 26px; border-radius: 24px;
+  font-size: 14px; font-weight: 700; box-shadow: 0 6px 22px rgba(0,0,0,.20);
+  transition: background .15s, transform .15s;
+}
+.research-preview .rp-overlay:hover .rp-more { background: var(--gold); transform: translateY(-1px); }
+@media (max-width: 560px) { .research-preview { height: 460px; } }
+
+/* 今日信号 / 新闻 · 折叠 */
+.signal-radar-fold, .news-fold { margin: 22px 0; border-top: 1px solid var(--rule-light); }
+.signal-radar-fold > summary, .news-fold > summary {
+  list-style: none; cursor: pointer; padding: 14px 2px; display: flex; align-items: baseline; gap: 12px;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted);
+}
+.signal-radar-fold > summary::-webkit-details-marker,
+.news-fold > summary::-webkit-details-marker { display: none; }
+.signal-radar-fold > summary::before, .news-fold > summary::before {
+  content: "▸"; color: var(--ink-faint); transition: transform .15s; display: inline-block;
+}
+.signal-radar-fold[open] > summary::before, .news-fold[open] > summary::before { transform: rotate(90deg); }
+.signal-radar-fold .srf-hint {
+  font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-faint);
+}
+.signal-radar-fold[open] .signal-radar-section { margin-top: 4px; }
+
+/* 行业专栏 · 归档页 */
+.research-archive { padding: 20px 0 60px; }
+.research-archive .ra-title { font-size: 30px; font-weight: 800; margin: 0 0 6px; }
+.research-archive .ra-sub { color: var(--ink-muted); font-size: 15px; margin: 0 0 28px; }
+.research-archive .ra-list { display: flex; flex-direction: column; gap: 14px; }
+.research-archive .ra-item {
+  display: flex; align-items: center; gap: 18px; padding: 18px 20px;
+  border: 1px solid var(--rule-light); border-radius: 12px; background: var(--paper-2);
+  text-decoration: none; transition: border-color .15s;
+}
+.research-archive .ra-item:hover { border-color: var(--gold); }
+.research-archive .ra-cover { font-size: 36px; flex-shrink: 0; }
+.research-archive .ra-body { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.research-archive .ra-eyebrow { font-size: 12px; color: var(--ink-faint); letter-spacing: .04em; }
+.research-archive .ra-item-title { font-size: 18px; font-weight: 700; color: var(--ink); }
+.research-archive .ra-arrow { color: var(--ink-faint); font-size: 18px; }
+.research-archive .ra-item:hover .ra-arrow { color: var(--gold); }
+
+/* US-126 「接近触发」子块折叠（榜单常显，只收这段） */
+.sr-approaching-fold { margin-top: 8px; border-top: 1px dashed var(--rule-light); }
+.sr-approaching-fold > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+  padding: 12px 2px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-muted);
+}
+.sr-approaching-fold > summary::-webkit-details-marker { display: none; }
+.sr-approaching-fold > summary::before {
+  content: "▸"; color: var(--ink-faint); transition: transform .15s; display: inline-block;
+}
+.sr-approaching-fold[open] > summary::before { transform: rotate(90deg); }
+.sr-approaching-fold .sr-appr-count {
+  font-size: 11px; font-weight: 700; color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, transparent); padding: 1px 8px; border-radius: 10px;
+}
+
+/* ══ US-128 统一「添加股票」搜索组件 ══ */
+.add-search { max-width: 560px; margin: 8px auto 6px; }
+.add-search-prompt {
+  font-size: clamp(18px,3.6vw,22px); font-weight: 700; color: var(--ink);
+  text-align: center; margin-bottom: 18px; letter-spacing: -.01em; text-wrap: balance;
+}
+.add-search .search-type-seg { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+.add-search .seg-btn {
+  font-size: 12px; padding: 5px 14px; border: 1px solid var(--rule-light);
+  border-radius: 20px; background: var(--paper-2); color: var(--ink-muted);
+  cursor: pointer; transition: all .15s;
+}
+.add-search .seg-btn:hover { border-color: var(--ink); color: var(--ink); }
+.add-search .seg-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.as-input-row { position: relative; }
+.as-box {
+  width: 100%; padding: 16px 20px 16px 48px; font-size: 16px;
+  border: 2px solid var(--rule-light); border-radius: 12px;
+  background: var(--paper-2); color: var(--ink); outline: none;
+  transition: border-color .15s, box-shadow .15s; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.as-box:focus { border-color: var(--gold); box-shadow: 0 4px 16px rgba(0,0,0,.10); }
+.as-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 18px; pointer-events: none; }
+.as-input-row .search-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 100; }
+.as-action-panel {
+  margin-top: 14px; background: var(--paper-2); border: 1.5px solid var(--ink);
+  border-radius: 14px; overflow: hidden; display: none; animation: asFadeIn .18s ease;
+}
+.as-action-panel.open { display: block; }
+@keyframes asFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.as-ap-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--rule-light); }
+.as-ap-stock { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.as-ap-code { font-weight: 700; color: var(--ink); }
+.as-ap-name { color: var(--ink); }
+.as-ap-market { font-size: 11px; color: var(--ink-faint); }
+.as-ap-tag { font-size: 12px; font-weight: 700; color: var(--green); }
+.as-ap-close { background: none; border: none; font-size: 20px; color: var(--ink-faint); cursor: pointer; line-height: 1; padding: 0 4px; }
+.as-ap-actions { display: flex; gap: 8px; padding: 12px 16px; }
+.as-ap-btn {
+  flex: 1; text-align: center; font-size: 14px; font-weight: 600; padding: 10px;
+  border-radius: 10px; border: 1px solid var(--rule-light); background: var(--paper);
+  color: var(--ink); cursor: pointer; text-decoration: none; transition: border-color .15s, color .15s;
+}
+.as-ap-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* US-128 紧凑版（我的选股页）：提示语缩小成小标签，整体更矮 */
+.add-search-compact { margin-top: 2px; margin-bottom: 10px; }
+.add-search-compact .add-search-prompt {
+  font-size: 13px; font-weight: 600; color: var(--ink-muted);
+  margin-bottom: 10px; letter-spacing: 0;
+}
+.add-search-compact .as-box { padding-top: 13px; padding-bottom: 13px; font-size: 15px; }

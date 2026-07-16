@@ -40,21 +40,16 @@
 
   {# ── 顶部工具栏（Option B：添加大号居中 · 搜索收图标 · 排序+筛选合成一个▾面板） ── #}
   <div class="wl-toolbar-b">
-    <div class="wl-title-row">
-      <span class="wl-toolbar-title">{{ t.wl_title }} <span class="wl-badge">{{ stocks | length }}</span></span>
-      {% if holding or sold %}<a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>{% endif %}
-    </div>
+    {# 添加：统一搜索组件（US-128），我的选股页用紧凑版（提示语已多余） #}
+    {% set add_search_compact = true %}
+    {% include 'stock/_add_search.html' %}
 
-    {# 添加：大号居中主按钮 #}
-    <button class="wl-add-hero" onclick="toggleAddPanel()">
-      <svg width="15" height="15" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2.2" pointer-events="none">
-        <line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/>
-      </svg>
-      {{ t.wl_add_btn }}
-    </button>
-
-    {# 次级控制行：搜索(收成图标，点开展开) + 机构雷达/列表 + 排序筛选▾ #}
+    {# 次级控制行：状态标签(左) + 过滤搜索 + 机构雷达/视图 + 排序筛选▾ #}
     <div class="wl-controls-row">
+      <div class="wl-status">
+        <span class="wl-status-tag">{{ t.wl_title }} <b>{{ stocks | length }}</b></span>
+        {% if holding or sold %}<a href="{{ url_for('performance_page') }}" class="wl-perf-link">{{ t.wl_perf_link }}</a>{% endif %}
+      </div>
       <div class="wl-search-wrap" id="wl-search-wrap">
         <button class="wl-search-icon" onclick="toggleWlSearch()" title="{{ t.wl_search_placeholder }}" aria-label="{{ t.wl_search_placeholder }}">🔍</button>
         <input type="text" id="wl-search" class="wl-search-input" placeholder="{{ t.wl_search_placeholder }}" oninput="filterBySearch(this.value)" autocomplete="off">
@@ -96,39 +91,6 @@
     </div>
   </div>
 
-  {# 添加股票面板 #}
-  <div id="add-panel" class="add-panel hidden">
-    <div class="search-type-seg" id="wl-search-type-seg">
-      {% if locale == 'zh' %}
-      <button type="button" class="seg-btn active" data-type="cn" onclick="setWlSearchType('cn',this)">{{ t.search_type_cn }}</button>
-      <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">{{ t.search_type_fund }}</button>
-      <button type="button" class="seg-btn" data-type="intl" onclick="setWlSearchType('intl',this)">{{ t.search_type_intl }}</button>
-      {% else %}
-      <button type="button" class="seg-btn active" data-type="intl" onclick="setWlSearchType('intl',this)">{{ t.search_type_intl }}</button>
-      <button type="button" class="seg-btn" data-type="fund" onclick="setWlSearchType('fund',this)">{{ t.search_type_fund }}</button>
-      <button type="button" class="seg-btn" data-type="cn" onclick="setWlSearchType('cn',this)">{{ t.search_type_cn }}</button>
-      {% endif %}
-    </div>
-    <div class="stock-search-wrap">
-      <input type="text" id="search-q" class="search-input"
-             placeholder="{{ t.search_placeholder }}"
-             autocomplete="off">
-      <div id="search-dropdown" class="search-dropdown"></div>
-    </div>
-    <form id="add-form" method="post" action="{{ url_for('add_stock') }}" class="add-watchlist-form" style="margin-top:10px">
-      <input type="hidden" name="code" id="add-code">
-      <input type="hidden" name="name" id="add-name">
-      <input type="hidden" name="market" id="add-market">
-      <input type="hidden" name="asset_type" id="add-asset-type">
-      <div id="add-selected" class="add-selected" style="display:none">
-        <span id="add-selected-label"></span>
-        <button type="button" class="btn-text" onclick="clearSelection()">×</button>
-      </div>
-      {# 「备注」字段已删除：只写不读的死字段（全站从不展示），对妈妈是多余摩擦。
-         若将来要「记录买入理由」，会做成能在卡片/详情回看的形式再加回。 #}
-      <button type="submit" id="btn-add-submit" class="btn-ink" disabled>{{ t.btn_add }}</button>
-    </form>
-  </div>
 
   {# ── 卡片渲染 macro ── #}
   {% macro render_card(s) %}
@@ -524,14 +486,16 @@ function toggleSortFilterPanel() {
   if (btn) btn.classList.toggle('active', open);
 }
 
-// ── 视图切换（卡片→列表→擂台 三态循环，US-120） ──────────
-const _VIEW_CYCLE = ['card', 'list', 'arena'];
+// ── 视图切换（卡片→列表→擂台，宽度感知：手机跳过列表，US-125 修可达性） ──────────
+function _viewCycle() { return window.innerWidth < 480 ? ['card', 'arena'] : ['card', 'list', 'arena']; }
 function toggleView() {
-  const i = _VIEW_CYCLE.indexOf(_currentView);
-  setView(_VIEW_CYCLE[(i + 1) % _VIEW_CYCLE.length]);
+  const c = _viewCycle();
+  const i = c.indexOf(_currentView);
+  setView(c[(i + 1) % c.length]);
 }
 function setView(v) {
-  if (v === 'list' && window.innerWidth < 480) v = 'card';
+  const c = _viewCycle();
+  if (!c.includes(v)) v = 'card';   // 手机端 list 不可用 → card（不再让擂台失联）
   _currentView = v;
   const sections = document.getElementById('wl-sections');
   const listView = document.getElementById('wl-list-view');
@@ -540,7 +504,7 @@ function setView(v) {
   if (listView) listView.style.display = v === 'list'  ? '' : 'none';
   if (arena)    arena.style.display    = v === 'arena' ? '' : 'none';
   // 按钮显示「下一个」视图名
-  const next = _VIEW_CYCLE[(_VIEW_CYCLE.indexOf(v) + 1) % _VIEW_CYCLE.length];
+  const next = c[(c.indexOf(v) + 1) % c.length];
   const btn = document.getElementById('view-toggle-btn');
   if (btn) btn.textContent = next === 'card' ? T.viewCards : next === 'list' ? T.viewList : T.viewArena;
   if (v === 'arena') loadArena();
@@ -913,8 +877,11 @@ async function cancelJob(jobId, code) {
   }
 }
 function _isSearching() {
-  const inp = document.getElementById('search-q');
-  return inp && (document.activeElement === inp || inp.value.trim() !== '');
+  const active = document.activeElement;
+  const a = document.getElementById('as-search');   // 统一添加搜索（US-128）
+  const w = document.getElementById('wl-search');    // 列表过滤框
+  return (a && (active === a || a.value.trim() !== '')) ||
+         (w && (active === w || w.value.trim() !== ''));
 }
 function _showReloadBanner() {
   if (document.getElementById('reload-banner')) return;
@@ -962,11 +929,15 @@ function pollJob(jobId, code) {
       if (data.status === 'done') {
         clearInterval(interval);
         if (progressIv) clearInterval(progressIv);
-        _finishProgress(jobId, data.analysis && data.analysis.grade);
-        setTimeout(() => {
-          if (_isSearching()) { _showReloadBanner(); }
-          else { location.reload(); }
-        }, 1200);
+        const grade = data.analysis && data.analysis.grade;
+        _finishProgress(jobId, grade);
+        const done = () => { if (_isSearching()) { _showReloadBanner(); } else { location.reload(); } };
+        // 差评掉落动画（US-125）：D/D- 播一次沉底再落位
+        const poor = grade === 'D' || grade === 'D-';
+        const card = document.querySelector(`[data-job="${jobId}"]`);
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (poor && card && !reduce) { card.classList.add('wl-sink'); setTimeout(done, 1500); }
+        else { setTimeout(done, 1200); }
       } else if (data.status === 'failed') {
         clearInterval(interval);
         if (progressIv) clearInterval(progressIv);
@@ -977,16 +948,10 @@ function pollJob(jobId, code) {
   }, 5000);
 }
 
-// ── 添加面板 ─────────────────────────────────────────
+// ── 添加：聚焦统一搜索组件（US-128） ──────────────────
 function toggleAddPanel() {
-  const panel = document.getElementById('add-panel');
-  panel.classList.toggle('hidden');
-  if (!panel.classList.contains('hidden')) {
-    const input = document.getElementById('search-q');
-    if (input) {
-      input.focus();
-    }
-  }
+  const inp = document.getElementById('as-search');
+  if (inp) { inp.scrollIntoView({behavior:'smooth', block:'center'}); inp.focus(); }
 }
 function clearSelection() {
   ['add-code','add-name','add-market'].forEach(id => document.getElementById(id).value = '');

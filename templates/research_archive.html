@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.research_column }} — {{ t.brand }}{% endblock %}
+{% block pulse_bar %}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="research-archive">
+    <h1 class="ra-title">{{ t.research_column }}</h1>
+    <p class="ra-sub">{{ t.research_archive_sub }}</p>
+    <div class="ra-list">
+      {% for a in articles %}
+      <a href="{{ url_for('research_article', slug=a.slug) }}" class="ra-item">
+        <span class="ra-cover">{{ a.cover }}</span>
+        <span class="ra-body">
+          <span class="ra-eyebrow">{{ a.subtitle }} · {{ a.date }}</span>
+          <span class="ra-item-title">{{ a.title }}</span>
+        </span>
+        <span class="ra-arrow">→</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

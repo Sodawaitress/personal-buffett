@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>上市新茶饮六强对比</title>
+<style>
+  :root{
+    --paper:#F4EFE6; --surface:#FBF8F2; --surface-2:#F1E9DA;
+    --ink:#2B211A; --ink-soft:#6E6155; --ink-faint:#95897B;
+    --line:#E4DBCC; --accent:#A9662B; --accent-soft:#EBDCC6;
+    --up:#2F7D53; --down:#BE4436; --warn:#B0801F;
+    --tier-a:#2F7D53; --tier-b:#B0801F; --tier-c:#BE4436;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#1B1611; --surface:#241D17; --surface-2:#2C241C;
+      --ink:#F0E7DA; --ink-soft:#AC9E8C; --ink-faint:#7E7264;
+      --line:#372C22; --accent:#D69A5B; --accent-soft:#3A2C1C;
+      --up:#54B27F; --down:#E06B5C; --warn:#D6A24E;
+      --tier-a:#54B27F; --tier-b:#D6A24E; --tier-c:#E06B5C;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F4EFE6; --surface:#FBF8F2; --surface-2:#F1E9DA;
+    --ink:#2B211A; --ink-soft:#6E6155; --ink-faint:#95897B;
+    --line:#E4DBCC; --accent:#A9662B; --accent-soft:#EBDCC6;
+    --up:#2F7D53; --down:#BE4436; --warn:#B0801F;
+    --tier-a:#2F7D53; --tier-b:#B0801F; --tier-c:#BE4436;
+  }
+  :root[data-theme="dark"]{
+    --paper:#1B1611; --surface:#241D17; --surface-2:#2C241C;
+    --ink:#F0E7DA; --ink-soft:#AC9E8C; --ink-faint:#7E7264;
+    --line:#372C22; --accent:#D69A5B; --accent-soft:#3A2C1C;
+    --up:#54B27F; --down:#E06B5C; --warn:#D6A24E;
+    --tier-a:#54B27F; --tier-b:#D6A24E; --tier-c:#E06B5C;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:clamp(20px,5vw,56px) clamp(16px,4vw,40px) 72px;}
+
+  .masthead-brand{font-family:"Songti SC","STSong",serif;}
+  .eyebrow{
+    font-size:12px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 14px;
+  }
+  h1{
+    font-family:"Songti SC","STSong",serif;
+    font-size:clamp(30px,6vw,50px); line-height:1.1; margin:0 0 18px;
+    font-weight:800; text-wrap:balance; letter-spacing:.01em;
+  }
+  .lede{
+    font-size:clamp(16px,2.4vw,19px); color:var(--ink-soft); max-width:64ch;
+    margin:0 0 8px;
+  }
+  .lede b{color:var(--ink); font-weight:700;}
+  .stamp{font-size:13px; color:var(--ink-faint); margin-top:14px;}
+
+  .signal{
+    margin:34px 0 8px; padding:18px 20px; border-radius:14px;
+    background:var(--surface); border:1px solid var(--line);
+    border-left:4px solid var(--down);
+    display:grid; grid-template-columns:1fr; gap:6px;
+  }
+  .signal .k{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--down); font-weight:700;}
+  .signal p{margin:0; color:var(--ink-soft); font-size:15.5px;}
+  .signal p b{color:var(--ink);}
+
+  h2{
+    font-size:13px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-faint); font-weight:700; margin:52px 0 16px;
+    padding-bottom:10px; border-bottom:1px solid var(--line);
+  }
+
+  /* ---- comparison table ---- */
+  .scroll{overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--surface);}
+  table{width:100%; border-collapse:collapse; min-width:760px; font-size:14px;}
+  thead th{
+    text-align:right; padding:13px 14px; font-weight:700; color:var(--ink-faint);
+    font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+    border-bottom:1px solid var(--line); white-space:nowrap; background:var(--surface-2);
+  }
+  thead th:first-child, tbody td:first-child{text-align:left;}
+  tbody td{padding:13px 14px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:none;}
+  .nm{font-weight:700; color:var(--ink); font-size:15px;}
+  .nm small{display:block; font-weight:500; color:var(--ink-faint); font-size:11.5px; letter-spacing:.04em; margin-top:2px;}
+  .up{color:var(--up); font-weight:600;} .dn{color:var(--down); font-weight:600;} .fl{color:var(--ink-faint);}
+  .yoy{font-size:12px; margin-left:2px;}
+  .dd{font-weight:700;}
+
+  /* ---- brand cards ---- */
+  .cards{display:grid; gap:18px; grid-template-columns:1fr;}
+  @media(min-width:720px){.cards{grid-template-columns:1fr 1fr;}}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:22px 22px 20px; border-top:4px solid var(--tier); position:relative;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .card[data-t="a"]{--tier:var(--tier-a);}
+  .card[data-t="b"]{--tier:var(--tier-b);}
+  .card[data-t="c"]{--tier:var(--tier-c);}
+  .rank{
+    position:absolute; top:18px; right:20px; font-family:"Songti SC","STSong",serif;
+    font-size:40px; font-weight:800; color:var(--accent-soft); line-height:1;
+  }
+  :root[data-theme="dark"] .rank{color:var(--accent-soft);}
+  .card h3{margin:0; font-size:21px; font-weight:800; letter-spacing:.01em;}
+  .card h3 span{font-size:12.5px; font-weight:600; color:var(--ink-faint); margin-left:8px; letter-spacing:.03em;}
+  .pos{font-size:14px; color:var(--ink-soft); margin:0;}
+  .tag{
+    display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.08em;
+    padding:3px 9px; border-radius:20px; color:var(--tier);
+    background:color-mix(in srgb, var(--tier) 12%, transparent);
+    border:1px solid color-mix(in srgb, var(--tier) 35%, transparent); width:fit-content;
+  }
+  .metrics{display:grid; grid-template-columns:1fr 1fr; gap:2px 18px; margin:2px 0;}
+  .metrics div{display:flex; justify-content:space-between; gap:10px; font-size:13.5px; padding:5px 0; border-bottom:1px dotted var(--line);}
+  .metrics span:first-child{color:var(--ink-faint);}
+  .metrics span:last-child{font-weight:600; text-align:right;}
+  .note{font-size:14px; margin:0; color:var(--ink-soft);}
+  .note b{color:var(--ink);}
+  .moat, .risk{font-size:13.5px; margin:0; color:var(--ink-soft);}
+  .lbl{font-weight:700; color:var(--ink); font-size:12px; letter-spacing:.06em;}
+  .moat .lbl{color:var(--up);} .risk .lbl{color:var(--down);}
+
+  /* ---- models synthesis ---- */
+  .models{display:grid; gap:14px; grid-template-columns:1fr;}
+  @media(min-width:720px){.models{grid-template-columns:1fr 1fr;}}
+  .model{padding:18px 20px; border:1px solid var(--line); border-radius:14px; background:var(--surface);}
+  .model h4{margin:0 0 6px; font-size:16px; font-weight:800;}
+  .model p{margin:0; font-size:14px; color:var(--ink-soft);}
+  .model p b{color:var(--ink);}
+
+  .mirror{
+    margin-top:26px; padding:22px 24px; border-radius:16px;
+    background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .mirror h3{margin:0 0 8px; font-size:18px; font-weight:800; color:var(--ink);}
+  .mirror p{margin:0 0 8px; font-size:15px; color:var(--ink-soft);}
+  .mirror p:last-child{margin-bottom:0;} .mirror b{color:var(--ink);}
+
+  .takeaway{margin-top:26px; display:grid; gap:10px;}
+  .takeaway .row{display:flex; gap:14px; align-items:baseline; padding:14px 0; border-bottom:1px solid var(--line);}
+  .takeaway .row:last-child{border-bottom:none;}
+  .takeaway .who{font-weight:800; font-size:15px; min-width:96px; color:var(--ink);}
+  .takeaway .verdict{font-size:14.5px; color:var(--ink-soft);}
+  .takeaway .verdict b{color:var(--ink);}
+  .pill{font-size:11px; font-weight:700; letter-spacing:.05em; padding:2px 8px; border-radius:12px; margin-right:8px;}
+  .pill.buy{color:var(--up); background:color-mix(in srgb,var(--up) 14%,transparent);}
+  .pill.watch{color:var(--warn); background:color-mix(in srgb,var(--warn) 16%,transparent);}
+  .pill.avoid{color:var(--down); background:color-mix(in srgb,var(--down) 14%,transparent);}
+
+  footer{margin-top:44px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--ink-faint);}
+  footer a{color:var(--accent); text-decoration:none;}
+  footer p{margin:0 0 6px;}
+</style>
+</head>
+<body>
+{% if not embed %}<a href="/" class="research-back" aria-label="返回">← 返回</a>{% endif %}
+<style>
+.research-back{position:fixed;top:16px;left:16px;z-index:50;font-size:13px;font-weight:600;
+  padding:7px 14px;border-radius:20px;text-decoration:none;
+  background:var(--surface);color:var(--ink);border:1px solid var(--line);
+  box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.research-back:hover{border-color:var(--accent);color:var(--accent);}
+@media(max-width:680px){.research-back{top:10px;left:10px;}}
+</style>
+
+
+<div class="wrap">
+
+  <p class="eyebrow">行业研究 · 中国新茶饮</p>
+  <h1>上市奶茶六强：谁在赚钱，谁被价格战碾碎</h1>
+  <p class="lede">2024–2025 年，中国新茶饮品牌<b>扎堆冲上市</b>；2025–2026 年，它们几乎<b>集体暴跌</b>。这不是某一家出事，是整个板块在门店过度扩张 + 惨烈价格战之后，被市场从"给成长溢价"重新定价成"按成熟算账"。下面把六家能公开交易的逐个拆开——生意模式、单店经济、护城河、估值、以及最重要的：谁的赚钱逻辑扛得住价格战。</p>
+  <p class="stamp">营收 / 净利 = 2025 全年，单位亿元人民币；市值 / 股价 = 各自市场货币；数据截至约 2026 年年中。仅为研究整理，非投资建议。</p>
+
+  <div class="signal">
+    <span class="k">贯穿全行业的一个信号</span>
+    <p><b>六家上市后无一幸免地跌了</b>：奈雪 −96% 沦为仙股、霸王茶姬发行价 $28→$11、蜜雪从峰值 −54%、茶百道 −66%、沪上阿姨首日 +68% 后腰斩、古茗 52 周高点 −34%。当"开店速度"不再等于"股价"，市场要看的就变成了<b>单店能不能持续赚钱</b>——而价格战恰恰在摧毁这件事。</p>
+  </div>
+
+  <h2>横向对比 · 2025 全年</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>品牌</th><th>门店</th><th>营收</th><th>净利</th><th>净利率</th><th>市值</th><th>PE</th><th>距高点/发行</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="nm">蜜雪冰城<small>02097 · 港股</small></td>
+          <td>5.98 万<span class="yoy up"> +29%</span></td>
+          <td>335.6<span class="yoy up"> +35%</span></td>
+          <td>58.8<span class="yoy up"> +33%</span></td>
+          <td>17.5%</td>
+          <td>~1000 亿<small>HK$</small></td>
+          <td>~16</td>
+          <td class="dd dn">−54%</td>
+        </tr>
+        <tr>
+          <td class="nm">古茗<small>01364 · 港股</small></td>
+          <td>1.36 万<span class="yoy up"> +37%</span></td>
+          <td>129.1<span class="yoy up"> +47%</span></td>
+          <td>31.2<span class="yoy up"> +109%</span></td>
+          <td>19.9%*</td>
+          <td>494 亿<small>HK$</small></td>
+          <td>14.4</td>
+          <td class="dd dn">−34%</td>
+        </tr>
+        <tr>
+          <td class="nm">霸王茶姬<small>CHA · 纳斯达克</small></td>
+          <td>7,453<span class="yoy up"> +16%</span></td>
+          <td>129.1<span class="yoy fl"> +4%</span></td>
+          <td class="fl">利润率腰斩</td>
+          <td class="dn">10.4%**</td>
+          <td>$2.5 B</td>
+          <td>~16</td>
+          <td class="dd dn">−60%</td>
+        </tr>
+        <tr>
+          <td class="nm">茶百道<small>02555 · 港股</small></td>
+          <td>8,621<span class="yoy fl"> +3%</span></td>
+          <td>53.95<span class="yoy up"> +10%</span></td>
+          <td>8.2<span class="yoy up"> +71%</span></td>
+          <td>15.4%</td>
+          <td>87 亿<small>HK$</small></td>
+          <td>~10</td>
+          <td class="dd dn">−66%</td>
+        </tr>
+        <tr>
+          <td class="nm">沪上阿姨<small>02589 · 港股</small></td>
+          <td>1.14 万<span class="yoy up"> +25%</span></td>
+          <td>44.66<span class="yoy up"> +36%</span></td>
+          <td>5.01<span class="yoy up"> +52%</span></td>
+          <td>11.2%</td>
+          <td>80 亿<small>HK$</small></td>
+          <td>~15</td>
+          <td class="dd dn">首日+68后腰斩</td>
+        </tr>
+        <tr>
+          <td class="nm">奈雪的茶<small>02150 · 港股</small></td>
+          <td>1,646<span class="yoy dn"> −8%</span></td>
+          <td>43.3<span class="yoy dn"> −12%</span></td>
+          <td class="dn">亏 2.4</td>
+          <td class="dn">亏损</td>
+          <td>13 亿<small>HK$</small></td>
+          <td class="fl">—</td>
+          <td class="dd dn">−96%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="stamp">* 古茗为调整后净利率（报表口径 24%，含一次性因素）；** 霸王茶姬为<b>经营</b>利润率，由 2024 年的 23.3% 跌到 10.4%。</p>
+
+  <h2>逐个拆开 · 按赚钱质地排序</h2>
+  <div class="cards">
+
+    <div class="card" data-t="a">
+      <span class="rank">1</span>
+      <h3>蜜雪冰城 <span>02097.HK</span></h3>
+      <span class="tag">规模盈利王</span>
+      <p class="pos">极致低价（一杯 6–8 元），冰淇淋 + 柠檬水 + 奶茶，全球门店最多。</p>
+      <div class="metrics">
+        <div><span>全球门店</span><span>59,823</span></div>
+        <div><span>营收</span><span>335.6 亿 +35%</span></div>
+        <div><span>归母净利</span><span>58.8 亿 +33%</span></div>
+        <div><span>股价</span><span>较峰值 −54%</span></div>
+      </div>
+      <p class="moat"><span class="lbl">护城河</span> 它其实<b>不靠卖奶茶赚钱</b>——靠给加盟商卖原料、设备、供应链赚钱（本质是 2B 的"卖水人"）。五大生产基地 + 全国仓配，规模把成本压到别人做不到。因为本来就是全行业最低价，价格战对它伤害最小。</p>
+      <p class="risk"><span class="lbl">风险</span> 增长见顶：国内主动放缓开店，低价有天花板；已启动"品牌升级 2.0" + 16 亿供应链投资 + CEO 换帅。市场已把它从"成长股"重定价为"成熟股"。</p>
+      <p class="note"><b>一句话：</b>唯一真正靠规模 + 供应链赚大钱的一个，逻辑最硬——但便宜的成长故事讲完了。</p>
+    </div>
+
+    <div class="card" data-t="a">
+      <span class="rank">2</span>
+      <h3>古茗 <span>01364.HK</span></h3>
+      <span class="tag">增长质量最好</span>
+      <p class="pos">中价位（10–18 元）鲜果茶，扎根二线及以下"下沉密度王"。</p>
+      <div class="metrics">
+        <div><span>门店</span><span>13,554</span></div>
+        <div><span>营收</span><span>129.1 亿 +47%</span></div>
+        <div><span>净利</span><span>31.2 亿 +109%</span></div>
+        <div><span>单店日均杯</span><span>384 → 456</span></div>
+      </div>
+      <p class="moat"><span class="lbl">护城河</span> 区域加密 + <b>冷链密度</b>：在一个区域把店开满，鲜果高频短半径配送，别人进不来。单店日均 GMV 6500→7800，是少数"开店同时单店还在变好"的。</p>
+      <p class="risk"><span class="lbl">风险</span> 高度绑定下沉市场景气；区域密度接近饱和后增速会掉；红利能持续多久是关键变量。</p>
+      <p class="note"><b>一句话：</b>利润翻倍、单店提升，估值反而最便宜（PE ~14）——数据上最"物美价廉"的一个。</p>
+    </div>
+
+    <div class="card" data-t="b">
+      <span class="rank">3</span>
+      <h3>霸王茶姬 <span>CHA · 美股</span></h3>
+      <span class="tag">品牌溢价 · 出海期权</span>
+      <p class="pos">高单价"原叶鲜奶茶"（16–20 元），想做"中国星巴克"，已进马来 / 新加坡 / 美国等。</p>
+      <div class="metrics">
+        <div><span>门店</span><span>7,453 +16%</span></div>
+        <div><span>营收</span><span>129.1 亿 +4%</span></div>
+        <div><span>经营利润率</span><span>23.3% → 10.4%</span></div>
+        <div><span>股价</span><span>$28 → $11</span></div>
+      </div>
+      <p class="moat"><span class="lbl">护城河</span> 单品爆款（伯牙绝弦）+ 品牌调性 + 高单店效率；账上现金充裕（~79 亿）。是六家里<b>品牌力最强</b>的。</p>
+      <p class="risk"><span class="lbl">风险</span> 增长神话破裂：营收增速从三位数掉到 <b>+4%</b>，经营利润率直接腰斩（价格战 + 费用）；高度依赖单一爆品，出海尚未验证。市场杀得最狠。</p>
+      <p class="note"><b>一句话：</b>从"高增长神话"跌成"增速 4% + 利润腰斩"，现在赌的是品牌 + 出海能不能重启第二增长曲线。分析师仍给"买入"（目标 $15.6）。</p>
+    </div>
+
+    <div class="card" data-t="b">
+      <span class="rank">4</span>
+      <h3>茶百道 <span>02555.HK</span></h3>
+      <span class="tag">利润反转 · 扩张停滞</span>
+      <p class="pos">中价位加盟品牌，曾"失速"，2025 靠盈利修复反转。</p>
+      <div class="metrics">
+        <div><span>门店</span><span>8,621 +2.7%</span></div>
+        <div><span>营收</span><span>53.95 亿 +10%</span></div>
+        <div><span>净利</span><span>8.2 亿 +71%</span></div>
+        <div><span>净利率</span><span>13.1% → 15.4%</span></div>
+      </div>
+      <p class="moat"><span class="lbl">护城河</span> 加盟 + 供应链，正上咖啡、探索出海（10 国 38 店）；PE 最低（~10），便宜。</p>
+      <p class="risk"><span class="lbl">风险</span> <b>开店几乎停了（+2.7%）</b>——利润增长靠"减员增效"而非扩张，中间价位被蜜雪（低）和霸王（高）两头挤。</p>
+      <p class="note"><b>一句话：</b>报表反转好看，但增长引擎熄火，是"省出来的利润"，不是"长出来的"。</p>
+    </div>
+
+    <div class="card" data-t="b">
+      <span class="rank">5</span>
+      <h3>沪上阿姨 <span>02589.HK</span></h3>
+      <span class="tag">上市炒作 · 回落</span>
+      <p class="pos">中价位，北方强，多品牌（沪上阿姨 + 沪咖 + 茶瀑布），刚过万店。</p>
+      <div class="metrics">
+        <div><span>门店</span><span>11,449 +25%</span></div>
+        <div><span>营收</span><span>44.66 亿 +36%</span></div>
+        <div><span>净利</span><span>5.01 亿 +52%</span></div>
+        <div><span>毛利率</span><span>31.4%</span></div>
+      </div>
+      <p class="moat"><span class="lbl">护城河</span> 几乎全加盟（直营仅 26 家），北方下沉 + 多品牌矩阵。规模已破万店。</p>
+      <p class="risk"><span class="lbl">风险</span> 上市首日 +68% 后<b>连跌</b>（"万店概念刹车"），IPO 时 PE 曾高达 ~47 倍（六家最贵）；规模和茶百道相近，<b>但盈利更弱</b>；加盟开店明显放缓。</p>
+      <p class="note"><b>一句话：</b>炒得最凶、跌得也凶；万店规模但单店盈利偏弱，性价比不如古茗 / 茶百道。</p>
+    </div>
+
+    <div class="card" data-t="c">
+      <span class="rank">6</span>
+      <h3>奈雪的茶 <span>02150.HK</span></h3>
+      <span class="tag">反面教材</span>
+      <p class="pos">高端直营（25–30 元），"新茶饮第一股"，如今行业垫底。</p>
+      <div class="metrics">
+        <div><span>门店</span><span>1,646（关 152 家）</span></div>
+        <div><span>营收</span><span>43.3 亿 −12%</span></div>
+        <div><span>净利</span><span>亏 2.4 亿</span></div>
+        <div><span>股价</span><span>较发行 −96%</span></div>
+      </div>
+      <p class="moat"><span class="lbl">护城河</span> 高端大店空间体验——但这在价格战里恰恰是<b>负资产</b>：重资产直营、租金人力高、翻不动量。</p>
+      <p class="risk"><span class="lbl">风险</span> 唯一营收下滑、连亏两年、全年关店、股价 0.66 港元沦为<b>仙股</b>；外卖占比飙到 52.6% 是被动求生。</p>
+      <p class="note"><b>一句话：</b>教科书级反面案例——高端重资产直营，被低价加盟大军正面碾碎。</p>
+    </div>
+
+  </div>
+
+  <h2>三种活法 · 护城河在哪</h2>
+  <div class="models">
+    <div class="model"><h4>卖水人（蜜雪）</h4><p><b>最抗打</b>。自己就是最低价，还靠卖原料给加盟商赚钱——价格战越狠，越多小店来加盟买它的料。护城河 = 供应链规模。</p></div>
+    <div class="model"><h4>区域密度（古茗）</h4><p><b>质量最好</b>。在一个区域把店开满 + 冷链短半径，别人进不来。护城河 = 配送密度。增长更健康、估值更便宜。</p></div>
+    <div class="model"><h4>品牌溢价（霸王茶姬）</h4><p><b>最脆弱也最有想象力</b>。靠品牌卖高价，但价格战里溢价最先被打穿——所以利润率腰斩。护城河 = 品牌，赌注 = 出海。</p></div>
+    <div class="model"><h4>高端直营（奈雪）</h4><p><b>几乎没护城河</b>。重资产大店在价格战里是包袱。已被证伪。</p></div>
+  </div>
+
+  <div class="mirror">
+    <h3>和你问的麦当劳对照着看</h3>
+    <p>麦当劳是<b>"成熟到顶、涨价发动机熄火"</b>——生意好但增长的老引擎用完了，被杀估值。</p>
+    <p>奶茶是<b>"扩张太猛、自相残杀"</b>——门店铺太快 + 价格战打烂单店利润，市场从"给成长溢价"转为"按成熟算账"，也被杀估值。</p>
+    <p>两条不同的路，通向<b>同一个结局：增长减速 → 估值下杀</b>。区别在于——麦当劳的护城河（品牌 + 加盟现金流）还在，奶茶这边护城河<b>分化极大</b>：蜜雪的"卖水人"模式和奈雪的"高端直营"，一个天一个地。</p>
+  </div>
+
+  <h2>如果要在里面挑</h2>
+  <div class="takeaway">
+    <div class="row"><span class="who">蜜雪 / 古茗</span><span class="verdict"><span class="pill buy">值得研究</span>逻辑最清晰：<b>蜜雪 = 赚钱的规模王</b>（但估值已回归成熟）；<b>古茗 = 增长质量 + 便宜 PE</b>。这两个是"真生意"。</span></div>
+    <div class="row"><span class="who">霸王茶姬</span><span class="verdict"><span class="pill watch">困境反转期权</span>品牌 + 现金 + 出海想象力都在，但要赌它能不能从"+4% 增速 + 利润腰斩"里重启增长。跌得多，风险也真。</span></div>
+    <div class="row"><span class="who">茶百道 / 沪上阿姨</span><span class="verdict"><span class="pill watch">吸引力弱</span>茶百道扩张停滞（靠省钱）、沪上阿姨偏贵且盈利弱——都是"能看但不急"。</span></div>
+    <div class="row"><span class="who">奈雪的茶</span><span class="verdict"><span class="pill avoid">回避</span>模式被证伪、连亏、仙股——除非有明确困境反转证据，否则是价值陷阱。</span></div>
+  </div>
+
+  <footer>
+    <p><b>数据来源：</b>各公司 2025 年报 / 港交所公告、新浪财经、界面新闻、GlobeNewswire（Chagee）、理杏仁、富途、companiesmarketcap 等公开资料。</p>
+    <p>营收 / 净利为 2025 全年、单位亿元人民币；市值 / 股价 / PE 截至约 2026 年年中，会随行情变动。本页仅为公开信息研究整理，<b>不构成投资建议</b>。</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

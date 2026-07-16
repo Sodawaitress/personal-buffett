@@ -195,6 +195,22 @@
     "en": "Latest Signals",
     "zh": "最新信号"
   },
+  "research_column": {
+    "en": "Industry Deep Dive",
+    "zh": "行业分析专栏"
+  },
+  "research_read": {
+    "en": "Read",
+    "zh": "阅读全文"
+  },
+  "research_archive_sub": {
+    "en": "Carefully researched, hand-made — like two real journalists.",
+    "zh": "仔细研究、仔细做——像两个真正的记者。"
+  },
+  "news_fold_label": {
+    "en": "Market news",
+    "zh": "市场新闻"
+  },
   "alert_warn_grade": {
     "en": "Grade {grade} — review recommended",
     "zh": "评级 {grade}，建议关注"

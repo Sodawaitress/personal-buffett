@@ -37,93 +37,38 @@
     <span id="bg-refresh-status" class="bg-refresh-status"></span>
   </div>
 
-  <div class="catalyst-banner home-catalyst">
-    <div class="catalyst-banner-title">{{ t.catalyst_title }}</div>
-    {% if upcoming_events %}
-    <div class="catalyst-banner-list">
-      {% set ev_type_labels = {
-        'share_unlock':       t.catalyst_share_unlock,
-        'earnings_report':    t.catalyst_earnings_report,
-        'major_announcement': t.catalyst_major_announcement,
-        'earnings_forecast':  t.catalyst_earnings_forecast,
-      } %}
-      {% for ev in upcoming_events %}
-      <a href="{{ url_for('stock_page', code=ev.code) }}" class="catalyst-item{% if ev.days_until == 0 %} catalyst-today{% elif ev.days_until <= 2 %} catalyst-soon{% endif %}">
-        <span class="catalyst-badge">{{ ev_type_labels.get(ev.event_type, ev.event_type) }}</span>
-        <span class="catalyst-name">{{ ev.display_name }}</span>
-        <span class="catalyst-when">{% if ev.days_until == 0 %}{{ t.catalyst_today }}{% elif ev.days_until == 1 %}{{ t.catalyst_tomorrow }}{% else %}{{ ev.days_until }}{{ t.catalyst_days_later }}{% endif %}</span>
-        <span class="catalyst-summary">{{ ev.summary[:40] }}{% if ev.summary|length > 40 %}…{% endif %}</span>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="catalyst-empty">{{ t.catalyst_empty }}</div>
-    {% endif %}
-  </div>
-
-  {# ══════════════════════════════════
-     三卡片行（横向滑动）
-     ══════════════════════════════════ #}
-  <div class="home-cards-row">
-
-    {# 卡片 1「今日简报」已删除：泛泛的 LLM 日报意义不大，且对妈妈是信息过载。
-       预警数改由具体信号呈现，不再用合成日报。 #}
-
-    {# 卡片 2：我的选股 #}
-    <a href="{{ url_for('watchlist_page') }}" class="home-card home-card-watchlist">
-      <div class="hc-main">
-        <div class="hc-title">{{ t.home_card_watchlist }}</div>
-        <div class="hc-sub">{{ stocks | length }} {{ t.home_card_watchlist_sub }}</div>
-        {% if stocks %}
-        <div class="hc-grades">
-          {% for s in stocks[:6] %}
-          <span class="wax-seal wax-seal-sm grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade and s.grade != '—' else 'c' }}">{{ s.grade }}</span>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </div>
-      <div class="hc-right">›</div>
+  {# 近期事件 → 顶栏一行提示（US-126）：无事件则不渲染 #}
+  {% if upcoming_events %}
+  {% set ev_type_labels = {
+    'share_unlock':       t.catalyst_share_unlock,
+    'earnings_report':    t.catalyst_earnings_report,
+    'major_announcement': t.catalyst_major_announcement,
+    'earnings_forecast':  t.catalyst_earnings_forecast,
+  } %}
+  <div class="home-event-line">
+    <span class="hel-label">{{ t.catalyst_title }}</span>
+    {% for ev in upcoming_events[:4] %}
+    <a href="{{ url_for('stock_page', code=ev.code) }}" class="hel-item{% if ev.days_until == 0 %} hel-today{% endif %}">
+      <b>{{ ev.display_name }}</b> {{ ev_type_labels.get(ev.event_type, ev.event_type) }}·{% if ev.days_until == 0 %}{{ t.catalyst_today }}{% elif ev.days_until == 1 %}{{ t.catalyst_tomorrow }}{% else %}{{ ev.days_until }}{{ t.catalyst_days_later }}{% endif %}
     </a>
-
-  </div>{# /home-cards-row #}
-
-  {# 添加股票：居中大号按钮 + 展开面板（与「我的选股」页一致） #}
-  <div class="home-add-block">
-    <button type="button" class="wl-add-hero" onclick="toggleHomeAdd()">
-      <svg width="15" height="15" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2.2" pointer-events="none">
-        <line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/>
-      </svg>
-      {{ t.wl_add_btn }}
-    </button>
-
-    <div class="home-add-panel hidden" id="home-add-panel">
-      <div class="search-type-seg" id="search-type-seg">
-        {% if locale == 'zh' %}
-        <button type="button" class="seg-btn active" data-type="cn" onclick="setSearchType('cn',this)">{{ t.search_type_cn }}</button>
-        <button type="button" class="seg-btn" data-type="fund" onclick="setSearchType('fund',this)">{{ t.search_type_fund }}</button>
-        <button type="button" class="seg-btn" data-type="intl" onclick="setSearchType('intl',this)">{{ t.search_type_intl }}</button>
-        {% else %}
-        <button type="button" class="seg-btn active" data-type="intl" onclick="setSearchType('intl',this)">{{ t.search_type_intl }}</button>
-        <button type="button" class="seg-btn" data-type="fund" onclick="setSearchType('fund',this)">{{ t.search_type_fund }}</button>
-        <button type="button" class="seg-btn" data-type="cn" onclick="setSearchType('cn',this)">{{ t.search_type_cn }}</button>
-        {% endif %}
-      </div>
-      <div class="stock-search-wrap">
-        <input type="text" id="search-q" class="search-input" placeholder="{{ t.search_placeholder }}" autocomplete="off">
-        <div id="search-dropdown" class="search-dropdown"></div>
-      </div>
-      <form id="add-form" method="post" action="{{ url_for('add_stock') }}">
-        <input type="hidden" name="code" id="add-code">
-        <input type="hidden" name="name" id="add-name">
-        <input type="hidden" name="market" id="add-market">
-        <input type="hidden" name="asset_type" id="add-asset-type">
-      </form>
-    </div>
+    {% endfor %}
   </div>
+  {% endif %}
 
-  {# ══════════════════════════════════
-     US-76 今日信号 · 最值得关注榜单
-     ══════════════════════════════════ #}
+  {# 添加股票：正文第一块（US-126/128）。统一搜索组件 #}
+  {% include 'stock/_add_search.html' %}
+
+  {# 行业分析专栏 · 预览（US-127）：嵌真文章显示一半，底部渐隐 + 阅读全文 #}
+  {% if featured_research %}
+  <div class="research-preview">
+    <iframe src="{{ url_for('research_article', slug=featured_research.slug) }}?embed=1" class="rp-frame" scrolling="no" tabindex="-1" loading="lazy" title="{{ featured_research.title }}"></iframe>
+    <a href="{{ url_for('research_article', slug=featured_research.slug) }}" class="rp-overlay" aria-label="{{ t.research_read }}">
+      <span class="rp-more">{{ t.research_read }} →</span>
+    </a>
+  </div>
+  {% endif %}
+
+  {# 今日信号 · 榜单常显（US-76），只有「接近触发」子块折叠（US-126） #}
   {% if has_cn_stocks %}
   <div class="signal-radar-section" id="signal-radar">
     <div class="sr-header">
@@ -137,9 +82,9 @@
   </div>
   {% endif %}
 
-  {# ══════════════════════════════════
-     市场信息流 — NYT 双栏
-     ══════════════════════════════════ #}
+  {# 市场信息流 — 折叠（US-126，用户：新闻感觉没啥用，收起来） #}
+  <details class="news-fold">
+  <summary class="news-fold-summary">{{ t.news_fold_label }}</summary>
   <div class="news-section-wrap">
   <div class="news-columns">
 
@@ -249,10 +194,12 @@
   {% endif %}
 
   </div>{# /news-section-wrap #}
+  </details>{# /news-fold #}
 
   {# ══════════════════════════════════
      知识专栏 — Clipping 卡片 (DS-06)
      ══════════════════════════════════ #}
+  {% if show_knowledge_column %}{# 知识专栏暂藏（US-126）：没做好，先隐藏，将来传 show_knowledge_column=True 恢复 #}
   <div class="clipping-section">
     <div class="clipping-header">
       <span class="section-label">{{ t.lbl_knowledge }}</span>
@@ -311,6 +258,7 @@
     </div>
 
   </div>{# /clipping-section #}
+  {% endif %}{# /show_knowledge_column #}
 
 </div>
 
@@ -332,8 +280,11 @@ function toggleCompound() {
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 function updateCompound() {
-  const rate  = +document.getElementById('cc-rate').value;
-  const years = +document.getElementById('cc-years').value;
+  const rateEl  = document.getElementById('cc-rate');
+  const yearsEl = document.getElementById('cc-years');
+  if (!rateEl || !yearsEl) return;   // 知识专栏隐藏时无复利计算器元素，直接跳过（否则整段 JS 崩）
+  const rate  = +rateEl.value;
+  const years = +yearsEl.value;
   const start = 10000;
   const end   = Math.round(start * Math.pow(1 + rate/100, years));
   document.getElementById('cc-result').textContent = '¥' + end.toLocaleString();
@@ -543,12 +494,13 @@ function _renderRadarSignals(data) {
   }
 
   if (approaching.length) {
-    html += `<div class="sr-approaching-header">接近触发 · 信号预警</div>`;
+    html += `<details class="sr-approaching-fold">`;
+    html += `<summary class="sr-approaching-header">接近触发 · 信号预警 <span class="sr-appr-count">${approaching.length}</span></summary>`;
     html += '<div class="sr-approaching-list">';
     for (const item of approaching) {
       html += _renderApproachingCard(item);
     }
-    html += '</div>';
+    html += '</div></details>';
   }
 
   html += `<div class="sr-footer">已扫描 ${scanned} 只A股</div>`;

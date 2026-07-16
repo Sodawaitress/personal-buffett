@@ -1,0 +1,84 @@
+{# 统一「添加股票」搜索组件（US-128）：所有添加入口共用，避免用户困惑。
+   设计语言来自 landing command 面板：搜索→选中即静默加入自选→命令菜单（隐藏"研究"命令）。 #}
+<div class="add-search{% if add_search_compact %} add-search-compact{% endif %}" id="add-search">
+  <div class="add-search-prompt">{{ '今天想成为哪家公司的股东？' if locale == 'zh' else 'Which company do you want to own today?' }}</div>
+  <div class="search-type-seg" id="as-type-seg">
+    {% if locale == 'zh' %}
+    <button type="button" class="seg-btn active" data-type="cn"   onclick="setAddType('cn',this)">A股</button>
+    <button type="button" class="seg-btn"        data-type="fund" onclick="setAddType('fund',this)">基金</button>
+    <button type="button" class="seg-btn"        data-type="intl" onclick="setAddType('intl',this)">海外</button>
+    {% else %}
+    <button type="button" class="seg-btn active" data-type="intl" onclick="setAddType('intl',this)">Global</button>
+    <button type="button" class="seg-btn"        data-type="cn"   onclick="setAddType('cn',this)">A-share</button>
+    <button type="button" class="seg-btn"        data-type="fund" onclick="setAddType('fund',this)">Fund</button>
+    {% endif %}
+  </div>
+  <div class="as-input-row">
+    <span class="as-icon">🔍</span>
+    <input id="as-search" class="as-box" type="text"
+           placeholder="{{ '输入公司名或股票代码…' if locale == 'zh' else 'Company name or ticker…' }}"
+           autocomplete="off">
+    <div id="as-dropdown" class="search-dropdown"></div>
+  </div>
+  <div id="as-action-panel" class="as-action-panel">
+    <div class="as-ap-head">
+      <div class="as-ap-stock">
+        <span class="as-ap-code" id="as-ap-code"></span>
+        <span class="as-ap-name" id="as-ap-name"></span>
+        <span class="as-ap-market" id="as-ap-market"></span>
+        <span class="as-ap-tag" id="as-ap-tag"></span>
+      </div>
+      <button class="as-ap-close" onclick="closeAddPanel()" aria-label="close">×</button>
+    </div>
+    <div class="as-ap-actions">
+      <button type="button" class="as-ap-btn" onclick="_addGo('detail')">{{ '查看详情' if locale == 'zh' else 'View details' }} →</button>
+      <a class="as-ap-btn" href="{{ url_for('watchlist_page') }}">{{ '我的选股' if locale == 'zh' else 'My watchlist' }}</a>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  if (window._addSearchInit) return; window._addSearchInit = true;
+  var _addType = localStorage.getItem('pbc_search_type') || '{{ "cn" if locale == "zh" else "intl" }}';
+  var _addCode = '';
+  window.setAddType = function(type, btn){
+    _addType = type; localStorage.setItem('pbc_search_type', type);
+    document.querySelectorAll('#as-type-seg .seg-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    var inp = document.getElementById('as-search');
+    if (inp && inp.value.trim()) inp.dispatchEvent(new Event('input',{bubbles:true})); else if (inp) inp.focus();
+  };
+  window.closeAddPanel = function(){
+    var p = document.getElementById('as-action-panel'); if (p) p.classList.remove('open');
+    var inp = document.getElementById('as-search'); if (inp){ inp.value=''; inp.focus(); }
+  };
+  window._addGo = function(dest){
+    if (dest === 'detail' && _addCode) location.href = '/stock/' + encodeURIComponent(_addCode);
+  };
+  function showAddPanel(code, name, market){
+    _addCode = code;
+    document.getElementById('as-ap-code').textContent   = code;
+    document.getElementById('as-ap-name').textContent   = name;
+    document.getElementById('as-ap-market').textContent = (market||'').toUpperCase();
+    document.getElementById('as-search').value          = name;
+    var tag = document.getElementById('as-ap-tag'); tag.textContent = '';
+    document.getElementById('as-action-panel').classList.add('open');
+    // 选中即有兴趣 → 静默加入自选（隐藏"研究"命令，纯添加）
+    fetch('/api/watchlist/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code:code, name:name})})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        tag.textContent = (d.ok && !d.already) ? '{{ "已加入自选 ✓" if locale == "zh" else "Added ✓" }}'
+                        : (d.already ? '{{ "已在自选中" if locale == "zh" else "Already added" }}' : '');
+        setTimeout(function(){ tag.textContent = ''; }, 3000);
+      }).catch(function(){});
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    var inp = document.getElementById('as-search');
+    if (!inp || typeof SearchWidget === 'undefined') return;
+    inp.addEventListener('focus', function(){
+      var p = document.getElementById('as-action-panel');
+      if (p && p.classList.contains('open')){ p.classList.remove('open'); inp.value = ''; }
+    });
+    SearchWidget.bind('as-search', 'as-dropdown', function(){ return _addType; }, function(c,n,m){ showAddPanel(c,n,m); }, '{{ locale }}');
+  });
+})();
+</script>
