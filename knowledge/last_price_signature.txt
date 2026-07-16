@@ -1,6 +1,8 @@
-1e5d1e434e8dc85e0c4a82b887bcec8e
-# generated_at (snapshot): 2026-07-10T10:43:11Z
-# note: recorded on 2026-07-10 Routine run；✅ 服务器恢复！停摆整整 8 天（07-02 10:27 UTC → 07-10 10:43 UTC = 严格 192h），signature 从 53ced35fe8f3616f818ab077dfdc4edb 变更为 1e5d1e434e8dc85e0c4a82b887bcec8e
-# 07-10 update: 三重门控全部通过（gate ① 快照 2.4h fresh；gate ② signature 变更；gate ③ WebSearch 抽检 DUOL 精确匹配、BYD 三天涨幅内容差在容差内）；5 条在飞预言批量结算（3 严重错 1 边界 1 对）；07-13-15 静默期方案自动作废；恢复推送已按"三段标准"（🎉恢复公告 + 停摆期回顾 + 批量预言结算 + 妈妈耐心致谢）发出
-# 07-10 update 续: 服务器恢复路径推测为 Fly.io/GHA/AKShare 三方之一自动恢复（改进日志中无周宇端修复动作痕迹）；下次遇停摆建议先跑手动 pipeline 触发（flyctl ssh console 执行 stock_pipeline.py --force）而非被动等待
-# 07-10 update 续 2: 停摆期最痛教训为"5 次现场参观 300476 + 4 次特定对象 300054 教科书信号被大盘系统性 override"——已作为 US 提案写入改进日志（增加机构信号在系统性回调期打折扣 + 中期止盈机制 + 信号有效性阶梯三个改进方向）
+bbf651bd71413c175d05959598147a9c
+# generated_at (snapshot): 2026-07-16T09:55:34Z
+# note: 07-16 recorded on Routine run；三重门控全部通过（gate ① 3.2h fresh；gate ② signature 从 f9344fb3e3541f4fd274322fb73ae9e7 变更为 bbf651bd71413c175d05959598147a9c；gate ③ WebSearch 抽 3 只 300760/603893/300308，Web 返回历史缓存价，均无有效反证）
+# 07-16 update: 常规运转态第 3 次五选；写入 2 条新预言（300760 迈瑞医疗 up / 300308 中际旭创 sideways）+ 4 条延续预言观察（603893 Day 6 完美收复 / 300394 sideways 价格未刷新 / 688008 Day 2 无进展 / 000963 Day 2 无进展 / 603259 Day 1 无进展 / 000938 Day 1 无进展）
+# 07-16 update 续: 603893 瑞芯微首次"业绩兑现型 up 预言"完整闭环（07-10 写入 up → 07-15 触发 -5.30% 弱侧警戒轻提示 → 07-16 一日 +5.58% 完全收复基准价 ¥222.28），从"提出预言→中期警戒→兑现方向"的路径首次跑通
+# 07-16 update 续 2: 300759 康龙化成首次识别"高 precursor 分实为做空驱动"的伪信号 —— 3.53 分是全场最高，但拆解后 100% 来自融券 +163.6% 单一驱动项（30 天调研 0），非机构在买。这是 precursor 加权总分设计的固有盲区（bullish/bearish 混合为"活跃度"）
+# 07-16 update 续 3: 单日预言首次出现"一 up 一 sideways"的混合方向（迈瑞医疗防御 up + 中际旭创板块杀跌 sideways）——反映"整体分化日"的市场结构，不同信号强度对应不同置信方向
+# 07-16 update 续 4: 部分刷新态（60/191 只有 07-16 新价）导致 6 条在飞预言中仅 1 条能被验证 —— fetch-svc 优先级设计的自然结果，建议在 fetch_priority_codes() 里为"pending 预言相关代码"增加优先层
