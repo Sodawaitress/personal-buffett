@@ -2294,3 +2294,199 @@
 @media (prefers-color-scheme: dark) { .pchart { --pc-accent: #2dd4bf; } }
 :root[data-theme="dark"] .pchart { --pc-accent: #2dd4bf; }
 :root[data-theme="light"] .pchart { --pc-accent: #0d9488; }
+
+/* ── US-75 预言家线 ── */
+.prophet {
+  margin: 4px 0 18px; padding: 12px 14px 10px;
+  border: 1px solid var(--rule-light); border-radius: 10px;
+  background: var(--paper);
+  --pr-accent: #64748b;
+}
+.prophet-rising  { --pr-accent: #16a34a; }
+.prophet-falling { --pr-accent: #dc2626; }
+.prophet-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.prophet-title { font-weight: 600; font-size: 14px; color: var(--ink); }
+.prophet-dir { font-size: 12.5px; font-weight: 600; color: var(--pr-accent); }
+.prophet-chart { position: relative; height: 72px; margin: 10px 0 6px; }
+.prophet-svg { width: 100%; height: 72px; overflow: visible; display: block; }
+.prophet-line { fill: none; stroke: var(--pr-accent); stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.prophet-dot { fill: var(--paper); stroke: var(--pr-accent); stroke-width: 1.5; }
+.prophet-cursor line { stroke: var(--ink-faint); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.prophet-cursor circle { fill: var(--pr-accent); }
+.prophet-tip {
+  position: absolute; top: -8px; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-size: 11px;
+  padding: 3px 8px; border-radius: 5px; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 3px 10px rgba(0,0,0,.18);
+}
+.prophet-foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.prophet-since { font-size: 11.5px; color: var(--ink-faint); }
+.prophet-hint { font-size: 11.5px; color: var(--ink-muted); flex: 1 1 200px; }
+@media (prefers-color-scheme: dark) {
+  .prophet { --pr-accent: #94a3b8; }
+  .prophet-rising { --pr-accent: #4ade80; }
+  .prophet-falling { --pr-accent: #f87171; }
+}
+:root[data-theme="dark"] .prophet { --pr-accent: #94a3b8; }
+:root[data-theme="dark"] .prophet-rising { --pr-accent: #4ade80; }
+:root[data-theme="dark"] .prophet-falling { --pr-accent: #f87171; }
+:root[data-theme="light"] .prophet { --pr-accent: #64748b; }
+:root[data-theme="light"] .prophet-rising { --pr-accent: #16a34a; }
+:root[data-theme="light"] .prophet-falling { --pr-accent: #dc2626; }
+
+/* ══ US-129 短线生命周期页 ══ */
+.lifecycle-page { max-width: 640px; margin: 0 auto; padding: 8px 4px 60px; }
+.lc-back { font-size: 13px; font-weight: 600; color: var(--ink-muted); text-decoration: none; }
+.lc-back:hover { color: var(--gold); }
+.lc-title { font-size: 26px; font-weight: 800; margin: 14px 0 4px; }
+.lc-sub { color: var(--ink-muted); font-size: 14px; margin: 0 0 22px; }
+
+.lc-evo { padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--rule-light); background: var(--paper-2); }
+.lc-evo-head { font-size: 15px; font-weight: 700; color: var(--ink); }
+.lc-evo-ev { font-size: 12.5px; color: var(--ink-muted); margin-top: 4px; }
+.lc-evo-up { border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.lc-evo-down { border-color: color-mix(in srgb, var(--red) 40%, transparent); }
+
+.lc-stages { display: flex; gap: 4px; margin-bottom: 20px; }
+.lc-stage { flex: 1; text-align: center; padding: 12px 2px; border-radius: 10px; opacity: .35; transition: all .2s; }
+.lc-stage-emoji { display: block; font-size: 24px; line-height: 1; filter: grayscale(1); }
+.lc-stage-name { display: block; font-size: 11.5px; color: var(--ink-muted); margin-top: 5px; }
+.lc-stage-past { opacity: .55; }
+.lc-stage-on { opacity: 1; background: var(--paper-2); border: 1px solid var(--gold); transform: scale(1.06); }
+.lc-stage-on .lc-stage-emoji { filter: none; }
+.lc-stage-on .lc-stage-name { color: var(--ink); font-weight: 700; }
+
+.lc-current { text-align: center; padding: 22px; border-radius: 14px; margin-bottom: 18px; }
+.lc-current-label { font-size: 26px; font-weight: 800; }
+.lc-current-plain { font-size: 15px; color: var(--ink-muted); margin-top: 6px; }
+.lc-current-embryo, .lc-current-young { background: color-mix(in srgb, var(--green) 12%, transparent); }
+.lc-current-embryo .lc-current-label, .lc-current-young .lc-current-label { color: var(--green); }
+.lc-current-prime { background: color-mix(in srgb, var(--gold) 14%, transparent); }
+.lc-current-prime .lc-current-label { color: var(--gold); }
+.lc-current-old, .lc-current-decline { background: color-mix(in srgb, var(--red) 12%, transparent); }
+.lc-current-old .lc-current-label, .lc-current-decline .lc-current-label { color: var(--red); }
+
+.lc-evidence { border: 1px solid var(--rule-light); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+.lc-ev-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 8px; }
+.lc-evidence ul { margin: 0; padding-left: 18px; }
+.lc-evidence li { font-size: 14px; color: var(--ink); margin: 5px 0; }
+
+.lc-verdict { font-size: 17px; font-weight: 700; text-align: center; padding: 16px; border-radius: 12px; background: var(--ink); color: var(--paper); }
+.lc-verdict-embryo, .lc-verdict-young { background: var(--green); }
+.lc-verdict-old, .lc-verdict-decline { background: var(--red); }
+.lc-verdict-prime { background: var(--gold); }
+
+.lc-hedge { font-size: 12px; color: var(--ink-faint); text-align: center; margin-top: 20px; }
+
+.lc-unknown { text-align: center; padding: 40px 20px; }
+.lc-unknown-icon { font-size: 40px; }
+.lc-unknown-text { color: var(--ink-muted); font-size: 15px; margin-top: 12px; line-height: 1.6; }
+
+/* ══ US-129 短线生命周期页 v2（两轴·科幻仪表盘） ══ */
+.lc2 { max-width: 620px; margin: 0 auto; padding: 6px 4px 60px; }
+
+.lc2-axis {
+  border: 1px solid var(--rule-light); border-radius: 14px; padding: 16px 18px 15px;
+  margin-bottom: 14px; background: var(--paper-2); position: relative;
+  --acc: var(--ink-faint);
+}
+.lc2-axis-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+.lc2-axis-tag { font-size: 14px; font-weight: 800; color: var(--ink); }
+.lc2-axis-sub { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .02em; }
+.lc2-axis-verdict { font-size: 16px; font-weight: 700; color: var(--acc); margin-top: 14px; text-align: center; }
+.lc2-axis-ev {
+  font-size: 12px; color: var(--ink-muted); margin-top: 6px; text-align: center;
+  font-variant-numeric: tabular-nums; letter-spacing: .01em;
+}
+
+/* 状态色 → --acc */
+.lc2-evo-up, .lc2-embryo, .lc2-young { --acc: var(--green); }
+.lc2-prime { --acc: var(--gold); }
+.lc2-evo-down, .lc2-old, .lc2-decline { --acc: var(--red); }
+.lc2-axis { border-color: color-mix(in srgb, var(--acc) 28%, var(--rule-light)); }
+.lc2-axis::before {
+  content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none;
+  box-shadow: inset 0 0 22px color-mix(in srgb, var(--acc) 10%, transparent);
+}
+
+/* 进化滑块 */
+.lc2-slider { display: flex; align-items: center; gap: 12px; }
+.lc2-slider-end { font-size: 12px; font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
+.lc2-end-l { color: color-mix(in srgb, var(--red) 70%, var(--ink-faint)); }
+.lc2-end-r { color: color-mix(in srgb, var(--green) 70%, var(--ink-faint)); }
+.lc2-slider-track {
+  position: relative; flex: 1; height: 4px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--red), var(--ink-faint) 50%, var(--green));
+  opacity: .5;
+}
+.lc2-slider-mark {
+  position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%;
+  transform: translate(-50%, -50%); background: var(--acc);
+  box-shadow: 0 0 0 3px var(--paper-2), 0 0 14px var(--acc);
+}
+
+/* 生命轴轨道 */
+.lc2-rail { position: relative; display: flex; justify-content: space-between; padding: 4px 6px 0; }
+.lc2-track { position: absolute; top: 10px; left: 16px; right: 16px; height: 2px; background: var(--rule-light); }
+.lc2-node { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1; opacity: .4; }
+.lc2-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--rule-light); border: 2px solid var(--paper-2); }
+.lc2-name { font-size: 12px; color: var(--ink-muted); }
+.lc2-past { opacity: .7; }
+.lc2-past .lc2-dot { background: var(--ink-faint); }
+.lc2-on { opacity: 1; }
+.lc2-on .lc2-dot {
+  width: 16px; height: 16px; background: var(--acc);
+  box-shadow: 0 0 0 4px var(--paper-2), 0 0 16px var(--acc);
+  animation: lc2-pulse 2s ease-in-out infinite;
+}
+.lc2-on .lc2-name { color: var(--acc); font-weight: 800; font-size: 13px; }
+@keyframes lc2-pulse { 0%,100% { box-shadow: 0 0 0 4px var(--paper-2), 0 0 10px var(--acc); } 50% { box-shadow: 0 0 0 4px var(--paper-2), 0 0 20px var(--acc); } }
+@media (prefers-reduced-motion: reduce) { .lc2-on .lc2-dot { animation: none; } }
+
+/* 交叉结论 */
+.lc2-cross { text-align: center; margin-top: 22px; }
+.lc2-cross-tag { font-size: 11px; font-weight: 700; letter-spacing: .18em; color: var(--ink-faint); text-transform: uppercase; }
+.lc2-cross-verdict {
+  font-size: 19px; font-weight: 800; margin-top: 10px; padding: 16px; border-radius: 12px;
+  background: var(--ink); color: var(--paper);
+}
+.lc2-cross-embryo, .lc2-cross-young { background: var(--green); }
+.lc2-cross-prime { background: var(--gold); }
+.lc2-cross-old, .lc2-cross-decline { background: var(--red); }
+
+.lc2-hedge { font-size: 11.5px; color: var(--ink-faint); text-align: center; margin-top: 22px; }
+.lc2-unknown { text-align: center; padding: 46px 20px; }
+.lc2-unknown-icon { font-size: 40px; color: var(--ink-faint); }
+.lc2-unknown-text { color: var(--ink-muted); font-size: 15px; margin-top: 14px; line-height: 1.6; }
+
+/* ── US-129 v2.1：信号可点 + 进化轴缩到底部细条 ── */
+.lc2-ev-link {
+  display: block; margin-top: 10px; text-align: center; text-decoration: none;
+  font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums;
+  padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--rule-light);
+}
+.lc2-ev-link:hover { border-color: var(--acc); color: var(--ink); }
+.lc2-ev-more { color: var(--acc); font-weight: 700; margin-left: 6px; white-space: nowrap; }
+
+.lc2-evo-strip {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 24px; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--rule-light); background: var(--paper-2);
+  text-decoration: none; --acc: var(--ink-faint);
+}
+.lc2-evo-strip.lc2-evo-up { --acc: var(--green); }
+.lc2-evo-strip.lc2-evo-down { --acc: var(--red); }
+.lc2-evo-strip:hover { border-color: color-mix(in srgb, var(--acc) 40%, var(--rule-light)); }
+.lc2-evo-tag { font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.lc2-evo-slider { flex: 0 0 84px; }
+.lc2-evo-track {
+  position: relative; display: block; height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--red), var(--ink-faint) 50%, var(--green)); opacity: .55;
+}
+.lc2-evo-mark {
+  position: absolute; top: 50%; width: 11px; height: 11px; border-radius: 50%;
+  transform: translate(-50%, -50%); background: var(--acc);
+  box-shadow: 0 0 0 2px var(--paper-2), 0 0 8px var(--acc);
+}
+.lc2-evo-verdict { font-size: 13px; font-weight: 700; color: var(--acc); white-space: nowrap; }
+.lc2-evo-ev { font-size: 11.5px; color: var(--ink-faint); flex: 1 1 100%; }

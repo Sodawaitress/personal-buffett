@@ -140,7 +140,17 @@ def run_precursor_scan(codes: list[str] | None = None) -> dict:
 
     elapsed = time.time() - start
     print(f"  precursor_scan: 完成 {len(codes)} 只，活跃 {active_count} 只，耗时 {elapsed:.0f}s")
-    return {"scanned": len(codes), "active": active_count}
+
+    # 搭车刷新中标信号（US-131，巨潮，🥚胚胎期）——同在 Fly 悉尼、巨潮可达
+    tender = {"codes_with_tender": 0, "events_saved": 0}
+    try:
+        from scripts.tender_signals import run_tender_refresh
+        tender = run_tender_refresh(codes, days=30)
+        print(f"  precursor_scan: 中标刷新 {tender}")
+    except Exception as e:
+        print(f"  precursor_scan: 中标刷新失败 — {e}")
+
+    return {"scanned": len(codes), "active": active_count, "tender": tender}
 
 
 if __name__ == "__main__":

@@ -134,6 +134,14 @@
   {% if not single_page %}
   <div class="stock-subnav" id="stock-subnav">
 
+    {% if session.get('role') == 'admin' %}{# 内测中，仅管理员可见 #}
+    <a href="{{ url_for('stock_lifecycle', code=stock.code) }}"
+       class="subnav-link {{ 'active' if active_tab == 'lifecycle' else '' }}">
+      <span class="subnav-label">{{ '🎂 生命周期' if locale == 'zh' else '🎂 Lifecycle' }}</span>
+      <span class="subnav-hint">{{ '现在活到哪一步' if locale == 'zh' else 'What stage now' }}</span>
+    </a>
+    {% endif %}
+
     <a href="{{ url_for('stock_page', code=stock.code) }}"
        class="subnav-link {{ 'active' if active_tab == 'letter' else '' }}">
       <span class="subnav-label">{{ t.tab_brief }}</span>

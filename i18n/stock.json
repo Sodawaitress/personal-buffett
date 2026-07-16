@@ -43,6 +43,34 @@
     "en": "Research → Participation → Money → Price — surveys & institutional interest move first, the earliest lead signals",
     "zh": "研究 → 参与 → 资金 → 价格：调研和机构参与度动得最早，是最前面的领先信号"
   },
+  "prophet_title": {
+    "en": "Institutional footprint trail",
+    "zh": "机构脚印轨迹"
+  },
+  "prophet_rising": {
+    "en": "accumulating",
+    "zh": "在悄悄建仓"
+  },
+  "prophet_falling": {
+    "en": "stepping back",
+    "zh": "在陆续离场"
+  },
+  "prophet_flat": {
+    "en": "holding steady",
+    "zh": "按兵不动"
+  },
+  "prophet_since": {
+    "en": "since",
+    "zh": "自"
+  },
+  "prophet_days": {
+    "en": " days",
+    "zh": " 天"
+  },
+  "prophet_hint": {
+    "en": "The line accumulates each day's survey / participation / short-selling footprints — extend it yourself.",
+    "zh": "这条线把每天的调研 / 参与度 / 融券脚印累积起来——往后延，你的眼睛自己会预测。"
+  },
   "btn_analyse": {
     "en": "↻",
     "zh": "↻"

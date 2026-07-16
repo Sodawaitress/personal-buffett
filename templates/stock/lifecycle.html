@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.name }} · {{ '摇钱树' if locale == 'zh' else 'Money Tree' }}{% endblock %}
+{% set active_tab = 'lifecycle' %}
+
+{% block content %}
+<div class="stock-page">
+{% include 'stock/_head.html' %}
+
+<div class="stock-page-body">
+<div class="mt2">
+
+{% if not lc or lc.stage.key == 'unknown' %}
+  <div class="mt-unknown">
+    <div class="mt-unknown-icon">🌱</div>
+    <div class="mt-unknown-text">这棵树现在信号不足，看不出它长到哪一步。<br>它可能还没进扫描范围，或最近没有明显的机构 / 资金动作。</div>
+  </div>
+{% else %}
+
+  {% set evo = lc.evolution.direction %}
+  {% set sk = lc.stage.key %}
+  {% set evo_word = {'up':'旺','flat':'稳','down':'枯'}[evo] %}
+  {% set evo_cls  = {'up':'mt-up','flat':'mt-fl','down':'mt-dn'}[evo] %}
+  {% set yb_word  = {'embryo':'抽芽','young':'初结元宝','prime':'满树金光','old':'众人摇树','decline':'摘光落叶'}[sk] %}
+  {% set v_cls = 'v-buy' if sk in ['embryo','young'] else ('v-hold' if sk == 'prime' else 'v-sell') %}
+
+  <div class="mt-scene" id="mt-scene" data-stage="{{ sk }}" data-evo="{{ evo }}" data-yb="{{ lc.yuanbao | length }}">
+    <canvas id="mt-cv"></canvas>
+    <div class="mt-anno" id="mt-anno-canopy">
+      <div class="mt-anno-t song">树势 · 长期</div>
+      <div class="mt-anno-v {{ evo_cls }} song">{{ evo_word }}</div>
+      {% if lc.evolution.evidence %}<div class="mt-anno-s">{{ lc.evolution.evidence[:2] | join(' · ') }}</div>{% endif %}
+    </div>
+    <div class="mt-anno" id="mt-anno-yuanbao">
+      <div class="mt-anno-t song">元宝 · 短线</div>
+      <div class="mt-anno-v song">{{ yb_word }}</div>
+      <div class="mt-anno-s">{% if lc.yuanbao %}已结 {{ lc.yuanbao | length }} 枚成果{% else %}成果尚未兑现{% endif %}</div>
+    </div>
+    <div class="mt-rail" id="mt-rail"></div>
+  </div>
+
+  <div class="mt-verdict {{ v_cls }} song">{{ lc.verdict }}</div>
+
+  <div class="mt-axes">
+    <div class="mt-ax">
+      <div class="mt-ax-h song">🌳 <b>树势</b>（公司本身 · 几年）</div>
+      <div class="mt-ax-v {{ evo_cls }} song">{{ lc.evolution.label | replace('📈 ','') | replace('📉 ','') | replace('➖ ','') }}</div>
+      {% if lc.evolution.evidence %}<div class="mt-ax-e">{{ lc.evolution.evidence | join(' · ') }}</div>{% endif %}
+    </div>
+    <div class="mt-ax">
+      <div class="mt-ax-h song">🪙 <b>元宝</b>（短线 · 这一季）</div>
+      <div class="mt-ax-v song">{{ lc.stage.label }}</div>
+      <div class="mt-ax-e">{{ lc.stage.plain }}</div>
+    </div>
+  </div>
+
+  {# 🪙 元宝 = 已兑现成果（果） #}
+  <div class="mt-nuts-h song">🪙 已兑现成果 · 枝头元宝</div>
+  {% if lc.yuanbao %}
+  <div class="mt-nuts">
+    {% for y in lc.yuanbao %}
+    <span class="mt-yb" title="{{ y.summary }}">🪙 {{ y.label }} · <span class="mt-yb-d">{{ y.date }}</span></span>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="mt-empty">还没结元宝——成果尚未兑现（早期正常，机构可能还在悄悄喂养）</div>
+  {% endif %}
+
+  {# 💧 养料 = 领先信号（因） #}
+  {% if lc.stage.evidence %}
+  <div class="mt-nuts-h song">💧 领先信号 · 浇给树的养料（点开看数据）</div>
+  <div class="mt-nuts">
+    {% for e in lc.stage.evidence %}
+    <a class="mt-nut" href="{{ url_for('stock_signals', code=code) }}">{{ e }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+{% endif %}
+
+  <p class="mt-hedge">养分越足，树越旺、越早结元宝。信号推的判断，不是保证，自己拿主意。</p>
+
+</div>
+</div>
+</div>
+
+<style>
+  .mt2{
+    --paper2:#F2EBDA; --ink:#2C2A22; --ink-dim:#7C755F; --line:#D6CDB4;
+    --malachite:#4C8A61; --mala-lt:#79AC83;
+    --gold:#BE922F; --gold-lt:#E7C766; --gold-dp:#8A6A22;
+    --verm:#B4472F; --trunk:#6B583C; --hill:#7FA872; --mist:#B9C7AE; --paper:#E9E0CD;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mt2{
+    --paper2:#151E19; --ink:#E9E3D3; --ink-dim:#8C9285; --line:#233029;
+    --malachite:#5CA075; --mala-lt:#84C79A;
+    --gold:#D8AD51; --gold-lt:#F2DB8B; --gold-dp:#A5822F;
+    --verm:#D06A4E; --trunk:#8A7150; --hill:#2E4A34; --mist:#20362A; --paper:#0E1512;
+  }}
+  :root[data-theme="dark"] .mt2{
+    --paper2:#151E19; --ink:#E9E3D3; --ink-dim:#8C9285; --line:#233029;
+    --malachite:#5CA075; --mala-lt:#84C79A;
+    --gold:#D8AD51; --gold-lt:#F2DB8B; --gold-dp:#A5822F;
+    --verm:#D06A4E; --trunk:#8A7150; --hill:#2E4A34; --mist:#20362A; --paper:#0E1512;
+  }
+  .mt2{max-width:560px;margin:0 auto;color:var(--ink);}
+  .mt2 .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
+  .mt-scene{position:relative;width:100%;aspect-ratio:1/1.04;border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,var(--paper2) 0%,var(--paper2) 55%,color-mix(in srgb,var(--hill) 22%,var(--paper2)) 100%);
+    border:1px solid var(--line);box-shadow:inset 0 0 60px color-mix(in srgb,var(--gold) 8%,transparent);}
+  .mt-scene canvas{position:absolute;inset:0;width:100%;height:100%;}
+  .mt-anno{position:absolute;transform:translate(-50%,-50%);background:color-mix(in srgb,var(--paper2) 88%,transparent);
+    border:1px solid var(--gold);border-radius:8px;padding:6px 10px;z-index:3;max-width:180px;backdrop-filter:blur(2px);}
+  .mt-anno-t{font-size:10px;letter-spacing:.12em;color:var(--gold-dp);font-weight:700;}
+  :root[data-theme="dark"] .mt-anno-t{color:var(--gold-lt);}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mt-anno-t{color:var(--gold-lt);}}
+  .mt-anno-v{font-size:14px;font-weight:800;color:var(--ink);margin-top:1px;}
+  .mt-anno-s{font-size:10.5px;color:var(--ink-dim);margin-top:1px;line-height:1.3;}
+  .mt-up{color:var(--malachite);} .mt-dn{color:var(--verm);} .mt-fl{color:var(--gold-dp);}
+
+  .mt-rail{position:absolute;left:0;right:0;bottom:9px;display:flex;justify-content:center;z-index:3;padding:0 14px;}
+  .mt-rail-i{flex:1;text-align:center;position:relative;}
+  .mt-rail-i::before{content:"";position:absolute;top:5px;left:50%;width:100%;height:1px;background:var(--line);}
+  .mt-rail-i:last-child::before{display:none;}
+  .mt-rail-dot{width:9px;height:9px;border-radius:50%;background:var(--line);margin:0 auto 3px;position:relative;z-index:1;}
+  .mt-rail-i.on .mt-rail-dot{background:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 35%,transparent);}
+  .mt-rail-i.past .mt-rail-dot{background:var(--gold-dp);}
+  .mt-rail-l{font-size:9px;color:var(--ink-dim);} .mt-rail-i.on .mt-rail-l{color:var(--gold-dp);font-weight:800;}
+  :root[data-theme="dark"] .mt-rail-i.on .mt-rail-l{color:var(--gold-lt);}
+
+  .mt-verdict{margin-top:15px;text-align:center;padding:14px;border-radius:11px;font-size:19px;font-weight:800;color:var(--paper);background:var(--vc);}
+  .mt-verdict.v-buy{--vc:var(--malachite);} .mt-verdict.v-hold{--vc:var(--gold-dp);} .mt-verdict.v-sell{--vc:var(--verm);}
+
+  .mt-axes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .mt-ax{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:var(--paper2);}
+  .mt-ax-h{font-size:11px;color:var(--ink-dim);letter-spacing:.06em;} .mt-ax-h b{color:var(--ink);font-size:13px;}
+  .mt-ax-v{font-size:16px;font-weight:800;margin:3px 0;}
+  .mt-ax-e{font-size:10.5px;color:var(--ink-dim);line-height:1.4;}
+
+  .mt-nuts-h{font-size:11px;color:var(--ink-dim);margin:16px 0 8px;letter-spacing:.06em;text-align:center;}
+  .mt-nuts{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;}
+  .mt-nut{cursor:pointer;border:1px solid var(--line);background:var(--paper2);border-radius:20px;
+    padding:6px 12px;font-size:12px;color:var(--ink);text-decoration:none;transition:all .15s;}
+  .mt-nut:hover{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 20%,transparent);}
+  .mt-yb{border:1px solid var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--paper2));border-radius:20px;
+    padding:6px 12px;font-size:12px;color:var(--ink);font-weight:600;}
+  .mt-yb-d{color:var(--gold-dp);font-weight:400;} :root[data-theme="dark"] .mt-yb-d{color:var(--gold-lt);}
+  .mt-empty{text-align:center;font-size:12px;color:var(--ink-dim);padding:10px;border:1px dashed var(--line);border-radius:10px;}
+  .mt-hedge{text-align:center;font-size:11px;color:var(--ink-dim);margin-top:18px;}
+  .mt-unknown{text-align:center;padding:48px 20px;}
+  .mt-unknown-icon{font-size:40px;} .mt-unknown-text{font-size:13px;color:var(--ink-dim);line-height:1.6;margin-top:12px;}
+</style>
+
+<script>
+(function(){
+  const scene=document.getElementById('mt-scene');
+  if(!scene) return;
+  const STAGE=scene.dataset.stage, EVO=scene.dataset.evo;
+  const STAGES=[["embryo","抽芽"],["young","初结"],["prime","满树"],["old","摇树"],["decline","落叶"]];
+  const CUR=STAGES.findIndex(s=>s[0]===STAGE);
+  const YB=Math.min(parseInt(scene.dataset.yb)||0, 12);
+
+  const railEl=document.getElementById('mt-rail');
+  STAGES.forEach((s,i)=>{const d=document.createElement('div');
+    d.className='mt-rail-i'+(i===CUR?' on':'')+(i<CUR?' past':'');
+    d.innerHTML='<div class="mt-rail-dot"></div><div class="mt-rail-l song">'+s[1]+'</div>';railEl.appendChild(d);});
+
+  const cv=document.getElementById('mt-cv'),g=cv.getContext('2d');
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  let W,H,DPR,tok={},tips=[],ybPos=[];
+  function css(n){return getComputedStyle(scene).getPropertyValue(n).trim();}
+  function loadTok(){['--malachite','--mala-lt','--trunk','--gold','--gold-lt','--gold-dp','--hill','--mist'].forEach(k=>tok[k]=css(k));}
+  let _s=1; function rnd(){_s=(_s*9301+49297)%233280;return _s/233280;}
+  function place(id,fx,fy){const e=document.getElementById(id);if(e){e.style.left=(fx*W)+'px';e.style.top=(fy*H)+'px';}}
+  function layout(){const r=scene.getBoundingClientRect();DPR=Math.min(2,devicePixelRatio||1);
+    W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0);
+    loadTok();place('mt-anno-canopy',0.24,0.19);place('mt-anno-yuanbao',0.79,0.45);}
+
+  function branch(x,y,ang,len,wid,depth,sway){
+    const a=ang+Math.sin(sway+depth)*0.02*(depth+1);
+    const x2=x+Math.cos(a)*len,y2=y+Math.sin(a)*len;
+    g.strokeStyle=tok['--trunk'];g.lineWidth=wid;g.lineCap='round';
+    g.beginPath();g.moveTo(x,y);g.lineTo(x2,y2);g.stroke();
+    if(depth<=0){const lush=EVO==='up'?1:(EVO==='down'?0.45:0.75);
+      if(rnd()<lush){g.fillStyle=(EVO==='down'&&rnd()<0.4)?tok['--gold-dp']:(rnd()<0.5?tok['--malachite']:tok['--mala-lt']);
+        const lr=4+rnd()*4;g.beginPath();g.arc(x2,y2,lr,0,6.28);g.fill();}
+      tips.push([x2,y2]);return;}
+    const sp=0.38+rnd()*0.22,nl=len*(0.72+rnd()*0.08),nw=Math.max(1,wid*0.68);
+    branch(x2,y2,a-sp,nl,nw,depth-1,sway);branch(x2,y2,a+sp,nl,nw,depth-1,sway);
+    if(rnd()<0.35&&depth>1) branch(x2,y2,a+(rnd()-0.5)*0.3,nl*0.8,nw*0.8,depth-2,sway);
+  }
+  function yuanbao(x,y,r,t){const grd=g.createLinearGradient(x,y-r,x,y+r);
+    grd.addColorStop(0,tok['--gold-lt']);grd.addColorStop(1,tok['--gold']);
+    g.save();g.shadowColor=tok['--gold-lt'];g.shadowBlur=6+2*Math.sin(t/500+x);g.fillStyle=grd;
+    g.beginPath();g.moveTo(x-r,y+r*0.2);g.quadraticCurveTo(x,y+r*1.1,x+r,y+r*0.2);
+    g.quadraticCurveTo(x,y+r*0.5,x-r,y+r*0.2);g.fill();
+    g.beginPath();g.ellipse(x,y-r*0.15,r*0.7,r*0.42,0,0,6.28);g.fill();
+    g.shadowBlur=0;g.fillStyle='rgba(255,255,255,.6)';g.beginPath();g.arc(x-r*0.25,y-r*0.2,r*0.14,0,6.28);g.fill();g.restore();}
+  function goldLine(x1,y1,x2,y2){g.strokeStyle=tok['--gold'];g.globalAlpha=.55;g.lineWidth=1;g.setLineDash([3,3]);
+    g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);g.globalAlpha=1;
+    g.fillStyle=tok['--gold'];g.beginPath();g.arc(x1,y1,2,0,6.28);g.fill();}
+  function draw(t){
+    g.clearRect(0,0,W,H);_s=1;tips=[];const sway=reduce?0:t/900;
+    g.fillStyle=tok['--mist'];g.globalAlpha=.5;g.beginPath();g.moveTo(0,H*0.62);
+    for(let i=0;i<=W;i+=W/6){g.lineTo(i,H*0.62-Math.sin(i/W*3.14*2)*H*0.06-H*0.02);}
+    g.lineTo(W,H);g.lineTo(0,H);g.fill();g.globalAlpha=1;
+    g.fillStyle=tok['--hill'];g.globalAlpha=.85;g.beginPath();g.moveTo(0,H*0.80);
+    g.quadraticCurveTo(W*0.5,H*0.72,W,H*0.80);g.lineTo(W,H);g.lineTo(0,H);g.fill();g.globalAlpha=1;
+    if(!reduce)for(let i=0;i<5;i++){const px=W*(0.34+i*0.085),ph=((t/16+i*80)%140)/140;
+      g.fillStyle=tok['--gold'];g.globalAlpha=.5*(1-ph);g.beginPath();g.arc(px,H*0.82-ph*40,1.6,0,6.28);g.fill();}
+    g.globalAlpha=1;
+    const bx=W*0.5,depth=EVO==='up'?7:(EVO==='down'?5:6);
+    branch(bx,H*0.82,-Math.PI/2,H*0.15,Math.max(6,W*0.022),depth,sway);
+    ybPos=[];
+    if(YB>0&&tips.length){const step=Math.max(1,Math.floor(tips.length/YB));
+      for(let i=0,c=0;i<tips.length&&c<YB;i+=step,c++){ybPos.push(tips[i]);}
+      ybPos.forEach(p=>yuanbao(p[0],p[1],7,t));
+      if(STAGE==='old'&&!reduce){for(let i=0;i<3;i++){const fx=bx+(i-1)*W*0.12,fy=H*(0.55+((t/20+i*90)%180)/180*0.28);yuanbao(fx,fy,6,t);}}}
+    if(STAGE==='decline'){yuanbao(bx-W*0.1,H*0.83,6,t);yuanbao(bx+W*0.08,H*0.84,6,t);}
+    if(ybPos.length){const yb=ybPos[Math.floor(ybPos.length/2)];goldLine(yb[0],yb[1],0.79*W,0.45*H+16);}
+    goldLine(bx,H*0.30,0.24*W,0.19*H+16);
+    if(!reduce)requestAnimationFrame(draw);
+  }
+  addEventListener('resize',()=>{layout();if(reduce)draw(0);});
+  layout();requestAnimationFrame(draw);if(reduce)draw(0);
+})();
+</script>
+{% endblock %}

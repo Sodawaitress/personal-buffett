@@ -60,6 +60,21 @@ def register_stock_routes(app):
             return redirect(url_for('index'))
         return render_template('stock/signals.html', **context)
 
+    @app.route('/stock/<path:code>/lifecycle')
+    @admin_required   # 新功能先管理员内测，数据验准前不给妈妈看（US-129）
+    def stock_lifecycle(code):
+        context = _stock_context(code.upper())
+        if not context:
+            flash('Stock not found.', 'warning')
+            return redirect(url_for('index'))
+        from radar_app.stocks.lifecycle import build_lifecycle
+        try:
+            context['lc'] = build_lifecycle(code.upper())
+        except Exception:
+            context['lc'] = None
+        context['active_tab'] = 'lifecycle'
+        return render_template('stock/lifecycle.html', **context)
+
     @app.route('/stock/<path:code>/archive')
     @login_required
     def stock_archive(code):
