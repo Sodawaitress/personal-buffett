@@ -15,6 +15,7 @@ try:
         describe_survey_context,
         describe_participation_context,
         label_news_vs_institution,
+        prophet_daily_score,
     )
     _SIGNAL_CTX_OK = True
 except Exception:
@@ -402,6 +403,43 @@ def _build_survey_chart(precursor: dict) -> list:
     return rows if any(r["count"] or r["visits"] for r in rows) else []
 
 
+def _build_prophet_series(code: str) -> dict:
+    """预言家线（US-75）：机构前兆脚印按日累积成一条轨迹（SMFI 原理）。
+    读 precursor_history 近 90 天，每日合成分累积 + 调研/参与度异动注释点。
+    历史不足 5 天返回 {}（线太短没意义）。"""
+    if not _SIGNAL_CTX_OK:
+        return {}
+    from radar_app.data.market import get_precursor_history
+    hist = get_precursor_history(code, days=90)
+    if len(hist) < 5:
+        return {}
+    # 调研事件在"首次出现在快照里"的那天标注（事件发生日常无快照/快照早于发布）；
+    # seen 去重，首日只播种不加成，避免把窗口内旧事件一次性倾倒。
+    series, cum, seen = [], 0.0, set()
+    for idx, row in enumerate(hist):
+        d_full = str(row.get("date") or "")[:10]
+        new_inst = 0
+        for e in (row.get("survey") or {}).get("events") or []:
+            key = (str(e.get("date", ""))[:10], e.get("n_inst"), e.get("method"))
+            if key not in seen:
+                seen.add(key)
+                if idx > 0:
+                    new_inst += int(e.get("n_inst", 0) or 0)
+        ds = prophet_daily_score(row.get("participation"), new_inst)
+        cum = round(cum + ds["value"], 3)
+        note = (f"{new_inst}家机构调研" if new_inst > 0
+                else "参与度异动" if ds["spike"] else "")
+        series.append({"d": d_full[5:], "v": cum, "note": note})
+    tail = [p["v"] for p in series[-5:]]
+    slope = tail[-1] - tail[0] if len(tail) >= 2 else 0
+    return {
+        "series": series,
+        "n_days": len(series),
+        "start_date": str(hist[0].get("date") or "")[:10],
+        "latest_dir": "rising" if slope > 0.5 else "falling" if slope < -0.5 else "flat",
+    }
+
+
 def _build_signal_contexts(precursor: dict, signals: dict, price_change_pct: float) -> dict:
     """Compute cross-product signal contexts from precursor cache."""
     if not _SIGNAL_CTX_OK or not precursor:
@@ -605,6 +643,7 @@ def present_stock_page(bundle):
     precursor = get_precursor_cache(bundle["code"]) if market == "cn" else {}
     signal_contexts = _build_signal_contexts(precursor, signals, price_change) if market == "cn" else {}
     survey_chart = _build_survey_chart(precursor) if market == "cn" else []
+    prophet_series = _build_prophet_series(bundle["code"]) if market == "cn" else {}
     news_labeled = _label_news(bundle["news"], inst_dir)
 
     # US-119 层1：与首页榜单同款结论（点榜单进详情讲同一个故事），仅 A股
@@ -663,6 +702,8 @@ def present_stock_page(bundle):
         # US-119 层1 结论（与首页一致）
         "signal_conclusion": signal_conclusion,
         "survey_chart": survey_chart,
+        # US-75 预言家线
+        "prophet_series": prophet_series,
         # US-92 extras
         "divergence_card": divergence_card,
         "signal_contexts": signal_contexts,

@@ -17,6 +17,36 @@
     </div>
     {% endif %}
 
+    {# ══ US-75 预言家线：机构前兆脚印按日累积，你的眼睛自动往后延 ══ #}
+    {% if market == "cn" and prophet_series and prophet_series.series | length >= 5 %}
+    {% set _ps = prophet_series.series %}
+    {% set _pvv = _ps | map(attribute='v') | list %}
+    {% set _pmin = _pvv | min %}{% set _pmax = _pvv | max %}{% set _prng = (_pmax - _pmin) or 1 %}
+    {% set _pn = _ps | length %}
+    <div class="prophet prophet-{{ prophet_series.latest_dir }}">
+      <div class="prophet-head">
+        <span class="prophet-title">{{ t.prophet_title }}</span>
+        <span class="prophet-dir prophet-dir-{{ prophet_series.latest_dir }}">
+          {% if prophet_series.latest_dir == 'rising' %}{{ t.prophet_rising }}
+          {% elif prophet_series.latest_dir == 'falling' %}{{ t.prophet_falling }}
+          {% else %}{{ t.prophet_flat }}{% endif %}
+        </span>
+      </div>
+      <div class="prophet-chart" data-series="{{ _ps | tojson | forceescape }}">
+        <svg class="prophet-svg" viewBox="0 0 300 72" preserveAspectRatio="none">
+          <polyline class="prophet-line" points="{% for p in _ps %}{{ (loop.index0 / (_pn-1) * 300) | round(1) }},{{ (66 - (p.v - _pmin) / _prng * 60) | round(1) }} {% endfor %}"/>
+          {% for p in _ps %}{% if p.note %}<circle class="prophet-dot" cx="{{ (loop.index0 / (_pn-1) * 300) | round(1) }}" cy="{{ (66 - (p.v - _pmin) / _prng * 60) | round(1) }}" r="3"><title>{{ p.d }} · {{ p.note }}</title></circle>{% endif %}{% endfor %}
+          <g class="prophet-cursor" style="display:none"><line y1="0" y2="72"/><circle r="3.5"/></g>
+        </svg>
+        <div class="prophet-tip"></div>
+      </div>
+      <div class="prophet-foot">
+        <span class="prophet-since">{{ t.prophet_since }} {{ prophet_series.start_date }}（{{ prophet_series.n_days }}{{ t.prophet_days }}）</span>
+        <span class="prophet-hint">{{ t.prophet_hint }}</span>
+      </div>
+    </div>
+    {% endif %}
+
     {# ══ 层2 核心：机构调研 + 机构参与度 = 最早的领先信号（US-119 realign 置顶主角）══ #}
     {% set _pc0 = (signal_contexts or {}).get('participation', {}) %}
     {% set _has_core = survey_chart or (_pc0.get('signal_strength', 0) > 0) %}
@@ -571,6 +601,34 @@ document.querySelectorAll('.pchart').forEach(el => {
     tip.style.display = '';
     tip.style.left = (px / 300 * 100) + '%';
     tip.textContent = series[i].d + '  ·  ' + series[i].v;
+  }
+  el.addEventListener('mousemove', e => move(e.clientX));
+  el.addEventListener('touchmove', e => { if (e.touches[0]) move(e.touches[0].clientX); }, { passive: true });
+  el.addEventListener('mouseleave', () => { cursor.style.display = 'none'; tip.style.display = 'none'; });
+});
+
+// ── US-75 预言家线：鼠标移动，日期 + 事件跟随 ──
+document.querySelectorAll('.prophet-chart').forEach(el => {
+  let series;
+  try { series = JSON.parse(el.dataset.series); } catch (e) { return; }
+  if (!series || series.length < 2) return;
+  const svg = el.querySelector('.prophet-svg');
+  const cursor = el.querySelector('.prophet-cursor');
+  const cLine = cursor.querySelector('line');
+  const cDot = cursor.querySelector('circle');
+  const tip = el.querySelector('.prophet-tip');
+  const pts = el.querySelector('.prophet-line').getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number));
+  function move(clientX) {
+    const r = svg.getBoundingClientRect();
+    let i = Math.round((clientX - r.left) / r.width * (series.length - 1));
+    i = Math.max(0, Math.min(series.length - 1, i));
+    const [px, py] = pts[i];
+    cursor.style.display = '';
+    cLine.setAttribute('x1', px); cLine.setAttribute('x2', px);
+    cDot.setAttribute('cx', px); cDot.setAttribute('cy', py);
+    tip.style.display = '';
+    tip.style.left = (px / 300 * 100) + '%';
+    tip.textContent = series[i].d + (series[i].note ? '  ·  ' + series[i].note : '');
   }
   el.addEventListener('mousemove', e => move(e.clientX));
   el.addEventListener('touchmove', e => { if (e.touches[0]) move(e.touches[0].clientX); }, { passive: true });
