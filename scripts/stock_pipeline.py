@@ -20,7 +20,7 @@ from scripts.config import (
     DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID, CN_TZ,
     SERVERCHAN_KEY
 )
-from scripts.stock_report import build_user_push_content, generate_report
+from scripts.stock_report import admin_user_id, build_user_push_content
 from scripts.buffett_analyst import analyze_all
 from scripts.macro_fetch import fetch_all_macro
 from scripts.nz_fetch import fetch_rbnz_news, fetch_nzx_announcements, fetch_nzx_earnings_calendar
@@ -236,13 +236,16 @@ def main():
     _refresh_user_holdings_layer2(date_str)
 
     print("\n🏦 Step 2.5/3：机构雷达...")
-    institutional_section = run_institutional_radar(data)
+    run_institutional_radar(data)  # 保留（信号副作用）；不再拼进日报
 
-    report = generate_report(data, ai_analysis)
-    report = report + "\n\n" + institutional_section
+    # ── 日报 md = 有用 digest（US-124）：admin 的「今天该注意的」，一次算两处用 ──
+    admin_id = admin_user_id()
+    admin_digest = build_user_push_content(admin_id, data, ai_analysis, date_str) if admin_id else ""
+    report = (admin_digest.replace("\n详情见网页。", "").rstrip()
+              if admin_digest else f"# 今天该注意的 · {date_str}\n\n今天没有需要特别注意的变动。")
     with open(REPORT_OUTPUT, "w", encoding="utf-8") as f:
         f.write(report)
-    print(f"✅ 报告 {len(report)} 字符 → {REPORT_OUTPUT}")
+    print(f"✅ 日报 {len(report)} 字符 → {REPORT_OUTPUT}")
 
     # ── 持久化到 SQLite ────────────────────────────────
     print("  💾 写入数据库...")
@@ -304,11 +307,12 @@ def main():
 
     print("\n📨 Step 3/3：推送...")
 
-    # ── Admin：全量报告 → Bear + Discord + 全局 Server酱 ──
-    save_to_bear(f"股票日报 {date_str}", report)
-    send_discord_chunks(report)
+    # ── Admin：有用日报（US-123）→ 只走 Server酱（复用上面算好的 admin_digest）──
     if SERVERCHAN_KEY:
-        send_serverchan(SERVERCHAN_KEY, f"自选股日报 {date_str}", report)
+        if admin_digest:
+            send_serverchan(SERVERCHAN_KEY, f"今天该注意的 · {date_str}", admin_digest)
+        else:
+            print("  · admin：无重大变化，不打扰")
 
     # ── Per-user：按 DB 持仓推送（notify_daily=1 的用户）──
     try:

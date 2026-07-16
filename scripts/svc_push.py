@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""push-svc（US-121）：推送。全程读 DB 最新数据，不重跑分析。
+"""push-svc（US-121 / US-123）：推送有用日报。全程读 DB 最新数据，不重跑分析。
 
-- Admin 全量报告（Bear + Discord + 全局 Server酱）：读 DB 里最新的 report md。
-- Per-user 个人日报（notify_daily=1 的用户）：build_user_push_content 纯 DB 驱动，
-  无重大变化则不打扰。
-独立服务：analyze-svc 挂了也能把"已有的最新报告"推出去。
-设 SKIP_PUSH=1 只生成不推送（云端验证用，不打扰妈妈）。
+US-123：删掉数字堆砌的旧报告（Bear/Discord/空壳），只推「今天该注意的」——
+早期预警 + 评级变化 + 机构领先信号 + 催化剂 + 预言线方向，无料不推。
+- Admin（role='admin'）：build_user_push_content → 全局 SERVERCHAN_KEY，只走 Server酱。
+- Per-user（notify_daily=1）：同一 digest → 各自 SCT key。
+设 SKIP_PUSH=1 只生成不推送（云端验证用，不打扰）。
 """
 import os
 import sys
@@ -20,8 +20,8 @@ bootstrap_paths()
 
 import db
 from scripts.config import CN_TZ, SERVERCHAN_KEY
-from scripts.stock_report import build_user_push_content
-from scripts.stock_pipeline import save_to_bear, send_discord_chunks, send_serverchan
+from scripts.stock_report import admin_user_id, build_user_push_content
+from scripts.stock_pipeline import send_serverchan
 
 SKIP_PUSH = bool(os.environ.get("SKIP_PUSH"))
 
@@ -32,19 +32,19 @@ def main():
     print(f"📨 push-svc 启动 {date_str}" + ("（SKIP_PUSH：只生成不推送）" if SKIP_PUSH else ""))
 
     with db.service_run("push-svc") as run:
-        # ── Admin 全量报告：读 DB 最新 ──
-        rep = db.get_report() or {}
-        report = rep.get("md") or ""
-        if report:
-            print(f"  📄 最新报告 {len(report)} 字符")
-            if not SKIP_PUSH:
-                save_to_bear(f"股票日报 {date_str}", report)
-                send_discord_chunks(report)
-                if SERVERCHAN_KEY:
-                    send_serverchan(SERVERCHAN_KEY, f"自选股日报 {date_str}", report)
-            run.tick()
+        # ── Admin 有用日报（US-123）：只走 Server酱 ──
+        if SERVERCHAN_KEY:
+            admin_id = admin_user_id()
+            content = build_user_push_content(admin_id, {}, {}, date_str) if admin_id else ""
+            if content:
+                print(f"  📲 admin 有用日报：{len(content)} 字符" + ("（SKIP）" if SKIP_PUSH else ""))
+                if not SKIP_PUSH:
+                    send_serverchan(SERVERCHAN_KEY, f"今天该注意的 · {date_str}", content)
+                run.tick()
+            else:
+                print("  · admin：无重大变化，不打扰")
         else:
-            print("  ⚠️ DB 无报告，跳过 admin 推送")
+            print("  ⚠️ 无 SERVERCHAN_KEY，跳过 admin 推送")
 
         # ── Per-user 个人日报 ──
         try:
