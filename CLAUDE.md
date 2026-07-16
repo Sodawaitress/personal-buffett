@@ -207,32 +207,32 @@
 
 ---
 
-## Fly.io 部署流程（每次部署必读）
+## 部署流程（每次部署必读）
 
-**配置**：`fly.toml`（app=personal-buffett, region=syd, port=8080），启动脚本 `deploy/start.sh`，入口 `run:app`（gunicorn）。
+**⚠️ 生产部署 = 提交 + 推 main，不是 `flyctl deploy`。**（2026-07-16 血泪教训：本地改了不提交，`flyctl deploy` 跑了也白跑，页面"都没了"——因为真正的生产镜像由 GHA 从 main 构建，flyctl 临时镜像会被覆盖。）
 
-**标准部署命令**（按顺序执行）：
+**配置**：`fly.toml`（app=personal-buffett, region=syd, port=8080），入口 `run:app`（gunicorn）。
 
+**标准部署（唯一可靠路径）**：
 ```bash
-# 1. 清除 macOS 元数据文件（外置磁盘上必须做，否则 depot builder 会报 xattr 错误）
-find . -name "._*" -not -path "*/.git/*" -delete
+git add <改动文件>
+git commit -m "..."          # 一个逻辑一个提交
+git push origin main         # → 触发 .github/workflows/deploy.yml
+```
+`deploy.yml`（push main 触发）：`actions/checkout`（**只拿已提交的代码**）→ 构建镜像推 `ghcr.io/sodawaitress/personal-buffett:main` → `flyctl deploy` 到 Fly。约 3 分钟。**未提交/未跟踪的文件永远不会上生产。**
 
-# 2. 部署（remote-only = 在 fly 云端 build，不依赖本地 Docker）
-COPYFILE_DISABLE=1 flyctl deploy --remote-only
+**推之前的体检**（合并大改动时）：
+```bash
+python3 -m py_compile <每个改动的.py>          # 语法
+python3 -c "import run; print(len(list(run.app.url_map.iter_rules())))"   # 导入+路由注册
 ```
 
-**已知坑**：
-- `/Volumes/` 路径下的 macOS `._*` 元数据文件会导致 depot builder 报 `failed to xattr: operation not permitted`，`.dockerignore` 里的 `._*` 规则来不及生效，必须先手动删除
-- `COPYFILE_DISABLE=1` 防止 macOS 在传输过程中重新生成 `._*`
-- 部署完成后 fly 可能报 "not listening on 0.0.0.0:8080"——这是时序问题，gunicorn 启动需要 3 秒（seed_demo.py 先跑），但 proxy 1 秒就来探测。fly.toml 已加 `grace_period = "20s"` 修复，日志里这条 error 只是一次性的，不影响实际可用性（`/healthz` 200 即正常）
+**远程 main 常被 cron 的自动 chore 提交推进**（daily snapshot / ingest predictions / routine log，只动 knowledge/output/snapshots 数据文件）。push 被拒时：`git fetch` → `git merge --no-edit origin/main`（零源码冲突，别用交互 rebase——本环境不支持）→ 再 push。
 
-**验证部署**：
+**盯部署**：`gh run watch <id> --exit-status`（`gh run list --workflow=deploy.yml`）。
+**验证**：`curl -s -o /dev/null -w "%{http_code}" https://personal-buffett.fly.dev/healthz`（200 即好）。
 
-```bash
-flyctl logs -a personal-buffett --no-tail | grep -E "(gunicorn|seed_demo|Error|started)"
-```
-
-看到 `Starting gunicorn` + `[seed_demo] seeded` 即为成功。
+**手动应急 flyctl deploy**（几乎不用；会被下次 GHA 覆盖）：先 `find . -name "._*" -not -path "*/.git/*" -delete`（外置磁盘 `._*` 会让 builder 报 xattr 错），再 `COPYFILE_DISABLE=1 flyctl deploy --remote-only`。
 
 ---
 
