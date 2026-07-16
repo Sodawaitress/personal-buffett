@@ -2889,3 +2889,22 @@
 .arena-rchg.down { color: var(--red); }
 .arena-rchg.flat { color: var(--ink-faint); }
 .arena-rchg.new { color: var(--accent); font-weight: 600; }
+
+/* ── US-125 差评掉落动画：多邻国式沉底 ── */
+@keyframes wl-sink {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  22%  { transform: translateY(-7px) scale(1.03); }   /* 先轻轻一顿，再掉 */
+  100% { transform: translateY(64px) scale(.93); opacity: .3; }
+}
+.wl-sink {
+  animation: wl-sink .95s cubic-bezier(.45,0,.55,1) forwards;
+  position: relative; z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-sink { animation: none; opacity: .5; }
+}
+
+/* US-128 我的选股页：标题缩成左侧状态标签 */
+.wl-status { margin-right: auto; display: flex; align-items: center; gap: 10px; }
+.wl-status-tag { font-size: 13px; font-weight: 600; color: var(--ink-muted); white-space: nowrap; }
+.wl-status-tag b { color: var(--ink); font-weight: 700; }

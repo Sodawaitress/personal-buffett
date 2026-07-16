@@ -40,6 +40,7 @@ def present_watchlist_stock(row, snapshot, avg_sentiment=None):
         "change_pct": snapshot["price"].get("change_pct"),
         "grade": grade or "—",
         "grade_sort": GRADE_ORDER.get(grade, 99),
+        "is_poor": grade in ("D", "D-"),  # 差评沉底（US-125）
         "conclusion": conclusion,
         "conclusion_sort": CONCLUSION_ORDER.get(conclusion, 99),
         "reasoning": (analysis.get("reasoning", "") or "")[:120] if analysis else "",

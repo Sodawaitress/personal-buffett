@@ -28,6 +28,9 @@ def build_watchlist_context(user_id):
         market = row.get("market") or detect_market(code)
         stocks.append(present_watchlist_stock(row, get_watchlist_snapshot(code, market), sentiment_map.get(code)))
 
+    # 差评（D/D-）沉底，稳定排序保留"新在前"（US-125）
+    stocks.sort(key=lambda s: s.get("is_poor", False))
+
     markets = sorted({s["market"] for s in stocks if s.get("market")})
     return {
         "stocks": stocks,
