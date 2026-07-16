@@ -23,6 +23,8 @@ _CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks.
 _PINYIN_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_stocks_pinyin.json")
 _ETF_CACHE_FILE  = os.path.join(os.path.dirname(__file__), "..", "data", "cn_etfs.json")
 _FUND_CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cn_funds.json")
+_HK_CACHE_FILE   = os.path.join(os.path.dirname(__file__), "..", "data", "hk_stocks.json")
+_HK_CACHE        = None   # [(code, name), ...] — HKEX 官方港股名单（数据驱动，非硬编码）
 _CACHE_TTL       = 604800  # 7 天（A股列表变化极慢）
 _FUND_CACHE_TTL  = 86400   # 1 天
 
@@ -377,6 +379,41 @@ def _search_pinyin(q: str, limit: int = 8) -> list:
     return out
 
 
+def _load_hk():
+    """HKEX 官方港股名单（data/hk_stocks.json，代码→简体中文名）。
+    数据驱动、离线加载，非硬编码；名单由 HKEX ListOfSecurities 生成。"""
+    global _HK_CACHE
+    if _HK_CACHE is not None:
+        return _HK_CACHE
+    try:
+        with open(_HK_CACHE_FILE, encoding="utf-8") as f:
+            _HK_CACHE = [tuple(x) for x in json.load(f)]
+    except Exception:
+        _HK_CACHE = []
+    return _HK_CACHE
+
+
+def _search_hk_list(q: str, limit: int) -> list:
+    """在 HKEX 官方名单里搜港股：中文名子串 或 代码前缀。返回 HK 结果。"""
+    q = q.strip()
+    q_l = q.lower()
+    q_digit = q.lstrip("0")
+    is_digit = q.isdigit()
+    out, seen = [], set()
+    for code, name in _load_hk():
+        hit = code.lstrip("0").startswith(q_digit) if is_digit else (q_l in name.lower())
+        if not hit:
+            continue
+        ticker = code.lstrip("0").zfill(4) + ".HK"
+        if ticker in seen:
+            continue
+        seen.add(ticker)
+        out.append({"code": ticker, "name": name, "market": "hk", "exchange": "HKG", "currency": "HKD"})
+        if len(out) >= limit:
+            break
+    return out
+
+
 def _search_hk_names(q: str) -> list:
     """港股中文名映射：子串匹配，直接返回静态结果，不打网络请求。"""
     q = q.strip()
@@ -616,11 +653,16 @@ def _search_intl_only(q: str, limit: int) -> list:
     q_l = q.lower()
     has_dot = "." in q
     # First try HK Chinese name shortcut
-    out = _search_hk_names(q) if any("\u4e00" <= c <= "\u9fff" for c in q) else []
+    # \u2460 HKEX \u5b98\u65b9\u6e2f\u80a1\u540d\u5355\uff08\u6570\u636e\u9a71\u52a8 data/hk_stocks.json\uff09\uff1a\u4e2d\u6587\u540d\u6216\u4ee3\u7801\uff0c\u79bb\u7ebf\u79d2\u51fa
+    out = _search_hk_list(q, limit)
+    # \u2461 yfinance\uff1a\u5e26\u70b9\u76f4\u67e5 / \u7eaf\u6570\u5b57\u5f53\u6e2f\u80a1 / \u5426\u5219\u82f1\u6587\u540d\u00b7\u7f8e\u80a1\u4ee3\u7801
     if has_dot:
         out += _search_yf(q.upper())
+    elif q.isdigit():
+        if not out:
+            out += _search_yf(q.lstrip("0").zfill(4) + ".HK")  # \u540d\u5355\u6ca1\u6709\u5219\u5b9e\u65f6\u67e5
     else:
-        out += _search_yf_name(q.upper(), limit=limit)
+        out += _search_yf_name(q.upper(), limit=limit)  # \u82f1\u6587\u540d / US \u4ee3\u7801
     seen = set()
     deduped = []
     for r in out:

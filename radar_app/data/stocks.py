@@ -49,7 +49,7 @@ def get_user_watchlist(user_id, status=None, market=None, asset_type=None):
     if asset_type:
         query += " AND s.asset_type = :asset_type"
         params["asset_type"] = asset_type
-    query += " ORDER BY w.added_at"
+    query += " ORDER BY w.added_at DESC"  # 最新添加在前（US-125）
     with get_conn() as c:
         return [dict(r) for r in c.execute(query, params)]
 

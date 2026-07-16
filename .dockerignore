@@ -12,6 +12,7 @@ __pycache__
 **/._*
 .codex-run
 data
+!data/hk_stocks.json
 notebooks
 node_modules
 **/node_modules
