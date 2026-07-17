@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "date": "2026-07-17",
+    "code": "300750",
+    "name": "宁德时代",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "全场无差别杀跌日只跌 -1.69% 是防御标本；护城河 88 + ROE 21.6% + 欧洲 5GWh 钠电订单利好，未来 10 天在¥340-¥380 防御盘整",
+    "price_at_prediction": 360.00
+  }
+]
