@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-07-20",
+    "code": "000938",
+    "name": "紫光股份",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "07-15 up 预言 Day 5 累计 +6.08% 兑现中，今日 +7.29% 单日爆发；中报 +83.5%~122.89% 硬催化 override 板块弱势",
+    "price_at_prediction": 37.69
+  },
+  {
+    "date": "2026-07-20",
+    "code": "300476",
+    "name": "胜宏科技",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "07-17 三重共振自检规则首次强制 down：PCB板块过去30日跑输 + 大盘5日弱势 + 估值贵三条门控全部触发；机构现场参观信号再强也不足以覆盖",
+    "price_at_prediction": 224.11
+  }
+]
