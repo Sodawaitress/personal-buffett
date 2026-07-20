@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 芯片大跌复盘：机构在派发，别追刀口</title>
+<style>
+  :root{
+    --paper:#EBE3D2; --paper2:#F4EEDF; --card:#FBF7EC; --ink:#2C2A22; --ink2:#6C6450; --line:#DDD3BB;
+    --jade:#3F7E56; --jade-bg:#E4EEDF; --gold:#B4882A; --gold-bg:#F3E8C8; --verm:#B0442E; --verm-bg:#F3DDD3;
+    --seal:#B0442E;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0E1512; --paper2:#141C18; --card:#182019; --ink:#EAE4D4; --ink2:#9AA091; --line:#26302A;
+    --jade:#6DB587; --jade-bg:#17251C; --gold:#DCB259; --gold-bg:#241E12; --verm:#DE7157; --verm-bg:#26170F;
+    --seal:#DE7157;
+  }}
+  :root[data-theme="light"]{--paper:#EBE3D2;--paper2:#F4EEDF;--card:#FBF7EC;--ink:#2C2A22;--ink2:#6C6450;--line:#DDD3BB;--jade:#3F7E56;--jade-bg:#E4EEDF;--gold:#B4882A;--gold-bg:#F3E8C8;--verm:#B0442E;--verm-bg:#F3DDD3;--seal:#B0442E;}
+  :root[data-theme="dark"]{--paper:#0E1512;--paper2:#141C18;--card:#182019;--ink:#EAE4D4;--ink2:#9AA091;--line:#26302A;--jade:#6DB587;--jade-bg:#17251C;--gold:#DCB259;--gold-bg:#241E12;--verm:#DE7157;--verm-bg:#26170F;--seal:#DE7157;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.7;
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+  .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:620px;margin:0 auto;padding:26px 18px 60px;}
+  .backlink{display:inline-block;margin-bottom:18px;color:var(--ink2);text-decoration:none;font-size:13px;}
+  .backlink:hover{color:var(--jade);}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:8px;}
+  .mh-l .kick{font-size:11px;letter-spacing:.28em;color:var(--ink2);}
+  .mh-l h1{font-size:26px;margin:4px 0 0;line-height:1.2;text-wrap:balance;}
+  .seal{font-family:"Songti SC","STSong",serif;color:#fff;background:var(--seal);border-radius:5px;
+    padding:6px 8px;font-size:12px;line-height:1.2;text-align:center;letter-spacing:.1em;white-space:nowrap;}
+  .date{font-size:12px;color:var(--ink2);margin:8px 0 22px;}
+
+  .update{background:var(--jade-bg);border:1px solid var(--jade);border-radius:12px;padding:16px 18px;margin-bottom:22px;}
+  .update-t{font-size:16px;font-weight:800;color:var(--jade);margin-bottom:4px;}
+  .update-d{font-size:11px;letter-spacing:.1em;color:var(--ink2);margin-bottom:10px;}
+  .update ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .update li{font-size:14px;line-height:1.5;padding-left:22px;position:relative;}
+  .update li::before{content:"✓";position:absolute;left:0;top:0;color:var(--jade);font-weight:800;}
+  .update li.new::before{content:"＋";color:var(--gold);}
+  .update li.watch::before{content:"→";color:var(--verm);}
+  .update b{color:var(--ink);}
+
+  .thesis{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--jade);border-radius:12px;padding:18px 20px;margin-bottom:14px;}
+  .thesis h2{font-size:15px;margin:0 0 8px;color:var(--jade);}
+  .thesis p{margin:0;font-size:15.5px;}
+  .thesis b{color:var(--ink);}
+  .hl-j{color:var(--jade);font-weight:700;} .hl-v{color:var(--verm);font-weight:700;}
+
+  section{margin-top:30px;}
+  .eyebrow{font-size:11px;letter-spacing:.24em;color:var(--ink2);margin-bottom:4px;}
+  h3.song{font-size:21px;margin:0 0 10px;text-wrap:balance;}
+  p{font-size:15px;} p.lead{font-size:15.5px;}
+  .big{font-size:19px;font-weight:800;} .big.mono{font-weight:800;}
+
+  .bucket{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:var(--card);border-left:5px solid var(--bc);}
+  .bucket.storm{--bc:var(--verm);} .bucket.anchor{--bc:var(--jade);} .bucket.weak{--bc:var(--gold);}
+  .b-head{display:flex;align-items:baseline;gap:8px;margin-bottom:3px;}
+  .b-head .ico{font-size:19px;} .b-head .t{font-size:17px;font-weight:800;}
+  .b-sub{font-size:13px;color:var(--ink2);margin-bottom:12px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .chip{font-size:12.5px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:var(--paper2);white-space:nowrap;}
+  .chip .n{color:var(--verm);font-weight:700;} .chip.up .n{color:var(--jade);}
+  .chip .g{color:var(--ink2);font-size:11px;}
+  .takeaway{font-size:14px;background:var(--tb);border-radius:8px;padding:9px 12px;}
+  .bucket.storm .takeaway{--tb:var(--verm-bg);} .bucket.anchor .takeaway{--tb:var(--jade-bg);} .bucket.weak .takeaway{--tb:var(--gold-bg);}
+  .takeaway b{color:var(--ink);}
+
+  .timeline{border:1px solid var(--line);border-radius:12px;padding:6px 18px 10px;background:var(--card);}
+  .tl-row{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line);}
+  .tl-row:last-child{border-bottom:0;}
+  .tl-date{flex:0 0 74px;text-align:right;}
+  .tl-date .d{font-size:17px;font-weight:800;} .tl-date .w{font-size:11px;color:var(--ink2);}
+  .tl-body{flex:1;} .tl-body .co{font-size:15px;font-weight:700;} .tl-body .no{font-size:12.5px;color:var(--ink2);}
+  .tl-flag{display:inline-block;font-size:11px;color:#fff;background:var(--verm);border-radius:4px;padding:1px 7px;margin-left:6px;}
+
+  ol.advice{list-style:none;counter-reset:a;padding:0;margin:0;}
+  ol.advice li{counter-increment:a;position:relative;padding:12px 0 12px 44px;border-bottom:1px solid var(--line);font-size:15.5px;}
+  ol.advice li:last-child{border-bottom:0;}
+  ol.advice li::before{content:counter(a);position:absolute;left:0;top:11px;width:28px;height:28px;border-radius:50%;
+    background:var(--jade);color:#fff;font-family:"Songti SC",serif;font-size:15px;display:grid;place-items:center;font-weight:700;}
+  ol.advice b{color:var(--verm);}
+
+  ul.fuse{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+  ul.fuse li{position:relative;padding:10px 14px 10px 16px;background:var(--verm-bg);border-radius:9px;font-size:14.5px;border-left:3px solid var(--verm);}
+  ul.fuse li b{color:var(--ink);}
+  .tailwind{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:14px 0;background:var(--card);}
+  .tw-row{display:flex;gap:12px;align-items:baseline;padding:11px 15px;border-bottom:1px solid var(--line);}
+  .tw-row:last-child{border-bottom:0;}
+  .tw-co{flex:0 0 88px;font-weight:800;font-size:15px;color:var(--jade);}
+  .tw-v{font-size:13px;color:var(--ink);}
+  .keepcull{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 6px;}
+  @media(max-width:520px){.keepcull{grid-template-columns:1fr;}}
+  .kc{border:1px solid var(--line);border-radius:12px;padding:14px 15px;}
+  .kc-keep{background:var(--jade-bg);border-left:4px solid var(--jade);}
+  .kc-cull{background:var(--verm-bg);border-left:4px solid var(--verm);}
+  .kc-h{font-size:16px;font-weight:800;}
+  .kc-keep .kc-h{color:var(--jade);} .kc-cull .kc-h{color:var(--verm);}
+  .kc-s{font-size:12px;color:var(--ink2);margin:2px 0 9px;}
+  .kc ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .kc li{font-size:13px;line-height:1.5;} .kc li b{color:var(--ink);}
+  .rules{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+  .rule{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-left:4px solid var(--jade);border-radius:11px;padding:13px 16px;background:var(--jade-bg);}
+  .rule-n{flex:0 0 78px;text-align:center;font-size:26px;font-weight:800;color:var(--jade);line-height:1;}
+  .rule-n.song-s{font-size:19px;}
+  .rule-b{font-size:14px;} .rule-b b{color:var(--ink);}
+  .lesson{margin-top:22px;background:var(--gold-bg);border:1px solid var(--gold);border-radius:12px;padding:16px 18px;}
+  .lesson-t{font-size:16px;font-weight:800;margin-bottom:6px;}
+  .lesson p{margin:0;font-size:14.5px;} .lesson b{color:var(--ink);}
+  .foot{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  {% if not embed %}<a class="backlink" href="/research">← 行业专栏</a>{% endif %}
+  <div class="masthead">
+    <div class="mh-l">
+      <div class="kick song">私人巴菲特 · 深度研究</div>
+      <h1 class="song">这波芯片大跌，你的自选怎么办</h1>
+    </div>
+    <div class="seal song">深度<br>研究</div>
+  </div>
+  <div class="date mono">2026年7月20日发布 · 7月21日更新</div>
+
+  <div class="update">
+    <div class="update-t song">周一盘后复盘 · 昨天的判断兑现了吗</div>
+    <div class="update-d mono">7月21日更新</div>
+    <ul>
+      <li><b>"别追刀、链条还没稳"——对了。</b>周一半导体、存储<b>继续跌</b>（德明利、至纯科技跌停，德福科技 −15%），没有反弹。周五冲进去接刀的就套了。</li>
+      <li><b>"配对手盘、别全押芯片"——正在实时上演。</b>周一大盘探底回升，靠的是<b>电力、煤炭涨停</b>；跌的是芯片、涨的是防守股，跟这篇让你补"不跟芯片一起跌"的那一条完全对上。</li>
+      <li><b>"反弹不是链条自愈"——对了。</b>周一大盘的托底，是<b>国家队护市</b>（两大央企百亿增持、多家央企密集护市、监管座谈），不是机构回补芯片——半导体自己还在挤泡沫。</li>
+      <li>"要留"那几只里，<b>瑞芯微 +3%</b>（唯一"资金在进"那只）率先转强。</li>
+      <li class="new"><b>新变量：国家队来托底了。</b>护身符更硬——但护的是大盘和价值股，<b>不是芯片</b>，芯片还得自己挤完泡沫。</li>
+      <li class="watch"><b>还没变的：真正的裁判是明天 7/22 谷歌财报</b>。国家队托底只是买时间，回答不了"AI 烧钱到底回不回本"。守住压舱石，等答案。</li>
+    </ul>
+  </div>
+
+  <div class="thesis">
+    <h2 class="song">先看这一句</h2>
+    <p>你自选 <b>151 只</b>，看着很分散，其实<span class="hl-v">八成是同一条链</span>——AI 芯片、光通信、电子材料。所以上周不是"运气差全跌了"，它们本来就是<b>一伙的，一起涨、一起跌</b>。<br><br><span class="hl-v">鸡蛋看着放了 151 个篮子，其实都在一辆车上。</span>这波大跌，正是在提醒你一件事：<b>该分散了。</b></p>
+  </div>
+
+  <section>
+    <div class="eyebrow song">为什么被杀</div>
+    <h3 class="song">不是公司出事，是"涨太多 + 一串坏消息"</h3>
+    <p class="lead">这条链上半年涨了 <span class="big mono">65%</span>，价格已经把好几年的好事都提前透支了。这种时候<b>一点风吹草动就踩踏</b>。最近接连几件事点了火：</p>
+    <ul class="fuse">
+      <li><b>7 月 1 日 · Meta</b>：宣布要把自己<b>用不完的 AI 算力</b>拿出来卖。大家一听——"原来建过头了、有富余"，当天整个芯片板块暴跌。</li>
+      <li><b>7 月 15 日 · 美光</b>：传苹果在试用<b>中国国产的存储芯片</b>，"中国要抢饭碗"，美光当天跌 8%。</li>
+      <li><b>《大空头》原型巴里</b>：公开做空英伟达和半导体，说现在"像 1999 年泡沫最后几个月"。</li>
+    </ul>
+    <p>于是<b>越是前期涨得最猛的，跌得越狠</b>——长光华芯跌停（−20%）、东芯 −14%、澜起 −13%、天孚 −13%。但请记住：<span class="hl-j">好几家公司的财报和订单其实都还好，跌的是"情绪和估值"，不是业绩。</span></p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">别只看美股脸色</div>
+    <h3 class="song">对 A 股，这里有个"护身符"</h3>
+    <p class="lead">砸美光的那条"中国抢饭碗"，反过来正是<span class="hl-j">国产芯片的顺风</span>。而且国内几大厂不但没停，还在<b>加码砸钱、并且转买国产</b>：</p>
+    <div class="tailwind">
+      <div class="tw-row"><span class="tw-co">字节跳动</span><span class="tw-v mono">2026 投入上调到 2000 亿，买华为昇腾 &gt;1400 亿</span></div>
+      <div class="tw-row"><span class="tw-co">阿里巴巴</span><span class="tw-v mono">三年 3800–4800 亿，芯片七成买国产</span></div>
+      <div class="tw-row"><span class="tw-co">腾讯</span><span class="tw-v mono">全年 900–1000 亿</span></div>
+    </div>
+    <p>所以你这条链现在是<b>两股力在打架</b>：<span class="hl-v">短期被全球恐慌拖着跌</span>，但<span class="hl-j">长期有"国产替代"托底</span>。这也是为啥专家吵翻天——有人喊泡沫，有人说"存储超级周期才打到第 3 局"。<b>吵得越凶，就颠得越厉害。</b></p>
+  </section>
+
+  <div class="lesson">
+    <div class="lesson-t song">📌 一个真实的例子：别被谣言吓着割肉</div>
+    <p>你自选里的<b>中际旭创</b>，7 月 10 日一天跌了 8%，起因是市场传"业绩不行、要发 H 股压价"的<b>谣言</b>。两天后公司直接开了 <b>186 家机构</b>的电话会辟谣，说"没有任何根据"——它<b>独家供应英伟达 70% 的高端光模块，订单已经排到 2027 年</b>，一季度利润还涨了 46%。<br><span class="hl-j">教训：跌的时候先分清是"公司真出事"还是"谣言/情绪"，别一慌就在最低点卖了。</span></p>
+  </div>
+
+  <section>
+    <div class="eyebrow song">你的自选 · 分三筐看</div>
+    <h3 class="song">同样在跌，性质完全不同</h3>
+
+    <div class="bucket storm">
+      <div class="b-head"><span class="ico">🔥</span><span class="t song">风暴中心 · 题材龙头</span></div>
+      <div class="b-sub">涨得最猛、跌得最狠，情绪主导，今天很可能还在晃。</div>
+      <div class="chips">
+        <span class="chip">长光华芯 <span class="n">−20%</span></span>
+        <span class="chip">中石科技 <span class="n">−18%</span></span>
+        <span class="chip">东芯股份 <span class="n">−14%</span> <span class="g">D</span></span>
+        <span class="chip">天孚通信 <span class="n">−13%</span></span>
+        <span class="chip">澜起科技 <span class="n">−13%</span></span>
+        <span class="chip">中际旭创 <span class="n">−12%</span></span>
+        <span class="chip">蓝思科技 <span class="n">−11%</span></span>
+        <span class="chip">长电科技 <span class="n">−10%</span></span>
+        <span class="chip">紫光国微 <span class="n">−9%</span></span>
+        <span class="chip">思特威 <span class="n">−8%</span></span>
+      </div>
+      <div class="takeaway">大白话：<b>别看"跌了好便宜"就冲进去接刀。</b>跌停的票，明天可能再跌停。</div>
+    </div>
+
+    <div class="bucket anchor">
+      <div class="b-head"><span class="ico">🛡️</span><span class="t song">压舱石 · 真业绩</span></div>
+      <div class="b-sub">评级 A/B，靠业绩不靠题材，这波<b>跌得比链条少很多</b>（只有福耀逆势收红）。</div>
+      <div class="chips">
+        <span class="chip up">福耀玻璃 <span class="n">+1.7%</span> <span class="g">B+</span></span>
+        <span class="chip">迈瑞医疗 <span class="n">−0.6%</span> <span class="g">A</span></span>
+        <span class="chip">浙江鼎力 <span class="n">−0.9%</span> <span class="g">A</span></span>
+        <span class="chip">隆基绿能 <span class="n">−0.9%</span> <span class="g">A</span></span>
+        <span class="chip">海康威视 <span class="n">−2.8%</span> <span class="g">A</span></span>
+        <span class="chip">巨星科技 <span class="n">−3.2%</span> <span class="g">A</span></span>
+        <span class="chip">九号公司 <span class="n">−3.6%</span> <span class="g">A</span></span>
+        <span class="chip">沃尔核材 <span class="n">−4.6%</span> <span class="g">A</span></span>
+      </div>
+      <div class="takeaway">大白话：<b>要买，先从这里挑。</b>它们也跌了，但跌得比芯片题材少得多——是被大盘带的，不是自己出了问题。</div>
+    </div>
+
+    <div class="bucket weak">
+      <div class="b-head"><span class="ico">⚠️</span><span class="t song">弱票 · 该趁乱清</span></div>
+      <div class="b-sub">评级 D（你自选里有 27 只），基本面差，涨时跟风、跌时更惨。</div>
+      <div class="chips">
+        <span class="chip">东芯股份 <span class="g">D · 又是龙头，最危险</span></span>
+        <span class="chip">上海瀚讯 <span class="g">D</span></span>
+        <span class="chip">光力科技 <span class="g">D</span></span>
+        <span class="chip">云南锗业 <span class="g">D</span></span>
+        <span class="chip">方正科技 <span class="g">D</span></span>
+        <span class="chip">跨境通 <span class="g">D</span></span>
+        <span class="chip">岩山科技 <span class="g">D</span></span>
+        <span class="chip">中国宝安 <span class="g">D</span></span>
+      </div>
+      <div class="takeaway">大白话：<b>这类别恋战，反弹就走</b>，别把便宜当理由。</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow song">咱们自己的信号 · 外面看不到</div>
+    <h3 class="song">别以为跌了是抄底——机构其实在悄悄出货</h3>
+    <p class="lead">这是咱们网站专门抓的机构数据。这波跌的时候，你这些股<b>绝大多数</b>都是同一个动作：<span class="hl-v">机构在悄悄减仓、往外撤，还有人借钱做空。</span>翻译成人话——<b>不是机构在抄底，是机构在高位出货。</b></p>
+    <p>所以最危险的想法就是"跌了好便宜，抄一把"——你很可能正好<b>接了机构派发的货</b>。真正该等的信号是：机构重新开始买回来（现在还完全没有）。</p>
+    <div class="keepcull">
+      <div class="kc kc-keep">
+        <div class="kc-h song">✅ 要留 / 可研究</div>
+        <div class="kc-s">机构还没跑、基本面最硬</div>
+        <ul>
+          <li><b>中微公司</b>：刻蚀设备，订单 280 亿排到 2027，一季度利润 +197%，国产化才 31% 空间大</li>
+          <li><b>江丰电子</b>：靶材，机构还在买、日本断供，跟英伟达签到 2027</li>
+          <li><b>瑞芯微</b>：端侧 AI，利润 +60~71%，资金在进（周一 +3% 率先转强）</li>
+        </ul>
+      </div>
+      <div class="kc kc-cull">
+        <div class="kc-h song">🗑️ 优先清</div>
+        <div class="kc-s">机构在跑 + 基本面差</div>
+        <ul>
+          <li><b>东芯股份</b>：已经转亏，评级 D，只剩题材</li>
+          <li><b>紫光国微</b>：机构在减、做空猛增、评级分才 47（你刚加的这只，要当心）</li>
+          <li><b>中芯国际</b>：做空大增、估值高</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top:4px;font-size:13.5px;color:var(--ink2);">注：上面"要留"这几只也在 AI 链里，整条链继续跌它们短线也躲不掉，都不便宜——<b>要买也分批、别一把梭、别追高</b>。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">小知识 · 这次最该学的一课</div>
+    <h3 class="song">分散风险，不是"买得多"，是"不一起跌"</h3>
+    <p class="lead">很多人以为买了一百只就叫分散。但你这 151 只<b>一起大跌</b>就说明了：<span class="hl-v">全是 AI 芯片这一条链，它们手拉手一起涨、一起跌，等于没分散。</span>真正的分散，是买一些<b>不跟着芯片一起动</b>的东西。记住三条就够：</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-n song">10%</div>
+        <div class="rule-b"><b>单只股票，别超过一成</b><br>一只踩雷，也伤不到筋骨。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-n song">20–30%</div>
+        <div class="rule-b"><b>单个主题/赛道，别超过两三成</b><br>别把身家押在一个故事上（比如"AI 芯片"）。你现在远远超了。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-n song song-s">对手盘</div>
+        <div class="rule-b"><b>配点"不一起跌"的</b><br>AI 之外，放点消费、医药、红利股——这波它们就没怎么跌，正好当压舱石。</div>
+      </div>
+    </div>
+    <p style="margin-top:6px;">一句话：<b>先看看自己是不是"假分散"，再补上几个真正不搭界的。</b></p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">接下来看什么</div>
+    <h3 class="song">别盯每天红绿，盯这个"裁判"</h3>
+    <p class="lead">真正决定这条链稳不稳的，是几大云厂商自己说——<b>还继不继续砸钱</b>。答案就在这几天的财报里（美股盘后，A 股次日反应）：</p>
+    <div class="timeline">
+      <div class="tl-row">
+        <div class="tl-date"><div class="d mono">7/22</div><div class="w">周三</div></div>
+        <div class="tl-body"><div class="co">谷歌 Google<span class="tl-flag">头炮 · 本周</span></div><div class="no">第一家表态，A 股 7/23 反应</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-date"><div class="d mono">7/29</div><div class="w">周二</div></div>
+        <div class="tl-body"><div class="co">微软 + Meta</div><div class="no">两家 AI 投入大户，最关键</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-date"><div class="d mono">7/30</div><div class="w">周三</div></div>
+        <div class="tl-body"><div class="co">苹果 + 亚马逊</div><div class="no">收官，看整体口风</div></div>
+      </div>
+    </div>
+    <p style="margin-top:12px;">它们<span class="hl-j">维持或加码 → 链条稳，可能反弹</span>；<span class="hl-v">松口说"要省钱、要优化" → 这波还没完</span>。这才是摇钱树里"元宝到底结不结得出来"的真答案。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">给你的三条</div>
+    <h3 class="song">大白话，就记这三句</h3>
+    <ol class="advice">
+      <li>跌的时候先<b>分清是谣言还是真出事</b>（像旭创那样），别在最低点慌着割；也别看"好便宜"就冲进跌停票接刀。</li>
+      <li>要加仓或新买，从 <b>🛡️ 压舱石（A/B 真业绩）</b>里挑，别碰 D 评级的弱票。</li>
+      <li>给自己定规矩：<b>单只不超一成、AI 芯片这一个赛道不超两三成</b>，剩下补点消费 / 医药 / 红利。别把身家押一条链。</li>
+    </ol>
+  </section>
+
+  <div class="foot">
+    数据说明：行情为各股最新可得日（7/17–7/20，部分个股因抓取覆盖未刷新到最新）。机构信号（调研 / 参与度 / 融券）截至 7/19。催化剂事件数据偏旧，仅供参考。评级为系统定量打分，非买卖指令。<br>
+    这份研究是"帮你看清楚"，不替你做决定——市场会变，最后自己拿主意。 · 沃伦·巴菲特（私人版）
+  </div>
+</div>
+
+</body>
+</html>

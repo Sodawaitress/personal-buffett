@@ -6,6 +6,14 @@
 
 ARTICLES = [
     {
+        "slug": "ai-chip-selloff-2026",
+        "title": "AI 芯片大跌复盘：机构在派发，别追刀口",
+        "subtitle": "半导体 · 光通信 · 行业研究",
+        "cover": "📉",
+        "date": "2026-07-21",
+        "template": "research/ai-chip-selloff-2026.html",
+    },
+    {
         "slug": "milk-tea-2026",
         "title": "上市奶茶六强：谁在赚钱，谁被价格战碾碎",
         "subtitle": "中国新茶饮 · 行业研究",
