@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>稳稳保底 · 放心冲刺：无忧做短线</title>
+<style>
+  :root{
+    --paper:#EBE3D2; --paper2:#F4EEDF; --card:#FBF7EC; --ink:#2C2A22; --ink2:#6C6450; --line:#DDD3BB;
+    --jade:#3F7E56; --jade-bg:#E4EEDF; --gold:#B4882A; --gold-bg:#F3E8C8; --spark:#C4562E; --spark-bg:#F6E0D3; --seal:#B4882A;
+    --c1:#3F7E56; --c2:#2F6E70; --c3:#6E5AA0; --c4:#B4882A; --c5:#7C8B3A; --c6:#9A6A2E; --c7:#4A7CA8;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0E1512; --paper2:#141C18; --card:#182019; --ink:#EAE4D4; --ink2:#9AA091; --line:#26302A;
+    --jade:#6DB587; --jade-bg:#17251C; --gold:#DCB259; --gold-bg:#241E12; --spark:#E4794C; --spark-bg:#2A1710; --seal:#DCB259;
+    --c1:#6DB587; --c2:#4FA0A2; --c3:#9C8AD0; --c4:#DCB259; --c5:#AEC066; --c6:#C99A5A; --c7:#7BA8CE;
+  }}
+  :root[data-theme="light"]{--paper:#EBE3D2;--paper2:#F4EEDF;--card:#FBF7EC;--ink:#2C2A22;--ink2:#6C6450;--line:#DDD3BB;--jade:#3F7E56;--jade-bg:#E4EEDF;--gold:#B4882A;--gold-bg:#F3E8C8;--spark:#C4562E;--spark-bg:#F6E0D3;--seal:#B4882A;--c1:#3F7E56;--c2:#2F6E70;--c3:#6E5AA0;--c4:#B4882A;--c5:#7C8B3A;--c6:#9A6A2E;--c7:#4A7CA8;}
+  :root[data-theme="dark"]{--paper:#0E1512;--paper2:#141C18;--card:#182019;--ink:#EAE4D4;--ink2:#9AA091;--line:#26302A;--jade:#6DB587;--jade-bg:#17251C;--gold:#DCB259;--gold-bg:#241E12;--spark:#E4794C;--spark-bg:#2A1710;--seal:#DCB259;--c1:#6DB587;--c2:#4FA0A2;--c3:#9C8AD0;--c4:#DCB259;--c5:#AEC066;--c6:#C99A5A;--c7:#7BA8CE;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.75;
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+  .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:600px;margin:0 auto;padding:26px 18px 56px;}
+  .backlink{display:inline-block;margin-bottom:16px;color:var(--ink2);text-decoration:none;font-size:13px;}
+  .backlink:hover{color:var(--jade);}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:12px;}
+  .kick{font-size:11px;letter-spacing:.26em;color:var(--ink2);}
+  h1{font-size:26px;margin:4px 0 0;line-height:1.2;text-wrap:balance;}
+  .seal{font-family:"Songti SC","STSong",serif;color:#fff;background:var(--seal);border-radius:5px;padding:6px 8px;font-size:12px;line-height:1.2;text-align:center;letter-spacing:.1em;white-space:nowrap;}
+  .date{font-size:12px;color:var(--ink2);margin:8px 0 20px;}
+  .hl-j{color:var(--jade);font-weight:700;} .hl-s{color:var(--spark);font-weight:700;}
+
+  .lead{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--jade);border-radius:12px;padding:16px 18px;margin-bottom:26px;font-size:16px;}
+  .lead b{color:var(--ink);} .lead .big{font-size:17.5px;font-weight:800;}
+
+  .step{display:inline-block;font-family:"Songti SC","STSong",serif;font-size:13px;letter-spacing:.06em;color:#fff;background:var(--jade);padding:4px 12px;border-radius:20px;margin-bottom:12px;}
+  .step.s2{background:var(--spark);}
+  h2.sec{font-size:21px;margin:0 0 12px;text-wrap:balance;}
+  section{margin-bottom:34px;}
+
+  .wallets{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:6px;}
+  .wal{border-radius:13px;padding:15px 16px;border:1px solid var(--line);}
+  .wal-base{background:var(--jade-bg);border-color:var(--jade);}
+  .wal-sprint{background:var(--spark-bg);border-color:var(--spark);}
+  .wal-tag{font-size:12px;font-weight:800;letter-spacing:.04em;}
+  .wal-base .wal-tag{color:var(--jade);} .wal-sprint .wal-tag{color:var(--spark);}
+  .wal-pct{font-size:30px;font-weight:900;line-height:1;margin:3px 0 2px;}
+  .wal-name{font-size:15px;font-weight:800;margin-bottom:8px;}
+  .wal ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .wal li{font-size:12.5px;line-height:1.4;color:var(--ink2);} .wal li b{color:var(--ink);}
+  .wal-cap{font-size:11.5px;color:var(--ink2);margin-top:12px;text-align:center;line-height:1.5;}
+
+  .map{display:flex;flex-direction:column;gap:8px;margin-bottom:6px;}
+  .map-row{display:grid;grid-template-columns:88px 1fr 34px;align-items:center;gap:10px;}
+  .map-name{font-size:13px;font-weight:700;} .map-bar{height:15px;border-radius:4px;background:var(--bc);}
+  .map-pct{font-size:13px;font-weight:800;text-align:right;}
+  .map-legend{font-size:11.5px;color:var(--ink2);margin-top:4px;line-height:1.5;}
+  .hgroup-t{font-size:13px;font-weight:800;margin:15px 0 6px;display:flex;align-items:center;gap:8px;}
+  .dot{width:10px;height:10px;border-radius:3px;background:var(--bc);display:inline-block;}
+  .holds{display:flex;flex-direction:column;gap:8px;}
+  .hold{display:flex;gap:11px;align-items:baseline;border:1px solid var(--line);border-radius:10px;padding:10px 13px;background:var(--card);}
+  .h-name{font-size:14.5px;font-weight:800;} .h-code{font-size:10.5px;color:var(--ink2);}
+  .h-body{flex:1;} .h-why{font-size:12.5px;color:var(--ink2);line-height:1.45;}
+  .h-tags{display:flex;gap:6px;align-items:center;margin-bottom:2px;}
+  .h-grade{font-size:10.5px;font-weight:800;color:#fff;background:var(--jade);border-radius:4px;padding:1px 6px;}
+
+  .how{display:flex;flex-direction:column;gap:11px;margin-top:4px;}
+  .howrow{display:flex;gap:13px;align-items:flex-start;}
+  .how-n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--spark);color:#fff;font-family:"Songti SC",serif;font-weight:800;font-size:15px;display:grid;place-items:center;}
+  .how-b{font-size:14.5px;line-height:1.55;padding-top:2px;} .how-b b{color:var(--ink);}
+  .how-b .t{font-weight:800;}
+
+  .wink{margin-top:16px;background:var(--gold-bg);border:1px solid var(--gold);border-radius:12px;padding:14px 17px;font-size:14.5px;}
+  .wink b{color:var(--ink);} .wink .song{font-weight:800;}
+
+  .close{margin-top:8px;background:var(--jade-bg);border:1px solid var(--jade);border-radius:12px;padding:16px 18px;font-size:15.5px;}
+  .close b{color:var(--ink);}
+  .sign{margin-top:14px;text-align:right;font-family:"Songti SC","STSong",serif;font-size:16px;font-weight:800;}
+
+  .note{background:var(--gold-bg);border:1px solid var(--gold);border-radius:10px;padding:11px 15px;margin-top:24px;font-size:12.5px;line-height:1.6;}
+  .note b{color:var(--ink);}
+  .byline{margin-top:14px;font-size:12px;color:var(--ink2);text-align:right;font-family:"Songti SC","STSong",serif;}
+  .foot{margin-top:12px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  {% if not embed %}<a class="backlink" href="/research">← 行业专栏</a>{% endif %}
+  <div class="masthead">
+    <div><div class="kick song">私人巴菲特 · 投资心法</div><h1 class="song">稳稳保底 · 放心冲刺</h1></div>
+    <div class="seal song">两个<br>钱包</div>
+  </div>
+  <div class="date mono">2026年7月22日</div>
+
+  <div class="lead">
+    想做短线？<span class="big">完全可以。</span>诀窍是把钱分成<b>两个钱包</b>：<span class="hl-j">一个「保底」</span>稳稳托着，<span class="hl-s">一个「冲刺」</span>放心去搏。<br>
+    <b>底稳了，短线才真正无忧</b>——就算冲刺看走眼，你的根基一点没动。
+  </div>
+
+  <section>
+    <h2 class="sec song">两个钱包，各干各的</h2>
+    <div class="wallets">
+      <div class="wal wal-base">
+        <div class="wal-tag">🛡 保底钱包</div>
+        <div class="wal-pct song hl-j">7 成</div>
+        <div class="wal-name">稳稳的地基</div>
+        <ul>
+          <li><b>收益</b>：一年约 8–12%，靠分红+成长</li>
+          <li><b>风险</b>：很稳，睡得着</li>
+          <li><b>怎么管</b>：一个月看一次</li>
+          <li><b>装什么</b>：一篮子好公司（见下）</li>
+        </ul>
+      </div>
+      <div class="wal wal-sprint">
+        <div class="wal-tag">⚡ 冲刺钱包</div>
+        <div class="wal-pct song hl-s">3 成</div>
+        <div class="wal-name">放心玩短线</div>
+        <ul>
+          <li><b>收益</b>：搏超额，上不封顶</li>
+          <li><b>风险</b>：亏也只亏这一小块</li>
+          <li><b>怎么管</b>：追热点、做短线随你</li>
+          <li><b>底气</b>：根基在，输了不伤身</li>
+        </ul>
+      </div>
+    </div>
+    <div class="wal-cap"><b>冲刺三成、保底七成。</b>就算冲刺那三成全打光，你还有七成稳稳的底——<b>这就是"无忧"的全部秘密</b>。</div>
+  </section>
+
+  <section>
+    <span class="step song">保底钱包 · 装什么</span>
+    <h2 class="sec song">10 家好公司，分在 7 个不搭界的行业</h2>
+    <p style="font-size:14px;margin:0 0 12px;">每家只放保底钱包的十分之一，摊在互不相干的行业里，稳稳托底。</p>
+    <div class="map">
+      <div class="map-row"><span class="map-name">医药</span><span class="map-bar" style="--bc:var(--c1);width:100%"></span><span class="map-pct">20%</span></div>
+      <div class="map-row"><span class="map-name">金融</span><span class="map-bar" style="--bc:var(--c2);width:100%"></span><span class="map-pct">20%</span></div>
+      <div class="map-row"><span class="map-name">软件·安防</span><span class="map-bar" style="--bc:var(--c3);width:100%"></span><span class="map-pct">20%</span></div>
+      <div class="map-row"><span class="map-name">消费品牌</span><span class="map-bar" style="--bc:var(--c4);width:50%"></span><span class="map-pct">10%</span></div>
+      <div class="map-row"><span class="map-name">红利·水电</span><span class="map-bar" style="--bc:var(--c5);width:50%"></span><span class="map-pct">10%</span></div>
+      <div class="map-row"><span class="map-name">高端制造</span><span class="map-bar" style="--bc:var(--c6);width:50%"></span><span class="map-pct">10%</span></div>
+      <div class="map-row"><span class="map-name">新能源</span><span class="map-bar" style="--bc:var(--c7);width:50%"></span><span class="map-pct">10%</span></div>
+    </div>
+    <div class="map-legend">都是你熟的、评级 A/B 的公司。（占的是保底钱包内部的比例）</div>
+
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c1)"></span>医药</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">药明康德</div><div class="h-code mono">603259</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">A</span></div><div class="h-why">全球医药研发外包龙头，业绩最稳。</div></div></div>
+      <div class="hold"><div><div class="h-name">迈瑞医疗</div><div class="h-code mono">300760</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">A</span></div><div class="h-why">国产医疗器械一哥，稳。</div></div></div>
+    </div>
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c2)"></span>金融 · 分红稳</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">宁波银行</div><div class="h-code mono">002142</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">A</span></div><div class="h-why">最会赚钱的城商行，稳、便宜、有分红。</div></div></div>
+      <div class="hold"><div><div class="h-name">新华保险</div><div class="h-code mono">601336</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">B+</span></div><div class="h-why">保险龙头，低估值、有红利。</div></div></div>
+    </div>
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c3)"></span>软件·安防</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">金山办公</div><div class="h-code mono">688111</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">B+</span></div><div class="h-why">WPS 办公软件，评分满分，软件现金牛。</div></div></div>
+      <div class="hold"><div><div class="h-name">海康威视</div><div class="h-code mono">002415</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">A</span></div><div class="h-why">安防+AI 视觉龙头，大盘蓝筹。</div></div></div>
+    </div>
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c4)"></span>消费品牌</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">福耀玻璃</div><div class="h-code mono">600660</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">B+</span></div><div class="h-why">全球汽车玻璃老大，稳如压舱石。</div></div></div>
+    </div>
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c5)"></span>红利·水电</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">华能水电</div><div class="h-code mono">600025</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">B</span></div><div class="h-why">旱涝保收+高分红，别的跌它常常还涨。</div></div></div>
+    </div>
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c6)"></span>高端制造</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">汇川技术</div><div class="h-code mono">300124</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">B+</span></div><div class="h-why">工业自动化龙头，业绩扎实。</div></div></div>
+    </div>
+    <div class="hgroup-t"><span class="dot" style="--bc:var(--c7)"></span>新能源</div>
+    <div class="holds">
+      <div class="hold"><div><div class="h-name">宁德时代</div><div class="h-code mono">300750</div></div><div class="h-body"><div class="h-tags"><span class="h-grade">B+</span></div><div class="h-why">动力电池全球第一。</div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="step s2 song">冲刺钱包 · 怎么玩</span>
+    <h2 class="sec song">如何"无忧"做短线</h2>
+    <div class="how">
+      <div class="howrow"><div class="how-n">1</div><div class="how-b"><span class="t">只拿冲刺钱包这三成去冲。</span>保底那七成稳稳放着不碰——这一条，就撑起了"无忧"两个字。</div></div>
+      <div class="howrow"><div class="how-n">2</div><div class="how-b"><span class="t">这三成，再分成 3~4 注。</span>一注押一只，看走眼一只，还有别的——冲刺也要有备份。</div></div>
+      <div class="howrow"><div class="how-n">3</div><div class="how-b"><span class="t">挑时机，用网站的信号。</span>它能看出<b>机构在偷偷买（领先信号）</b>还是<b>在悄悄卖（派发）</b>：机构在买时上车，在卖时落袋，胜率高很多。</div></div>
+      <div class="howrow"><div class="how-n">4</div><div class="how-b"><span class="t">赢了就落袋，挪一半回保底。</span>冲刺赚到的钱，分一半搬进保底钱包——赢的钱变成更厚的安全垫。</div></div>
+      <div class="howrow"><div class="how-n">5</div><div class="how-b"><span class="t">给每一注定个收手价。</span>比如亏到 −15% 就走，留着子弹等下一波。冲刺拼的是"打得久"，不是"一把大的"。</div></div>
+    </div>
+
+    <div class="wink">
+      <span class="song">这里有个小心机 😏：</span>冲刺<b>赢了就把利润挪回保底</b>——赢一次，你的地基就厚一层；<b>输，也只输冲刺那一小块</b>。<br>一来二去，<span class="hl-j">稳的越来越稳，搏的还照样能搏</span>。这才是聪明人的玩法。
+    </div>
+  </section>
+
+  <div class="close">
+    <b>一句话：七成稳稳托底，三成放心冲刺；冲刺赢了加固地基，输了伤不到根。</b><br>底在，你就永远有底气——想冲的时候，尽管冲。
+    <div class="sign song">—— 沃伦·巴菲特（私人版）</div>
+  </div>
+
+  <div class="note">
+    📌 <b>关于结果准不准</b>：全部分析都<b>只根据你已经添加的股票</b>来算——<b>你添加的股票越多，覆盖越全，结果就越准确</b>。想让这套更懂你、更准，就把关注的票都加进自选。
+  </div>
+
+  <div class="byline">作者：Claude　·　责编：管理猿</div>
+
+  <div class="foot">
+    数据截至 7/21，评级为系统定量打分。收益为长期参考，非承诺；市场有波动。这是一份仓位分法示范，最后由你自己拿主意。
+  </div>
+</div>
+
+</body>
+</html>

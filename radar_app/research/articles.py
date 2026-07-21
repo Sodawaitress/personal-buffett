@@ -6,6 +6,14 @@
 
 ARTICLES = [
     {
+        "slug": "base-and-sprint-2026",
+        "title": "稳稳保底 · 放心冲刺：无忧做短线",
+        "subtitle": "投资心法 · 仓位分法",
+        "cover": "🛡️",
+        "date": "2026-07-22",
+        "template": "research/base-and-sprint-2026.html",
+    },
+    {
         "slug": "ai-chip-selloff-2026",
         "title": "AI 芯片大跌复盘：机构在派发，别追刀口",
         "subtitle": "半导体 · 光通信 · 行业研究",
