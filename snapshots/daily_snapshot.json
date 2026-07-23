@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-22T10:13:22.497866Z",
+  "generated_at": "2026-07-23T10:10:33.808134Z",
   "scope": "all_users",
-  "price_snapshot_at": "2026-07-22T10:13:22.497887Z",
-  "stocks_with_fresh_price": 178,
+  "price_snapshot_at": "2026-07-23T10:10:33.808155Z",
+  "stocks_with_fresh_price": 163,
   "stocks_total": 203,
-  "price_signature": "fc933e69a877aa9b9b8d5c420bb85d8a",
+  "price_signature": "e13637100fa212edf56796cb7cbd0ec7",
   "stocks": [
     {
       "code": "AAPL",
@@ -16,18 +16,27 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "0/35：—",
-        "reasoning": "苹果公司（AAPL）当前的估值水平令人担忧，市盈率和市净率都处于历史高位。作为一名价值投资者，我始终关注公司的基本面和估值水平。苹果公司的护城河主要来自其品牌忠诚度和生态系统，但近期的新闻显示，公司面临着来自竞争和汇率波动的压力。\n\n从供应链角度来看，苹果公司的供应链管理能力是其竞争优势之一，但供应链瓶颈和关键设计赢客户的能力也面临着挑战。ATM稀释风险也是一个需要关注的因素。\n\n基于以上分析，我",
+        "reasoning": "苹果公司（AAPL）近期的表现令人关注，其当前价位处于52周区间的高位，接近年高。尽管公司的ROE异常高，但数据的准确性仍需谨慎参考。从护城河的角度来看，苹果公司的品牌认知和技术壁垒为其提供了强大的竞争优势。然而，当前的估值溢价极大，PB达到43.6x，这使得投资者需要谨慎考虑其是否具有合理的护城河支撑。\n\n从供应链的角度来看，苹果公司的供应链管理能力是其竞争优势之一。然而，供应链瓶颈和关键设计赢",
         "quant_score": 67,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 325.89,
+        "change_pct": -0.56,
+        "fetched_at": "2026-07-23 09:31:29"
+      },
       "news": [
+        {
+          "title": "Apple (AAPL) BofA Stays Bullish as Price Increases Could Offset Higher Memory Costs - Yahoo Finance",
+          "sentiment": null,
+          "date": "Wed, 24 Ju"
+        },
         {
           "title": "Apple Inc. (AAPL): A Top Stock Pick by Graham Stephan? - Yahoo Finance",
           "sentiment": 0.0,
@@ -47,11 +56,6 @@
           "title": "Is Apple Inc (AAPL) Overvalued After 4.0% Rally? GF Value Says O - GuruFocus",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "Tech analyst Ives teams with Yorkville Securities to form new merchant bank (AAPL:NASDAQ) - Seeking Alpha",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
         }
       ]
     },
@@ -65,17 +69,21 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "Nvidia Corporation（NVDA）是一家技术领先的公司，专注于高性能计算和人工智能。近期新闻显示，公司的芯片价格可能会下降，这可能会影响其盈利能力。然而，公司在能源、电信和机器人领域的应用也在不断扩展，尤其是其Nemotron技术的采用。\n\n从估值角度来看，公司的当前价格处于52周区间中段，历史价值区和强支撑区分别位于$176.92–188.10和$157.16–166.88。机构信",
+        "reasoning": "Nvidia Corporation（NVDA）是一家技术领先的公司，专注于高性能计算和人工智能。近期新闻显示，公司的芯片价格可能会下降，这可能会影响其短期的财务表现。然而，公司的长期增长前景仍然看好，尤其是在人工智能和机器学习领域。\n\n从供应链的角度来看，Nvidia 是一个关键的供应商，其产品被广泛应用于各个行业。公司的设计赢客户能力强，能够为客户提供高质量的产品和服务。然而，ATM 稀释风险",
         "quant_score": 90,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 212.06,
+        "change_pct": 2.3,
+        "fetched_at": "2026-07-23 09:32:07"
+      },
       "news": [
         {
           "title": "NVIDIA Announces Financial Results for Fourth Quarter and Fiscal 2026 - NVIDIA Newsroom",
@@ -114,18 +122,37 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "Spotify Technology（SPOT）目前呈现出一个有趣的局面。从基本面分析来看，公司的盈利能力和竞争优势仍然需要更多数据来进行准确评估。然而，机构信号显示主动基金净增持较多，做空比例下降，这可能是市场对公司未来前景持乐观态度的体现。\n\n近期新闻中，Spotify与UMG的AI音乐合作协议带来了股价的上涨，但同时第二季度盈利预测不及预期也引起了投资者的担忧。情绪值为0.08，表明市场对公",
+        "reasoning": "Spotify Technology（SPOT）当前面临着多种因素的影响。从基本面分析来看，公司的盈利能力和竞争优势仍然需要更多数据来进行准确评估。近期的新闻中，公司的二季度盈利预测低于预期，但同时也宣布了与UMG的AI音乐合作，这可能带来新的增长机会。机构信号方面，主动基金净增持和做空比例下降表明了机构对公司的信心。\n\n从估值判断来看，当前的股价相对于历史价值区间来说处于较低的位置，52周低位区",
         "quant_score": 64,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 474.16,
+        "change_pct": -3.87,
+        "fetched_at": "2026-07-23 09:34:00"
+      },
       "news": [
+        {
+          "title": "Andra AP fonden Acquires 2,400 Shares of Spotify Technology $SPOT - MarketBeat",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "Why Spotify Technology (SPOT) Stock Is Down Today - Moomoo",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "Commerzbank Aktiengesellschaft FI Buys 5,483 Shares of Spotify Technology $SPOT - MarketBeat",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
         {
           "title": "6 Best Music Stocks to Buy in 2026 - The Motley Fool",
           "sentiment": 0.0,
@@ -135,21 +162,6 @@
           "title": "Spotify (NYSE: SPOT) co-CEO sells 5,436 shares after option exercise - Stock Titan",
           "sentiment": 0.0,
           "date": "Wed, 08 Ju"
-        },
-        {
-          "title": "Spotify (NYSE: SPOT) co-CEO sells 20,833 shares after option exercise - Stock Titan",
-          "sentiment": 0.0,
-          "date": "Wed, 08 Ju"
-        },
-        {
-          "title": "Spotify Q2 2026 profit forecast misses estimates, stock falls - Yahoo Finance",
-          "sentiment": -1.0,
-          "date": "Tue, 28 Ap"
-        },
-        {
-          "title": "5 Good Stocks to Buy for the Second Half of 2026 and Beyond - U.S. News - Money",
-          "sentiment": 0.0,
-          "date": "Tue, 14 Ju"
         }
       ]
     },
@@ -163,35 +175,39 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "Lululemon Athletica 的股价近期下跌了 2.07%，当前价格为 116.33 美元。从基本面分析来看，公司的成长和管理层表现尚未有明确的数据支持。然而，机构信号显示主动基金净增持 16.78pp，这是一个积极的信号。近期新闻中，有分析师下调了 Lululemon 的股票评级，理由是公司面临的问题并没有因为估值降低而得到解决。\n\n从估值判断来看，当前价格处于 52 周极低位（9% ",
+        "reasoning": "Lululemon Athletica 的股价近期下跌了 2.07%，当前价格为 116.33 美元。从基本面分析来看，公司的成长和管理层数据不足，无法对其进行准确的评估。然而，机构信号显示主动基金净增持 16.78pp，这是一个相对积极的信号。\n\n从估值判断来看，当前价格处于 52 周极低位（9% 分位），低于历史价值区（130.79–150.55）。这可能意味着当前价格具有相对的性价比优势。近",
         "quant_score": 76,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 113.37,
+        "change_pct": -2.8,
+        "fetched_at": "2026-07-23 09:32:45"
+      },
       "news": [
-        {
-          "title": "Lululemon Stock Just Hit a 52-Week Low. Is a Turnaround Possible in 2026? - The Motley Fool",
-          "sentiment": 0.0,
-          "date": "Wed, 27 Ma"
-        },
         {
           "title": "Lululemon Stock Just Hit a 52-Week Low. Is a Turnaround Possible in 2026? - Yahoo Finance",
           "sentiment": 0.0,
           "date": "Wed, 27 Ma"
         },
         {
-          "title": "Could Lululemon Stock Go From Bad to Worse Amid a 6.5% Increase in Wholesale Prices? - The Motley Fool",
+          "title": "Lululemon Stock Just Hit a 52-Week Low. Is a Turnaround Possible in 2026? - The Motley Fool",
+          "sentiment": 0.0,
+          "date": "Wed, 27 Ma"
+        },
+        {
+          "title": "Lululemon Athletica vs. StubHub: Which Consumer Stock Is a Better Buy in 2026? - Yahoo Finance",
           "sentiment": 0.0,
           "date": "Wed, 17 Ju"
         },
         {
-          "title": "Lululemon Athletica vs. StubHub: Which Consumer Stock Is a Better Buy in 2026? - Yahoo Finance",
+          "title": "Could Lululemon Stock Go From Bad to Worse Amid a 6.5% Increase in Wholesale Prices? - The Motley Fool",
           "sentiment": 0.0,
           "date": "Wed, 17 Ju"
         },
@@ -212,17 +228,21 @@
       "is_new": false,
       "watched_by": "1,3,4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "Duolingo 的增长故事确实令人印象深刻，尤其是在 AI 驱动的增长背景下。然而，净利率的突然跳升引发了人们对一次性收益的质疑，这使得我们需要谨慎地看待其竞争力提升的归因。尽管如此，公司在语言学习领域的创新和用户黏性仍然是其重要的护城河。\n\n从估值角度来看，当前的价格已经低于历史价值区，处于52周极低位，这可能为投资者提供了一个相对合理的买入机会。机构信号方面，主动基金的净增持和做空比例的下降",
+        "reasoning": "我的朋友们，今天我们来谈谈Duolingo，这家公司的增长故事确实令人印象深刻。他们的净利率从11.8%跳升至39.9%，这是一个非常显著的改善。但是，我们需要核实是否含有一次性收益，不能将此净利率改善归因于竞争力提升。同时，公司的估值似乎已经反映了其增长潜力，但我们需要谨慎地评估其估值是否合理。\n\n从技术S曲线的角度来看，Duolingo似乎仍然处于快速成长期，市场空间仍然很大。公司的竞争壁垒主",
         "quant_score": 86,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 119.51,
+        "change_pct": -4.17,
+        "fetched_at": "2026-07-23 09:35:51"
+      },
       "news": [
         {
           "title": "Duolingo, Inc. (DUOL) Stock Falls Amid Market Uptick: What Investors Need to Know - Yahoo Finance",
@@ -261,17 +281,21 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "Etsy Inc. 的当前状态令人担忧，高达 138.8% 的资产负债率引发了显著的财务风险警告。尽管近期新闻中提到了战略性收购和增长潜力，但这些好消息并不能掩盖公司在偿债能力方面的弱点。从量化评分来看，Etsy Inc. 的护城河、成长/管理层、安全性和估值方面的数据均不足，这使得对公司的全面评估变得困难。\n\n从提供的数据来看，主动基金净增持 11.08pp，做空比例下降 8.6% 到 16.9",
+        "reasoning": "Etsy Inc.（ETSY）的当前价格为$84.10，相比其历史价格而言处于较高位。从基本面分析来看，公司的资产负债率高达138.8%，这显著增加了其财务风险，尤其是偿债能力方面存在隐患。虽然近期新闻中提到了Etsy的市场增长和应用程序动力可能带来的增长潜力，但这些并没有从根本上解决公司的财务结构问题。\n\n从估值角度来看，当前的股价相对于其历史区间而言较高，处于52周区间的高位。考虑到公司的财务",
         "quant_score": 40,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 80.48,
+        "change_pct": -1.48,
+        "fetched_at": "2026-07-23 09:33:22"
+      },
       "news": [
         {
           "title": "Etsy, Inc. Q1 2026 Earnings Call Summary - Yahoo Finance",
@@ -284,6 +308,11 @@
           "date": "Wed, 24 Ju"
         },
         {
+          "title": "Truist raises Etsy stock price target to $90 on stronger card data - Investing.com",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
           "title": "Proposed Etsy (ETSY) sale of 3,855 shares via UBS and prior June trade - Stock Titan",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
@@ -292,11 +321,6 @@
           "title": "[144] ETSY INC SEC Filing - Stock Titan",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "Etsy to Announce First Quarter 2026 Financial Results on April 29, 2026 - Yahoo Finance",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ap"
         }
       ]
     },
@@ -310,11 +334,11 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "NR",
         "conclusion": "数据不足，暂不评级",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我对Xero Limited（XRO.NZ）进行了初步分析。尽管当前的数据不足以进行全面评估，但我仍然可以提供一些初步的见解。Xero Limited是一家云端会计软件公司，其市场空间和竞争壁垒是值得关注的方面。然而，缺乏足够的数据使得我难以对其营收增速、毛利率趋势、研发效率等关键指标进行评估。\n\n近期新闻显示，Xero的股价曾经下跌，但也曾回升至80美元以上。一些预测认",
+        "reasoning": "作为一位成长股质量分析师，我对Xero Limited（XRO.NZ）进行了研究。尽管当前的数据不足以进行全面评估，但我仍然可以提供一些初步的分析。\n\n首先，Xero Limited作为一家云端会计软件公司，具有较强的成长潜力。其市场空间仍然较大，公司的渗透率仍处于早期阶段。然而，缺乏具体的财务数据和估值指标，使得我难以对公司的估值进行准确的判断。\n\n此外，近期的新闻显示，Xero的股价受到了全球",
         "quant_score": null,
         "data_incomplete": 1,
         "data_quality": "incomplete"
@@ -369,7 +393,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 0.23,
         "is_active": false,
         "survey": {
@@ -428,19 +452,19 @@
         "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "0/35：—",
-        "reasoning": "作为一名成长股分析师，我对阳光电源的基本面和估值进行了深入分析。公司近期的回购计划表明了董事长对公司未来发展的信心，这是值得关注的积极信号。然而，当前的技术面破位和价格跌破止损位，暂不建议入场。\n\n从长远来看，阳光电源在新能源领域的布局和技术优势是其成长的关键驱动力。尽管当前的估值看似较高，但考虑到公司的成长潜力和行业发展趋势，估值溢价可能是合理的。\n\n基于以上，我的判断是：买入。因为量化评分为7",
+        "moat": "70/100",
+        "reasoning": "按成长科技股的标准看：质量 70/100（营收 10年复合增速 35%），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 70,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 2.09,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 1.03,
+        "is_active": false,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 7,
+          "days_since_latest": 8,
           "events": [
             {
               "date": "2026-07-15",
@@ -510,7 +534,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "53/100",
@@ -520,7 +544,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 0.92,
         "is_active": false,
         "survey": {
@@ -533,11 +557,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 8.97,
-        "change_pct": -1.1,
-        "fetched_at": "2026-07-21 09:57:57"
-      },
+      "price": null,
       "news": [
         {
           "title": "公用事业行业资金流出榜：中国核电等10股净流出资金超5000万元",
@@ -579,19 +599,19 @@
         "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "0/35：—",
-        "reasoning": "久立特材的近期动态引人关注，尤其是其拟2亿元至4亿元回购股份的计划。这一举动表明公司对自身价值的信心，以及对未来发展的乐观态度。作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。虽然当前的市场价格已经跌破了止损位，但这并不意味着公司的基本面已经发生了根本性的变化。\n\n从公司的发展战略和市场地位来看，久立特材仍然具有较强的竞争优势和增长潜力。然而，当前的估值和技术面破位使得我暂时不建议入场。",
+        "moat": "64/100",
+        "reasoning": "按成长科技股的标准看：质量 64/100（营收 10年复合增速 18%），估值便宜。普通公司，胜在便宜。",
         "quant_score": 64,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 4.35,
-        "is_active": true,
+        "cache_age_hours": 20.9,
+        "score": 1.41,
+        "is_active": false,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 20,
+          "count_30d": 2,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-07-02",
@@ -602,12 +622,6 @@
             {
               "date": "2026-06-23",
               "n_inst": 5,
-              "method": "特定对象调研",
-              "is_specific": true
-            },
-            {
-              "date": "2026-06-04",
-              "n_inst": 12,
               "method": "特定对象调研",
               "is_specific": true
             }
@@ -661,7 +675,7 @@
       "is_new": false,
       "watched_by": "2,3",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "62/100",
@@ -671,7 +685,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 0.35,
         "is_active": false,
         "survey": {
@@ -685,9 +699,9 @@
         }
       },
       "price": {
-        "current": 38.29,
-        "change_pct": 11.89,
-        "fetched_at": "2026-07-21 09:41:22"
+        "current": 36.58,
+        "change_pct": -0.6,
+        "fetched_at": "2026-07-23 09:51:43"
       },
       "news": [
         {
@@ -730,14 +744,14 @@
         "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "0/35：—",
-        "reasoning": "作为一位价值投资者，我始终关注那些具有长期成长潜力的公司。药明康德（603259）就是这样一家公司，尽管其当前的利润质量引发了一些疑问。净利润增速103%远超营收增速16%，这可能意味着存在一次性收益。然而，我们需要深入分析公司的基本面，以判断其长期的成长潜力。\n\n从公司的业务模式和市场地位来看，药明康德在医药生物行业中占据了重要的地位。公司的研发能力和客户资源是其核心竞争力的重要组成部分。尽管当",
+        "moat": "88/100",
+        "reasoning": "按成长科技股的标准看：质量 88/100（营收 10年复合增速 25%），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 88,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 0.11,
         "is_active": false,
         "survey": {
@@ -793,7 +807,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "64/100",
@@ -803,12 +817,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 1.12,
+        "cache_age_hours": 20.9,
+        "score": 0.62,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-06-25",
@@ -823,8 +837,27 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 84.77,
+        "change_pct": -0.04,
+        "fetched_at": "2026-07-23 09:25:18"
+      },
       "news": [
+        {
+          "title": "头部整机厂自研：灵心巧手400亿估值“垂类”困境",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "判若两基！张坤、刘彦春、朱少醒二季度集体“破圈”调仓 | 基金放大镜",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
+        {
+          "title": "5只股收盘价创历史新高",
+          "sentiment": null,
+          "date": "2026-07-20"
+        },
         {
           "title": "睿远基金旗下产品最新重仓股曝光：傅鹏博首次建仓炬光科技 赵枫买回药明生物",
           "sentiment": null,
@@ -834,21 +867,6 @@
           "title": "12只个股大宗交易超5000万元",
           "sentiment": null,
           "date": "2026-07-16"
-        },
-        {
-          "title": "解密主力资金出逃股 连续5日净流出418股",
-          "sentiment": null,
-          "date": "2026-07-16"
-        },
-        {
-          "title": "美的集团：440万股限制性股票将于7月20日上市流通",
-          "sentiment": null,
-          "date": "2026-07-15"
-        },
-        {
-          "title": "合康新能联合国家电投  推进核电高端装备国产化",
-          "sentiment": null,
-          "date": "2026-07-13"
         }
       ]
     },
@@ -862,7 +880,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "49/100",
@@ -872,7 +890,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 0.11,
         "is_active": false,
         "survey": {
@@ -886,11 +904,26 @@
         }
       },
       "price": {
-        "current": 14.87,
-        "change_pct": -0.4,
-        "fetched_at": "2026-07-21 09:38:35"
+        "current": 15.27,
+        "change_pct": 0.86,
+        "fetched_at": "2026-07-23 09:48:50"
       },
       "news": [
+        {
+          "title": "中远海控601919.SH)：副总经理、总法律顾问钱明辞任",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "中远海控：钱明辞任副总经理及总法律顾问",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "中远海控回购150万股 总支付2252万元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "15家央企上市公司公告：增持、回购、分红",
           "sentiment": null,
@@ -900,21 +933,6 @@
           "title": "15家央企上市公司发布公告 持续提振市场信心",
           "sentiment": null,
           "date": "2026-07-21"
-        },
-        {
-          "title": "中远海控回购150万股 金额2219万元",
-          "sentiment": null,
-          "date": "2026-07-20"
-        },
-        {
-          "title": "中远海控回购1970万股 金额2.79亿元",
-          "sentiment": null,
-          "date": "2026-07-20"
-        },
-        {
-          "title": "中远海控回购150万股 金额2193万元",
-          "sentiment": null,
-          "date": "2026-07-16"
         }
       ]
     },
@@ -928,7 +946,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "57/100",
@@ -938,7 +956,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 2.45,
         "is_active": true,
         "survey": {
@@ -1004,7 +1022,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 1.03,
         "is_active": false,
         "survey": {
@@ -1060,7 +1078,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "29/100",
@@ -1070,23 +1088,23 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 2.63,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.11,
+        "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 44,
+          "days_since_latest": 45,
           "events": [
             {
               "date": "2026-06-08",
               "n_inst": 14,
-              "method": "特定对象调研,电话会议,线上沟通交流",
+              "method": "",
               "is_specific": true
             },
             {
               "date": "2026-05-27",
               "n_inst": 7,
-              "method": "路演活动,会议沟通交流",
+              "method": "",
               "is_specific": false
             }
           ]
@@ -1096,11 +1114,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 13.65,
-        "change_pct": 3.17,
-        "fetched_at": "2026-07-21 10:03:26"
-      },
+      "price": null,
       "news": [
         {
           "title": "流感概念涨3.23%，主力资金净流入99股",
@@ -1139,7 +1153,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "88/100",
@@ -1149,7 +1163,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 1.35,
         "is_active": false,
         "survey": {
@@ -1162,11 +1176,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 382.2,
-        "change_pct": 1.53,
-        "fetched_at": "2026-07-21 14:07:06"
-      },
+      "price": null,
       "news": [
         {
           "title": "宁德时代成立新公司 含多项物联网相关业务",
@@ -1215,7 +1225,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1281,7 +1291,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 0.72,
         "is_active": false,
         "survey": {
@@ -1337,7 +1347,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "46/100",
@@ -1347,12 +1357,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 3.0,
         "is_active": true,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 22,
+          "days_since_latest": 23,
           "events": [
             {
               "date": "2026-06-30",
@@ -1416,7 +1426,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "70/100",
@@ -1426,7 +1436,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1439,11 +1449,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 50.18,
-        "change_pct": 6.43,
-        "fetched_at": "2026-07-21 14:07:05"
-      },
+      "price": null,
       "news": [
         {
           "title": "厦门钨业等成立新公司 含智能机器人业务",
@@ -1482,7 +1488,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "84/100",
@@ -1492,12 +1498,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 4.21,
         "is_active": true,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 7,
+          "days_since_latest": 8,
           "events": [
             {
               "date": "2026-07-15",
@@ -1525,35 +1531,35 @@
         }
       },
       "price": {
-        "current": 219.6,
-        "change_pct": 15.62,
-        "fetched_at": "2026-07-21 09:44:05"
+        "current": 225.5,
+        "change_pct": 1.12,
+        "fetched_at": "2026-07-23 09:54:29"
       },
       "news": [
         {
-          "title": "125只股中线走稳 站上半年线",
+          "title": "澜起科技、中微公司等新设创投合伙企业",
           "sentiment": null,
-          "date": "2026-07-21"
+          "date": "2026-07-23"
         },
         {
-          "title": "104只股中线走稳 站上半年线",
+          "title": "澜起科技、中微公司等新设创投合伙企业",
           "sentiment": null,
-          "date": "2026-07-21"
+          "date": "2026-07-23"
         },
         {
-          "title": "今日84只个股突破半年线",
+          "title": "7月22日A股420只个股融资买入额超亿元 中际旭创68.01亿元居首位",
           "sentiment": null,
-          "date": "2026-07-21"
+          "date": "2026-07-23"
         },
         {
-          "title": "澜起科技拟回购3亿至6亿元股份",
+          "title": "澜起科技：2025年年度权益分派每股派发现金红利0.39元",
           "sentiment": null,
-          "date": "2026-07-17"
+          "date": "2026-07-22"
         },
         {
-          "title": "澜起科技：韩国办公室遭反垄断搜查 正配合调查",
+          "title": "澜起科技、中微公司等新设创投合伙企业，出资额21亿",
           "sentiment": null,
-          "date": "2026-07-17"
+          "date": "2026-07-22"
         }
       ]
     },
@@ -1567,7 +1573,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "44/100",
@@ -1577,7 +1583,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 0.38,
         "is_active": false,
         "survey": {
@@ -1591,9 +1597,9 @@
         }
       },
       "price": {
-        "current": 41.7,
-        "change_pct": 1.78,
-        "fetched_at": "2026-07-21 09:46:43"
+        "current": 40.49,
+        "change_pct": -0.83,
+        "fetched_at": "2026-07-23 09:57:15"
       },
       "news": [
         {
@@ -1633,7 +1639,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "77/100",
@@ -1643,12 +1649,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 3.04,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.04,
+        "is_active": false,
         "survey": {
           "count_30d": 6,
-          "days_since_latest": 14,
+          "days_since_latest": 15,
           "events": [
             {
               "date": "2026-07-08",
@@ -1687,32 +1693,36 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 238.93,
+        "change_pct": -0.61,
+        "fetched_at": "2026-07-23 09:27:43"
+      },
       "news": [
         {
-          "title": "近日海外机构调研股名单",
+          "title": "广东上市公司总数达1256家居全国第一",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "胜宏科技拟实施限制性股票激励 折价超30% 员工持股计划同步登场",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "折价超30%！胜宏科技拟向逾1500名骨干推限制性股票激励，员工持股计划同步登场",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
+        {
+          "title": "胜宏科技：拟推不超7亿元员工持股计划",
           "sentiment": null,
           "date": "2026-07-20"
         },
         {
-          "title": "融资客看好2股 买入占成交比例超三成",
+          "title": "胜宏科技：拟推不超486.24万股限制性股票激励计划",
           "sentiment": null,
-          "date": "2026-07-15"
-        },
-        {
-          "title": "今日94只个股突破年线",
-          "sentiment": null,
-          "date": "2026-07-14"
-        },
-        {
-          "title": "【盘中播报】57只股长线走稳 站上年线",
-          "sentiment": null,
-          "date": "2026-07-14"
-        },
-        {
-          "title": "胜宏科技澄清市场传闻：AI相关PCB产品需求旺盛 在手订单持续增长",
-          "sentiment": null,
-          "date": "2026-07-14"
+          "date": "2026-07-20"
         }
       ]
     },
@@ -1726,7 +1736,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "35/100",
@@ -1736,7 +1746,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1750,11 +1760,16 @@
         }
       },
       "price": {
-        "current": 47.5,
-        "change_pct": 6.38,
-        "fetched_at": "2026-07-21 09:49:57"
+        "current": 47.75,
+        "change_pct": 1.7,
+        "fetched_at": "2026-07-23 10:00:32"
       },
       "news": [
+        {
+          "title": "医药生物行业资金流出榜：九安医疗等6股净流出资金超亿元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "英科医疗控股股东刘方毅解除质押125万股公司股份",
           "sentiment": null,
@@ -1774,11 +1789,6 @@
           "title": "15.79亿元主力资金今日撤离医药生物板块",
           "sentiment": 0.0,
           "date": "2026-05-22"
-        },
-        {
-          "title": "海外机构调研股名单 澜起科技最受关注",
-          "sentiment": 0.0,
-          "date": "2026-05-22"
         }
       ]
     },
@@ -1792,7 +1802,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "63/100",
@@ -1802,12 +1812,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.9,
         "score": 1.94,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 56,
+          "days_since_latest": 57,
           "events": [
             {
               "date": "2026-05-27",
@@ -1822,11 +1832,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 59.66,
-        "change_pct": 15.91,
-        "fetched_at": "2026-07-21 10:02:19"
-      },
+      "price": null,
       "news": [
         {
           "title": "131股融资余额增幅超5%",
@@ -1875,12 +1881,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.9,
         "score": 3.82,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-06-25",
@@ -1948,7 +1954,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2004,7 +2010,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "42/100",
@@ -2014,8 +2020,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 0.51,
+        "cache_age_hours": 20.9,
+        "score": 0.2,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -2070,7 +2076,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "27/100",
@@ -2080,12 +2086,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 2.35,
         "is_active": true,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 44,
+          "days_since_latest": 45,
           "events": [
             {
               "date": "2026-06-08",
@@ -2107,9 +2113,9 @@
         }
       },
       "price": {
-        "current": 29.77,
-        "change_pct": 4.02,
-        "fetched_at": "2026-07-21 09:40:10"
+        "current": 28.97,
+        "change_pct": -0.45,
+        "fetched_at": "2026-07-23 09:50:29"
       },
       "news": [
         {
@@ -2149,7 +2155,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "50/100",
@@ -2159,7 +2165,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 2.31,
         "is_active": true,
         "survey": {
@@ -2173,9 +2179,9 @@
         }
       },
       "price": {
-        "current": 406.38,
-        "change_pct": 6.38,
-        "fetched_at": "2026-07-21 09:51:33"
+        "current": 356.12,
+        "change_pct": -2.71,
+        "fetched_at": "2026-07-23 10:02:09"
       },
       "news": [
         {
@@ -2215,7 +2221,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "50/100",
@@ -2225,7 +2231,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2281,7 +2287,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "90/100",
@@ -2291,12 +2297,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 3.04,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.03,
+        "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-07-09",
@@ -2318,9 +2324,9 @@
         }
       },
       "price": {
-        "current": 231.0,
-        "change_pct": 8.18,
-        "fetched_at": "2026-07-21 09:43:35"
+        "current": 212.09,
+        "change_pct": -2.55,
+        "fetched_at": "2026-07-23 09:53:56"
       },
       "news": [
         {
@@ -2360,7 +2366,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "52/100",
@@ -2370,12 +2376,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 4.48,
-        "is_active": true,
+        "cache_age_hours": 20.9,
+        "score": 1.98,
+        "is_active": false,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 6,
+          "count_30d": 2,
+          "days_since_latest": 7,
           "events": [
             {
               "date": "2026-07-16",
@@ -2388,12 +2394,6 @@
               "n_inst": 2,
               "method": "电话会议",
               "is_specific": false
-            },
-            {
-              "date": "2026-05-29",
-              "n_inst": 3,
-              "method": "深交所2026全球投资者大会路演活动",
-              "is_specific": false
             }
           ]
         },
@@ -2402,11 +2402,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 12.4,
-        "change_pct": 0.08,
-        "fetched_at": "2026-07-21 09:57:24"
-      },
+      "price": null,
       "news": [
         {
           "title": "17.99亿元主力资金今日撤离食品饮料板块",
@@ -2445,7 +2441,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "13/100",
@@ -2455,8 +2451,8 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 0.0,
+        "cache_age_hours": 20.9,
+        "score": 1.47,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -2511,7 +2507,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "64/100",
@@ -2521,7 +2517,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 0.68,
         "is_active": false,
         "survey": {
@@ -2577,7 +2573,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "86/100",
@@ -2587,12 +2583,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 3.15,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.65,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 10,
+          "days_since_latest": 11,
           "events": [
             {
               "date": "2026-07-12",
@@ -2650,7 +2646,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "41/100",
@@ -2660,12 +2656,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 4.0,
         "is_active": true,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 36,
+          "days_since_latest": 37,
           "events": [
             {
               "date": "2026-06-16",
@@ -2729,7 +2725,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "34/100",
@@ -2739,7 +2735,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 21.0,
         "score": 1.02,
         "is_active": false,
         "survey": {
@@ -2752,11 +2748,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 6.18,
-        "change_pct": 1.64,
-        "fetched_at": "2026-07-21 10:00:04"
-      },
+      "price": null,
       "news": [
         {
           "title": "3只个股融资余额占流通市值比例超20%",
@@ -2795,7 +2787,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "54/100",
@@ -2805,12 +2797,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 1.1,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 50,
+          "days_since_latest": 51,
           "events": [
             {
               "date": "2026-06-02",
@@ -2826,11 +2818,16 @@
         }
       },
       "price": {
-        "current": 32.96,
-        "change_pct": -0.15,
-        "fetched_at": "2026-07-21 09:43:02"
+        "current": 33.76,
+        "change_pct": 2.24,
+        "fetched_at": "2026-07-23 09:53:24"
       },
       "news": [
+        {
+          "title": "杠杆资金少了3000亿！两融连降13天，融资客逃离科技股？",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
         {
           "title": "中船澄西首艘41800吨双向航行自卸船交付，手持订单交付已排至2030年",
           "sentiment": null,
@@ -2850,11 +2847,6 @@
           "title": "造船业高景气兑现 两家船企上半年业绩大增",
           "sentiment": null,
           "date": "2026-07-14"
-        },
-        {
-          "title": "造船业高景气兑现 龙头企业上半年业绩大增",
-          "sentiment": null,
-          "date": "2026-07-14"
         }
       ]
     },
@@ -2868,7 +2860,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "25/100",
@@ -2878,17 +2870,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 3.5,
+        "cache_age_hours": 20.9,
+        "score": 2.0,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 51,
+          "days_since_latest": 52,
           "events": [
             {
               "date": "2026-06-01",
               "n_inst": 14,
-              "method": "现场参观",
+              "method": "",
               "is_specific": true
             }
           ]
@@ -2898,11 +2890,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 8.33,
-        "change_pct": 0.48,
-        "fetched_at": "2026-07-21 09:54:44"
-      },
+      "price": null,
       "news": [
         {
           "title": "深市密集回购增持再现！7月已披露54单 总金额上限超76亿元",
@@ -2944,14 +2932,14 @@
         "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "0/35：—",
-        "reasoning": "这家公司的基本面仍然不明朗，数据不足让我们很难对其护城河、成长性和安全性做出准确的判断。最近中标新加坡圣淘沙项目幕墙工程，这是一个积极的信号，但我们需要考虑这是否能改变公司的基本面坏处。公司的估值看起来并不明显便宜，当前价¥8.09相对于年线¥8.34略有下降，但这并不能让我们得出结论说公司的估值已经变得合理。\n\n基于提供的数据，我们看到公司的量化评分为30/100，属于C级，建议减持。虽然公司近",
+        "moat": "30/100",
+        "reasoning": "按成熟价值股的标准看：质量 30/100（ROE 8.4%（巴菲特线 15%）），估值合理。质量偏弱。",
         "quant_score": 30,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 0.87,
         "is_active": false,
         "survey": {
@@ -3007,7 +2995,7 @@
       "is_new": false,
       "watched_by": "2,4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "64/100",
@@ -3017,7 +3005,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.9,
         "score": 2.8,
         "is_active": true,
         "survey": {
@@ -3030,8 +3018,27 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 145.09,
+        "change_pct": -6.75,
+        "fetched_at": "2026-07-23 09:28:56"
+      },
       "news": [
+        {
+          "title": "A股小幅收涨：有色金属领涨，两市成交不足2.2万亿元",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "469只科创板股现身基金重仓股名单",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "基金二季度控盘比例超10%个股（附名单）",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
         {
           "title": "中芯国际概念下跌6.01%，33股主力资金净流出超亿元",
           "sentiment": null,
@@ -3041,21 +3048,6 @@
           "title": "科创板股今日大宗交易成交明细",
           "sentiment": null,
           "date": "2026-07-13"
-        },
-        {
-          "title": "中签率有望高出10倍！长鑫科技申购时间敲定 硬科技脉冲飙升",
-          "sentiment": null,
-          "date": "2026-07-09"
-        },
-        {
-          "title": "两融余额五连降 累计缩水708.17亿元",
-          "sentiment": null,
-          "date": "2026-07-09"
-        },
-        {
-          "title": "56只科创板股获融资净买入超1000万元",
-          "sentiment": null,
-          "date": "2026-07-09"
         }
       ]
     },
@@ -3069,7 +3061,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "48/100",
@@ -3079,8 +3071,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 2.43,
+        "cache_age_hours": 20.9,
+        "score": 2.14,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -3093,9 +3085,9 @@
         }
       },
       "price": {
-        "current": 14.19,
-        "change_pct": 3.12,
-        "fetched_at": "2026-07-21 09:38:04"
+        "current": 13.76,
+        "change_pct": -0.58,
+        "fetched_at": "2026-07-23 09:48:17"
       },
       "news": [
         {
@@ -3135,7 +3127,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "57/100",
@@ -3145,12 +3137,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 0.8,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 56,
+          "days_since_latest": 57,
           "events": [
             {
               "date": "2026-05-27",
@@ -3165,11 +3157,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 49.5,
-        "change_pct": 0.77,
-        "fetched_at": "2026-07-21 09:53:10"
-      },
+      "price": null,
       "news": [
         {
           "title": "华大智造选举非独立董事，刘健获候选提名",
@@ -3208,7 +3196,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "15/100",
@@ -3218,12 +3206,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 1.5,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 42,
+          "days_since_latest": 43,
           "events": [
             {
               "date": "2026-06-10",
@@ -3239,11 +3227,26 @@
         }
       },
       "price": {
-        "current": 7.25,
-        "change_pct": -4.61,
-        "fetched_at": "2026-07-21 09:42:29"
+        "current": 7.19,
+        "change_pct": -1.1,
+        "fetched_at": "2026-07-23 09:52:49"
       },
       "news": [
+        {
+          "title": "因2400万元算力云服务合同纠纷 京源环保子公司将蓝耘科技告上法庭",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "欠2250万元算力服务费被告上法庭，京源环保新业务被蓝耘科技拖累？连续三年亏损待破局",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "京源环保688096龙虎榜数据07-21)",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
         {
           "title": "短线防风险 154只个股短期均线现死叉",
           "sentiment": null,
@@ -3251,21 +3254,6 @@
         },
         {
           "title": "短线防风险 164只个股短期均线现死叉",
-          "sentiment": null,
-          "date": "2026-07-21"
-        },
-        {
-          "title": "短线防风险 157只个股短期均线现死叉",
-          "sentiment": null,
-          "date": "2026-07-21"
-        },
-        {
-          "title": "短线防风险 231只个股短期均线现死叉",
-          "sentiment": null,
-          "date": "2026-07-21"
-        },
-        {
-          "title": "融资客看好2股 买入占成交比例超三成",
           "sentiment": null,
           "date": "2026-07-21"
         }
@@ -3281,7 +3269,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "19/100",
@@ -3291,12 +3279,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.4,
         "score": 3.0,
         "is_active": true,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 14,
+          "days_since_latest": 15,
           "events": [
             {
               "date": "2026-07-08",
@@ -3324,9 +3312,9 @@
         }
       },
       "price": {
-        "current": 26.51,
-        "change_pct": 10.05,
-        "fetched_at": "2026-07-21 09:40:43"
+        "current": 26.38,
+        "change_pct": -4.07,
+        "fetched_at": "2026-07-23 09:51:01"
       },
       "news": [
         {
@@ -3366,7 +3354,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "40/100",
@@ -3376,12 +3364,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 4.27,
         "is_active": true,
         "survey": {
           "count_30d": 7,
-          "days_since_latest": 8,
+          "days_since_latest": 9,
           "events": [
             {
               "date": "2026-07-14",
@@ -3421,11 +3409,21 @@
         }
       },
       "price": {
-        "current": 38.4,
-        "change_pct": 8.72,
-        "fetched_at": "2026-07-21 09:39:38"
+        "current": 37.0,
+        "change_pct": -0.16,
+        "fetched_at": "2026-07-23 09:49:57"
       },
       "news": [
+        {
+          "title": "144家公司获机构调研（附名单）",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "53家公司获海外机构调研",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "近日海外机构调研股名单",
           "sentiment": null,
@@ -3440,16 +3438,6 @@
           "title": "134家公司获机构调研（附名单）",
           "sentiment": null,
           "date": "2026-07-17"
-        },
-        {
-          "title": "金橙子迎来数十家机构密集调研，双线布局3D打印抢抓行业升级红利",
-          "sentiment": null,
-          "date": "2026-07-15"
-        },
-        {
-          "title": "海外机构调研股名单 广合科技最受关注",
-          "sentiment": null,
-          "date": "2026-07-14"
         }
       ]
     },
@@ -3463,7 +3451,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "55/100",
@@ -3473,7 +3461,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -3529,7 +3517,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "73/100",
@@ -3539,7 +3527,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3553,18 +3541,23 @@
         }
       },
       "price": {
-        "current": 51.12,
-        "change_pct": 6.21,
-        "fetched_at": "2026-07-21 09:39:07"
+        "current": 48.25,
+        "change_pct": -3.13,
+        "fetched_at": "2026-07-23 09:49:24"
       },
       "news": [
         {
-          "title": "创业板融资余额13连降",
+          "title": "中石科技：拟回购3000万元-6000万元股份",
           "sentiment": null,
           "date": "2026-07-21"
         },
         {
           "title": "创业板两融余额减少165.84亿元",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
+        {
+          "title": "创业板融资余额13连降",
           "sentiment": null,
           "date": "2026-07-21"
         },
@@ -3577,11 +3570,6 @@
           "title": "两融余额缩水293.40亿元 杠杆资金大幅加仓139股",
           "sentiment": null,
           "date": "2026-07-17"
-        },
-        {
-          "title": "25.84亿主力资金净流入，AI PC概念涨4.02%",
-          "sentiment": null,
-          "date": "2026-07-09"
         }
       ]
     },
@@ -3595,7 +3583,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "71/100",
@@ -3605,7 +3593,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 0.04,
         "is_active": false,
         "survey": {
@@ -3661,7 +3649,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "51/100",
@@ -3671,12 +3659,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 1.74,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 50,
+          "days_since_latest": 51,
           "events": [
             {
               "date": "2026-06-02",
@@ -3734,7 +3722,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "35/100",
@@ -3744,8 +3732,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 2.0,
+        "cache_age_hours": 20.9,
+        "score": 2.29,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -3758,11 +3746,21 @@
         }
       },
       "price": {
-        "current": 3.49,
-        "change_pct": 0.58,
-        "fetched_at": "2026-07-21 09:47:14"
+        "current": 3.65,
+        "change_pct": 2.53,
+        "fetched_at": "2026-07-23 09:57:48"
       },
       "news": [
+        {
+          "title": "煤炭行业资金流入榜：大有能源、兖矿能源等净流入资金居前",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "煤炭概念上涨1.52%，8股主力资金净流入超5000万元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "煤炭行业资金流出榜：陕西煤业等9股净流出资金超千万元",
           "sentiment": null,
@@ -3777,16 +3775,6 @@
           "title": "上半年煤焦市场价格走强 企业利润整体改善",
           "sentiment": null,
           "date": "2026-07-15"
-        },
-        {
-          "title": "美锦能源：预计2026年上半年亏损4.5亿元-6.5亿元",
-          "sentiment": null,
-          "date": "2026-07-14"
-        },
-        {
-          "title": "1.02亿元资金今日流出煤炭股",
-          "sentiment": null,
-          "date": "2026-07-13"
         }
       ]
     },
@@ -3800,7 +3788,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "74/100",
@@ -3810,7 +3798,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.3,
         "is_active": false,
         "survey": {
@@ -3866,7 +3854,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "51/100",
@@ -3876,12 +3864,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 3.5,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 57,
+          "days_since_latest": 58,
           "events": [
             {
               "date": "2026-05-26",
@@ -3896,32 +3884,36 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 103.35,
+        "change_pct": -7.56,
+        "fetched_at": "2026-07-23 09:26:01"
+      },
       "news": [
         {
-          "title": "91只科创板股票跻身百元股阵营",
+          "title": "57家科创板公司提前预告上半年业绩",
           "sentiment": null,
-          "date": "2026-07-20"
+          "date": "2026-07-23"
         },
         {
-          "title": "【数据揭秘】融资客看好个股一览",
+          "title": "31只科创板股融资余额增加超5000万元",
           "sentiment": null,
-          "date": "2026-07-20"
+          "date": "2026-07-23"
         },
         {
-          "title": "两融余额缩水811.69亿元 杠杆资金大幅加仓87股",
+          "title": "科创板股融资融券余额每日变动（7月22日）",
           "sentiment": null,
-          "date": "2026-07-20"
+          "date": "2026-07-23"
         },
         {
-          "title": "7月16日科创板主力资金净流出196.77亿元",
+          "title": "全年盈利曙光乍现？翱捷科技预计上半年扭亏为盈，扣非仍亏损！股价一直破发",
           "sentiment": null,
-          "date": "2026-07-16"
+          "date": "2026-07-22"
         },
         {
-          "title": "科创板平均股价56.01元，30股股价超300元",
+          "title": "翱捷科技：预计2026年上半年盈利8500万元 同比扭亏",
           "sentiment": null,
-          "date": "2026-07-16"
+          "date": "2026-07-22"
         }
       ]
     },
@@ -3935,7 +3927,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "27/100",
@@ -3945,12 +3937,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 1.0,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 9,
+          "days_since_latest": 10,
           "events": [
             {
               "date": "2026-07-13",
@@ -3971,8 +3963,22 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 62.62,
+        "change_pct": -4.53,
+        "fetched_at": "2026-07-23 09:29:30"
+      },
       "news": [
+        {
+          "title": "【数据揭秘】融资客看好个股一览",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "两融余额增加7.05亿元 杠杆资金大幅加仓225股",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "天禄科技301045.SZ)：控股子公司安徽吉光设备采购合同仲裁败诉，将减少2026年净利润约193.5万元",
           "sentiment": null,
@@ -3987,16 +3993,6 @@
           "title": "20只创业板股获杠杆资金加仓超5%",
           "sentiment": null,
           "date": "2026-07-20"
-        },
-        {
-          "title": "【数据揭秘】融资客看好个股一览",
-          "sentiment": null,
-          "date": "2026-07-17"
-        },
-        {
-          "title": "133家公司获机构调研（附名单）",
-          "sentiment": null,
-          "date": "2026-07-13"
         }
       ]
     },
@@ -4010,7 +4006,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "40/100",
@@ -4020,7 +4016,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.68,
         "is_active": false,
         "survey": {
@@ -4034,9 +4030,9 @@
         }
       },
       "price": {
-        "current": 25.8,
-        "change_pct": -1.26,
-        "fetched_at": "2026-07-21 09:33:03"
+        "current": 26.07,
+        "change_pct": -0.34,
+        "fetched_at": "2026-07-23 09:43:16"
       },
       "news": [
         {
@@ -4076,7 +4072,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "56/100",
@@ -4086,7 +4082,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 1.28,
         "is_active": false,
         "survey": {
@@ -4100,11 +4096,21 @@
         }
       },
       "price": {
-        "current": 83.2,
-        "change_pct": 16.49,
-        "fetched_at": "2026-07-21 09:49:22"
+        "current": 77.0,
+        "change_pct": -9.44,
+        "fetched_at": "2026-07-23 09:59:59"
       },
       "news": [
+        {
+          "title": "7月22日科创板主力资金净流入9.21亿元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "60只科创板股获融资净买入超1000万元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "7月21日科创板主力资金净流入91.95亿元",
           "sentiment": null,
@@ -4119,16 +4125,6 @@
           "title": "科创板今日平均换手率2.60%，121股换手率超5%",
           "sentiment": null,
           "date": "2026-07-16"
-        },
-        {
-          "title": "科创板活跃股排行榜（7月15日）",
-          "sentiment": null,
-          "date": "2026-07-15"
-        },
-        {
-          "title": "受益AI相关基础设施领域需求快速增长，封测龙头长电科技上半年归母净利同比最高预增超100%，二季度环比预增超65%",
-          "sentiment": null,
-          "date": "2026-07-14"
         }
       ]
     },
@@ -4142,7 +4138,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "26/100",
@@ -4152,7 +4148,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 2.03,
         "is_active": true,
         "survey": {
@@ -4165,8 +4161,27 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 6.77,
+        "change_pct": 3.36,
+        "fetched_at": "2026-07-23 09:26:34"
+      },
       "news": [
+        {
+          "title": "奥动新能源第二次递表港交所；上海电气预计中期归母净利润同比增加约12%至22%丨港交所早参",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
+        {
+          "title": "上海电气：预计上半年净利润9.20亿元~10.00亿元 同比增12.00%~22.00%",
+          "sentiment": null,
+          "date": "2026-07-20"
+        },
+        {
+          "title": "上海电气：预计2026年上半年净利同比增长12%-22%",
+          "sentiment": null,
+          "date": "2026-07-20"
+        },
         {
           "title": "上海电气：预计2026年半年度归母净利润同比增12%至22%",
           "sentiment": null,
@@ -4176,21 +4191,6 @@
           "title": "上海电气：上半年净利润同比预增约12%至22%",
           "sentiment": null,
           "date": "2026-07-20"
-        },
-        {
-          "title": "上海电气：预计2026年半年度净利润同比增长12%-22%",
-          "sentiment": null,
-          "date": "2026-07-20"
-        },
-        {
-          "title": "华电光大应收逾期超六成，流动性问题凸显，关联资金拆借频发|读懂IPO",
-          "sentiment": null,
-          "date": "2026-07-15"
-        },
-        {
-          "title": "七年仲裁“拉锯”终胜诉 合作方向上海电气索赔3.89亿美元被驳回",
-          "sentiment": null,
-          "date": "2026-07-07"
         }
       ]
     },
@@ -4204,7 +4204,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "36/100",
@@ -4214,7 +4214,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4228,11 +4228,21 @@
         }
       },
       "price": {
-        "current": 4.57,
-        "change_pct": 2.7,
-        "fetched_at": "2026-07-21 09:48:51"
+        "current": 4.63,
+        "change_pct": 2.43,
+        "fetched_at": "2026-07-23 09:59:26"
       },
       "news": [
+        {
+          "title": "金属锌概念涨2.43%，主力资金净流入这些股",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "金属铅概念上涨2.54%，7股主力资金净流入超亿元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "金属锌概念涨3.51%，主力资金净流入这些股",
           "sentiment": null,
@@ -4245,16 +4255,6 @@
         },
         {
           "title": "【中证快报】7月5日中证投资资讯",
-          "sentiment": null,
-          "date": "2026-07-05"
-        },
-        {
-          "title": "浙富控股：预计2026年上半年净利12.5亿元-14.5亿元 同比增长120.78%-156.11%",
-          "sentiment": null,
-          "date": "2026-07-05"
-        },
-        {
-          "title": "二季度净利环比增长114%-240%！近800亿光纤龙头发布上半年业绩预告|盘后公告集锦",
           "sentiment": null,
           "date": "2026-07-05"
         }
@@ -4270,7 +4270,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "52/100",
@@ -4280,12 +4280,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 1.95,
+        "cache_age_hours": 20.9,
+        "score": 0.45,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-07-10",
@@ -4343,7 +4343,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "25/100",
@@ -4353,7 +4353,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4366,11 +4366,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 14.0,
-        "change_pct": 4.24,
-        "fetched_at": "2026-07-21 09:54:13"
-      },
+      "price": null,
       "news": [
         {
           "title": "股东户数降幅榜：25股最新股东户数降逾一成",
@@ -4409,7 +4405,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "14/100",
@@ -4419,7 +4415,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4433,9 +4429,9 @@
         }
       },
       "price": {
-        "current": 3.44,
-        "change_pct": 5.52,
-        "fetched_at": "2026-07-21 09:51:00"
+        "current": 3.39,
+        "change_pct": 1.5,
+        "fetched_at": "2026-07-23 10:01:36"
       },
       "news": [
         {
@@ -4475,7 +4471,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "38/100",
@@ -4485,7 +4481,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 0.83,
         "is_active": false,
         "survey": {
@@ -4541,7 +4537,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "55/100",
@@ -4551,7 +4547,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4607,7 +4603,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "18/100",
@@ -4617,7 +4613,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 0.22,
         "is_active": false,
         "survey": {
@@ -4631,11 +4627,16 @@
         }
       },
       "price": {
-        "current": 17.26,
-        "change_pct": 0.35,
-        "fetched_at": "2026-07-21 09:45:38"
+        "current": 16.82,
+        "change_pct": 2.37,
+        "fetched_at": "2026-07-23 09:56:06"
       },
       "news": [
+        {
+          "title": "黄金概念上涨1.86%，12股主力资金净流入超亿元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "短线防风险 29只个股短期均线现死叉",
           "sentiment": null,
@@ -4655,11 +4656,6 @@
           "title": "宁波中百600857龙虎榜数据07-17",
           "sentiment": null,
           "date": "2026-07-17"
-        },
-        {
-          "title": "强势股追踪 主力资金连续5日净流入135股",
-          "sentiment": null,
-          "date": "2026-07-16"
         }
       ]
     },
@@ -4673,7 +4669,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "52/100",
@@ -4683,7 +4679,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4696,11 +4692,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 6.0,
-        "change_pct": -1.8,
-        "fetched_at": "2026-07-21 14:07:33"
-      },
+      "price": null,
       "news": [
         {
           "title": "7家公司公布半年报 5家业绩增幅翻倍",
@@ -4739,7 +4731,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "30/100",
@@ -4749,8 +4741,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 1.02,
+        "cache_age_hours": 20.9,
+        "score": 1.29,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -4763,9 +4755,9 @@
         }
       },
       "price": {
-        "current": 5.3,
-        "change_pct": -2.57,
-        "fetched_at": "2026-07-21 09:41:53"
+        "current": 5.57,
+        "change_pct": 3.15,
+        "fetched_at": "2026-07-23 09:52:15"
       },
       "news": [
         {
@@ -4815,12 +4807,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 3.86,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.65,
+        "is_active": false,
         "survey": {
-          "count_30d": 5,
-          "days_since_latest": 13,
+          "count_30d": 4,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-07-09",
@@ -4845,12 +4837,6 @@
               "n_inst": 1,
               "method": "特定对象调研",
               "is_specific": true
-            },
-            {
-              "date": "2026-06-09",
-              "n_inst": 1,
-              "method": "2025年度股东会&高管面对面交流会",
-              "is_specific": false
             }
           ]
         },
@@ -4902,7 +4888,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "26/100",
@@ -4912,7 +4898,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4968,7 +4954,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "54/100",
@@ -4978,7 +4964,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 0.4,
         "is_active": false,
         "survey": {
@@ -4991,7 +4977,11 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 22.66,
+        "change_pct": -1.44,
+        "fetched_at": "2026-07-23 09:30:51"
+      },
       "news": [
         {
           "title": "今日突破半年线个股",
@@ -5030,7 +5020,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "90/100",
@@ -5040,7 +5030,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5096,7 +5086,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "61/100",
@@ -5106,7 +5096,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 0.82,
         "is_active": false,
         "survey": {
@@ -5119,11 +5109,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 27.13,
-        "change_pct": 7.79,
-        "fetched_at": "2026-07-21 09:56:21"
-      },
+      "price": null,
       "news": [
         {
           "title": "东睦股份斥资6.73亿元高溢价收购关联资产，超5亿元商誉悬顶，标的对大客户存依赖",
@@ -5162,7 +5148,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "58/100",
@@ -5172,12 +5158,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 4.97,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 1.98,
+        "is_active": false,
         "survey": {
           "count_30d": 6,
-          "days_since_latest": 7,
+          "days_since_latest": 8,
           "events": [
             {
               "date": "2026-07-15",
@@ -5216,11 +5202,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 77.32,
-        "change_pct": 17.36,
-        "fetched_at": "2026-07-21 09:52:39"
-      },
+      "price": null,
       "news": [
         {
           "title": "中芯国际概念上涨9.40%，14股主力资金净流入超亿元",
@@ -5259,7 +5241,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "44/100",
@@ -5269,7 +5251,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.86,
         "is_active": false,
         "survey": {
@@ -5282,11 +5264,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 36.69,
-        "change_pct": 7.28,
-        "fetched_at": "2026-07-21 09:59:00"
-      },
+      "price": null,
       "news": [
         {
           "title": "飞荣达：2026年上半年归母净利润同比预增44.5%至56.54%",
@@ -5325,7 +5303,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "66/100",
@@ -5335,7 +5313,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5348,11 +5326,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 110.05,
-        "change_pct": 12.28,
-        "fetched_at": "2026-07-21 14:07:31"
-      },
+      "price": null,
       "news": [
         {
           "title": "汽车芯片概念下跌8.69%，主力资金净流出121股",
@@ -5391,7 +5365,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "40/100",
@@ -5401,12 +5375,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 2.17,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 51,
+          "days_since_latest": 52,
           "events": [
             {
               "date": "2026-06-01",
@@ -5422,35 +5396,35 @@
         }
       },
       "price": {
-        "current": 147.93,
-        "change_pct": 10.0,
-        "fetched_at": "2026-07-21 09:48:19"
+        "current": 146.41,
+        "change_pct": 0.96,
+        "fetched_at": "2026-07-23 09:58:53"
       },
       "news": [
+        {
+          "title": "沪股通现身20只个股龙虎榜",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
+        {
+          "title": "营业部最青睐个股曝光 3股净买入超亿元",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
         {
           "title": "博迁新材605376龙虎榜数据07-21)",
           "sentiment": null,
           "date": "2026-07-21"
         },
         {
-          "title": "涨停股复盘：39股封单超亿元",
+          "title": "博迁新材：拟投建纳米金属镍粉精细化分级扩产等项目",
           "sentiment": null,
           "date": "2026-07-21"
         },
         {
-          "title": "财通基金金梓才二季度首次建仓6只个股 预判AI供应链紧缺短期难解",
+          "title": "博迁新材：拟投资约2.02亿元建设三个新项目",
           "sentiment": null,
           "date": "2026-07-21"
-        },
-        {
-          "title": "上半年业绩预亏后 骏亚科技再迎“利空”：将退回近300万元政府补助",
-          "sentiment": null,
-          "date": "2026-07-20"
-        },
-        {
-          "title": "博迁新材605376龙虎榜数据07-20",
-          "sentiment": null,
-          "date": "2026-07-20"
         }
       ]
     },
@@ -5464,7 +5438,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "6/100",
@@ -5474,23 +5448,17 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 3.12,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.11,
+        "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 6,
+          "count_30d": 1,
+          "days_since_latest": 7,
           "events": [
             {
               "date": "2026-07-16",
               "n_inst": 13,
               "method": "特定对象调研,现场参观",
-              "is_specific": true
-            },
-            {
-              "date": "2026-05-27",
-              "n_inst": 9,
-              "method": "特定对象调研",
               "is_specific": true
             }
           ]
@@ -5500,11 +5468,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 73.98,
-        "change_pct": 9.52,
-        "fetched_at": "2026-07-21 09:56:53"
-      },
+      "price": null,
       "news": [
         {
           "title": "有色金属行业资金流入榜：紫金矿业等16股净流入资金超亿元",
@@ -5543,7 +5507,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "39/100",
@@ -5553,7 +5517,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.15,
         "is_active": false,
         "survey": {
@@ -5609,7 +5573,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "42/100",
@@ -5619,12 +5583,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 4.48,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 21,
+          "days_since_latest": 22,
           "events": [
             {
               "date": "2026-07-01",
@@ -5682,7 +5646,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "59/100",
@@ -5692,7 +5656,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 20.9,
         "score": 0.43,
         "is_active": false,
         "survey": {
@@ -5705,11 +5669,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 30.89,
-        "change_pct": -1.44,
-        "fetched_at": "2026-07-21 14:07:31"
-      },
+      "price": null,
       "news": [
         {
           "title": "兴业多策略混合：2026年第二季度利润7360.15万元 净值增长率40.39%",
@@ -5748,7 +5708,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "26/100",
@@ -5758,17 +5718,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 0.64,
+        "cache_age_hours": 20.9,
+        "score": 0.14,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 50,
+          "days_since_latest": 51,
           "events": [
             {
               "date": "2026-06-02",
               "n_inst": 9,
-              "method": "广新集团2026年“走进资本市场”上市公司系列路演活动",
+              "method": "",
               "is_specific": false
             }
           ]
@@ -5779,9 +5739,9 @@
         }
       },
       "price": {
-        "current": 11.7,
-        "change_pct": 5.41,
-        "fetched_at": "2026-07-21 09:46:10"
+        "current": 11.99,
+        "change_pct": 6.29,
+        "fetched_at": "2026-07-23 09:56:42"
       },
       "news": [
         {
@@ -5821,7 +5781,7 @@
       "is_new": false,
       "watched_by": "4,2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "54/100",
@@ -5831,23 +5791,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 3.0,
+        "cache_age_hours": 20.8,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 23,
+          "count_30d": 1,
+          "days_since_latest": 24,
           "events": [
             {
               "date": "2026-06-29",
               "n_inst": 1,
               "method": "2026年第二次临时股东会",
-              "is_specific": false
-            },
-            {
-              "date": "2026-06-08",
-              "n_inst": 76,
-              "method": "分析师会议",
               "is_specific": false
             }
           ]
@@ -5858,11 +5812,21 @@
         }
       },
       "price": {
-        "current": 47.69,
-        "change_pct": 3.43,
-        "fetched_at": "2026-07-21 09:47:48"
+        "current": 51.19,
+        "change_pct": 7.93,
+        "fetched_at": "2026-07-23 09:58:21"
       },
       "news": [
+        {
+          "title": "小金属概念盘中走强，机构：行业呈现供需紧平衡与战略价值凸显的特征|异动情报",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "化肥概念涨0.74%，主力资金净流入这些股",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "赣锋锂业等在广东成立能源科技新公司",
           "sentiment": null,
@@ -5877,16 +5841,6 @@
           "title": "赣锋锂业等在广东成立能源科技公司 注册资本2100万",
           "sentiment": null,
           "date": "2026-07-20"
-        },
-        {
-          "title": "威兆半导体、济南建邦金属材料递表港交所；埃斯顿预计上半年归母净利润同比增长2144.74%至2593.68%丨港交所早参",
-          "sentiment": null,
-          "date": "2026-07-16"
-        },
-        {
-          "title": "28股今日获机构买入评级",
-          "sentiment": null,
-          "date": "2026-07-15"
         }
       ]
     },
@@ -5900,20 +5854,20 @@
       "is_new": false,
       "watched_by": "4,5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "我的朋友们，今天我们来分析一下FuelCell Energy, Inc.（FCEL）的情况。首先，我们看到公司的净利率深度亏损，达到-118.8%，这说明公司的盈利能力尚未得到验证。同时，公司的PE数据缺失，也使得我们难以进行市盈率估值。\n\n从机构信号来看，主动基金净增持116.28pp，做空比例为15.2%，顶级投行近90天净升级4次。这些信号表明市场对公司的前景有一定的乐观情绪。近期新闻也显示",
+        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。FuelCell Energy, Inc.（FCEL）近期股价上涨，主要受顶级投行升级和数据中心合作协议的影响。然而，公司的净利率深度亏损，现金流成为关键关注点。\n\n从机构信号来看，主动基金净增持116.28pp，做空比例上升90.2%。这表明市场对公司的前景存在分歧。近期新闻显示，公司在数据中心领域取得了一定进展，签署了多个合作协议。\n\n",
         "quant_score": 24,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 19.84,
-        "change_pct": 7.27,
-        "fetched_at": "2026-07-21 09:35:11"
+        "current": 22.47,
+        "change_pct": 3.84,
+        "fetched_at": "2026-07-23 09:45:19"
       },
       "news": [
         {
@@ -5953,20 +5907,20 @@
       "is_new": false,
       "watched_by": "4,5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有强大竞争优势和稳定的现金流的公司。然而，Sandisk Corporation 的当前情况让我感到担忧。公司的护城河、成长和管理层、安全性以及估值等方面的数据均不足，这使得我难以对公司的未来前景做出准确的判断。\n\n从机构信号来看，做空比例下降了 21.9%，这可能表明市场对公司的看法有所改善。但是，顶级投行近 90 天仅净升级 1 次，这并不足以让我对公司的长",
+        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。Sandisk Corporation（SNDK）作为一家存储解决方案提供商，近期的表现引起了我的注意。尽管当前价为1390.95美元，相比之下，做空比例下降了21.9%，这可能表明市场对公司的信心有一定程度的恢复。\n\n然而，机构信号和近期新闻显示，公司的长期需求-profile并不明确，且有Rating Downgrade的消息。这些因素",
         "quant_score": 24,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 1390.95,
-        "change_pct": 2.67,
-        "fetched_at": "2026-07-21 09:31:12"
+        "current": 1599.27,
+        "change_pct": 0.62,
+        "fetched_at": "2026-07-23 09:41:24"
       },
       "news": [
         {
@@ -6006,17 +5960,21 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终在寻找那些具有强大护城河和成长潜力的公司。Applied Optoelectronics, Inc.（AAOI）是一家美国本土垂直整合的收发器制造商，拥有独特的供应链瓶颈地位。根据Serenity供应链论文，AAOI是唯一一家在美国本土垂直整合的收发器制造商，全部产能由AMZN/MSFT/ORCL三家超大规模云厂商包购。这种独特的供应链地位使得AAOI具有较强的议价能力和",
+        "reasoning": "作为一名价值投资者，我对Applied Optoelectronics, Inc.（AAOI）进行了深入分析。公司作为美国本土垂直整合的收发器制造商，拥有独特的供应链瓶颈地位。其核心客户包括AMZN、MSFT和ORCL，这些超大规模云厂商对AAOI的产能有着强烈的需求。Serenity供应链论文指出，公司的Sugar Land工厂产能由这些云厂商包购，这为AAOI提供了稳定的收入来源。\n\n然而，公",
         "quant_score": 61,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 110.52,
+        "change_pct": -7.33,
+        "fetched_at": "2026-07-23 09:36:28"
+      },
       "news": [
         {
           "title": "Why Applied Optoelectronics’ (AAOI) Mediacom Work Points to Broader Bandwidth Upgrade Demand - Yahoo Finance",
@@ -6024,24 +5982,24 @@
           "date": "Wed, 24 Ju"
         },
         {
+          "title": "Lobbying Update: $60,000 of APPLIED OPTOELECTRONICS INC. lobbying was just disclosed - Quiver Quantitative",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "Needham & Company LLC Issues Pessimistic Forecast for Applied Optoelectronics (NASDAQ:AAOI) Stock Price - MarketBeat",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "AAOI Stock Surges 15% as AI Optical Transceiver Demand Accelerates - top1markets.com",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
           "title": "Applied Optoelectronics: Hypergrowth Trapped Inside An Unrealistic Stock Price (AAOI) - Seeking Alpha",
           "sentiment": 1.0,
           "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "Tradr's 2X Short Leveraged ETFs on AAOI and ORCL Begin Trading - TradingView",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "Applied Optoelectronics Falls 12%, Coherent and Lumentum Slide as AI Optics Trade Cools - 24/7 Wall St.",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "AAOI Stock Surges As Momentum, Insider Selling And Leverage Collide - StocksToTrade",
-          "sentiment": 0.0,
-          "date": "Wed, 10 Ju"
         }
       ]
     },
@@ -6055,21 +6013,17 @@
       "is_new": false,
       "watched_by": "4,8",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "SpaceX 的股价近期出现了较大幅度的下跌，这引起了我的注意。从基本面分析来看，公司的成长和管理层信息尚不明确，缺乏具体的数据支持。同时，估值方面由于PE数据的缺失，我们需要依靠其他指标如PB来进行分析。\n\n从机构信号来看，做空比例相对较低，顶级投行近90天内没有进行净升级。这可能表明市场对公司的前景仍然持有一定的乐观态度。近期新闻中，SpaceX 股份面临1090亿美元的锁定挑战，星舰测试飞行",
+        "reasoning": "SpaceX 的当前股价为 $119.85，较前一日下跌 3.34%。尽管近期新闻中充满了挑战和不确定性，例如 $109 Billion 锁定挑战和 Starship 测试飞行中止，但我仍然保持冷静和理性的态度来分析这家公司。\n\n从基本面分析来看，缺乏关键数据使得我们难以对公司的盈利能力、竞争优势和管理层信号进行全面评估。然而，机构信号显示做空比例仅为 1.8%，顶级投行近 90 天内没有净升级，",
         "quant_score": 25,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": {
-        "current": 119.85,
-        "change_pct": -3.34,
-        "fetched_at": "2026-07-21 10:00:37"
-      },
+      "price": null,
       "news": [
         {
           "title": "Predicting Where SpaceX Is Headed by the End of 2026 - The Motley Fool",
@@ -6108,25 +6062,29 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。Rocket Lab Corporation（RKLB）作为一家空间技术公司，近期的股价波动引起了我的注意。尽管公司的净利率有所改善，但我仍然保持谨慎态度，因为这可能包含一次性收益，难以判断其竞争力。\n\n从机构信号来看，做空比例的上升和顶级投行的净升级次数，表明市场对公司的未来前景存在一定的担忧。近期新闻中，Iridium与Rocket L",
+        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。Rocket Lab Corporation（RKLB）作为一家太空技术公司，近期的表现引起了我的注意。尽管公司的净利率有所改善，但我仍然保持谨慎态度，因为这可能包含一次性收益。同时，做空比例的上升和机构信号的变化也需要密切关注。\n\n公司的护城河、成长和安全性方面的数据不足，导致我难以对其长期前景做出准确的判断。然而，顶级投行近90天内的净",
         "quant_score": 60,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 69.75,
+        "change_pct": 0.91,
+        "fetched_at": "2026-07-23 09:34:37"
+      },
       "news": [
         {
-          "title": "Why Rocket Lab Stock Still Matters After SpaceX (NASDAQ:RKLB) - Seeking Alpha",
+          "title": "Rocket Lab: SpaceX Halo Effect (NASDAQ:RKLB) - Seeking Alpha",
           "sentiment": 0.0,
           "date": "Wed, 24 Ju"
         },
         {
-          "title": "Rocket Lab: SpaceX Halo Effect (NASDAQ:RKLB) - Seeking Alpha",
+          "title": "Why Rocket Lab Stock Still Matters After SpaceX (NASDAQ:RKLB) - Seeking Alpha",
           "sentiment": 0.0,
           "date": "Wed, 24 Ju"
         },
@@ -6136,14 +6094,14 @@
           "date": "Wed, 24 Ju"
         },
         {
-          "title": "Rocket Lab tests 200-day average, Schaeffer's sees bullish signal (RKLB:NASDAQ) - Seeking Alpha",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Rocket Lab Announces Date of Second Quarter 2026 Financial Results - Yahoo Finance",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Rocket Lab Delivered 835% Returns in Five Years, Is It Still A Buy? - 24/7 Wall St.",
-          "sentiment": 0.0,
-          "date": "Wed, 10 Ju"
+          "title": "Rocket Lab sets Aug. 10 webcast for second-quarter results - Stock Titan",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         }
       ]
     },
@@ -6157,7 +6115,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "39/100",
@@ -6167,7 +6125,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 0.72,
         "is_active": false,
         "survey": {
@@ -6180,11 +6138,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 10.73,
-        "change_pct": 5.2,
-        "fetched_at": "2026-07-21 09:58:28"
-      },
+      "price": null,
       "news": [
         {
           "title": "抢权行情能否上演？ 这些股即将实施分红",
@@ -6223,7 +6177,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "42/100",
@@ -6233,12 +6187,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 1.12,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 14,
+          "days_since_latest": 15,
           "events": [
             {
               "date": "2026-07-08",
@@ -6254,9 +6208,9 @@
         }
       },
       "price": {
-        "current": 24.49,
-        "change_pct": 1.53,
-        "fetched_at": "2026-07-21 09:50:29"
+        "current": 23.87,
+        "change_pct": -0.87,
+        "fetched_at": "2026-07-23 10:01:05"
       },
       "news": [
         {
@@ -6296,20 +6250,20 @@
       "is_new": false,
       "watched_by": "4,6",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "0/35：—",
-        "reasoning": "我的朋友们，今天我们来讨论一下Pacific Biosciences of California（PACB）。作为一名价值投资者，我总是寻找那些具有强大护城河的公司，但遗憾的是，PACB的数据不足，无法让我对其护城河有一个清晰的认识。公司的PB估值异常高，达到175.0x，这让人感到有些担忧，因为这种估值溢价需要有非常强大的护城河来支撑。\n\n从机构信号来看，主动基金净增持12.61pp，这是一个相",
+        "reasoning": "作为一名价值投资者，我总是寻找那些具有长期竞争优势和稳健财务状况的公司。然而，Pacific Biosciences of California（PACB）目前的状况让我感到有些担忧。该公司的市净率（PB）异常高，达到175.0x，这表明其估值可能过高。同时，公司的量化评分仅为24/100，属于C级 · 观察，这意味着其护城河、成长性、管理层和安全性等方面都存在不足。\n\n从机构信号来看，主动基金净",
         "quant_score": 24,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 1.36,
-        "change_pct": -5.56,
-        "fetched_at": "2026-07-21 09:28:49"
+        "current": 1.38,
+        "change_pct": -1.43,
+        "fetched_at": "2026-07-23 09:38:54"
       },
       "news": [
         {
@@ -6349,42 +6303,46 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "0/35：—",
-        "reasoning": "Arista Networks, Inc.（ANET）是一家值得关注的公司，尤其是在网络设备领域的表现。从营收增速来看，ANET一直保持着较高的增长率，这是其在市场中的竞争力的一部分。同时，公司的毛利率趋势也较为稳定，表明其在成本控制方面做得较好。\n\n从市场空间来看，ANET所处的网络设备市场仍然有较大的增长空间，公司的渗透率也处于较好的阶段。竞争壁垒方面，ANET的技术优势和品牌认知度为其提供了",
+        "reasoning": "Arista Networks, Inc.（ANET）是一家网络设备公司，当前市场表现较为稳定。从营收增速来看，公司的增长势头仍然较强，尤其是在数据中心和云计算领域。同时，公司的毛利率趋势也较为稳定，表明其在规模扩张的同时仍能保持较高的利润率。\n\n从研发效率来看，公司的研发投入占比较高，新产品和新市场的产出也较为可观。市场空间方面，TAM仍然较大，公司的渗透率也处于快速成长期。竞争壁垒方面，公司的",
         "quant_score": 95,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 174.87,
+        "change_pct": 0.17,
+        "fetched_at": "2026-07-23 09:37:44"
+      },
       "news": [
         {
-          "title": "MASTERINVEST Kapitalanlage GmbH Has $4.04 Million Stock Position in Arista Networks, Inc. $ANET - MarketBeat",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "4 Internet Stocks Poised to Top Estimates This Earnings Season - TradingView",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Cisco Jumps 52% YTD: Is There More Room for the Stock to Rise? - TradingView",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Can ANET's New VeloCloud AI Security Solution Drive Enterprise Growth? - TradingView",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Arista Networks Inc (ANET) Shares Fall 5.8% -- What GF Score of 97 Tells Investors - GuruFocus",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Arista Networks (ANET) Strengthens from Exponential Growth in AI - Yahoo Finance Singapore",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "What to Expect From Arista Networks' Q2 2026 Earnings Report - Yahoo Finance",
-          "sentiment": 1.0,
-          "date": "Wed, 15 Ju"
+          "title": "Arista Networks (NYSE: ANET) CTO exercises 17,333 options, sells 43,333 - Stock Titan",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "After Earnings, Is Arista Networks Stock a Buy, a Sell, or Fairly Valued? - Morningstar",
-          "sentiment": 1.0,
-          "date": "Wed, 13 Ma"
+          "title": "Westpac Banking Corp Sells 10,343 Shares of Arista Networks, Inc. $ANET - MarketBeat",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         }
       ]
     },
@@ -6398,17 +6356,21 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有长期增长潜力的公司。然而，Rigetti Computing, Inc.（RGTI）的当前状况让我感到担忧。公司的净利率深度亏损，达到-3050.4%，这表明其商业模式仍然存在重大挑战。同时，ROE的连续下滑也引发了人们对公司管理层和盈利能力的质疑。\n\n尽管公司在量子计算领域具有潜力，但其估值却面临着挑战。做空比例达到17.7%，表明投资者对公司的前景存在担忧",
+        "reasoning": "作为一名价值投资者，我总是寻找那些具有长期增长潜力的公司。然而，Rigetti Computing, Inc.（RGTI）的当前情况让我感到有些担忧。公司的净利率深度亏损，达到-3050.4%，这表明其商业模式仍然存在很大的挑战。同时，ROE的下滑也引发了人们对公司管理层和盈利能力的质疑。\n\n尽管公司的估值受到关注，顶级投行近90天内净升级1次，但做空比例仍然较高，达17.7%。这表明市场对公司的",
         "quant_score": 10,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 15.23,
+        "change_pct": -0.33,
+        "fetched_at": "2026-07-23 09:37:05"
+      },
       "news": [
         {
           "title": "RGTI Stock Slides As CTO’s $12.7M Sale Rattles Traders - StocksToTrade",
@@ -6431,7 +6393,7 @@
           "date": "Wed, 15 Ju"
         },
         {
-          "title": "RGTI Stock Pulls Back As Quantum Momentum Cools - StocksToTrade",
+          "title": "Quantum Stocks Witness Correction: Why QUBT is the Best Buy Now - TradingView",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
         }
@@ -6447,20 +6409,20 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我对Marvell Technology, Inc.（MRVL）进行了深入分析。公司的净利率从-15.3%跳升至32.6%，这表明其主营业务毛利率有所改善。然而，我们需要核实是否含一次性收益，以避免将此净利率改善归因于竞争力提高。\n\n从市场空间来看，MRVL的增长故事与AI、DOCSIS和光纤升级密切相关。顶级投行近90天净升级2次，表明机构对公司的前景持乐观态度。同时，",
+        "reasoning": "作为一名成长股分析师，我对Marvell Technology, Inc.（MRVL）进行了深入分析。公司的净利率从-15.3%跳升至32.6%，这是一次显著的改善。然而，需要核实是否含一次性收益，以确保这不是一个短期的现象。从估值角度来看，MRVL的当前价位处于52周区间中段，距离年低和年高都有一定的空间。\n\n从机构信号来看，主动基金净减持1.35pp，做空比例下降3.2%，顶级投行近90天净升",
         "quant_score": 71,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 194.94,
-        "change_pct": 3.32,
-        "fetched_at": "2026-07-21 09:29:25"
+        "current": 210.99,
+        "change_pct": 1.46,
+        "fetched_at": "2026-07-23 09:39:31"
       },
       "news": [
         {
@@ -6469,24 +6431,24 @@
           "date": "Wed, 27 Ma"
         },
         {
+          "title": "Marvell Technology, Inc. Stock 12‑Month Price Target Raised to $268.15, Implies 29% Upside - TradingView",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "CRDO vs. MRVL: Which AI Connectivity Stock Is the Better Buy? - TradingView",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "Astera Labs Rides on Strong Taurus Demand: More Upside Ahead? - TradingView",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
           "title": "Marvell Technology Inc (MRVL) Stock Down 7.3% but Still Overvalued -- GF Score: 69/100 - GuruFocus",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "NFSG Corp Purchases 6,347 Shares of Marvell Technology, Inc. $MRVL - MarketBeat",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "MXL's Growth Story Tracks AI Optics, DOCSIS and Fiber Upgrades Ahead - TradingView",
-          "sentiment": 1.0,
-          "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "My Marvell Stock Price Target After Jensen Huang’s Trillion-Dollar Call - MarketWise",
-          "sentiment": 0.0,
-          "date": "Wed, 03 Ju"
         }
       ]
     },
@@ -6500,20 +6462,20 @@
       "is_new": false,
       "watched_by": "4,6",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "0/35：—",
-        "reasoning": "我的朋友们，今天我们来分析一下Illumina, Inc.（ILMN）的情况。首先，我们看到公司的净利率从-28.0%跳升至19.6%，这确实是一个令人惊讶的转变。但是，我们需要核实是否含有一次性收益，不得将此净利率改善归因于竞争力提昇。另外，机构信号显示主动基金净减持10.05pp，做空比例为8.2%，这些信号都表明市场对公司的前景有一定的担忧。\n\n在估值方面，GF Value认为公司的股票被高",
+        "reasoning": "我的朋友们，今天我们来分析一下Illumina, Inc.（ILMN）。首先，我们看到公司的净利率从-28.0%跳升至19.6%，这确实是一个令人惊讶的转变。但是，我们需要核实是否含一次性收益，不得将此净利率改善归因于竞争力提。另外，机构信号显示主动基金净减持10.05pp，做空比例为8.2%，这些信号都表明市场对公司的前景有一定的担忧。\n\n在近期新闻中，我们看到公司的股价曾经达到52周高点，但是",
         "quant_score": 19,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 184.68,
-        "change_pct": -1.06,
-        "fetched_at": "2026-07-21 09:30:01"
+        "current": 190.87,
+        "change_pct": -0.86,
+        "fetched_at": "2026-07-23 09:40:09"
       },
       "news": [
         {
@@ -6553,20 +6515,20 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终关注公司的核心竞争力和供应链地位。Lumentum Holdings Inc.（LITE）凭借其在光学电路交换（OCS）领域的垄断地位和关键客户如Google、MSFT、Meta的设计赢，展现出强大的供应链瓶颈地位。Serenity供应链论文中提到的CW/DFB激光产能售罄和LITE作为整合商的第二优先级地位，进一步强化了其在供应链中的重要性。\n\n此外，LITE的ATM稀",
+        "reasoning": "作为一名价值投资者，我始终关注公司的供应链地位和估值情况。Lumentum Holdings Inc.（LITE）作为一家光学电路交换（OCS）领域的领导者，拥有供应链唯一瓶颈的地位，无可替代性是其护城河的重要组成部分。其核心客户包括Google、MSFT、Meta等科技巨头，设计赢确认度较高。\n\n从供应链角度来看，LITE的CW/DFB激光是CPO的主要瓶颈，产能据称2028年前已售罄，这为公司",
         "quant_score": 24,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 765.55,
-        "change_pct": 4.47,
-        "fetched_at": "2026-07-21 09:30:37"
+        "current": 829.7,
+        "change_pct": -0.94,
+        "fetched_at": "2026-07-23 09:40:46"
       },
       "news": [
         {
@@ -6585,14 +6547,14 @@
           "date": "Wed, 24 Ju"
         },
         {
-          "title": "​Lumentum Holdings (LITE) Sold Out Through 2027 on High Demand - Yahoo Finance",
-          "sentiment": 0.0,
-          "date": "Wed, 22 Ap"
+          "title": "Himension Capital Singapore PTE. LTD. Lowers Stock Holdings in Lumentum Holdings Inc. $LITE - MarketBeat",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Advisors Preferred LLC Sells 2,152 Shares of Lumentum Holdings Inc. $LITE - MarketBeat",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Mediolanum International Funds Ltd Invests $2.87 Million in Lumentum Holdings Inc. $LITE - MarketBeat",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         }
       ]
     },
@@ -6606,25 +6568,34 @@
       "is_new": false,
       "watched_by": "6",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "Intel Corporation 的当前表现令人担忧，净利率从 -35.3% 跳升至 -0.5%，这虽然看似是一个巨大的改善，但我们必须谨慎地考虑是否含有一次性收益。这种改善幅度在主营业务毛利中极为少见，可能并非完全归因于竞争力的提高。同时，机构信号显示主动基金净减持 1.79pp，做空比例下降 5.3% 至 2.5%，顶级投行近 90 天内净升级 5 次，这些信号混杂着正面和负面的信息。\n\n近",
+        "reasoning": "Intel Corporation 的当前表现令人关注，尤其是其净利率从 -35.3% 大幅跳升至 -0.5%，这是一次显著的改善。但是，我们需要谨慎地看待这一变化，考虑是否含有一次性收益，而不是将其完全归因于竞争力的提高。同时，公司的市盈率数据缺失，限制了我们对其估值的全面评估。\n\n从机构信号来看，主动基金净减持 1.79pp，做空比例下降 5.3% 至 2.5%，这些信号表明市场对 Intel",
         "quant_score": 52,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": null,
+      "price": {
+        "current": 102.62,
+        "change_pct": -2.68,
+        "fetched_at": "2026-07-23 09:35:14"
+      },
       "news": [
         {
-          "title": "Intel (NASDAQ:INTC) Turns a $400 Million High-NA Tool Into a Manufacturing Hedge - TechStock²",
+          "title": "Intel's sky-high rally put to the test as expectations soar (INTC:NASDAQ) - Seeking Alpha",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
+        {
+          "title": "Here’s Why HSBC Doubled The PT on Intel (INTC) - Yahoo Finance",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
         },
         {
-          "title": "Here’s Why HSBC Doubled The PT on Intel (INTC) - Yahoo Finance",
+          "title": "Intel (NASDAQ:INTC) Turns a $400 Million High-NA Tool Into a Manufacturing Hedge - TechStock²",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
         },
@@ -6635,11 +6606,6 @@
         },
         {
           "title": "Intel Corp Stock (INTC) Moved Down by 3.62% on Jul 8: Drivers Behind the Movement - TradingKey",
-          "sentiment": 0.0,
-          "date": "Wed, 08 Ju"
-        },
-        {
-          "title": "Intel (INTC) Stock Price Prediction July 2026: Down 21% in 7 Days — HSBC Says $200, BofA Says Bubble - TradingKey",
           "sentiment": 0.0,
           "date": "Wed, 08 Ju"
         }
@@ -6655,7 +6621,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "10/100",
@@ -6665,7 +6631,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -6731,7 +6697,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.28,
         "is_active": false,
         "survey": {
@@ -6787,7 +6753,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "22/100",
@@ -6797,12 +6763,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.9,
         "score": 0.5,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-07-09",
@@ -6819,6 +6785,11 @@
       },
       "price": null,
       "news": [
+        {
+          "title": "北交所股票成交概况：98股上涨，226股下跌",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "北交所股票全天成交额161.83亿元，41股成交额超亿元",
           "sentiment": null,
@@ -6838,11 +6809,6 @@
           "title": "28只北交所股票融资余额增加超百万元",
           "sentiment": null,
           "date": "2026-07-08"
-        },
-        {
-          "title": "两融余额缩水136.02亿元 杠杆资金大幅加仓141股",
-          "sentiment": null,
-          "date": "2026-07-08"
         }
       ]
     },
@@ -6856,7 +6822,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "43/100",
@@ -6866,7 +6832,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 0.16,
         "is_active": false,
         "survey": {
@@ -6879,11 +6845,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 19.09,
-        "change_pct": 0.0,
-        "fetched_at": "2026-07-21 09:55:50"
-      },
+      "price": null,
       "news": [
         {
           "title": "天智航：筹划收购微创医疗控股权 16日起停牌",
@@ -6922,7 +6884,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "10/100",
@@ -6932,7 +6894,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 20.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -6945,11 +6907,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 4.39,
-        "change_pct": -1.13,
-        "fetched_at": "2026-07-21 09:59:31"
-      },
+      "price": null,
       "news": [
         {
           "title": "厦门信达：预计2026年上半年盈利3.5亿元-4.5亿元 同比扭亏",
@@ -6988,7 +6946,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "52/100",
@@ -6998,7 +6956,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -7011,11 +6969,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 5.14,
-        "change_pct": -1.53,
-        "fetched_at": "2026-07-21 14:07:29"
-      },
+      "price": null,
       "news": [
         {
           "title": "77.41亿主力资金净流入，创新药概念涨3.65%",
@@ -7054,7 +7008,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "43/100",
@@ -7064,7 +7018,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -7077,8 +7031,17 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 32.99,
+        "change_pct": 1.51,
+        "fetched_at": "2026-07-23 09:28:16"
+      },
       "news": [
+        {
+          "title": "PET铜箔概念下跌2.65%，9股主力资金净流出超5000万元",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "PET铜箔概念下跌7.89%，主力资金净流出35股",
           "sentiment": null,
@@ -7098,11 +7061,6 @@
           "title": "通信行业今日跌1.96%，主力资金净流出23.63亿元",
           "sentiment": null,
           "date": "2026-07-15"
-        },
-        {
-          "title": "中天科技：预计2026年上半年净利23.52亿元-25.08亿元 同比增长50%-60%",
-          "sentiment": null,
-          "date": "2026-07-14"
         }
       ]
     },
@@ -7116,7 +7074,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "52/100",
@@ -7126,12 +7084,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 2.15,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 8,
+          "days_since_latest": 9,
           "events": [
             {
               "date": "2026-07-14",
@@ -7146,7 +7104,11 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 97.82,
+        "change_pct": -4.24,
+        "fetched_at": "2026-07-23 09:27:09"
+      },
       "news": [
         {
           "title": "80只股中线走稳 站上半年线",
@@ -7185,7 +7147,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "53/100",
@@ -7195,7 +7157,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -7208,11 +7170,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 28.58,
-        "change_pct": 3.07,
-        "fetched_at": "2026-07-21 09:52:07"
-      },
+      "price": null,
       "news": [
         {
           "title": "光刻机概念涨8.43%，主力资金净流入20股",
@@ -7251,7 +7209,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "35/100",
@@ -7261,12 +7219,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.8,
         "score": 0.5,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-07-09",
@@ -7284,6 +7242,11 @@
       "price": null,
       "news": [
         {
+          "title": "125只北交所股票获融资净买入",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
           "title": "176只北交所股票获融资净买入",
           "sentiment": null,
           "date": "2026-07-22"
@@ -7294,17 +7257,12 @@
           "date": "2026-07-21"
         },
         {
-          "title": "北交所股票成交概况：236股上涨，82股下跌",
-          "sentiment": null,
-          "date": "2026-07-21"
-        },
-        {
           "title": "戈碧迦7月21日龙虎榜数据",
           "sentiment": null,
           "date": "2026-07-21"
         },
         {
-          "title": "戈碧迦920438龙虎榜数据07-21)",
+          "title": "北交所股票成交概况：236股上涨，82股下跌",
           "sentiment": null,
           "date": "2026-07-21"
         }
@@ -7320,7 +7278,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "28/100",
@@ -7330,7 +7288,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -7344,11 +7302,21 @@
         }
       },
       "price": {
-        "current": 10.09,
-        "change_pct": 0.4,
-        "fetched_at": "2026-07-21 09:37:32"
+        "current": 10.41,
+        "change_pct": 2.36,
+        "fetched_at": "2026-07-23 09:47:44"
       },
       "news": [
+        {
+          "title": "中国核建：2026年上半年累计新签合同额达402.62亿元",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
+        {
+          "title": "中国核建：上半年公司新签合同402.62亿元",
+          "sentiment": null,
+          "date": "2026-07-21"
+        },
         {
           "title": "中国核建上市十周年：打造世界一流核工业建造企业",
           "sentiment": null,
@@ -7363,16 +7331,6 @@
           "title": "中国核建：打造世界一流核工业建造企业",
           "sentiment": null,
           "date": "2026-07-15"
-        },
-        {
-          "title": "短线防风险 188只个股短期均线现死叉",
-          "sentiment": null,
-          "date": "2026-07-08"
-        },
-        {
-          "title": "短线防风险 199只个股短期均线现死叉",
-          "sentiment": null,
-          "date": "2026-07-08"
         }
       ]
     },
@@ -7386,7 +7344,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "42/100",
@@ -7396,7 +7354,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 0.7,
         "is_active": false,
         "survey": {
@@ -7410,9 +7368,9 @@
         }
       },
       "price": {
-        "current": 2.57,
-        "change_pct": 0.0,
-        "fetched_at": "2026-07-21 09:45:07"
+        "current": 2.64,
+        "change_pct": 2.33,
+        "fetched_at": "2026-07-23 09:55:34"
       },
       "news": [
         {
@@ -7452,7 +7410,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "43/100",
@@ -7462,7 +7420,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 1.39,
         "is_active": false,
         "survey": {
@@ -7475,11 +7433,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 26.18,
-        "change_pct": 3.93,
-        "fetched_at": "2026-07-21 09:53:41"
-      },
+      "price": null,
       "news": [
         {
           "title": "6只个股大宗交易超5000万元",
@@ -7518,7 +7472,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "54/100",
@@ -7528,7 +7482,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 1.84,
         "is_active": false,
         "survey": {
@@ -7541,11 +7495,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 7.23,
-        "change_pct": -2.69,
-        "fetched_at": "2026-07-21 14:07:26"
-      },
+      "price": null,
       "news": [
         {
           "title": "今日突破半年线个股",
@@ -7594,7 +7544,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 0.02,
         "is_active": false,
         "survey": {
@@ -7650,7 +7600,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "42/100",
@@ -7660,7 +7610,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 0.28,
         "is_active": false,
         "survey": {
@@ -7716,7 +7666,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "57/100",
@@ -7726,12 +7676,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 0.98,
+        "cache_age_hours": 20.8,
+        "score": 0.48,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 9,
+          "days_since_latest": 10,
           "events": [
             {
               "date": "2026-07-13",
@@ -7789,7 +7739,7 @@
       "is_new": false,
       "watched_by": "2,4,7",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "70/100",
@@ -7799,12 +7749,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 3.11,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 51,
+          "days_since_latest": 52,
           "events": [
             {
               "date": "2026-06-01",
@@ -7820,11 +7770,21 @@
         }
       },
       "price": {
-        "current": 228.86,
-        "change_pct": 10.0,
-        "fetched_at": "2026-07-22 09:24:38"
+        "current": 214.0,
+        "change_pct": -6.49,
+        "fetched_at": "2026-07-23 09:22:32"
       },
       "news": [
+        {
+          "title": "7月23日A股收评：三大指数缩量震荡小幅上行 全市场超4200只个股飘红",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
+        {
+          "title": "半导体概念盘中走弱，机构：行业处于AI驱动的超级上行周期|异动情报",
+          "sentiment": null,
+          "date": "2026-07-23"
+        },
         {
           "title": "446只股短线走稳 站上五日均线",
           "sentiment": null,
@@ -7837,16 +7797,6 @@
         },
         {
           "title": "主力动向：7月21日特大单净流入395.12亿元",
-          "sentiment": null,
-          "date": "2026-07-21"
-        },
-        {
-          "title": "100.42亿主力资金净流入，汽车芯片概念涨6.78%",
-          "sentiment": null,
-          "date": "2026-07-21"
-        },
-        {
-          "title": "国家大基金持股概念涨10.78%，主力资金净流入这些股",
           "sentiment": null,
           "date": "2026-07-21"
         }
@@ -7862,7 +7812,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "70/100",
@@ -7872,7 +7822,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 0.84,
         "is_active": false,
         "survey": {
@@ -7885,11 +7835,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 275.5,
-        "change_pct": 6.25,
-        "fetched_at": "2026-07-21 14:07:03"
-      },
+      "price": null,
       "news": [
         {
           "title": "355只科创板股现身基金重仓股名单",
@@ -7928,7 +7874,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "0/100",
@@ -7938,7 +7884,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 20.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -7994,7 +7940,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "65/100",
@@ -8004,7 +7950,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 0.03,
         "is_active": false,
         "survey": {
@@ -8018,9 +7964,9 @@
         }
       },
       "price": {
-        "current": 325.6,
-        "change_pct": 8.17,
-        "fetched_at": "2026-07-21 09:36:59"
+        "current": 293.04,
+        "change_pct": -2.33,
+        "fetched_at": "2026-07-23 09:47:11"
       },
       "news": [
         {
@@ -8060,7 +8006,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "40/100",
@@ -8070,7 +8016,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 0.38,
         "is_active": false,
         "survey": {
@@ -8084,9 +8030,9 @@
         }
       },
       "price": {
-        "current": 9.29,
-        "change_pct": 3.8,
-        "fetched_at": "2026-07-21 09:44:35"
+        "current": 9.51,
+        "change_pct": 3.71,
+        "fetched_at": "2026-07-23 09:55:00"
       },
       "news": [
         {
@@ -8126,7 +8072,7 @@
       "is_new": false,
       "watched_by": "4,7",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "42/100",
@@ -8136,8 +8082,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 0.72,
+        "cache_age_hours": 20.9,
+        "score": 1.3,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -8149,11 +8095,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 6.97,
-        "change_pct": 0.43,
-        "fetched_at": "2026-07-21 09:55:18"
-      },
+      "price": null,
       "news": [
         {
           "title": "东华软件在北京成立算力科技公司 注册资本1亿",
@@ -8192,7 +8134,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "78/100",
@@ -8202,7 +8144,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 1.04,
         "is_active": false,
         "survey": {
@@ -8215,11 +8157,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 61.53,
-        "change_pct": 3.01,
-        "fetched_at": "2026-07-21 14:07:03"
-      },
+      "price": null,
       "news": [
         {
           "title": "11只个股大宗交易超5000万元",
@@ -8258,11 +8196,11 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。T1 Energy Inc.（TE）是一家处于早期发展阶段的公司，当前的市价为$6.03。尽管公司的净利率有所改善，但仍然处于亏损状态，这引发了人们对其盈利能力的担忧。\n\n从机构信号来看，主动基金净增持453.00pp，表明机构投资者对公司的前景持乐观态度。然而，做空比例上升至22.8%也提示了市场对公司的不确定性。近期新闻显示，公司的损失",
+        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。T1 Energy Inc.（TE）尽管当前面临净利率为-48.7%的挑战，但主营业务毛利的改善和净利率的显著提升引起了我的注意。然而，考虑到利润质量的警告和净利率的跳升，我需要谨慎地评估公司的财务状况和未来前景。\n\n公司的成长潜力和管理层的能力是我的关注点，但由于数据不足，我无法对这些方面进行深入分析。机构信号方面，主动基金的净增持和顶级",
         "quant_score": 100,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -8270,8 +8208,8 @@
       "precursor": null,
       "price": {
         "current": 6.03,
-        "change_pct": 3.25,
-        "fetched_at": "2026-07-21 09:31:48"
+        "change_pct": -1.15,
+        "fetched_at": "2026-07-23 09:42:01"
       },
       "news": [
         {
@@ -8285,13 +8223,13 @@
           "date": "Wed, 15 Ju"
         },
         {
-          "title": "T1 Energy (TE) Falls Hard on July 4 Solar Credit Expiration - Insider Monkey",
-          "sentiment": 0.0,
+          "title": "TE Stock Pulls Back As Traders Weigh Losses And Volatility - StocksToTrade",
+          "sentiment": -1.0,
           "date": "Wed, 08 Ju"
         },
         {
-          "title": "TE Stock Pulls Back As Traders Weigh Losses And Volatility - StocksToTrade",
-          "sentiment": -1.0,
+          "title": "T1 Energy (TE) Falls Hard on July 4 Solar Credit Expiration - Insider Monkey",
+          "sentiment": 0.0,
           "date": "Wed, 08 Ju"
         },
         {
@@ -8311,31 +8249,31 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "我的朋友们，今天我们来分析一下IREN LIMITED（IREN）的情况。首先，我们看到公司的净利率从-15.4%跳升至17.4%，这是一个非常大的改善。但是，我们需要核实是否含一次性收益，不得将此净利率改善归因于竞争力提高。同时，我们看到公司的做空比例上升了36.9%，这是一个需要关注的信号。\n\n从机构信号来看，顶级投行近90天净升级1次，这是一个积极的信号。同时，公司签署了一个$2.8亿的大单",
+        "reasoning": "我的朋友们，今天我们来分析一下IREN LIMITED（IREN）的情况。首先，我们看到公司的净利率从-15.4%跳升至17.4%，这是一个非常显著的改善。但是，我们需要核实是否含一次性收益，不得将此净利率改善归因于竞争力提高。另外，公司的做空比例为22.0%，这是一个相对较高的比例，表明市场对公司的前景有一定的担忧。\n\n从机构信号来看，顶级投行近90天净升级1次，这是一个积极的信号。同时，公司近",
         "quant_score": 46,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 40.2,
-        "change_pct": 19.57,
-        "fetched_at": "2026-07-21 09:32:24"
+        "current": 41.28,
+        "change_pct": -0.02,
+        "fetched_at": "2026-07-23 09:42:39"
       },
       "news": [
+        {
+          "title": "IREN Limited (NASDAQ:IREN) climbs 26% as AI partnerships ease GPU financing pressure - TechStock²",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
+        },
         {
           "title": "U.S. Navy Veteran Will Lead Security Across IREN's AI Cloud - Stock Titan",
           "sentiment": 0.0,
           "date": "Wed, 15 Ju"
-        },
-        {
-          "title": "Why IREN (IREN) Stock Is Up Today - Moomoo",
-          "sentiment": 0.0,
-          "date": "Wed, 08 Ju"
         },
         {
           "title": "IREN's Revenue Is Falling For The Right Reason But Market Is Pricing It As Failure - Seeking Alpha",
@@ -8348,7 +8286,7 @@
           "date": "Wed, 08 Ju"
         },
         {
-          "title": "Why IREN (IREN) Stock Is Up Today - Quiver Quantitative",
+          "title": "Why IREN (IREN) Stock Is Up Today - Moomoo",
           "sentiment": 0.0,
           "date": "Wed, 08 Ju"
         }
@@ -8364,20 +8302,20 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。Fluence Energy, Inc.（FLNC）作为一家能源领域的公司，目前面临着市场的考验。从机构信号来看，主动基金净增持87.65pp，表明机构投资者对公司的前景持乐观态度。然而，做空比例上升至39.0%，这可能是市场对公司短期表现的担忧。\n\n从近期新闻来看，公司即将发布第三季度财报，这将是市场关注的焦点。同时，高管的股份出售也可能",
+        "reasoning": "我的朋友们，今天我们来分析一下Fluence Energy, Inc.（FLNC）。从机构信号来看，主动基金净增持87.65pp，这是一个很好的迹象，表明机构投资者对公司的前景有信心。然而，做空比例39.0%的上升，也让我们需要谨慎对待。\n\n从近期新闻来看，公司的财报和能源储存业务的发展都是值得关注的。Fluence Retains Tier 1 Energy Storage Status for",
         "quant_score": 51,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 14.28,
-        "change_pct": 1.49,
-        "fetched_at": "2026-07-21 09:33:58"
+        "current": 14.66,
+        "change_pct": -4.06,
+        "fetched_at": "2026-07-23 09:44:06"
       },
       "news": [
         {
@@ -8417,29 +8355,29 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "AXTI 的供应链地位无疑是其最大的优势。作为全球约 40% 磷化铟（InP）供应链的控制者，AXTI 在上游 7N 铟/镓/锗提炼和下游 InP 衬底晶圆制造领域都具有双重瓶颈优势。这种独特的供应链地位，加上中国对日双用出口禁令，形成了 AXTI 的地缘政治护城河。关键客户如 Intel、Coherent、II-VI 和 CPO 激光制造商的设计赢，也为 AXTI 提供了稳定的收入来源。同时，A",
+        "reasoning": "作为一名价值投资者，我始终关注公司的供应链地位和估值。AXTI公司作为全球约40%磷化铟（InP）供应链的控制者，拥有双重瓶颈：上游7N铟/镓/锗提炼和下游InP衬底晶圆制造。这种独特的供应链地位，加上2026年1月6日中国宣布对日双用出口禁令，形成了AXTI的地缘政治护城河。\n\nAXTI的关键客户包括Intel、Coherent、II-VI和CPO激光制造商，这些设计赢客户为公司提供了稳定的收入",
         "quant_score": 8,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 48.83,
-        "change_pct": 6.48,
-        "fetched_at": "2026-07-21 09:34:33"
+        "current": 52.98,
+        "change_pct": -6.25,
+        "fetched_at": "2026-07-23 09:44:42"
       },
       "news": [
         {
-          "title": "Director Tracy Liu reports restricted and annual equity awards in AXT INC (NASDAQ: AXTI) - Stock Titan",
+          "title": "Can AXTI Deliver Its Biggest Indium Phosphide Quarter Ever? - TradingView",
           "sentiment": 0.0,
           "date": "Wed, 24 Ju"
         },
         {
-          "title": "Can AXTI Deliver Its Biggest Indium Phosphide Quarter Ever? - TradingView",
+          "title": "Director Tracy Liu reports restricted and annual equity awards in AXT INC (NASDAQ: AXTI) - Stock Titan",
           "sentiment": 0.0,
           "date": "Wed, 24 Ju"
         },
@@ -8449,14 +8387,14 @@
           "date": "Wed, 24 Ju"
         },
         {
-          "title": "A Look at AXT Inc (AXTI) After 14.1% Gain -- GF Value $2.54 vs Price $57.58 - GuruFocus",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "AXT, Inc. (Nasdaq: AXTI) appoints Jia-Bin Duh to its expanded board - Stock Titan",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "AXT Inc. (AXTI) Gets 8.8% Jump from AI Optimism - Yahoo Finance",
-          "sentiment": 0.0,
-          "date": "Wed, 10 Ju"
+          "title": "30+ year tech executive Jia-Bin Duh joins as AXT board grows to six - Stock Titan",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         }
       ]
     },
@@ -8470,20 +8408,20 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "Hudbay Minerals Inc.（HBM）的净利率从3.8%跳升至25.7%，这显然引起了我的注意。但是，考虑到这可能含有一次性收益，我不会将此净利率改善完全归因于竞争力提升。基本面分析显示，公司的盈利能力有所改善，但还需要更多数据来全面评估其护城河、成长性和安全性。\n\n估值判断方面，当前价$20.84处于52周区间中段，考虑到公司的盈利能力和市场情绪，估值似乎尚可接受。新闻方面，公司的A",
+        "reasoning": "Hudbay Minerals Inc.（HBM）近期的净利率大幅跳升至25.7%，这一变化值得关注，但我们需要核实是否含有一次性收益。这种突然的改善可能并非完全归因于竞争力提升。公司的估值和基本面分析还需要更多的数据支持。\n\n从提供的数据来看，HBM的当前价格处于52周区间中段，量化评分为65/100，属于B+级，持有评级。然而，护城河、成长/管理层、安全性和估值等方面的数据不足，难以对公司的长",
         "quant_score": 65,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 20.84,
-        "change_pct": 2.36,
-        "fetched_at": "2026-07-21 09:35:46"
+        "current": 23.55,
+        "change_pct": 2.39,
+        "fetched_at": "2026-07-23 09:45:56"
       },
       "news": [
         {
@@ -8523,20 +8461,20 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我对Super Micro Computer, Inc.（SMCI）进行了深入分析。公司的营收增速和毛利率趋势表明其具有良好的增长潜力。然而，需要注意的是，公司的护城河和成长/管理层评分尚未明确，这可能会影响其长期竞争力。\n\n近期新闻显示，公司的股票价格有所波动，但顶级投行的升级和主动基金的净增持表明市场对公司的前景仍然乐观。情绪分析显示，市场对公司的增长前景有所担忧，但",
+        "reasoning": "作为一名成长股分析师，我对Super Micro Computer, Inc.（SMCI）进行了深入的研究。该公司在服务器和数据中心领域具有强大的竞争力，其产品和服务受到广泛的认可。然而，近期的新闻和市场情绪显示出了一些令人担忧的迹象，例如股价下跌和做空比例的上升。\n\n尽管如此，我认为SMCI仍然具有很大的成长潜力。公司的产品和服务在数据中心和云计算领域具有很强的需求，且其技术和设计能力在行业中处",
         "quant_score": 77,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": null,
       "price": {
-        "current": 23.83,
-        "change_pct": -1.45,
-        "fetched_at": "2026-07-21 09:36:23"
+        "current": 30.56,
+        "change_pct": 19.84,
+        "fetched_at": "2026-07-23 09:46:34"
       },
       "news": [
         {
@@ -8545,24 +8483,24 @@
           "date": "Wed, 24 Ju"
         },
         {
-          "title": "Super Micro Computer Slides as Financing and Export-Control Overhangs Stay in Focus - Quiver Quantitative",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Why Super Micro Computer (SMCI) Stock Is Up Today - Quiver Quantitative",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Two AI Server Bets, Two Outcomes: Dell Technologies vs Super Micro Computer - 24/7 Wall St.",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Supermicro stock jumps on gross margin raise amid record $60 billion backlog - Yahoo Finance",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Dell Falls 14%, HPE and Super Micro Slide as AI Hardware Stocks Give Back Gains - 24/7 Wall St.",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Super Micro Just Disclosed $60 Billion in New Orders and a Massive Margin Beat - 24/7 Wall St.",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         },
         {
-          "title": "Supermicro's New Cooling Doors Offer Liquid Cooling for Legacy Data Centers - Stock Titan",
-          "sentiment": 0.0,
-          "date": "Wed, 15 Ju"
+          "title": "Super Micro Computer Stock Drives Tech Hardware Higher - Schaeffer's Investment Research",
+          "sentiment": null,
+          "date": "Wed, 22 Ju"
         }
       ]
     },
@@ -8576,7 +8514,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "46/100",
@@ -8586,8 +8524,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 3.36,
+        "cache_age_hours": 20.8,
+        "score": 3.56,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -8599,11 +8537,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 116.6,
-        "change_pct": 3.17,
-        "fetched_at": "2026-07-21 14:07:25"
-      },
+      "price": null,
       "news": [
         {
           "title": "大模型几个月能力翻番，标准更新却按年算！业界：AI迭代太快，治理没跟上",
@@ -8652,7 +8586,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -8718,7 +8652,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 0.83,
         "is_active": false,
         "survey": {
@@ -8774,7 +8708,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "30/100",
@@ -8784,7 +8718,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 28.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -8797,7 +8731,11 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 32.6,
+        "change_pct": 1.34,
+        "fetched_at": "2026-07-23 09:30:17"
+      },
       "news": [
         {
           "title": "震有科技2025年营收下滑陷入亏损，四季度营收占比过高遭问询 公司回复",
@@ -8846,7 +8784,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 2.51,
         "is_active": true,
         "survey": {
@@ -8902,7 +8840,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "36/100",
@@ -8912,12 +8850,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 2.73,
         "is_active": true,
         "survey": {
           "count_30d": 5,
-          "days_since_latest": 16,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-07-06",
@@ -8956,11 +8894,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 120.46,
-        "change_pct": 20.0,
-        "fetched_at": "2026-07-21 10:03:57"
-      },
+      "price": null,
       "news": [
         {
           "title": "个股异动 | 东芯股份午后涨停",
@@ -8999,7 +8933,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "53/100",
@@ -9009,12 +8943,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 4.34,
-        "is_active": true,
+        "cache_age_hours": 20.9,
+        "score": 0.88,
+        "is_active": false,
         "survey": {
-          "count_30d": 5,
-          "days_since_latest": 2,
+          "count_30d": 2,
+          "days_since_latest": 3,
           "events": [
             {
               "date": "2026-07-20",
@@ -9025,24 +8959,6 @@
             {
               "date": "2026-06-29",
               "n_inst": 12,
-              "method": "特定对象调研,现场参观,电话会议",
-              "is_specific": true
-            },
-            {
-              "date": "2026-06-11",
-              "n_inst": 10,
-              "method": "特定对象调研,现场参观",
-              "is_specific": true
-            },
-            {
-              "date": "2026-06-10",
-              "n_inst": 2,
-              "method": "特定对象调研,现场参观",
-              "is_specific": true
-            },
-            {
-              "date": "2026-06-03",
-              "n_inst": 11,
               "method": "特定对象调研,现场参观,电话会议",
               "is_specific": true
             }
@@ -9096,7 +9012,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "33/100",
@@ -9106,7 +9022,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9162,7 +9078,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "81/100",
@@ -9172,17 +9088,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 2.5,
+        "cache_age_hours": 20.8,
+        "score": 2.0,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 57,
+          "days_since_latest": 58,
           "events": [
             {
               "date": "2026-05-26",
               "n_inst": 1,
-              "method": "业绩说明会,网络远程",
+              "method": "",
               "is_specific": false
             }
           ]
@@ -9235,7 +9151,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "56/100",
@@ -9245,42 +9161,18 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 3.93,
-        "is_active": true,
+        "cache_age_hours": 20.9,
+        "score": 1.02,
+        "is_active": false,
         "survey": {
-          "count_30d": 13,
-          "days_since_latest": 28,
+          "count_30d": 1,
+          "days_since_latest": 29,
           "events": [
             {
               "date": "2026-06-24",
               "n_inst": 2,
               "method": "特定对象调研,线上交流",
               "is_specific": true
-            },
-            {
-              "date": "2026-06-22",
-              "n_inst": 3,
-              "method": "特定对象调研,线上交流",
-              "is_specific": true
-            },
-            {
-              "date": "2026-06-18",
-              "n_inst": 2,
-              "method": "路演活动",
-              "is_specific": false
-            },
-            {
-              "date": "2026-06-17",
-              "n_inst": 4,
-              "method": "路演活动",
-              "is_specific": false
-            },
-            {
-              "date": "2026-06-16",
-              "n_inst": 8,
-              "method": "路演活动",
-              "is_specific": false
             }
           ]
         },
@@ -9332,7 +9224,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "37/100",
@@ -9342,12 +9234,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 2.5,
+        "cache_age_hours": 20.9,
+        "score": 2.36,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 1,
+          "days_since_latest": 2,
           "events": [
             {
               "date": "2026-07-21",
@@ -9405,7 +9297,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "60/100",
@@ -9415,7 +9307,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.6,
         "is_active": false,
         "survey": {
@@ -9471,7 +9363,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "52/100",
@@ -9481,7 +9373,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -9494,11 +9386,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 58.23,
-        "change_pct": 3.85,
-        "fetched_at": "2026-07-21 14:07:25"
-      },
+      "price": null,
       "news": [
         {
           "title": "A股公司“自掏腰包”传递信心，深市增持回购近4天新增29家次",
@@ -9537,7 +9425,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "30/100",
@@ -9547,12 +9435,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 1.74,
+        "cache_age_hours": 20.9,
+        "score": 0.24,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 29,
+          "days_since_latest": 30,
           "events": [
             {
               "date": "2026-06-23",
@@ -9610,7 +9498,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "65/100",
@@ -9620,7 +9508,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.34,
         "is_active": false,
         "survey": {
@@ -9676,7 +9564,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "56/100",
@@ -9686,12 +9574,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 4.15,
         "is_active": true,
         "survey": {
           "count_30d": 4,
-          "days_since_latest": 22,
+          "days_since_latest": 23,
           "events": [
             {
               "date": "2026-06-30",
@@ -9767,7 +9655,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "30/100",
@@ -9777,12 +9665,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 1.83,
+        "cache_age_hours": 20.9,
+        "score": 0.34,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 9,
+          "days_since_latest": 10,
           "events": [
             {
               "date": "2026-07-13",
@@ -9840,7 +9728,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "30/100",
@@ -9850,7 +9738,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -9906,7 +9794,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "32/100",
@@ -9916,7 +9804,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -9972,7 +9860,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "38/100",
@@ -9982,7 +9870,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10038,7 +9926,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "12/100",
@@ -10048,7 +9936,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10104,7 +9992,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "30/100",
@@ -10114,7 +10002,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 1.99,
         "is_active": false,
         "survey": {
@@ -10180,12 +10068,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 3.39,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 51,
+          "days_since_latest": 52,
           "events": [
             {
               "date": "2026-06-01",
@@ -10243,7 +10131,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "25/100",
@@ -10253,12 +10141,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 3.5,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-07-02",
@@ -10316,7 +10204,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "48/100",
@@ -10326,7 +10214,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10382,7 +10270,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "31/100",
@@ -10392,7 +10280,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 29.0,
         "score": 1.88,
         "is_active": false,
         "survey": {
@@ -10448,7 +10336,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "62/100",
@@ -10458,8 +10346,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 0.28,
+        "cache_age_hours": 20.9,
+        "score": 1.13,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -10471,11 +10359,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 10.73,
-        "change_pct": 0.0,
-        "fetched_at": "2026-07-21 14:07:25"
-      },
+      "price": null,
       "news": [
         {
           "title": "受益铝价上涨 铝企上半年集体预喜",
@@ -10514,7 +10398,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "51/100",
@@ -10524,7 +10408,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 1.77,
         "is_active": false,
         "survey": {
@@ -10590,12 +10474,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 1.58,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 51,
+          "days_since_latest": 52,
           "events": [
             {
               "date": "2026-06-01",
@@ -10653,7 +10537,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "47/100",
@@ -10663,12 +10547,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 3.65,
         "is_active": true,
         "survey": {
           "count_30d": 6,
-          "days_since_latest": 22,
+          "days_since_latest": 23,
           "events": [
             {
               "date": "2026-06-30",
@@ -10750,7 +10634,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "72/100",
@@ -10760,7 +10644,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 0.74,
         "is_active": false,
         "survey": {
@@ -10826,7 +10710,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.52,
         "is_active": false,
         "survey": {
@@ -10882,7 +10766,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "38/100",
@@ -10892,7 +10776,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10948,7 +10832,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "58/100",
@@ -10958,12 +10842,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 1.16,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 54,
+          "days_since_latest": 55,
           "events": [
             {
               "date": "2026-05-29",
@@ -11021,7 +10905,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "45/100",
@@ -11031,23 +10915,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
-        "score": 3.4,
-        "is_active": true,
+        "cache_age_hours": 20.8,
+        "score": 0.4,
+        "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 15,
+          "count_30d": 1,
+          "days_since_latest": 16,
           "events": [
             {
               "date": "2026-07-07",
               "n_inst": 4,
               "method": "特定对象调研",
-              "is_specific": true
-            },
-            {
-              "date": "2026-05-27",
-              "n_inst": 7,
-              "method": "特定对象调研,电话会议",
               "is_specific": true
             }
           ]
@@ -11100,7 +10978,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "41/100",
@@ -11110,7 +10988,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 1.26,
         "is_active": false,
         "survey": {
@@ -11166,7 +11044,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "52/100",
@@ -11176,7 +11054,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 0.08,
         "is_active": false,
         "survey": {
@@ -11189,11 +11067,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 5.99,
-        "change_pct": -0.66,
-        "fetched_at": "2026-07-21 14:07:19"
-      },
+      "price": null,
       "news": [
         {
           "title": "A股回购增持潮来袭 两日逾百份公告密集披露",
@@ -11232,7 +11106,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "34/100",
@@ -11242,7 +11116,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 29.3,
         "score": 1.06,
         "is_active": false,
         "survey": {
@@ -11298,7 +11172,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "70/100",
@@ -11308,24 +11182,18 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 4.0,
+        "cache_age_hours": 20.9,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 16,
+          "count_30d": 1,
+          "days_since_latest": 17,
           "events": [
             {
               "date": "2026-07-06",
               "n_inst": 9,
               "method": "特定对象调研",
               "is_specific": true
-            },
-            {
-              "date": "2026-05-26",
-              "n_inst": 1,
-              "method": "业绩说明会",
-              "is_specific": false
             }
           ]
         },
@@ -11334,11 +11202,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 38.1,
-        "change_pct": 5.48,
-        "fetched_at": "2026-07-21 14:07:17"
-      },
+      "price": null,
       "news": [
         {
           "title": "三花智控698万股限制性股票7月22日上市流通",
@@ -11377,7 +11241,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "3/100",
@@ -11387,9 +11251,9 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 2.52,
-        "is_active": true,
+        "cache_age_hours": 20.9,
+        "score": 0.52,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
@@ -11428,7 +11292,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "44/100",
@@ -11438,7 +11302,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 0.93,
         "is_active": false,
         "survey": {
@@ -11494,7 +11358,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "68/100",
@@ -11504,12 +11368,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 4.9,
+        "cache_age_hours": 28.9,
         "score": 0.53,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 58,
+          "days_since_latest": 59,
           "events": [
             {
               "date": "2026-05-25",
@@ -11562,7 +11426,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "41/100",
@@ -11572,7 +11436,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 1.9,
         "is_active": false,
         "survey": {
@@ -11628,8 +11492,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 0.83,
+        "cache_age_hours": 20.9,
+        "score": 0.99,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -11684,7 +11548,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "57/100",
@@ -11694,7 +11558,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 0.4,
         "is_active": false,
         "survey": {
@@ -11753,15 +11617,15 @@
         "date": "2026-07-22",
         "grade": "B+",
         "conclusion": "买入",
-        "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我对浪潮信息的表现感到乐观。该公司在计算机设备领域的布局和增长前景值得关注。尽管当前价格较高，但从长期来看，公司的增长潜力和市场空间仍然广阔。\n\n从技术S曲线的角度来看，浪潮信息可能处于快速成长期，市场对其未来增长的预期较高。公司的研发投入和新产品开发能力将是决定其长期成功的关键因素。同时，公司的竞争壁垒，包括技术壁垒和品牌优势，也将在未来增长中发挥重要作用。\n\n基于以上",
+        "moat": "81/100",
+        "reasoning": "按成长科技股的标准看：质量 81/100（营收 10年复合增速 33%），估值合理。好公司，价格合理。",
         "quant_score": 81,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 0.62,
+        "cache_age_hours": 20.9,
+        "score": 0.55,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -11816,7 +11680,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "50/100",
@@ -11826,8 +11690,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 3.04,
+        "cache_age_hours": 20.9,
+        "score": 3.12,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -11882,7 +11746,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "18/100",
@@ -11892,8 +11756,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 1.46,
+        "cache_age_hours": 20.9,
+        "score": 1.48,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -11948,7 +11812,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "10/100",
@@ -11958,12 +11822,12 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.2,
         "score": 2.16,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-07-09",
@@ -12021,11 +11885,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股分析师，我对Chagee Holdings Limited（CHA）进行了深入研究。公司的扩张计划继续推进，最近宣布在韩国开设新店，这表明其对增长的承诺。同时，公司被认为是消费股中增长最快的股票之一，这引起了我的注意。\n\n然而，做空比例的上升和顶级投行近90天内没有净升级，提示我们需要谨慎对待公司的估值。尽管如此，公司的扩张计划和增长潜力仍然值得关注。\n\n基于以上分析，我的判断是：持",
+        "reasoning": "作为一名成长股质量分析师，我对Chagee Holdings Limited（CHA）进行了深入分析。从营收增速来看，公司的增长势头尚可，但利润率的下滑令人担忧，这可能是竞争加剧和规模扩张带来的效率问题。公司的扩张计划，例如在韩国开设新店，表明其仍在寻求新的增长机会。\n\n从估值角度来看，当前的股价已经低于历史价值区，处于52周极低位，似乎具备一定的买入价值。但是，做空比例的上升和顶级投行的缺乏升级",
         "quant_score": 48,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12038,12 +11902,12 @@
       },
       "news": [
         {
-          "title": "Chagee Holdings Limited Files Annual Report on Form 20-F for Fiscal Year 2025 - Quiver Quantitative",
+          "title": "Chagee posts audited 2025 financials in annual SEC filing - Stock Titan",
           "sentiment": 0.0,
           "date": "Wed, 29 Ap"
         },
         {
-          "title": "Chagee posts audited 2025 financials in annual SEC filing - Stock Titan",
+          "title": "Chagee Holdings Limited Files Annual Report on Form 20-F for Fiscal Year 2025 - Quiver Quantitative",
           "sentiment": 0.0,
           "date": "Wed, 29 Ap"
         },
@@ -12074,11 +11938,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股分析师，我始终关注那些具有强大增长潜力的公司。MIXUE GROUP（2097.HK）就是这样一家公司，尽管当前的市场环境较为复杂，但其长期的增长故事仍然值得关注。\n\n从营收增速来看，MIXUE GROUP仍然保持着较高的增长速度，尽管近期的新闻中提到了亏损预计，但这并不是公司长期增长故事的决定性因素。同时，公司的市场空间仍然广阔，具有较大的增长潜力。\n\n从估值来看，当前的价格HK$",
+        "reasoning": "作为一名成长股质量分析师，我对MIXUE GROUP（2097.HK）的表现进行了深入分析。尽管当前的市场情绪较为负面，尤其是日盈电子预计2026年上半年亏损的消息，但我认为这并不代表整个行业的趋势。领跑AI办公智能体赛道的腾讯WorkBuddy的成功表明，科技行业仍然有许多增长机会。\n\n然而，MIXUE GROUP的估值需要谨慎考虑。由于缺乏具体的财务数据和护城河信息，我难以对公司的长期增长潜力",
         "quant_score": 96,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12092,12 +11956,12 @@
       "news": [
         {
           "title": "领跑AI办公智能体赛道 腾讯WorkBuddy负责人刘毅称“暂时跑赢半个身位”",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-07-22"
         },
         {
           "title": "每日新闻0721-半导体设备ETF鹏华(589020涨超19%，芯片产业链强势反弹，半导体设备掀起涨停潮",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-07-21"
         },
         {
@@ -12127,11 +11991,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "我的朋友们，今天我们来谈谈GUMING（1364.HK）。作为一名成长股质量分析师，我始终关注那些具有强大护城河和成长潜力的公司。虽然GUMING的护城河、成长和安全性评分暂时无法获得，但我们可以从其当前的市场表现和新闻中找到一些线索。\n\n从近期新闻来看，GUMING在自动驾驶领域取得了一定的成就，例如成为WAIC2026十大案例中的唯一自动驾驶案例。这表明公司在技术创新方面有一定的优势。然而，债",
+        "reasoning": "作为一位成长股质量分析师，我对GUMING（1364.HK）进行了深入研究。从营收增速来看，公司的CAGR值较高，表明其具有强劲的增长潜力。同时，毛利率趋势也较为稳定，表明公司在规模扩张的同时，仍能保持较高的利润率。然而，公司的研发效率和市场空间仍需要进一步观察。\n\n从技术S曲线位置来看，GUMING可能处于快速成长期，估值溢价有依据，但需要验证增速是否能维持。与同行业、同阶段的公司比较，GUMI",
         "quant_score": 82,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12145,7 +12009,7 @@
       "news": [
         {
           "title": "募投双升，回报高企：2026上半年VC/PE市场复苏进程加速",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-07-21"
         },
         {
@@ -12180,11 +12044,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我始终关注那些具有强大增长潜力的公司。AUNTEA JENNY（2589.HK）正是如此。尽管当前的市场环境较为复杂，但该公司的基本面仍然值得关注。从近期新闻来看，长鑫科技的成功“打新”事件表明市场对高科技公司的需求仍然旺盛。\n\n然而，作为一名谨慎的投资者，我必须考虑公司的估值是否合理。由于缺乏具体的财务数据，我无法对公司的护城河、成长性和安全性进行详细分析。但是，根据量",
+        "reasoning": "作为一名价值投资者，我始终在寻找具有长期成长潜力的公司。AUNTEA JENNY（2589.HK）正是这样一家公司，尽管当前的市场价格可能让一些投资者感到担忧。然而，通过对公司的基本面分析，我们可以发现其具有良好的成长基础。\n\n从营收增速来看，AUNTEA JENNY表现出色，CAGR持续增长，这表明公司的商业模式具有强大的生命力。同时，公司的毛利率趋势也值得关注，规模扩张带来的效率提升将进一步推",
         "quant_score": 80,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12233,11 +12097,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "0/35：—",
-        "reasoning": "CHABAIDAO 的 ROE 趋势令人担忧，2022-2024 年连续下滑，尽管最近有所反弹，但仍需核实其原因是否为一次性事件。公司的基本面数据不足，难以对其护城河、成长性、管理层和安全性进行全面评估。当前的估值也缺乏明确的依据。\n\n在这种情况下，情绪值为 0.0，关键信号也没有明显的指向，市场似乎处于观望状态。近期没有重要新闻，公司的走势似乎主要受内部因素影响。\n\n基于以上，我的判断是：持有。",
+        "reasoning": "CHABAIDAO 的 ROE 趋势令人担忧，2022-2024 年连续下滑至 12.1%，尽管最近有所反弹至 20.2%。然而，这一反弹的原因尚需核实，以确定其是否为一次性事件。公司的基本面数据不足，难以对其护城河、成长性、管理层和安全性进行全面评估。\n\n从估值角度来看，当前价 HK$4.71 处于 52 周极低位，低于历史价值区。这可能表明当前价格具有相对的性价比优势。然而，缺乏足够的数据支持",
         "quant_score": 60,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12286,11 +12150,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我总是寻找那些具有长期竞争优势和稳健财务状况的公司。然而，NAYUKI（2150.HK）的当前状况令人担忧。公司的净利率虽然有所改善，但仍然处于亏损状态，且利润质量存疑。同时，公司面临监管处罚和高波动行情的风险，这些因素都对公司的未来前景构成了威胁。\n\n从供应链的角度来看，NAYUKI可能面临着供应链瓶颈地位的挑战，这可能会影响公司的生产和交货能力。然而，没有相关的供应链数据，",
+        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和长期增长潜力。然而，NAYUKI（2150.HK）的当前情况令人担忧。公司的净利率虽然有所改善，但仍然处于亏损状态，且利润质量存疑。同时，公司面临监管处罚和高波动行情的风险，这些因素都对公司的未来前景构成了挑战。\n\n从供应链角度来看，NAYUKI可能面临供应链瓶颈地位的挑战，这可能会影响公司的生产和交货能力。然而，没有相关的供应链数据和信息，我们无法对此",
         "quant_score": 24,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12304,12 +12168,12 @@
       "news": [
         {
           "title": "德国化工上半年产量跌3%，VCI警告结构性困局远未解除",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-07-21"
         },
         {
           "title": "金禄电子：预计2026年上半年净利同比增长5.04%-14.59%",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-07-20"
         },
         {
@@ -12349,8 +12213,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 0.78,
+        "cache_age_hours": 20.9,
+        "score": 1.04,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -12405,11 +12269,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "0/35：—",
-        "reasoning": "Macerich Company 的当前表现令人担忧。从基本面分析来看，缺乏关键数据使得我们难以对其赚钱能力和竞争优势做出准确的判断。虽然机构信号中主动基金净增持和顶级投行的升级带来了一些积极的信号，但做空比例的显著上升和情绪值仅为0.3却暗示着市场对其前景的担忧。\n\n在估值判断方面，由于PE数据的缺失，我们难以通过市盈率对其进行估值。然而，考虑到公司的整体表现和市场信号，似乎其估值可能并不具有吸",
+        "reasoning": "Macerich Company 的基本面分析显示，该公司的财务数据不足，无法进行全面评估。虽然最近的新闻显示公司的租赁进展有所改善，且获得了顶级投行的升级，但做空比例的上升和机构信号的变化仍然需要关注。公司的估值由于缺乏PE数据而难以评估，但可以通过其他指标如PB进行分析。\n\n从情绪和关键信号来看，公司的升级和盈利增长带来了积极的影响，但这是否能改变公司的基本面仍然存疑。作为价值投资者，我需要看",
         "quant_score": 10,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12423,7 +12287,7 @@
       "news": [
         {
           "title": "Here Are Wednesday’s Best Wall Street Analyst Research Calls: Devon Energy, Flowserve, Klaviyo, Macerich, Merck, Nucor, Take-Two Interactive Software, Twilio, and More - 24/7 Wall St.",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "Wed, 24 Ju"
         },
         {
@@ -12438,7 +12302,7 @@
         },
         {
           "title": "Here Are Wednesday’s Best Wall Street Analyst Research Calls: Block, Charles River Laboratories, Cognizant Technology, Constellation Energy, Credicorp, First Solar, GE Vernova, Huntsman, Macerich, and",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "Wed, 17 Ju"
         },
         {
@@ -12458,7 +12322,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "NR",
         "conclusion": "数据不足，暂不评级",
         "moat": "—",
@@ -12468,7 +12332,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12509,7 +12373,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "37/100",
@@ -12519,7 +12383,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.17,
         "is_active": false,
         "survey": {
@@ -12575,11 +12439,11 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
         "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我对POP MART的表现感到兴趣。该公司在市场中的地位和增长潜力值得关注。然而，当前的估值和市场情绪也需要谨慎分析。近期新闻中，华润系公司的总市值破万亿，这可能对市场产生一定影响，但对POP MART的直接影响尚不明显。\n\n在分析POP MART的增长潜力时，我们需要考虑其在市场中的竞争壁垒、研发效率以及市场空间的大小。虽然当前的数据不足以全面评估这些方面，但公司的创新",
+        "reasoning": "作为一名成长股质量分析师，我对POP MART（9992.HK）的表现和前景进行了深入分析。公司的营收增速和毛利率趋势表明其在市场中仍然具有较强的竞争力。尽管护城河、成长/管理层和安全性方面的数据不足，但公司的估值和市场空间仍然具有吸引力。\n\n近期新闻显示，公司获得了战略投资者的支持，这为其未来发展提供了坚实的基础。然而，需要密切关注公司的供应链管理和设计能力，以赢得客户的青睐。同时，需要注意AT",
         "quant_score": 82,
         "data_incomplete": 0,
         "data_quality": "incomplete"
@@ -12625,10 +12489,10 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-07-15",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "D",
         "conclusion": "减持",
         "moat": "20/100",
@@ -12638,7 +12502,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 20.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12651,11 +12515,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 3.17,
-        "change_pct": -0.94,
-        "fetched_at": "2026-07-21 10:01:12"
-      },
+      "price": null,
       "news": [
         {
           "title": "今日864只个股突破五日均线",
@@ -12691,10 +12551,10 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-07-15",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
         "moat": "57/100",
@@ -12704,7 +12564,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 29.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12717,11 +12577,7 @@
           "direction": ""
         }
       },
-      "price": {
-        "current": 19.82,
-        "change_pct": 3.77,
-        "fetched_at": "2026-07-21 10:01:46"
-      },
+      "price": null,
       "news": [
         {
           "title": "46只A股筹码大换手（7月21日）",
@@ -12770,7 +12626,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 20.8,
         "score": 0.12,
         "is_active": false,
         "survey": {
@@ -12799,21 +12655,17 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "45/100",
-        "reasoning": "按成长科技股的标准看：质量 45/100（营收 4年复合增速 24%），估值便宜。普通公司，胜在便宜。",
+        "moat": "0/35：—",
+        "reasoning": "作为一名成长股质量分析师，我对比亚迪股份的表现进行了深入分析。从营收增速来看，比亚迪股份在新能源汽车领域的快速扩张带来了可观的增长。但是，毛利率的趋势和研发效率也是我们需要密切关注的指标。另外，市场空间和竞争壁垒也是影响公司长期发展的关键因素。\n\n在技术渗透率S曲线的位置判断上，比亚迪股份可能处于快速成长期，市场对其未来发展前景给予了较高的估值。然而，红旗检查显示，若营收增速持续放缓或毛利率下滑，",
         "quant_score": 45,
         "data_incomplete": 0,
-        "data_quality": "ok"
+        "data_quality": "incomplete"
       },
       "precursor": null,
-      "price": {
-        "current": 89.8,
-        "change_pct": -0.39,
-        "fetched_at": "2026-07-21 14:07:15"
-      },
+      "price": null,
       "news": [
         {
           "title": "港交所：上半年香港现货市场日均成交金额同比增17.8%",
@@ -12853,16 +12705,16 @@
       "watched_by": "2",
       "analysis": {
         "date": "2026-07-22",
-        "grade": "B+",
-        "conclusion": "持有",
-        "moat": "100/100",
-        "reasoning": "按成长科技股的标准看：质量 100/100（营收 10年复合增速 30%），估值数据不足。好公司，价格合理（价格数据不足，先不下买入结论）。",
+        "grade": "A",
+        "conclusion": "买入",
+        "moat": "0/35：—",
+        "reasoning": "作为一名成长股质量分析师，我对金山办公的表现和前景进行了深入分析。公司近期的回购和分红行为表明其对自身价值的信心和对股东的回报承诺。同时，作为一家科技公司，金山办公的研发投入和创新能力将决定其在市场中的竞争力和长期增长潜力。\n\n从估值角度来看，需要考虑公司的成长性、市场空间和竞争壁垒等因素。虽然当前的价格已经跌破了止损位，但这并不一定意味着公司的基本面已经恶化。相反，公司的回购行为和分红政策可能是",
         "quant_score": 100,
         "data_incomplete": 0,
-        "data_quality": "ok"
+        "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 29.0,
         "score": 3.42,
         "is_active": true,
         "survey": {
@@ -12876,11 +12728,16 @@
         }
       },
       "price": {
-        "current": 244.0,
-        "change_pct": -1.43,
-        "fetched_at": "2026-07-22 02:32:18"
+        "current": 239.92,
+        "change_pct": -3.08,
+        "fetched_at": "2026-07-22 13:11:10"
       },
       "news": [
+        {
+          "title": "科创板平均股价53.03元，25股股价超300元",
+          "sentiment": 0.0,
+          "date": "2026-07-22"
+        },
         {
           "title": "100只科创板股票跻身百元股阵营",
           "sentiment": 0.0,
@@ -12900,11 +12757,6 @@
           "title": "28股今日获机构买入评级",
           "sentiment": 0.0,
           "date": "2026-07-16"
-        },
-        {
-          "title": "金山办公回购22万股 金额4505万元",
-          "sentiment": 1.0,
-          "date": "2026-07-07"
         }
       ]
     },
@@ -12928,7 +12780,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 0.86,
         "is_active": false,
         "survey": {
@@ -12984,7 +12836,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-07-21",
+        "date": "2026-07-22",
         "grade": "C",
         "conclusion": "观察",
         "moat": "34/100",
@@ -12994,12 +12846,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
-        "score": 0.81,
+        "cache_age_hours": 20.9,
+        "score": 1.45,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-07-09",
@@ -13014,8 +12866,22 @@
           "direction": ""
         }
       },
-      "price": null,
+      "price": {
+        "current": 4.37,
+        "change_pct": 1.39,
+        "fetched_at": "2026-07-23 09:38:21"
+      },
       "news": [
+        {
+          "title": "中邮核心科技创新灵活配置混合：2026年第二季度利润3308.23万元 净值增长率51.39%",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
+        {
+          "title": "长源电力000966.SZ)：全资子公司汉川公司476万元SIS系统服务项目由关联方国能信控中标",
+          "sentiment": null,
+          "date": "2026-07-22"
+        },
         {
           "title": "长源电力上半年净利润预计增长57.14%~126.74%",
           "sentiment": 0.0,
@@ -13030,16 +12896,6 @@
           "title": "长源电力披露6月及上半年发电数据 单月发电量同比降2.12%",
           "sentiment": 0.0,
           "date": "2026-07-03"
-        },
-        {
-          "title": "长源电力：6月完成发电量24.55亿千瓦时，同比降低2.12%",
-          "sentiment": 0.0,
-          "date": "2026-07-03"
-        },
-        {
-          "title": "长源电力000966.SZ)：董事王娟因工作调整辞职，不再担任任何职务",
-          "sentiment": -1.0,
-          "date": "2026-06-11"
         }
       ]
     },
@@ -13063,12 +12919,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
-        "score": 4.34,
-        "is_active": true,
+        "cache_age_hours": 20.9,
+        "score": 1.07,
+        "is_active": false,
         "survey": {
-          "count_30d": 10,
-          "days_since_latest": 1,
+          "count_30d": 5,
+          "days_since_latest": 2,
           "events": [
             {
               "date": "2026-07-21",
@@ -13153,19 +13009,19 @@
         "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "0/35：—",
-        "reasoning": "中远海发的基本面分析显示，该公司的护城河、成长和管理层、安全性以及估值方面的数据均不足，这使得对公司的全面评估变得困难。尽管公司近期实施了回购方案，并与其他公司签署了融资租赁合同，但这些行动并未能显著改变公司的基本面状况。公司的股价相对于年线和季线位置，仍然存在一定的波动风险。\n\n从估值角度来看，公司的当前价格¥2.43相对于其历史走势和行业比较而言，并不明显偏离。但考虑到公司的整体评分为C级，且",
+        "moat": "34/100",
+        "reasoning": "按成熟价值股的标准看：质量 34/100（ROE 5.3%（巴菲特线 15%）），估值合理。质量偏弱。",
         "quant_score": 34,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 29.1,
         "score": 1.2,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 41,
+          "days_since_latest": 42,
           "events": [
             {
               "date": "2026-06-11",
@@ -13226,13 +13082,26 @@
         "date": "2026-07-22",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终关注公司的基本面和成长潜力。德明利（001309）当前的市场表现令人担忧，股价大幅下跌，市值跌破1000亿元。然而，作为一名长期投资者，我更关注公司的根本性问题和成长潜力。\n\n从红旗检查来看，公司的经营现金流只有利润的-321%，这表明公司的盈利能力可能存在问题。同时，公司的护城河、成长和安全性等方面的数据不足，难以对公司的未来前景做出准确的判断。\n\n尽管存在这些问题，但",
+        "moat": "60/100",
+        "reasoning": "按成长科技股的标准看：质量 60/100（营收 9年复合增速 63%），估值便宜。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的-321%——赚的钱没真正进账户",
         "quant_score": 60,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
-      "precursor": null,
+      "precursor": {
+        "cache_age_hours": 20.9,
+        "score": 1.01,
+        "is_active": false,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 20.2,
+          "direction": ""
+        }
+      },
       "price": {
         "current": 457.2,
         "change_pct": -10.0,
@@ -13279,13 +13148,26 @@
         "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "0/35：—",
-        "reasoning": "作为一名价值投资者，我始终关注那些具有长期成长潜力的公司。山金国际作为一家市场中的佼佼者，引起了我的注意。通过对公司的基本面分析，我发现其具有良好的营收增速和稳定的毛利率趋势，这些都是公司长期成长的重要指标。然而，公司的护城河和成长/管理层评分由于数据不足而无法准确评估。\n\n尽管如此，公司的估值和安全性评分也同样受到数据不足的影响，这使得对公司的全面评估变得困难。然而，通过对市场和行业的分析，我认",
+        "moat": "89/100",
+        "reasoning": "按成长科技股的标准看：质量 89/100（营收 10年复合增速 41%），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 89,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
-      "precursor": null,
+      "precursor": {
+        "cache_age_hours": 20.9,
+        "score": 3.03,
+        "is_active": true,
+        "survey": {
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
+        },
+        "short_selling": {
+          "change_pct": 20.6,
+          "direction": ""
+        }
+      },
       "price": {
         "current": 22.52,
         "change_pct": 10.01,
@@ -13332,11 +13214,11 @@
         "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "0/35：—",
-        "reasoning": "这家公司陷入了一个有趣的位置。从基本面分析来看，由于数据不足，我们无法对公司的赚钱能力、竞争优势和管理层信号做出明确的判断。但是，从近期新闻来看，公司的股权变更和海外机构调研可能带来一些积极的影响。\n\n从估值判断来看，由于缺乏具体数据，我们无法对公司的估值做出准确的判断。但是，当前价¥11.90已经跌破了止损位¥14.55，这可能意味着公司的估值已经相对较低。\n\n新闻权重方面，公司的股权变更和海外",
+        "moat": "65/100",
+        "reasoning": "按成熟价值股的标准看：质量 65/100（ROE 17.5%（巴菲特线 15%）），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 65,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": null,
       "price": {
@@ -13385,11 +13267,11 @@
         "date": "2026-07-22",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "0/35：—",
-        "reasoning": "作为一名成长股质量分析师，我对传音控股的表现有一些担忧。公司的营收增速和毛利率趋势并没有给我留下深刻的印象，尤其是经营现金流只有利润的54%，这表明公司的盈利能力可能存在一些问题。此外，公司的护城河、成长和管理层、安全性以及估值等方面的数据均不足，难以对公司的未来发展做出准确的判断。\n\n尽管公司最近的业绩预告显示上半年业绩有所改善，但我仍然持谨慎态度。公司的技术面破位，当前价格已跌破止损位，这使得",
+        "moat": "26/100",
+        "reasoning": "按成长科技股的标准看：质量 26/100（营收 10年复合增速 21%），估值合理。质量偏弱。\n⚠ 利润是正的，但经营现金流只有利润的54%——赚的钱没真正进账户",
         "quant_score": 26,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": null,
       "price": {
@@ -13438,11 +13320,11 @@
         "date": "2026-07-22",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "0/35：—",
-        "reasoning": "南京银行的股价近期呈现出稳定的走势，当前价位为¥11.17，相比历史走势而言，仍然处于相对较低的位置。从基本面分析来看，南京银行的ROE和净利率虽然没有提供具体数据，但近期的新闻显示，高管和国资股东的增持行为对公司的信心有一定的提振作用。特别是江苏交控增持至15%的举动，表明了对公司未来的信心。\n\n从估值判断来看，由于缺乏具体的PE和PB对标数据，我们难以对公司的估值做出准确的判断。但是，考虑到银",
+        "moat": "74/100",
+        "reasoning": "按银行的标准看：质量 74/100（ROE 12.1%（巴菲特线 15%）），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 74,
         "data_incomplete": 0,
-        "data_quality": "incomplete"
+        "data_quality": "ok"
       },
       "precursor": null,
       "price": {
