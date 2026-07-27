@@ -3277,4 +3277,49 @@ Claude 独立判断的结论是：今天的 +19.84% 是**空头被逼平仓**的
 
 ---
 
+## 2026-07-27 · Skip · 服务器 pipeline 三天未刷新（Gate ① + Gate ② 双失守）
+
+**⚠️ 数据陈旧 · 今日无分析**
+
+**三重门控结果**：
+- **Gate ① 时效**：❌ FAIL — `generated_at = 2026-07-24T10:06:35.912724Z`，距今 **75.2 小时**，远超 20 小时阈值。
+- **Gate ② 价格签名**：❌ FAIL — 当前签名 `6b0bf121c782ba2ad42b23384c053266` 与上次 Routine 处理时（07-24）写入的签名**完全相同**，说明 Fly.io 上的 pipeline **自 07-24 以来从未成功刷新过 snapshot**。
+- **Gate ③ 实价抽检**：跳过 — 前两重已失守，无必要再消耗 WebSearch 抽检。
+
+**Git 侧证据**（`git log --oneline snapshots/daily_snapshot.json`）：
+```
+5b557b8 chore: daily snapshot 2026-07-24  ← 最后一次
+6099e88 chore: daily snapshot 2026-07-23
+0c44ac1 chore: daily snapshot 2026-07-22
+```
+最近三天（07-25 周六 / 07-26 周日 / 07-27 周一）均无新 snapshot commit。周末不跑属正常，但今日（07-27 周一）应有交易日 snapshot 而无，说明 Fly.io 侧的 precursor scan 或 GHA 提交流程有故障。
+
+**按 CLAUDE_ROUTINE.md 协议执行**：
+1. ✅ `output/daily_push.txt` 只写"服务器数据未刷新，今日无分析。请以券商 APP 为准"
+2. ✅ `output/predictions_pending.json` 保持空数组 `[]`（不新增预言）
+3. ✅ `knowledge/last_price_signature.txt` **不更新**（服务器未刷新，无新签名可写）
+4. ✅ 本条 skip 记录写入 improvement_log
+
+**在飞预言状态（无新价，无法验证，全部保持在飞）**：
+
+| 编号 | 日期 | 代码 | 名称 | 方向 | 锚定价 | 到期日 | 当前 Day | 状态 |
+|------|------|------|------|------|--------|--------|----------|------|
+| 1 | 07-22 | 002142 | 宁波银行 | sideways | ¥31.07 | 08-01 | Day 5（若含 07-27）| 无新价 |
+| 2 | 07-22 | 300274 | 阳光电源 | up | ¥110.02 | 08-01 | Day 5 | 无新价 |
+| 3 | 07-23 | SMCI | 超微电脑 | sideways | $30.56 | 08-02 | Day 4 | 无新价（美股周末不动） |
+| 4 | 07-23 | 002460 | 赣锋锂业 | sideways/up | ¥51.19 | 08-02 | Day 4 | 无新价 |
+| 5 | 07-24 | 601009 | 南京银行 | up | ¥11.26 | 08-03 | Day 3 | 无新价 |
+| 6 | 07-24 | 300454 | 深信服 | sideways | ¥100.05 | 08-03 | Day 3 | 无新价 |
+
+**长期教训（服务器连续未刷新）**：
+- 这是自 2026 年 6 月初 Hibernation 事件（9 天停摆）以来第二次多日 pipeline 停摆。上次因宕机损失了 2 组预言（06-08 / 06-15）。
+- 本次若周二（07-28）仍未恢复，则 07-22 写入的两条预言（002142 / 300274）会走到 Day 6-7 但缺 07-25 之后的价格轨迹，验证只能依赖到期日的单点收盘，中间过程无法追踪。
+- **需要主动核查**：Fly.io 上的 precursor scan cron 是否停机；GHA 是否有 push-to-main 失败的 error log。**Routine 层面无法自动恢复，只能记录并等待 Zhou Yu 手动处理**。
+
+**下次 Run 判定条件**：
+- 若下次 Routine 触发时 `generated_at` 早于本次触发时间且 signature 仍相同 → 继续跳过并再次报警
+- 若 `generated_at` 更新且 signature 变化 → 进入正常 Run 1 流程；Run 2 需一次性拿最新价补齐所有在飞预言的 Day-N 检查点
+
+---
+
 
