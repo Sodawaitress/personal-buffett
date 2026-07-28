@@ -1,0 +1,49 @@
+name: market-svc (US-138)
+
+# 市场信息流服务：宏观快照 + 国际新闻/摩根大通 + 重大新闻扫描(US-118)。
+# 接手旧 monolith 里没人认领的被动信息流；数据源是 Google News RSS + 宏观接口，
+# 与个股抓取无依赖 —— 挂了不影响价格/分析/推送。
+
+on:
+  schedule:
+    # 09:40 UTC = 17:40 CST，radar-svc 之后，与个股链路错峰
+    - cron: '40 9 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      material_days:
+        description: '重大新闻回溯天数'
+        required: false
+        default: '3'
+
+jobs:
+  market:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      PYTHONUNBUFFERED: "1"
+      MATERIAL_SCAN_DAYS: ${{ github.event.inputs.material_days || '3' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run market-svc
+        run: python -m scripts.svc_market
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ market-svc 失败" \
+              --data-urlencode "desp=市场信息流服务跑挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          else
+            echo "无可用 Server酱 key，跳过微信告警"
+          fi
