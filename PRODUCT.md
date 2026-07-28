@@ -5067,3 +5067,68 @@ Claude 手工研究 + 设计的"上市奶茶六强"页非常受用户认可（"�
 - 不硬编码任何公司数据（拿不到就诚实标"无数据"）。
 - 不拼数据量/速度（卫星高分、信用卡panel、专家网络、HFT）——散户拼不过也不拼。
 - 每个 US 动手前先搜 prior art（用户铁律）。
+
+---
+
+## US-138 · US-121 收尾：monolith 退役（补齐孤儿步骤 + 全服务排班）
+
+> **实现状态（2026-07-29）**：📝 待实现。US-121 只走到「第 3 步切了 fetch-svc」，其余 4 个服务至今无 schedule。
+
+### 背景
+US-121 拆出 6 个服务后走的是 strangler fig（并行双跑）：新服务全部休眠，旧 monolith `stock_pipeline.main()` 继续当家推妈妈。2026-07-12 切了 fetch-svc 一个，第 2 步「并行观察」清单一格没打就搁置了。
+
+**代价（2026-07-29 发现）**：monolith 从 **2026-07-15 起连续 10 个交易日崩在同一行**——
+```
+institutional_radar.py:1154  bar = "▓" * min(int(v["pct_done"] / 10), 10)
+ValueError: cannot convert float NaN to integer
+```
+回购进度某只股 `pct_done` 是 NaN；上一行过滤 `pct_done > 0 or "实施" in progress` 挡不住（`NaN > 0` 为 False，但走 `"实施"` 分支漏进来）。崩点在 `stock_pipeline.py:239`，**其后全部步骤陪葬**：日报 digest、`/report` 归档、Server酱 推送、新闻/国际新闻入库、催化剂、重大新闻扫描。妈妈 10 天没收到推送。
+
+**为什么没人发现**：`cron.yml` 的 `Alert on failure` 依赖 secret `SERVERCHAN_ADMIN_KEY`，该 secret 从未配置 → 10 天静默。5 个 svc workflow 的告警块是同一写法，同样失效。
+
+**这正是拆分要根治的「一损俱损」**——但因 monolith 还没退休，拆分的隔离价值等于零。
+
+### Scope
+
+**1. 修 NaN（阻塞项，radar-svc 走同一函数）**
+`format_institutional_section()` 回购进度块：过滤时排除 NaN/None，`int()` 前兜底。同类 `pct_change`/数值格式化处一并检查。
+
+**2. 孤儿步骤归位**（不新建 6 个服务，只加 1 个）
+
+| 孤儿步骤 | 归属 | 理由 |
+|---|---|---|
+| 宏观 + RBNZ/NZX + 国际新闻/JPM 入库 | **market-svc（新建）** | 全市场被动信息流，与个股无关 |
+| 重大新闻扫描（US-118） | **market-svc** | 即 US-121 表里「待接」的 material-svc，并入不单开 |
+| 催化剂日历刷新 | **radar-svc** | 同为 A股 AKShare 事件流 |
+| 持仓 Layer2 量化评级刷新 | **analyze-svc**（跑 LLM 前先做） | 零 token，与分析同源 |
+| 日报归档 `save_report` | **push-svc** | 复用同一份 digest，一次算两处用（US-124 精神） |
+
+**3. 排班错峰**（UTC，工作日；括号为 CST）
+
+| 服务 | cron | 说明 |
+|---|---|---|
+| fetch-svc | `0 7`（15:00） | 已有，不动 |
+| analyze-svc | `0 8`（16:00） | 读 fetch 写好的 DB |
+| radar-svc | `0 9`（17:00） | + 催化剂 |
+| market-svc | `40 9`（17:40） | 宏观/新闻，与个股无依赖 |
+| digest-svc | `20 10`（18:20） | 快照 + 回填 |
+| push-svc | `30 10`（18:30） | **最后切，碰妈妈** |
+
+**4. 告警修复**：所有 workflow 的 `if: failure()` 改 `SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 回退，secret 缺失不再静默。
+
+**5. monolith 退役**：`cron.yml` 删 `pipeline` job 的 schedule，`stock_pipeline.py` 保留为手动全量回滚入口（`workflow_dispatch`）。`light` job 的 **precursor scan 触发保留不动**——东财只能在 Fly 悉尼跑，GHA 美国 runner 跑不了；`trigger-digest` 由 digest-svc 接管后删除。
+
+### Acceptance Criteria
+- [ ] `pct_done` 为 NaN 时 `format_institutional_section` 不抛异常（单测覆盖 NaN/None/正常三态）
+- [ ] 6 件孤儿步骤各有归属服务，手动触发验证各自 DB 副作用（宏观快照/国际新闻/催化剂/重大新闻/`reports` 表/持仓 quant_score 均有当日新记录）
+- [ ] 5 个服务加 schedule，`service_runs` 表连续 3 个工作日每个服务都有 `done` 记录
+- [ ] push-svc 先 `SKIP_PUSH=1` 云端跑一轮，内容非空且与 monolith 时期格式一致，再开真推
+- [ ] 故意让 analyze-svc 失败：fetch/radar/market/digest/push 仍各自成功（**分开失败**验证，US-121 遗留未打勾项）
+- [ ] 任一服务失败 → 管理员微信收到告警（先验 secret 回退生效）
+- [ ] `cron.yml` monolith 不再排班，手动可跑
+- [ ] `/report` 有当日归档、妈妈当日收到推送
+
+### 不做
+- 不改 push 内容格式（US-123/124 已定，本 US 只搬运不改文案）
+- 不动 precursor scan 的 Fly 触发路径（地理约束，改不了）
+- 不新建 material-svc 独立 workflow（并入 market-svc，少一个要维护的排班）
