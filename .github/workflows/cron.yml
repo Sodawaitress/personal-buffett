@@ -1,15 +1,21 @@
 name: Daily Cron
 
+# US-138：monolith 已退役。pipeline job 不再排班，仅保留手动触发作全量回滚入口
+# （日常活已拆给 fetch/analyze/radar/market/digest/push-svc）。
+# light job 的 precursor scan 仍需每日跑：东财只能在 Fly 悉尼跑，GHA 美国 runner 连不上。
+
 on:
   schedule:
-    # 08:00 UTC = 16:00 CST，A股收盘后一小时，周一至周五
-    - cron: '0 8 * * 1-5'
+    # 09:30 UTC = 17:30 CST，只为触发 Fly 上的 precursor scan（light job）
+    - cron: '30 9 * * 1-5'
   workflow_dispatch:
 
 jobs:
   # 重活：pipeline 直接在 runner 里跑（7GB 内存，不会 OOM），写 Neon
   # 迁 Neon 后 DB 在云上，pipeline 不必挤在 Fly 512MB 上
   pipeline:
+    # 只在手动触发时跑：定时那一路已全部拆给各 svc（US-138）
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
@@ -39,30 +45,23 @@ jobs:
       - name: Alert on failure
         if: failure()
         run: |
-          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
           if [ -n "$KEY" ]; then
             curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
               --data-urlencode "title=⚠️ 每日 pipeline 失败" \
               --data-urlencode "desp=GHA runner 里的每日 pipeline 跑挂了，数据可能过期。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
               >/dev/null && echo "已推送失败告警"
           else
-            echo "未配置 SERVERCHAN_ADMIN_KEY，跳过微信告警（GitHub 会默认邮件仓库主）"
+            echo "无可用 Server酱 key，跳过微信告警（GitHub 会默认邮件仓库主）"
           fi
 
-  # 轻活：digest（快照+预测入库）+ precursor scan，仍触发 Fly（不 OOM，写 Neon）
+  # precursor scan 触发 Fly（悉尼，能连东财；GHA 美国 runner 不行）
+  # digest 已交给 digest-svc（US-138），此处不再触发，避免双跑
   light:
     runs-on: ubuntu-latest
     env:
       APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
     steps:
-      - name: Trigger daily digest
-        run: |
-          HTTP=$(curl -s -o /tmp/digest.json -w "%{http_code}" \
-            -X POST "${APP_URL}/api/trigger-digest" \
-            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
-          echo "digest → HTTP $HTTP"; cat /tmp/digest.json
-          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
-
       - name: Trigger precursor scan
         run: |
           HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \

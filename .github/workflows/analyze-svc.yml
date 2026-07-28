@@ -3,9 +3,10 @@ name: analyze-svc (US-121)
 # 分析服务：选择性跑 LLM 巴菲特信（持仓/重大新闻/轮转），数据从 Neon 读。
 # TPM 令牌桶配速 + 时间预算,永不撞 120min 天花板。
 # 独立于 fetch-svc / push-svc：本服务挂了价格仍新鲜、旧报告仍可推。
-# 暂时仅手动触发（cron.yml 旧 monolith 仍在跑,避免双跑）。全链路验证后再加 schedule。
-
 on:
+  schedule:
+    # 08:00 UTC = 16:00 CST，fetch-svc(07:00) 之后一小时，读它写好的新鲜 DB
+    - cron: '0 8 * * 1-5'
   workflow_dispatch:
     inputs:
       budget_min:
@@ -41,7 +42,7 @@ jobs:
       - name: Alert on failure
         if: failure()
         run: |
-          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
           if [ -n "$KEY" ]; then
             curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
               --data-urlencode "title=⚠️ analyze-svc 失败" \

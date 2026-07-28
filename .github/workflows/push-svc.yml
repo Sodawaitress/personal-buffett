@@ -37,7 +37,7 @@ jobs:
       - name: Alert on failure
         if: failure()
         run: |
-          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY }}"
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
           if [ -n "$KEY" ]; then
             curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
               --data-urlencode "title=⚠️ push-svc 失败" \
