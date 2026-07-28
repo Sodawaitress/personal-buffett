@@ -43,6 +43,18 @@ def main():
     with db.service_run("radar-svc") as run:
         section = run_institutional_radar(data)
         run.tick()
+
+        # 催化剂日历（US-138 归位）：解禁/公告同为 A股 AKShare 事件流，与雷达同源
+        print("  📅 催化剂日历…")
+        try:
+            from scripts.catalyst_calendar import run_catalyst_refresh
+
+            cal = run_catalyst_refresh()
+            print(f"  ✅ 催化剂：解禁 {cal.get('unlock', 0)} 条 / 公告 {cal.get('notice', 0)} 条")
+            run.tick()
+        except Exception as e:
+            print(f"  ⚠️ 催化剂日历失败（不影响雷达）: {e}")
+
     print(f"✅ radar-svc 完成，雷达片段 {len(section or '')} 字符（前兆信号已写 DB）")
 
 

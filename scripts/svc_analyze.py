@@ -18,13 +18,43 @@ except ImportError:
 bootstrap_paths()
 
 import db
-from scripts.pipeline_analysis import _run_analysis
+from scripts.pipeline_analysis import _run_analysis, _run_layer2
 
 BUDGET_MIN = float(os.environ.get("ANALYZE_BUDGET_MIN", "50"))
 ROTATION_DAYS = int(os.environ.get("ANALYZE_ROTATION_DAYS", "3"))
 
 # 预算被截断时先做要紧的：持仓 > 重大新闻 > 从未分析 > 轮转
 _PRIORITY = {"held": 0, "material": 1, "never": 2, "bad_date": 2, "rotation": 3}
+
+
+def _refresh_quant_all() -> int:
+    """收盘后给所有在持/观察股刷一遍 Layer 2 量化评级（零 LLM token，US-138）。
+
+    旧 monolith 的 `_refresh_user_holdings_layer2`：A股跑 Layer 2、非 A股顺带跑
+    整条 LLM。这里只保留 Layer 2 —— LLM 由下面的选择性循环按 should_analyze 决定，
+    不再因为「是非 A股」就每天全量烧 token（US-121 选择性分析的本意）。
+    """
+    with db.get_conn() as c:
+        rows = c.execute(
+            "SELECT DISTINCT stock_code FROM user_watchlist WHERE status != 'sold'"
+        ).all()
+    codes = sorted({r["stock_code"] for r in rows if r["stock_code"]})
+    if not codes:
+        return 0
+
+    print(f"📊 量化评级刷新：{len(codes)} 只")
+    ok = 0
+    for code in codes:
+        stock = db.get_stock(code)
+        if not stock:
+            continue
+        try:
+            _run_layer2(code, stock.get("market", "cn"), lambda _m: None)
+            ok += 1
+        except Exception as e:
+            print(f"  ⚠️ {code} 量化评级失败（跳过）: {e}")
+    print(f"  ✅ 量化评级完成：{ok}/{len(codes)}")
+    return ok
 
 
 def main():
@@ -39,6 +69,12 @@ def main():
     done = 0
 
     with db.service_run("analyze-svc") as run:
+        # 先做零 token 的量化评级（擂台/榜单/差评预警都读它），再花预算跑 LLM
+        try:
+            _refresh_quant_all()
+        except Exception as e:
+            print(f"⚠️ 量化评级整体失败（不挡 LLM 分析）: {e}")
+
         for code, reason in picked:
             if time.time() > deadline:
                 run.stopped_early = True

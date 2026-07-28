@@ -32,19 +32,28 @@ def main():
     print(f"📨 push-svc 启动 {date_str}" + ("（SKIP_PUSH：只生成不推送）" if SKIP_PUSH else ""))
 
     with db.service_run("push-svc") as run:
-        # ── Admin 有用日报（US-123）：只走 Server酱 ──
-        if SERVERCHAN_KEY:
-            admin_id = admin_user_id()
-            content = build_user_push_content(admin_id, {}, {}, date_str) if admin_id else ""
-            if content:
-                print(f"  📲 admin 有用日报：{len(content)} 字符" + ("（SKIP）" if SKIP_PUSH else ""))
-                if not SKIP_PUSH:
-                    send_serverchan(SERVERCHAN_KEY, f"今天该注意的 · {date_str}", content)
-                run.tick()
-            else:
-                print("  · admin：无重大变化，不打扰")
+        # ── Admin 有用日报（US-123）：一份 digest 两处用 —— 存档 + 推送 ──
+        admin_id = admin_user_id()
+        content = build_user_push_content(admin_id, {}, {}, date_str) if admin_id else ""
+
+        # 归档 /report（US-138 归位）：与推送同源同一份，无料时存占位（US-124）
+        report = (content.replace("\n详情见网页。", "").rstrip()
+                  if content else f"# 今天该注意的 · {date_str}\n\n今天没有需要特别注意的变动。")
+        if SKIP_PUSH:
+            print(f"  📄 /report 归档 {len(report)} 字符（SKIP：干跑不写库）")
         else:
+            db.save_report(date_str, html="", md=report)
+            print(f"  📄 /report 已归档 {len(report)} 字符")
+
+        if not SERVERCHAN_KEY:
             print("  ⚠️ 无 SERVERCHAN_KEY，跳过 admin 推送")
+        elif content:
+            print(f"  📲 admin 有用日报：{len(content)} 字符" + ("（SKIP）" if SKIP_PUSH else ""))
+            if not SKIP_PUSH:
+                send_serverchan(SERVERCHAN_KEY, f"今天该注意的 · {date_str}", content)
+            run.tick()
+        else:
+            print("  · admin：无重大变化，不打扰")
 
         # ── Per-user 个人日报 ──
         try:
