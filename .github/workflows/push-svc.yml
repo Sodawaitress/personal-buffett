@@ -2,9 +2,10 @@ name: push-svc (US-121)
 
 # 推送服务：读 DB 最新报告 → Bear/Discord/Server酱 + 各用户个人日报（无重大变化不打扰）。
 # 独立于 analyze-svc：analyze 挂了也能把已有最新报告推出去。
-# 暂时仅手动触发；skip_push=1 只生成不推送（验证用）。全链路验证后再加 schedule。
-
 on:
+  schedule:
+    # 10:30 UTC = 18:30 CST，各服务写完 DB 后最后一棒：归档 /report + 推送
+    - cron: '30 10 * * 1-5'
   workflow_dispatch:
     inputs:
       skip_push:
@@ -22,7 +23,9 @@ jobs:
       DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
       DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
       PYTHONUNBUFFERED: "1"
-      SKIP_PUSH: ${{ github.event.inputs.skip_push || '1' }}
+      # 定时触发 inputs 为空 → 真推送；手动触发默认 skip_push=1 干跑。
+      # 不能写 `inputs.skip_push || '1'`：那样定时那一路会永远落到 '1'，排了班也不推。
+      SKIP_PUSH: ${{ github.event.inputs.skip_push == '1' && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
