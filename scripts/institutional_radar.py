@@ -12,6 +12,7 @@ institutional_radar.py — 机构行为追踪
   8. 回购进度       — 公司在执行中的回购（底部信号组合之一）
 """
 
+import math
 import time
 from datetime import datetime, timedelta
 
@@ -33,10 +34,13 @@ def _cn_codes():
 
 
 def _safe_float(val, default=0.0):
+    # NaN 也要落回 default：float(nan) 不抛异常，漏下去会在 int()/格式化处炸
+    # （2026-07-15 起 monolith 连崩 10 天的根因就是回购 pct_done=NaN）
     try:
-        return float(val)
+        f = float(val)
     except (TypeError, ValueError):
         return default
+    return default if math.isnan(f) or math.isinf(f) else f
 
 
 def _pure(code: str) -> str:
@@ -900,7 +904,7 @@ def compute_intention_score(code: str, lhb: dict, northbound: dict,
     # 公司回购 = 公司用自己的钱从市场上买回自己的股票注销，
     # 执行进度越高说明公司越认真，不是光说不练。
     rp       = repurchase.get(code)
-    pct_done = rp.get("pct_done", 0) if rp else 0.0
+    pct_done = _safe_float(rp.get("pct_done")) if rp else 0.0
     if rp and pct_done > 0:
         dir_v = min(pct_done / 100.0, 1.0)
         desc  = (f"公司正在执行回购计划，已完成{pct_done:.0f}%"
@@ -1132,28 +1136,30 @@ def format_institutional_section(patterns: dict, northbound_trend: dict,
 
     # ── 股东人数 ──────────────────────────────────────
     notable_sh = {c: v for c, v in shareholder.items()
-                  if abs(v.get("pct_change", 0)) >= 10}
+                  if abs(_safe_float(v.get("pct_change"))) >= 10}
     if notable_sh:
         lines.append("\n**季度股东人数变化（筹码方向）**\n")
         for code, v in notable_sh.items():
             name = quotes.get(code, {}).get("name", code)
-            sign = "+" if v["pct_change"] >= 0 else ""
+            pct  = _safe_float(v.get("pct_change"))
+            sign = "+" if pct >= 0 else ""
             lines.append(
                 f"- **{name}（{code}）** {v['quarter']} "
-                f"股东人数{sign}{v['pct_change']:.1f}%（{v['cnt']:,}户）  "
+                f"股东人数{sign}{pct:.1f}%（{v['cnt']:,}户）  "
                 f"{v['signal']}"
             )
 
     # ── 回购进度 ──────────────────────────────────────
     active_buybacks = {c: v for c, v in repurchase.items()
-                       if v.get("pct_done", 0) > 0 or "实施" in v.get("progress", "")}
+                       if _safe_float(v.get("pct_done")) > 0 or "实施" in v.get("progress", "")}
     if active_buybacks:
         lines.append("\n**🔄 回购进度（公司在用真钱买自己股票）**\n")
         for code, v in active_buybacks.items():
             name = quotes.get(code, {}).get("name", code)
-            bar  = "▓" * min(int(v["pct_done"] / 10), 10)
+            pct  = _safe_float(v.get("pct_done"))
+            bar  = "▓" * min(int(pct / 10), 10)
             lines.append(
-                f"- **{name}（{code}）** 已回购{v['pct_done']:.0f}%"
+                f"- **{name}（{code}）** 已回购{pct:.0f}%"
                 f" [{bar}]  {v['progress']}"
             )
 
