@@ -43,11 +43,30 @@
 
 ### 第 3 步：确认稳了逐个切（一次一个，先不碰妈妈的）
 - [x] fetch-svc 加 schedule（2026-07-12）：`0 7 * * 1-5`（07:00 UTC=15:00 CST 收盘，早于旧 monolith 08:00 UTC 1h 错峰）。旧 monolith 仍当家推妈妈，本服务只写 DB。观察一周稳定性。
-- [ ] analyze-svc 加 schedule（fetch 后错峰）
-- [ ] digest-svc / radar-svc 加 schedule
-- [ ] push-svc 加 schedule（**最后切，碰妈妈**）
-- [ ] 关掉 cron.yml 里对应的旧 monolith 步骤
-- [ ] 旧 monolith 保留为手动回滚入口
+- [x] analyze-svc 加 schedule（2026-07-29，US-138）：`0 8 * * 1-5`
+- [x] digest-svc / radar-svc 加 schedule（2026-07-29，US-138）：`20 10` / `0 9`
+- [ ] push-svc 加 schedule（**最后切，碰妈妈**）—— 待 SKIP_PUSH=1 云端验证通过
+- [x] 关掉 cron.yml 里对应的旧 monolith 步骤（2026-07-29，US-138）
+- [x] 旧 monolith 保留为手动回滚入口（`if: github.event_name == 'workflow_dispatch'`）
+
+> ⚠️ **2026-07-29 事故：搁置 17 天的代价**
+> 第 3 步只切了 fetch-svc 就停手，旧 monolith 继续当家 —— 而它从 **07-15 起
+> 连续 10 个交易日崩在同一行**（`institutional_radar.py` 回购进度 `pct_done`
+> 为 NaN → `int(NaN)`）。崩点之后的日报/`/report` 归档/Server酱 推送/新闻入库
+> 全部陪葬，妈妈 10 天没收到推送。`Alert on failure` 依赖的
+> `SERVERCHAN_ADMIN_KEY` 从未配置 → 全程静默。
+> **这正是拆分要根治的一损俱损，但 monolith 没退休 = 隔离价值为零。**
+> 收尾见 US-138。教训：strangler fig 停在半路，比不拆更危险 —— 新服务不当家
+> 却让人以为已经拆完了。
+
+### 第 4 步：孤儿步骤（US-138 补）
+拆分时 6 件事没有任何服务接手，直接关 monolith 会静默消失：
+- [x] 宏观快照 / 国际新闻 / 重大新闻扫描 → **market-svc（新建）**
+- [x] 催化剂日历 → radar-svc
+- [x] 持仓 Layer 2 量化评级 → analyze-svc（LLM 前先跑）
+- [x] `/report` 日报归档 → push-svc（与推送同一份 digest）
+- [x] rbnz / nzx_announcements / nzx_earnings → **不搬**，US-124 删掉
+      `generate_report` 后零消费者，每天白抓
 
 ### 查 service_runs 的命令
 ```sql
