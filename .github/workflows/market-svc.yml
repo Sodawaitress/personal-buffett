@@ -6,8 +6,8 @@ name: market-svc (US-138)
 
 on:
   schedule:
-    # 09:40 UTC = 17:40 CST，radar-svc 之后，与个股链路错峰
-    - cron: '40 9 * * 1-5'
+    # 13:00 UTC = 21:00 CST，cron scan 之后（东财消费者串行化，US-139）
+    - cron: '0 13 * * 1-5'
   workflow_dispatch:
     inputs:
       material_days:
@@ -18,7 +18,7 @@ on:
 jobs:
   market:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

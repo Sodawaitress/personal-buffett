@@ -6,8 +6,9 @@ name: Daily Cron
 
 on:
   schedule:
-    # 09:30 UTC = 17:30 CST，只为触发 Fly 上的 precursor scan（light job）
-    - cron: '30 9 * * 1-5'
+    # 12:45 UTC = 20:45 CST，只为触发 Fly 上的 precursor scan（light job）
+    # 夹在 radar(11:00) 与 market(13:00) 之间，三个东财消费者串行（US-139）
+    - cron: '45 12 * * 1-5'
   workflow_dispatch:
 
 jobs:

@@ -1183,11 +1183,15 @@ def format_institutional_section(patterns: dict, northbound_trend: dict,
 
 # ── 10. 主入口（供 pipeline 调用） ──────────────────────────────────
 
-def run_institutional_radar(data: dict) -> str:
+def run_institutional_radar(data: dict, budget_min: float = None) -> str:
     """
     传入 pipeline data dict，返回机构雷达报告片段（Markdown）。
     data 中需含 quotes（{code: {price, change, ...}}）和 fund_flow。
+
+    budget_min（US-139）：前兆信号逐只循环的时间预算。到点抓多少算多少，
+    自己停干净、留下 service_runs 记录，别等 GHA timeout SIGKILL。
     """
+    deadline = time.time() + budget_min * 60 if budget_min else None
     print("  🏦 机构雷达：龙虎榜…")
     lhb = fetch_lhb_signals(days=7)
 
@@ -1218,7 +1222,7 @@ def run_institutional_radar(data: dict) -> str:
     print("  🏦 机构雷达：前兆信号（调研热度 + 融券 + 参与度）…")
     try:
         from scripts.precursor_signals import fetch_precursor_signals
-        precursor = fetch_precursor_signals(_cn_codes())
+        precursor = fetch_precursor_signals(_cn_codes(), deadline=deadline)
     except Exception as e:
         print(f"  ⚠️ 前兆信号拉取失败，跳过: {e}")
         precursor = {}

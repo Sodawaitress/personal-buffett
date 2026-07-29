@@ -5132,3 +5132,93 @@ ValueError: cannot convert float NaN to integer
 - 不改 push 内容格式（US-123/124 已定，本 US 只搬运不改文案）
 - 不动 precursor scan 的 Fly 触发路径（地理约束，改不了）
 - 不新建 material-svc 独立 workflow（并入 market-svc，少一个要维护的排班）
+
+---
+
+## US-139 · 服务排班上线后的三处失血（US-138 收尾修订）
+
+> **实现状态（2026-07-30）**：📝 待实现。US-138 排班首日暴露，手动单跑时全部测不出来。
+
+### 背景
+US-138 让六服务全部排班，2026-07-29 首日全链路触发，但三处失血：
+
+**① analyze-svc 一封信都没生成（US-138 引入的回归）**
+```
+🤖 analyze-svc 启动：33/204 只待分析，预算 50.0 分钟
+📊 量化评级刷新：211 只
+  ✅ 量化评级完成：211/211        ← 10:42 → 11:33，51 分钟
+⏱ 达 50.0 分钟预算，提前停止（已 0 只，剩 33 只下次续）
+✅ analyze-svc 完成：0/33 只
+```
+Layer 2 刷新被放在 LLM 循环之前且**没有任何预算**，吃光 50 分钟 → LLM 一只没跑。
+两次运行都是 `items_processed=0` 但 `status=done`，看着像成功。
+根因二：`_run_layer2` 无网络调用却要 14.5s/只 —— 它每只发 ~10 次独立
+`get_conn()`（每次还带 `pool_pre_ping` 的 SELECT 1），GHA 美国 runner ↔ Neon
+每趟往返都要钱。**211 只全量重算本身就是浪费**：`save_analysis` 是
+`ON CONFLICT(code, period, analysis_date)`，当天算过的再算一遍结果一样。
+
+**② radar-svc / market-svc 撞 45 分钟 timeout 被 SIGKILL**
+| | 昨天手动单跑 | 排班首日 |
+|---|---|---|
+| radar-svc | 27.5 min ✅ | >45 min ❌ |
+| market-svc | 20 min ✅ | >45 min ❌ |
+
+时间窗重叠（radar 11:21–12:06、market 11:48–12:33，中间 11:38 cron 还触发了
+Fly 上的 precursor scan）→ 三路同时打东财互相拖慢。**手动单跑测不出来**，
+排班才会撞上。且两者内部都没有时间预算（只有 material scan 有）。
+
+**③ 被 kill 的 run 在 service_runs 里永远停在 `running`**
+```
+market-svc  2026-07-29T19:49:03  running  0s  items=0
+radar-svc   2026-07-29T19:28:41  running  0s  items=0
+```
+GHA timeout 走 SIGKILL，`service_run` 的 `finally` 没机会执行。记账里留下永久
+「running」—— US-121 AC「一眼看出哪个服务掉链子」恰恰失效，因为它长得像还在跑。
+
+### Scope
+
+**1. analyze-svc 预算与顺序**
+- `_refresh_quant_all(deadline)`：**跳过当天已有 analysis_results 行的股票**（幂等，
+  US-121 铁律①），自带 `QUANT_BUDGET_MIN`（默认 20）预算，超了停下次续
+- LLM 循环预算独立计时，不再被量化刷新侵占
+- 两段都上报 `stopped_early`，`items_processed` 分别记账
+
+**2. 内部时间预算封顶（US-121 铁律②，此前只有 material scan 有）**
+- `fetch_precursor_signals(codes, deadline=None)`：逐只循环超时即返回已抓部分
+- `run_institutional_radar(data, budget_min=None)` 透传；svc_radar 用
+  `RADAR_BUDGET_MIN`（默认 70）
+- market-svc `MATERIAL_MAX_MIN` 默认 25 → 20
+- workflow timeout：radar 45→90、market 45→60（预算内正常结束，timeout 只兜底）
+
+**3. 东财消费者串行化排班**（UTC 工作日）
+| 服务 | 原 | 新 | 说明 |
+|---|---|---|---|
+| fetch-svc | 07:00 | 07:00 | 不动 |
+| analyze-svc | 08:00 | 08:00 | 不动（不碰东财，只读 DB + Groq）|
+| push-svc | 10:30 | 10:30 | **不动**，用户可感知时间锚点（18:30 CST）|
+| radar-svc | 09:00 | 11:00 | 挪到 push 后，与 scan/market 串开 |
+| cron scan 触发 | 09:30 | 12:45 | Fly 悉尼跑东财 |
+| market-svc | 09:40 | 13:00 | |
+| digest-svc | 10:20 | 14:15 | 全部写完再收快照 |
+
+radar/market 挪到 push 之后 → 其结果进**次日** digest。这符合 US-121「各服务读
+DB 最新可用，慢的那天用稍旧数据下次自愈」，不是缺陷；monolith 时代同样是拿
+前一天的雷达数据推当天的信。
+
+**4. 陈旧 running 行清理**
+`service_run()` 启动时把同名服务 `status='running'` 且超过 `STALE_RUN_HOURS`（默认 3）
+的行标成 `killed`，附 error 说明「疑似被 timeout/SIGKILL 掐断」。
+
+### Acceptance Criteria
+- [ ] analyze-svc 一轮内 LLM 实际分析 > 0 只，`items_processed` 非 0
+- [ ] 当天二次运行 analyze-svc，量化刷新跳过已算过的股票（日志显示 skip 数）
+- [ ] radar-svc / market-svc 在预算内正常结束（`done`，非 cancelled），
+      超预算时 `stopped_early=1` 而不是被 kill
+- [ ] 排班后无两个东财消费者时间窗重叠
+- [ ] 存在陈旧 `running` 行时，下次同服务启动把它标成 `killed`
+- [ ] push-svc 仍在 10:30 UTC，`/report` 与微信推送不受本次改动影响
+
+### 不做
+- 不给 `_run_layer2` 做 DB 批量化重构（一次性取全量再算）—— 值得做但属独立优化，
+  本 US 先靠「跳过当天已算」把量级降下来
+- 不引入 self-hosted runner 解决地理延迟（B 方案已定，不花钱）

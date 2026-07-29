@@ -357,10 +357,14 @@ def fetch_inst_participation_trend(code: str) -> dict:
 
 # ── 主入口：整合三个信号 ─────────────────────────────────────────────
 
-def fetch_precursor_signals(codes: list = None) -> dict:
+def fetch_precursor_signals(codes: list = None, deadline: float = None) -> dict:
     """
     对每只 A 股代码返回前兆信号汇总。
     返回 {code: {"survey": ..., "short": ..., "participation": ..., "summary": str}}
+
+    deadline（time.time() 时刻，US-139）：到点即返回已抓部分。逐只打东财本就慢，
+    与别的东财消费者撞车时会更慢；宁可少抓几只留痕，不要被 GHA SIGKILL 掐断
+    —— 那样连 service_runs 都记不上。
     """
     if codes is None:
         codes = _cn_codes()
@@ -373,6 +377,9 @@ def fetch_precursor_signals(codes: list = None) -> dict:
 
     result = {}
     for i, code in enumerate(codes):
+        if deadline and time.time() > deadline:
+            print(f"  ⏱ 前兆信号达时间预算，停在 {i}/{len(codes)} 只（余下次续）")
+            break
         if i > 0 and i % 5 == 0:
             time.sleep(1)  # 避免 API 限速
 

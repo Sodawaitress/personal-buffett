@@ -25,7 +25,7 @@ import db
 from scripts.config import CN_TZ
 
 MATERIAL_DAYS = int(os.environ.get("MATERIAL_SCAN_DAYS", "3"))
-MATERIAL_MAX_MIN = float(os.environ.get("MATERIAL_MAX_MIN", "25"))
+MATERIAL_MAX_MIN = float(os.environ.get("MATERIAL_MAX_MIN", "20"))
 
 
 def _run_macro(date_str: str) -> int:

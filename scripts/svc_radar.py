@@ -14,8 +14,13 @@ except ImportError:
 
 bootstrap_paths()
 
+import os
+
 import db
 from scripts.institutional_radar import _cn_codes, run_institutional_radar
+
+# 前兆信号逐只打东财，与别的东财消费者撞车会慢一倍 → 自带预算，别被 timeout 掐（US-139）
+BUDGET_MIN = float(os.environ.get("RADAR_BUDGET_MIN", "70"))
 
 
 def _build_market_data() -> dict:
@@ -39,9 +44,9 @@ def _build_market_data() -> dict:
 def main():
     db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     data = _build_market_data()
-    print(f"🏦 radar-svc 启动：{len(data['quotes'])} 只 A股")
+    print(f"🏦 radar-svc 启动：{len(data['quotes'])} 只 A股，预算 {BUDGET_MIN} 分钟")
     with db.service_run("radar-svc") as run:
-        section = run_institutional_radar(data)
+        section = run_institutional_radar(data, budget_min=BUDGET_MIN)
         run.tick()
 
         # 催化剂日历（US-138 归位）：解禁/公告同为 A股 AKShare 事件流，与雷达同源

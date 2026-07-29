@@ -15,8 +15,30 @@ __all__ = [
 ]
 
 
+STALE_RUN_HOURS = 3
+
+
 def _now_iso() -> str:
     return datetime.now(CN_TZ).isoformat()
+
+
+def _reap_stale_runs(service_name: str) -> None:
+    """把同名服务里挂着的陈旧 running 行标成 killed（US-139）。
+
+    GHA 撞 timeout-minutes 是 SIGKILL，下面的 finally 根本没机会跑 → 记账里留下
+    永久「running」，看着像还在跑，反而掩盖了掉链子的服务。启动时顺手收尸。
+    """
+    cutoff = (datetime.now(CN_TZ) - timedelta(hours=STALE_RUN_HOURS)).isoformat()
+    with get_conn() as c:
+        c.execute(
+            """
+            UPDATE service_runs
+            SET status='killed', finished_at=:now,
+                error='疑似被 timeout/SIGKILL 掐断，未走正常收尾'
+            WHERE service_name=:name AND status='running' AND started_at < :cutoff
+            """,
+            {"name": service_name, "now": _now_iso(), "cutoff": cutoff},
+        )
 
 
 class _RunHandle:
@@ -39,6 +61,7 @@ def service_run(service_name: str):
             run.stopped_early = True   # 达预算提前停
     异常会被记为 failed 后重新抛出。
     """
+    _reap_stale_runs(service_name)
     start = _now_iso()
     with get_conn() as c:
         row = c.execute(

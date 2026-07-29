@@ -4,8 +4,8 @@ name: digest-svc (US-121)
 # 纯 DB 驱动、无 LLM。独立于 analyze-svc：读 DB 最新价即可提交快照。
 on:
   schedule:
-    # 10:20 UTC = 18:20 CST，各服务写完 DB 后再收快照
-    - cron: '20 10 * * 1-5'
+    # 14:15 UTC = 22:15 CST，全部服务写完 DB 后再收快照（US-139）
+    - cron: '15 14 * * 1-5'
   workflow_dispatch:
 
 jobs:

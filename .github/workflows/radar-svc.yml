@@ -4,14 +4,15 @@ name: radar-svc (US-121)
 # 从 Neon 读价格/资金,前兆信号写回 DB(详情页读)。独立服务：AKShare 慢/挂只影响雷达。
 on:
   schedule:
-    # 09:00 UTC = 17:00 CST，analyze-svc 之后；含催化剂日历刷新（US-138）
-    - cron: '0 9 * * 1-5'
+    # 11:00 UTC = 19:00 CST，push 之后。东财消费者串行化（US-139）：
+    # radar 11:00 → scan 12:45 → market 13:00，不再互相拖慢
+    - cron: '0 11 * * 1-5'
   workflow_dispatch:
 
 jobs:
   radar:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PYTHONUNBUFFERED: "1"
