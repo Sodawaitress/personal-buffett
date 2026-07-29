@@ -3394,4 +3394,49 @@ Claude 独立判断的结论是：今天的 +19.84% 是**空头被逼平仓**的
 
 ---
 
+## 2026-07-29 · Routine · 三重门控失守 · 今日跳过分析
+
+### 门控检查结果
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` 新鲜度 < 20h | ❌ **失守** | 快照 generated_at = 2026-07-28T10:23:14Z；当前 UTC = 2026-07-29T13:14:41Z；age ≈ 26.85h > 20h |
+| ② 价格签名与上次不同 | ❌ **失守** | 快照 `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`，与 `knowledge/last_price_signature.txt` 存储的上次签名**完全一致**——服务器 pipeline 空跑，snapshot 陈旧 |
+| ③ WebSearch 实价抽检 | — 跳过 | ①② 均已失守，无需第三重校验；即使 ③ 通过也不能放行（三重是 AND 关系） |
+
+**辅助证据**：`git log origin/main -- snapshots/daily_snapshot.json` 最近提交 `c71ddf0 chore: daily snapshot 2026-07-28`，2026-07-29 尚无 snapshot 提交。
+
+### 处置（严格执行 CLAUDE_ROUTINE.md 「三重门控任一失守时」条款）
+
+1. **五选正文不写** —— `output/daily_push.txt` 只写"服务器数据未刷新，今日无分析。请以券商 APP 为准"。
+2. **`predictions_pending.json` 不写** —— 保留 07-28 已写入的两条 pending 预言（300394 up / 002414 down），等 Fly.io 服务恢复后自然被 ingest。**⚠️ 不清空**——那两条是有效预言，需要 Fly.io 存库以便 10 天后 `backfill_returns.py` 回填。
+3. **`last_price_signature.txt` 不更新** —— 今天未处理任何新快照。签名维持 `c8adbfcf5b57d8c4491f616f4da5cd84`，等下次真新快照到来时才推进。
+4. **Run 2 验证也跳过** —— 07-28 预言（300394 天孚 up @¥181.56；002414 海康 down @¥13.76）本应在今日或后续拿到 Day 1 真新价进行首次检查，但没有 07-29 快照，无法验证。**记账**：07-28 那批预言进入"验证等待队列"，等首个覆盖它们的真新快照。
+
+### 根因（今日的特殊背景）
+
+CLAUDE.md 记录 **US-138 (2026-07-29)** —— monolith 退役、fetch/analyze/radar/scan/market/digest/push 服务拆分**今天刚部署**。事故起源是 `stock_pipeline.main()` 从 07-15 起连崩 10 个交易日（`institutional_radar.py` 回购进度 `pct_done` 为 NaN → `int(NaN)` 抛 ValueError），且告警的 `SERVERCHAN_ADMIN_KEY` 从未配置 → 全程静默。修复后拆分了服务并加了 `_safe_float` 兜底。
+
+今日是拆分后的**过渡首日**，新服务链路（fetch 07:00 → analyze 08:00 → radar 09:00 → scan 09:30 → market 09:40 → digest 10:20 → push 10:30 UTC）尚未产出新快照到 `snapshots/daily_snapshot.json`。可能原因：
+- 拆分后 snapshot 生成责任归属未接管（原 monolith `stock_pipeline.main()` 的最后一步是 commit snapshot 到 repo，新服务链路里由哪个 svc 负责需确认）；
+- 或今日部署后 cron 尚未按新计划执行完整链路；
+- 或某个 svc 失败但因 `SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 回退 alert 生效，需明日排查邮件/推送。
+
+### 改进建议（今日新增）
+
+1. **Snapshot 生成的服务归属需明确**（US-138 收尾项）：拆分后，`snapshots/daily_snapshot.json` 的生成 + commit 应明确划归某个 svc（建议是 push-svc 或 market-svc 的最后一步），否则 Routine 数据源会永久断裂。**优先级最高**——妈妈的每日推送依赖它。
+2. **服务级 alert 需要 dry-run 演练**：`SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 回退是 US-138 里 6 个 workflow 加的兜底，但**从未在真正失败场景下验证**。建议在 fetch-svc / digest-svc 里各插一次"故意抛异常"演练，确认告警确实到达管理员微信，而不是又一次 10 天静默。
+3. **Routine 应能识别"过渡日"**：拆分/大改动的当日，Routine 应有能力直接检查 GHA workflow 运行状态（`mcp__github__actions_list` for fetch-svc/analyze-svc/…），若最近 24h 某个 svc 从未 success，直接在 daily_push.txt 里加一行"服务器状态：{svc} 未运行"，而不只是笼统的"数据未刷新"。这样妈妈和管理员能看到具体断点。
+4. **签名文件维护规则明晰化**：`last_price_signature.txt` 只在**成功处理新快照后**才推进——这个规则今天首次真的用上（往期都是"三门通过 → 写新签名"，从没写过"三门失守 → 保持旧签名"的路径）。规则本身正确，但值得在 CLAUDE_ROUTINE.md 里显式写清楚，避免未来 Routine 版本更新时误把"更新签名"当成幂等操作。
+
+### 学习积累
+
+- **今日的 fail-safe 是设计里最重要的一环**（2026-07-01 事故教训的直接产物）。**"给了反向的信心比什么都不发更危险"**这条原则今天首次被真正激活，且正常触发——三重门控设计有效。
+- **US-138 拆分动作大**，从 monolith 到 7 个 svc 是**架构级重构**，过渡日出问题是完全在预料之内的。Routine 不应尝试"帮忙修"服务器端，只应做好**下游安全消费者**——门控失守就跳过、不写预言、不误导。
+- **保留昨日 pending 预言不清空**这个选择重要：这两条预言（300394 up / 002414 down）Da-young / 妈妈已经在 07-28 的推送里看到过，Fly.io 一恢复就会 ingest。若清空，那两条预言就成了"发过但没进训练集"的孤儿，破坏 backfill 闭环。**规则未来固化**：Routine 只在**成功写新预言时**才 overwrite `predictions_pending.json`，失守日绝不清空。
+
+**签名文件维持不动**：`knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 及原附注，直到下次真新快照到来。
+
+---
+
 
