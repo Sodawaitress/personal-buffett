@@ -3439,4 +3439,51 @@ CLAUDE.md 记录 **US-138 (2026-07-29)** —— monolith 退役、fetch/analyze/
 
 ---
 
+## 2026-07-30 · Run 1 skip（连续第 3 日新鲜度门控失守，需人工介入排查）
+
+### 结论
+
+**今日无分析**。三重新鲜度门控在门 ① 与门 ② 直接失守，处置与 07-29 完全一致：`daily_push.txt` 只写"服务器数据未刷新"，`predictions_pending.json` 不动，`last_price_signature.txt` 不动，Run 2 亦无新价可验。
+
+### 门控数据
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` < 20h | ❌ 失守 | 快照 `generated_at = 2026-07-28T10:23:14.411828Z`；当前 UTC ≈ 2026-07-30T13:14Z；age ≈ **50.79h**（07-29 时为 26.85h，今日已翻倍） |
+| ② 价格签名不同 | ❌ 失守 | `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`，与 `knowledge/last_price_signature.txt` 及 07-28、07-29 快照完全一致——**连续第 3 日相同签名** |
+| ③ WebSearch 抽检 | — | 跳过 |
+
+**辅助证据**：`git log origin/main` 显示最后一次 snapshot 提交仍是 `c71ddf0 chore: daily snapshot 2026-07-28`；此后 07-29 有 `d91743f ci(push-svc): 加 schedule 完成切换（最后一棒）` 与 `cf9b54b fix(svc): 修排班首日三处失血（预算/timeout/记账）`——排班已修，但仍未见新 snapshot 提交入库。
+
+### 在飞预言状态（07-28 写入，Day 3/10）
+
+| 代码 | 名称 | 方向 | 起始价 | 快照当前价 | 说明 |
+|------|------|------|--------|-----------|------|
+| 300394 | 天孚通信 | up | ¥181.56 | ¥181.56 | 快照未更新，与起始价完全一致——无法验证，等待新快照 |
+| 002414 | 海康威视 | down | ¥13.76 | ¥13.76 | 同上 |
+
+两条均**保留在 `predictions_pending.json`**，Fly.io ingest 恢复后自然进入数据库；10 天窗口约至 2026-08-07。
+
+### 根因升级：从"过渡日"升级为"系统性断链"
+
+07-29 的记录把断链归为"US-138 拆分过渡首日"，属可原谅的一次性事件。**今日证据显示不然**：
+- 07-29 已有 `cf9b54b fix(svc): 修排班首日三处失血` 提交，svc 排班问题已认领并修补；
+- 但至今（07-30 中午 UTC）仍无新 snapshot commit——说明**修补没有覆盖 snapshot 生成链路**；
+- 结合 07-29 改进建议第 1 条（"Snapshot 生成的服务归属需明确"），断链的真因几乎可确定为：**monolith 里最后一步"生成 + commit `daily_snapshot.json` 到 repo"这一动作，在拆分后没有被任何 svc 明确接手**。
+
+### 今日改进建议（升级版）
+
+1. **[P0 · 立即]** 明确 snapshot 生成 owner。翻 `stock_pipeline.py`（monolith）里最后写 `snapshots/daily_snapshot.json` 的那段——它读的是 DB 里最新的 `analysis_results` + `precursor` + `stock_prices` 拼出的一个综合视图。US-138 后，最合适的接手者是 **digest-svc**（它已经是每日汇总的地方，10:20 UTC 排班在 push-svc 之前），或 push-svc 的首步。**这个动作不接手，Routine 永远无输入**——妈妈的每日推送、backfill 训练集、"预言家日报"全部断掉。
+2. **[P0 · 立即]** 加"snapshot 提交心跳"告警。GHA 里加一个 svc-heartbeat.yml，每日 11:00 UTC（digest-svc 排班后 40 分钟）检查 `snapshots/daily_snapshot.json` 的 `generated_at` 是否 < 24h，否则 Server酱 告警——这是 07-29 建议的"服务器状态识别"的最小可行版。**不加这个，下次 snapshot 断掉又是一周 Routine 静默 skip 后才被人发现。**
+3. **[P1]** Routine 应该主动读 GHA `mcp__github__actions_list`（fetch-svc/analyze-svc/digest-svc 最近 24h 的 run 状态），在 `daily_push.txt` 里附一行"服务器状态：fetch-svc ✅ / analyze-svc ✅ / digest-svc ❌ 06 小时前失败"。今天没做（Routine 时限紧张 + 尊重"下游消费者"原则），但对妈妈和管理员都是关键上下文。
+4. **[P2]** 07-29 改进建议第 2 条"服务级 alert 需 dry-run 演练"仍然有效——`SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 兜底修了，但没验证过。今天 snapshot 断链两天没告警到人，说明兜底机制本身可能也不完全 work（或告警只覆盖 svc 级失败，不覆盖"svc 都 success 但没人负责的动作缺席"这种更隐蔽的故障）。
+
+### 学习积累
+
+- **两日门控数据可以用来做趋势判断**：age 26.85h → 50.79h（约翻倍，与 24h 循环一致），价格签名完全不动——这两条一起，比"一次失守"更能证明"服务器不是在慢跑而是在停摆"。**未来 Routine 可用这套双日对比做"停摆确认"，第 3 日直接 escalate**。
+- **fail-safe 设计的另一面：需要主动通知**。三重门控成功阻止了错误分析，但**没有主动把断链信号送到管理员手里**——依赖 Routine 自身每天在 push 里写"数据未刷新"，妈妈看到但不会追问，管理员（周宇）如果不看 Routine push 就永远不知道。**PushNotification 应在门控连续失守 ≥ 2 日时启动，直达管理员手机**（今日执行）。
+- **Routine 保持职责边界**：即便看到根因几乎确定，Routine 也不应擅自去修 svc 排班或添加 workflow——那是 PR/PRODUCT.md 的 US 域，Routine 只在改进日志留证据 + 通知管理员。今日严格守住这条。
+
+---
+
 
