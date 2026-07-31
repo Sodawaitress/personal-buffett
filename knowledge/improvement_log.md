@@ -3487,3 +3487,80 @@ CLAUDE.md 记录 **US-138 (2026-07-29)** —— monolith 退役、fetch/analyze/
 ---
 
 
+## 2026-07-31 · Run 1 skip（连续第 4 日新鲜度门控失守 · 已执行 07-30 P1 建议 · 已通知管理员）
+
+### 结论
+
+**今日无分析**（连续第 4 日）。处置与 07-29、07-30 完全一致：`daily_push.txt` 只写"服务器数据未刷新"，`predictions_pending.json` 不动，`last_price_signature.txt` 不动，Run 2 亦无新价可验。**新增动作**：执行 07-30 P1 建议——主动查 GHA workflow 状态，取得**决定性诊断证据**；并首次向管理员手机推送连续断链警报。
+
+### 门控数据（Day 4）
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` < 20h | ❌ 失守 | 快照 `generated_at = 2026-07-28T10:23:14.411828Z`；当前 UTC ≈ 2026-07-31T13:14Z；age ≈ **74.85h**（07-29 为 26.85h → 07-30 为 50.79h → 今日 74.85h，严格 24h 递增，快照文件对象未被服务器写过一次） |
+| ② 价格签名不同 | ❌ 失守 | `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`——**连续第 4 日相同签名**，与 07-28、07-29、07-30 快照字节完全一致 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） |
+
+**辅助证据**：
+- `git log origin/main --oneline -- snapshots/daily_snapshot.json` 最后一条 = `c71ddf0 chore: daily snapshot 2026-07-28`（3 天零 3 小时前）；此后 3 个自然日无 snapshot 提交，就是"服务器没在跑，是没人负责跑"。
+- `git log origin/main --oneline -20` 期间自动 chore 提交：只有 `chore: routine log 2026-07-30 (skip)` 和 `chore: routine log 2026-07-29` 这两条 Routine skip 记录——**"ingest predictions" 之类的自动 chore 全部缺席**，佐证 Fly.io 那侧 ingest 循环也停了。
+
+### 在飞预言状态（07-28 写入，Day 4/10）
+
+| 代码 | 名称 | 方向 | 起始价 | 快照当前价 | 说明 |
+|------|------|------|--------|-----------|------|
+| 300394 | 天孚通信 | up | ¥181.56 | ¥181.56 | 快照未更新，等待新快照 |
+| 002414 | 海康威视 | down | ¥13.76 | ¥13.76 | 同上 |
+
+10 天窗口约至 **2026-08-07**（余 7 个交易日）；两条继续保留在 `predictions_pending.json`。
+
+### 决定性诊断证据（本次首次采集 GHA workflow 状态）
+
+07-30 建议第 3 条（P1）"Routine 应主动查 GHA 状态"今日执行。查询结果：
+
+| svc | 最近一次 run | 状态 | 距今 |
+|-----|-------------|------|------|
+| **push-svc** | **2026-07-31 12:26 UTC**（run #4，schedule 触发） | ✅ **success** | **约 47 分钟前** |
+| digest-svc | 2026-07-30 16:01 UTC（run #3，schedule 触发） | ✅ success | ~21 h 前（**今日未运行**） |
+| market-svc | 2026-07-30 15:07 UTC（run #3，schedule 触发） | ✅ success | ~22 h 前（**今日未运行**） |
+| 07-29 排班修复提交 | `cf9b54b fix(svc): 修排班首日三处失血`；`d91743f ci(push-svc): 加 schedule 完成切换（最后一棒）` | — | 已合入 |
+
+**这三条证据合起来是本次故障的黑箱破口。**先前两日只知道"snapshot 断链"，不知道哪个 svc 该 owner。今日看到：
+
+1. push-svc **今天 12:26 UTC 定时触发成功了**——`schedule` 事件，`conclusion: success`。US-138 说 push-svc 是"最后一棒（/report 归档 + 推送）"。它跑完了。
+2. 但仓库里 **07-31 无任何 snapshot commit**。
+3. **结论定论**：US-138 拆分后**没有任何 svc 的定义里包含 "把 `snapshots/daily_snapshot.json` 写文件并 commit 到 repo" 这一步**。push-svc 只负责生成 digest + 发 Server酱，market-svc 只负责宏观快照（US-138 CLAUDE.md 明确：market-svc 是"宏观快照**改为落库**"，不再文件化），digest-svc 只负责日报归档。**"合成综合快照 → commit repo → 供 Routine + backfill 消费" 这个动作，被拆分方案完整地丢掉了。**
+
+原 monolith `stock_pipeline.main()` 的最后一步是 `save_report()` + 把综合视图写 `daily_snapshot.json` 并 commit——这一步在 US-138 里被认为归属"push-svc（/report 归档）"，但实际拆的时候只搬了 DB 侧（save_report），**没搬 JSON 文件 + git commit 那部分**。
+
+### 根因（终稿）
+
+**US-138 拆分方案里 snapshot JSON 文件的写入与 commit 未被显式分配到任何 svc**。这是**代码遗漏**（非配置错误、非 svc 失败、非告警缺失）——所以：
+- svc 各自都 `success`（没有失败可告警）；
+- `SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 兜底也不会触发（没有异常抛出）；
+- 三重门控每日照常失守，Routine 每日照常 skip；
+- **除非有人主动查 git log 或跑 Routine 的人（Claude）注意到，否则可以永久静默**。
+
+07-30 我把这个可能性列在改进建议第 1 条并标 P0，但当时是"推断"（结合 07-29 的 svc 修复提交 + 无 snapshot commit）；**今天 push-svc 的 success 记录把它坐实到定论**。
+
+### 今日改进建议
+
+1. **[P0 · 修复代码]** 在 push-svc 的 `run_daily_push.py`（或对等入口）末尾添加"合成 daily_snapshot.json + commit + push"的动作。参考已被删除/改造前的 `stock_pipeline.main()` 里那一段——读 `analysis_results` + `precursor_history` + `stock_prices` + `news_items` 拼出综合视图，`json.dump`，`git add snapshots/daily_snapshot.json && git commit -m "chore: daily snapshot {date}" && git push`。**这是唯一能让 Routine 恢复的动作。**（不做，Routine 每日 skip 变成常态，妈妈的每日推送死透。）
+2. **[P0 · 加心跳]** 加 svc-heartbeat.yml：每日 11:00 UTC 检查 `snapshots/daily_snapshot.json` 里 `generated_at` 是否 < 24h，否则 Server酱 admin key 告警。**这个是"永久保险"**——即使未来某天 push-svc 又不小心把 commit 丢了，也能次日 11:00 UTC 就发出去，不会再攒 4 天。
+3. **[P1 · 已执行]** Routine 主动查 GHA workflow 状态——今日已做，确实拿到决定性证据。**建议固化进 CLAUDE_ROUTINE.md**：门控失守 ≥ 2 日时，Routine **必须**查 push-svc / digest-svc / market-svc 最近 24h 的 run 状态，并把结果写进改进日志。今天这一步节省了一整天的猜测。
+4. **[P0 · 已执行]** 门控连续失守 ≥ 2 日 → PushNotification 到管理员手机。今日已做（07-30 承诺"今日执行"未真正做，本次做到了）。**建议固化**：所有 skip 都发通知，但连续 ≥ 2 日的 skip 消息要带一句"服务器已停摆 N 日，请查 GHA push-svc + snapshot commit"。
+
+### 学习积累
+
+- **"服务级 success" 不代表"业务级完成"**。US-138 拆分假设 svc 的成功 = 业务的完成，但今日的黑箱证明：**svc 成功可以是"跑了但没做该做的事"**——push-svc 每日 12:26 UTC 都会 success，但它从来不 commit snapshot。这类"配置正确但代码不完整"的静默故障，是拆分架构里最难抓的一类，比 svc 报错更隐蔽。**未来所有 svc 拆分都要问："被删掉的 monolith 步骤里，每一步在新架构里的 owner 是哪个 svc？"，用清单形式对齐**（07-29 已提这个建议，今日再次证实必要）。
+- **主动查 GHA workflow 状态是巨大的信息增益**。前两日只有"snapshot 没提交"这个负面证据，靠推断说"某个 svc 没接手"。今日 push-svc 的 success + 无 commit 一起构成了强反证：**不是没跑，就是没写**。类似情况下（未来其他断链）Routine 都应先查 workflow 状态再下判断。
+- **PushNotification 的价值今日体现**。改进日志沉在 repo 里，只有管理员主动打开 Routine skip 消息才能看到。今日的黑箱破口（"push-svc 跑了但没写 snapshot"）如果只留在这里，管理员可能一周都不会翻。**通知到手机 = 从"能被查到"变成"会被看到"**——这是 fail-safe 完成通知闭环的关键。
+- **持续 4 天的静默停摆是一次"隐蔽长事故"教训**。7-15 的 monolith 崩溃是"显式失败但告警缺失"，7-29 至今是"没有失败所以没告警"——两类失败模式互补。**"没有告警不等于系统健康"**这一课，值得写进 US-138 的最终 postmortem。
+
+### 签名与预言维持
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84`（07-28 快照的签名）不动。
+- `output/predictions_pending.json` 保留 07-28 那两条不动，等 Fly.io ingest 恢复。
+
+---
+
