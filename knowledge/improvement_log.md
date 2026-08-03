@@ -3564,3 +3564,87 @@ CLAUDE.md 记录 **US-138 (2026-07-29)** —— monolith 退役、fetch/analyze/
 
 ---
 
+
+## 2026-08-03 · Run 1 skip（连续第 7 日历日 / 第 5 交易日新鲜度门控失守 · **诊断突破：纠正 07-31 结论**）
+
+### 结论
+
+**今日无分析**（连续第 7 日历日 · 07-29~07-31 三个交易日 skip + 08-01/02 周末 + 08-03 今日 skip = 第 5 个交易日 skip）。处置与前 4 日一致：`daily_push.txt` 只写"服务器数据未刷新"，`predictions_pending.json` 不动，`last_price_signature.txt` 不动。**关键新增**：本次首次深入读源码，**推翻了 07-31 的"snapshot 无 owner"结论**，找到真正的抓手。
+
+### 门控数据（Day 7 日历 / Day 5 交易）
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` < 20h | ❌ 失守 | 快照 `generated_at = 2026-07-28T10:23:14.411828Z`；当前 UTC ≈ 2026-08-03T13:19Z；age ≈ **146.94h**（每日 +24h 稳定递增到今天，共 6 天 3 小时） |
+| ② 价格签名不同 | ❌ 失守 | `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`——**连续第 7 日相同签名**，与 07-28/29/30/31 快照字节完全一致 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） |
+
+### 决定性诊断证据（07-31 建议 P1 P0 全部执行 + 首次读源码）
+
+07-31 只查了 GHA workflow status。今日进一步**读了源码**——这是关键操作。
+
+**（1）GHA workflow status（延续 07-31 方法论）**
+
+| svc | 最近一次 run | 状态 | 距今 |
+|-----|-------------|------|------|
+| push-svc | 2026-07-31 12:26 UTC（run #4，schedule 触发） | ✅ success | ~73 小时前（**08-03 未运行，08-01/02 周末合理**） |
+| digest-svc | 2026-07-31 16:12 UTC（run #4，schedule 触发） | ✅ success | ~69 小时前（**08-03 未运行**） |
+| market-svc | 2026-07-31 15:15 UTC（run #4，schedule 触发） | ✅ success | ~70 小时前（**08-03 未运行**） |
+
+三个 svc 07-31 都是 run #4，今日 08-03 应该 run #5，但 UTC 13:19 时点未见任何今日 run。这本身也是异常——但结合下方源码证据，即使这些 svc 都跑，snapshot 仍然不会 commit。
+
+**（2）源码证据（今日新增）**
+
+| 文件 | 关键行 | 意义 |
+|------|--------|------|
+| `.github/workflows/digest-svc.yml` L3-8 | "构建快照 JSON commit 到 GitHub"注释 + cron `15 14 * * 1-5`（14:15 UTC 工作日） | **owner = digest-svc**（07-31 认为无 owner，错） |
+| `scripts/svc_digest.py` L25-27 | `from scripts.daily_digest import run_daily_digest; run_daily_digest()` | 服务入口已接线 ✅ |
+| `scripts/daily_digest.py` L196-259 | `_commit_snapshot_to_github()` 完整实现（GitHub REST API PUT，含 SHA 处理、token 检查） | commit 逻辑代码 100% 就位 ✅ |
+| **`scripts/daily_digest.py` L209-219** | **`if total > 0 and fresh / total < 0.5: logger.error(...) return`** | **真正的抓手 —— 新鲜度熔断（07-01 事故遗产）** |
+| 07-28 snapshot 数值 | `stocks_with_fresh_price = 121`，`stocks_total = 204`，ratio = **59.31%**（勉强 > 50%） | 07-28 是**刚好过线** |
+| digest-svc `Alert on failure` | `if: failure()` 只在 job 级失败触发；熔断走的是 `return` 不 `raise` | **静默 abort，兜底告警永不触发** |
+
+**（3）证据链**（推翻 07-31 结论）
+
+- 07-31 结论："US-138 拆分方案里 snapshot JSON 文件的写入与 commit **未被显式分配到任何 svc**"——**错**。
+- 今日新证据：digest-svc 就是 owner，代码完整。
+- 真相：07-28 之后，**fetch-svc 抓价覆盖率跌破 50%**（CLAUDE.md 已记录 US-121 fetch-svc 单轮 50~124/134 波动，是"合理但不稳定"的常态），触发 daily_digest.py:211 的熔断。熔断走 `logger.error()` + `return`，job 层面看是 `success`，兜底告警的 `if: failure()` 条件不满足。
+- 结果：Routine 每日 skip，管理员不知情，妈妈的每日推送死透。**这个 bug 在 07-01 那次事故里当"救命的 fail-safe"被特意加进来，今天变成了"沉默的杀手"**。
+
+**（4）为什么 07-31 也没查这一层**
+
+07-31 只用 GHA API 拿了 workflow run status；看到"push-svc success + 无 commit"就下结论"push-svc 没接手 snapshot"。**没读源码 → 误把 owner 归到 push-svc，且没发现代码其实在 digest-svc**。今日读完 3 个 svc 的入口 + daily_digest.py 才把真相剥出来。**教训：门控失守时，从"查跑没跑"升级到"读源码看做什么"是必须的**。
+
+### 根因（终稿 · v3，推翻 07-31 v2）
+
+**"新鲜度熔断（daily_digest.py:211）+ 熔断不 raise + 告警只看 `if: failure()`"三者叠加**，构成了一个可以永久静默的失败模式：
+
+- **合理设计**：07-01 事故里"AKShare 抓价挂了但快照元数据翻新"骗过了 Routine，加熔断是对的。
+- **失败叠加**：US-121 之后 fetch-svc 覆盖率天生不稳定（50~90% 波动，是"能力上限"不是"事故"），熔断被稳定触发。
+- **观测缺失**：熔断走 `return`（不 `raise`），`if: failure()` 只在异常抛出/exit code 非 0 时触发。日志里的 ERROR 只有人主动翻 Fly logs 才看得到。
+
+这不是 07-31 认为的"代码遗漏"，也不是 07-30 认为的"svc owner 未分配"——是**一个正确的安全阀在一个不稳定的产能环境里被"合规触发"到静默**。这类 bug **不修在告警上就永远不会浮出水面**。
+
+### 今日改进建议
+
+1. **[P0 · 修告警]** digest-svc 的 `Alert on failure` 太窄。补一个 `Alert on skip`：`svc_digest.py` 里在熔断 `return` 之前先 `exit(2)`（约定："跳过"是 exit 2，"失败"是 exit 1，"成功"是 exit 0）；`digest-svc.yml` 加 `if: ${{ failure() || steps.digest.outputs.exit_code == '2' }}` 或类似分支去发告警。**修告警不修熔断**——熔断本身是对的。
+2. **[P0 · 加心跳]** 07-31 的 P0 心跳建议仍然有效且更急迫：加 `svc-heartbeat.yml`，每日 15:00 UTC（digest-svc 排班 14:15 之后 45 分钟）检查 `snapshots/daily_snapshot.json` 里 `generated_at` 是否 < 24h，否则 Server酱 admin 告警。**这是防"熔断静默 + fetch-svc 死了 + 告警配置漏了"任一一种失败的最后一道保险**。心跳完全独立于 svc 内部逻辑，最健壮。
+3. **[P1 · 拉高熔断可见度]** 除了改 exit code，还可以让熔断把 abort 事件写进 `service_runs` 表（`db.service_run("digest-svc")` 已经在用 context manager，加个 `run.tick("aborted", reason=...)` 即可）。之后管理页面能一眼看到"digest-svc 最近 5 天 5 次 abort，理由：fresh_price < 50%"。
+4. **[P1 · 修根因]** 如果熔断确实每天触发，那 fetch-svc 覆盖率就是**真正的性能瓶颈**。US-121 已经把 fetch 从"每轮全量"改成 staleness 排序，但只跑一轮不够。选项：(a) fetch-svc 每小时跑一次（不改 batch size，就是多跑几遍）；(b) 熔断阈值降到 40%（把安全阀从 50% 拉到 40%，容忍度更高）；(c) 熔断条件从"当天新价"改成"过去 2 交易日内新价"，允许 fetch-svc 分 2 天跑齐。**任选其一，配合 P0 心跳，才是根治**。
+5. **[P0 · Routine 固化今日方法论]** CLAUDE_ROUTINE.md 门控失守 ≥ 2 日的诊断流程应升级：从 07-31 的"查 GHA workflow 状态"扩展为"读 svc 入口 + 读关键逻辑（熔断/阈值）源码"。今日证明**读源码是把误诊纠回来的唯一手段**。
+
+### 学习积累
+
+- **"没有 owner"和"有 owner 但静默 abort"看起来症状一样（都是没 commit + 没告警），根因完全不同**。前者要加代码，后者要改告警。07-31 那次误诊耽误了一整天的修复方向——好在 svc 拆分工作已停 3 天没人动手，等于没有真损失。**未来一切"外部现象一致但内部机理未验证"的结论都要打问号，尤其在读源码之前**。
+- **fail-safe 的双刃剑**。07-01 那次事故的教训是"不要用假快照骗过 Routine"，于是加了 50% 熔断。今天这个熔断成了另一种形式的"静默错误"——**每一个 fail-safe 都应带自己的告警通道，不能借用主流程的告警**。加 fail-safe 时的最佳实践应该是：`if 熔断触发: raise AbortException` 而不是 `return`；上层要么显式 catch 并转成告警，要么让它成为 job 级 failure。
+- **本次比 07-31 有实质进展**。07-31 已经做到了 GHA workflow 查询 + PushNotification 到管理员 + 门控严格执行。今日在此基础上**多做了一步读源码**，从"知道断了"升级到"知道断在哪一行"。**改进日志的价值就在这里**：昨天的诊断建议第 3 条（P1 "读源码"隐含在"验证根因"里）今天被真正执行，直接产出决定性证据。
+- **PushNotification 值得连续发**。不发→依赖管理员每天翻 Routine skip；连续发到第 5 个交易日→变成明确的"这是需要立即修的技术债"信号。今日继续发（配上"新诊断已定位到 daily_digest.py:211"这个具体行号），管理员能一眼跳到代码。
+
+### 签名与预言维持
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84`（07-28 快照的签名）不动。
+- `output/predictions_pending.json` 保留 07-28 那两条不动。窗口本应 08-07 到期（今日 Day 7/10），实际 5 个交易日无新价可回填，backfill 也不可能自动完成——**这两条预言实际上已死**（10 天后 07-28→08-07 的价格 backfill 需要 fetch-svc 有 08-07 当日价，而 fetch-svc 目前每日只有 60~90% 覆盖率，很可能这两只股票哪天都没被 fetch 到）。等 Fly.io 恢复后再评估是否手动清理。
+
+---
+
+

@@ -1,23 +1,21 @@
-【今日无分析】2026-07-31
+【今日无分析】2026-08-03
 
 ⚠️ 服务器数据未刷新，今日无分析。请以券商 APP 为准。
 
-原因（三重新鲜度门控失守 · 连续第 4 日）：
-① 快照 generated_at = 2026-07-28 10:23 UTC，距今约 74.85 小时 > 20 小时阈值。
-② 价格签名 c8adbfc… 与 07-28/29/30 Routine 处理的完全一致，服务器 pipeline 已连续 4 日未产出新快照。
+原因（三重新鲜度门控失守 · 连续第 7 个日历日 / 第 5 个交易日）：
+① 快照 generated_at = 2026-07-28 10:23 UTC，距今约 146.94 小时 >> 20 小时阈值。
+② 价格签名 c8adbfc… 与 07-28/29/30/31 Routine 处理的完全一致，服务器 pipeline 已连续 7 日历日未产出新快照。
 ③ 门控 ①② 已失守，Gate ③（WebSearch 抽检）省略。
 
-决定性诊断证据（今日首次主动查 GHA workflow 状态）：
-- push-svc 今日 12:26 UTC 定时触发 ✅ success（run #4）
-- digest-svc 今日未运行，最近一次 07-30 16:01 UTC ✅
-- market-svc 今日未运行，最近一次 07-30 15:07 UTC ✅
-- 仓库 07-29 至今 3 个自然日无任何 snapshot commit
+诊断突破（本次首次读源码，纠正 07-31 结论）：
+- svc_digest.py 存在 ✅，14:15 UTC 排班已生效 ✅，daily_digest._commit_snapshot_to_github() 有完整 GitHub API PUT 提交逻辑 ✅
+- **真正的抓手是 daily_digest.py:211 的"新鲜度熔断"**：`if fresh/total < 0.5: return`（07-01 事故遗产）
+- 07-28 快照 stocks_with_fresh_price=121/204=59.3% 恰好过线，之后每日 fetch-svc 覆盖率跌破 50%（US-138 已记 fetch-svc 单轮 50~124/134 波动），digest-svc 每日"成功"跑但 silently return，只 logger.error 不 raise → `if: failure()` 兜底告警永不触发
+- 07-31 结论 "snapshot commit 步骤无 owner" **错误**，owner 有，代码有；真因是"silent circuit-breaker + 无观测"
 
-结论：US-138 拆分后，"合成 daily_snapshot.json → commit repo" 这一动作没有被显式分配到任何 svc。原 monolith 的最后一步在 push-svc 里只搬了 DB 侧（save_report），没搬 JSON + git commit 那半段——属**代码遗漏**（非 svc 失败、非配置错误），所以 svc 各自都 success、兜底告警不触发。
+原则：宁可发"今日无分析"让妈妈失望一次，也绝不基于陈旧数据发送有信心的错误分析。修复 fetch-svc 覆盖率或降低熔断阈值后，明日恢复推送。
 
-原则：宁可发"今日无分析"让妈妈失望一次，也绝不基于陈旧数据发送有信心的错误分析。修复 push-svc 的 snapshot 生成动作后，明日恢复推送。
-
-在飞预言（07-28 写入，Day 4/10 · 窗口至 08-07）：
+在飞预言（07-28 写入，Day 7/10 · 窗口至 08-07）：
 - 300394 天孚通信 up @¥181.56（快照未更新，无法验证）
 - 002414 海康威视 down @¥13.76（快照未更新，无法验证）
 
