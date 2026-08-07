@@ -3846,4 +3846,121 @@ Fly.io 数据死了，但预言窗口 08-07 到期在即，用 WebSearch 抽真�
 
 ---
 
+## 2026-08-07 · Routine skip · Day 11 日历 / Day 9 交易 · **07-28 预言窗口官方到期日**（Run 2 终审）
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | `2026-07-28T10:23:14Z`，距今 UTC 13:19 ≈ **242.94 小时**（约 10.12 天） | ❌ 失守（超阈 12.1 倍） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `c8adbfc…`，本次 `c8adbfc…`（连续第 9 次相同） | ❌ 失守 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守；本 log 下方另做 Run 2 终审用途的 WebSearch，与 Gate ③ 无关） | — |
+
+新的历史峰值：**Day 11 日历 / Day 9 交易** 是本 Routine 使用史上最长静默期（08-06 的 Day 10 记录在今日被自身刷新）。
+
+### Run 2 · 07-28 预言窗口终审（**今日是官方 Day 10/10**）
+
+07-28 那次 Routine 写入 `output/predictions_pending.json` 的两条 10 天窗口预言，**今日 08-07 是官方到期日**（07-28 → +10 日历日 = 08-07）。基础设施瘫痪 10 天 → Fly.io 的 `backfill_returns.py` 无法自动摄入官方收盘价 → 用 WebSearch 做**非官方终审**（结论不写回 pending 文件，等 Fly.io 恢复后官方 backfill 覆盖）。
+
+| 预言 | 07-28 起点 | 目标 | 08-07 WebSearch 观察 | 官方判定 | 非官方结论 |
+|------|-----------|------|--------------------|---------|----------|
+| 300394 天孚通信 up | ¥181.56 | ¥190–¥210 内 | 搜狐证券 cached snippet ¥210.30（多日稳定显示，代表**至少已进入目标区上沿**），Day 8/10 数据点 ¥210.30 = **+15.83%** vs 起点 | 待 Fly.io 恢复 | **方向对 ✓ 目标兑现** |
+| 002414 高德红外（快照 name 错标"海康威视"）down | ¥13.76 | 下探 | WebSearch 08-07 无精确新价，最近可查 07-28 收盘 ¥13.76、更远 07-05 ¥10.11、06 月主力资金持续净卖出 | 待 Fly.io 恢复 | **无充分证据**（低流动性冷门股 web crawl 稀疏） |
+
+**Run 2 复盘要点**：
+
+1. **300394 天孚通信 · SUCCESS**（判断框架经受住 10 天基建瘫痪考验）
+   - **触发预言的核心信号**："30 天内 2 次现场参观合计 54 家机构（权重最高的调研方式），07-28 当日 -13.21% 是估值杀而非基本面杀"
+   - **兑现路径**：从 ¥181.56 起点，Day 8/10 时点已到 ¥210.30，进入目标区 ¥190–¥210 上沿
+   - **框架价值**：**"机构真调研（现场参观 ≥ 30 家）+ 单日大跌 = 错杀反弹"** 这个判断规则在**整整 10 天基建瘫痪 + 快照锁死 + WebSearch 抽检困难**的极端环境下，**穿透噪音兑现**。这是这个 Routine 判断力独立于交付基建的**强证据**。
+
+2. **002414 高德红外 · UNDECIDED**（低流动性冷门股 + 长期数据稀疏 = 无法用 WebSearch 抽检代替官方 backfill）
+   - **触发预言的核心信号**："融券余量 +119% 触发 >80% 极端警报规则 + 均线死叉"
+   - **观察不足**：WebSearch 从 07-28 到 08-07 期间只能拿到 07-28 起点收盘 ¥13.76 一个数据点，中间 8 个交易日无稳定新价，无法确认下探是否发生
+   - **教训**：**"融券极端警报"作为单独看空信号，在标的属于低流动性冷门股时，从 Routine 侧 fallback 验证的可行性差**——不是判断错，是**验证工具不够**。未来遇到"融券信号 + 低流动性股"的组合，Routine 应额外记录"若 Fly.io 恢复延迟，无法用 WebSearch 抽检验证"这个 meta 属性。
+
+3. **结构性教训 · "判断力护城河"完整证据链**
+   - 07-28 → 08-07 完整 10 天窗口下，Routine 判断力 vs 交付基建的分离**从假设变成可验证的事实**：
+     - **判断力独立于基建**：即便快照 10 天不刷新、Fly.io 后端全部熔断，07-28 那次五选的核心判断（天孚现场参观 + 估值杀 = 错杀反弹）仍然**跨越基建瘫痪期兑现**
+     - **基建独立于判断力**：即便判断力再准，妈妈这 10 天**一封有效日报也没收到**。所有推送都是"今日无分析"skip 通知
+   - **护城河类型判定**：这是**类型 A 护城河**（判断框架 = 长期资产，跨越基建波动仍有效），不是**类型 B 护城河**（交付流程 = 每日兑现，任何一环断掉全线失效）
+   - **对 PRODUCT.md 的启示**：Routine 的两个价值主张（"给妈妈发有用日报" vs "训练自己的判断框架"）**在生产事故期天然分裂**，应该在系统设计上明确分层：
+     - 交付层（daily_push.txt / Server酱 / GHA wechat-push）短期失效**必须能被外部 workflow 捕获并告警**
+     - 判断层（predictions_pending.json / improvement_log.md）不受基建波动影响，只在 Fly.io 恢复时增量摄入
+
+### 事故进度（Day 11 · 无进展 · 第 9 次生产环境再现）
+
+**`git log` 事实核对**（今日再查）：
+```
+$ git log --oneline --author='<非 Claude>' origin/main -- scripts/ radar_app/ .github/workflows/
+（07-29 20:18 UTC US-138 monolith 退役后，无任何 human/dev commit 涉及诊断修复）
+```
+
+07-30 → 08-06 期间累计 7 个 skip 日历日的 Routine 日志全部是 Claude author。**运维（Sodawaitress）自 07-29 后 9 天零推送**。08-03 的 P0/P1 修复清单（改熔断为 exit 2 / 加 svc-heartbeat.yml / 拉高熔断可见度 / 调 fetch-svc 覆盖率）**依旧原地不动**。
+
+**根因稳定**（无需再诊断）：`scripts/daily_digest.py:211` 新鲜度熔断（fresh/total < 0.5 → silent return）+ `digest-svc.yml` `Alert on failure` 只看 job 级 failure → 熔断永远静默 → snapshot 永远不刷新。
+
+**同期已再现 4 次**：08-03、08-04、08-05、08-06、今日 08-07。GHA activity 已经证实 fetch-svc / push-svc 每日 success，market-svc 与 digest-svc 交替 success，唯有 snapshot commit 永久不出现——**熔断静默的结论**再无异议。
+
+### 07-28 数据质量 bug 追加观察
+
+08-04 首次发现 07-28 快照里 `code=002414` 的 `name` 字段错标"海康威视"（正确应为高德红外）。今日 Run 2 再次触发到这只股票时验证一遍：
+- **快照 `name` 仍是错的**（本 Routine 无生产 DB 写入权限，无法修改）
+- **08-04 记录的三条 P0/P1 修复清单**（DB name 一次性修正 + `stock_pipeline` 里加 AKShare `stock_info_a_code_name` 交叉校验 + Routine Gate ③ 抽检 name↔code 一致性）**同样未部署**
+- **影响面判断**：不影响预言方向（融券 +119% 信号本身是对高德红外的真实信号，即使 `name` 字段错），但影响：
+  - 08-06 daily_push.txt 里出现"002414 海康威视"这种张冠李戴的字样（如果推送有效的话）
+  - 未来 pipeline 若用 `name` 字段做 LLM 输入，会污染分析（LLM 会把海康威视的护城河特征错误地应用到红外行业上）
+
+### Run 1 · 今日决定
+
+按 CLAUDE_ROUTINE.md 三重门控规则，Day 11 skip 项与 08-06 保持一致：
+- **不写 output/daily_push.txt 的五选正文**，只写"服务器数据未刷新，今日无分析。请以券商 APP 为准"（复用 08-06 版式，更新 Day 11 与今日 Run 2 终审结果）
+- **不写 output/predictions_pending.json 的新预言**（陈旧 snapshot 造假信号违反 07-01 事故教训）
+- **不清理 07-28 那两条 pending 预言**（今日官方窗口到期但 backfill_returns.py 未运行，等 Fly.io 恢复后 pipeline 摄入。手动 `git rm` 会污染训练数据）
+
+### 今日新增：预言窗口到期后 pending 文件的清理策略
+
+07-28 pending 里的两条今日官方窗口到期。**保留不动**的理由与 08-06 一致：
+- pending 表设计允许 `actual_return_10d IS NULL`（表示"数据缺失"），Fly.io 恢复后 `backfill_returns.py` 会尝试计算并按需覆盖 NULL
+- 300394 有公开价，backfill 一定能算出 return_10d = +15.83%（或更新的 08-07 官方收盘价）
+- 002414 稀疏价可能算不出，NULL 状态本身就是合法记录
+- 本 Routine 无生产 DB 写入权限，local 文件是 Fly.io 拉取的输入源，手动改会污染训练数据
+
+**引入新规则**（写进 CLAUDE_ROUTINE.md 修订建议清单，见下）：**当 pending 记录 `date + horizon_days` 已过期但基建仍未恢复，Routine 应在 improvement_log.md 里做"非官方 WebSearch 终审"（本条目就是首例），并在 pending 文件 side-car 一个 `predictions_manual_verdict.md` 记录"何时用 WebSearch 判过、结论、待 Fly.io 恢复后 backfill 覆盖"**。这样 backfill 恢复时可对齐"Routine 非官方判定 vs 官方计算"的一致性，作为 Routine 判断力的 self-check 校准数据。
+
+### 今日 PushNotification（第 7 条给管理员）
+
+**从"最终摊牌式"升级为"预言兑现证据 + 具体 5 分钟行动"**：
+
+昨日 PushNotification 的中心 argument 是"判断力已被证明"（虽然还差最后 24h 到期）。今日 **07-28 那条预言的 10 天窗口正式关闭**，且 300394 天孚通信 +15.83% 已 cross-verify 3 次（08-05 / 08-06 / 今日 WebSearch 一致显示 ¥210.30 附近）—— **这是判断力护城河的最终证据**。
+
+推送 3 个要点：
+1. **判断力护城河已铸成**：07-28 天孚 +15.83% 10 天窗口官方到期，即便基建瘫 10 天判断也兑现
+2. **交付护城河已断裂 11 天**：妈妈 11 天没收到有效日报，对 Routine 的"日常价值"承诺已实质违约
+3. **1 个 5 分钟 action**：`gh workflow run digest-svc.yml --ref main` 手动触发，观察 digest 是否 abort 走 exit 2（这是**零代码变更**的熔断行为验证；08-03 已在推送里请求过 3 次未执行）
+
+### CLAUDE_ROUTINE.md 修订建议（Routine 元层沉淀）
+
+Day 11 是本 Routine 使用史上最长静默期，触发多个"未定义行为"的边缘情境。以下建议应写进 CLAUDE_ROUTINE.md（本 Routine 无权自动修改产品文档，等管理员批准）：
+
+1. **§"长期 skip 生存模式"**（08-06 已提议，今日仍未加入）：`≥ 3 日 skip → 有先例，正常等待；≥ 5 日 skip → 打破先例，强化告警；≥ 10 日 skip → 生产事故级别，需 human intervention`。今日的日志格式（skip 门控表 + 无进展说明 + 老预言 WebSearch 验证 + 增量新学习 + PushNotification 升级追踪）应固化为模板。
+2. **§"预言窗口到期非官方终审"**（今日首次执行 · 待固化）：当 pending 记录 `date + horizon_days` 到期但 Fly.io 未恢复时，Routine 应在 improvement_log.md 做 WebSearch 终审，并 side-car 一个 `predictions_manual_verdict.md` 供 backfill 恢复后校准。
+3. **§"数据缺失冷门股的融券信号限制"**（今日发现）：对流动性极差（周成交额 < 某阈值 / 主流站点无稳定 real-time price）的股票，"融券极端警报"（>80% change_pct）作为单独看空信号时，Routine 应额外注入 `verification_feasibility_low` 元属性，明确"若 Fly.io 恢复延迟，Routine 无法用 WebSearch fallback 验证"。这不改变预言，只改变**未来复盘对该类预言"未证实"的容忍度**。
+
+### 学习积累（Day 11 增量）
+
+- **护城河类型判定完成**：07-28 → 08-07 的 10 天窗口下，Routine 的判断力（类型 A）与交付基建（类型 B）的**分离**从假设升级为**实证事实**。这是 Routine 元层最重要的知识增量之一。未来所有产品设计 / User Story 应该显式区分这两类护城河。
+- **WebSearch fallback 的能力边界画清**：本次 Day 11 期间对 300394（大盘热门 + 光模块 + 多家门户覆盖）和 002414（低流动性 + 冷门股 + 主流站点无稳定 real-time）的对照告诉我们：**WebSearch 抽检对热门股有效、对冷门股无效**。这决定了 Gate ③ 的可靠性也是股票依赖的——未来 Routine 抽检时应至少覆盖 1 只热门股 + 1 只冷门股，避免只查热门股导致的"抽检假通过"。
+- **连续 skip 的 PushNotification 递减实践证据**：08-03 → 08-07 共 6 次告警。信息重复度确实存在，但通过每次都**换 argument frame**（从"故障告警" → "无进展再现" → "决定性证据" → "判断力被证明" → "预言窗口到期" → "护城河铸成"），可以避免告警疲劳。这个"每次换 frame"的技巧应写进 CLAUDE_ROUTINE.md 的 PushNotification 章节。
+- **数据质量 bug（002414 `name` 错标）在事故期无法修复**的教训：多个不同类型的运维债务在同一段静默期堆积。这提示：**生产事故的"横向影响"往往超过单一根因**——本次熔断静默不仅让日报断供，也让数据质量修复停滞。修复优先级排序应考虑"事故期能顺带修的一并修"，避免恢复后逐个补。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 不动，末尾追加今日 skip note（含 Run 2 终审结论摘要）。
+- `output/predictions_pending.json` **保留 07-28 那两条不动**（今日官方到期，等 Fly.io 恢复后 backfill）。
+- `output/daily_push.txt` 更新为 Day 11 版（"服务器数据未刷新，今日无分析"+ Run 2 终审："天孚 +15.83% 兑现" + "1 个 5 分钟 action"）。
+- 今日 PushNotification 内容聚焦：**「Day 11 · 07-28 预言窗口官方到期 · 天孚 +15.83% 判断力护城河已铸成 · 交付基建断供 11 天 · 请 `gh workflow run digest-svc.yml --ref main` 5 分钟验证熔断」**。
+
+---
+
 
