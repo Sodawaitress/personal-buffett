@@ -94,7 +94,13 @@ def _bulk_prices(codes: list) -> int:
             ok = 0
             for sym, code in sym_map.items():
                 try:
-                    hist = df[sym].dropna(subset=["Close"]) if len(sym_map) > 1 else df.dropna(subset=["Close"])
+                    # group_by="ticker" 即使只有一个 ticker 也返回 MultiIndex 列，
+                    # 所以先按 ticker 取；取不到再当普通单层列处理。
+                    try:
+                        sub = df[sym]
+                    except (KeyError, TypeError):
+                        sub = df
+                    hist = sub.dropna(subset=["Close"])
                     if not len(hist):
                         continue
                     price = round(float(hist.iloc[-1]["Close"]), 2)
