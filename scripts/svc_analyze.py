@@ -20,6 +20,7 @@ bootstrap_paths()
 from datetime import datetime
 
 import db
+from scripts.buffett_groq import set_call_deadline
 from scripts.config import CN_TZ
 from scripts.pipeline_analysis import _run_analysis, _run_layer2
 
@@ -105,6 +106,9 @@ def main():
 
         # LLM 预算在量化跑完后才起算 —— 否则量化耗时会侵占信件时间（US-139 事故）
         deadline = time.time() + BUDGET_MIN * 60
+        # 单只内部撞 429 会 sleep 450s，绕过下面「每只之间」的检查 → 预算交给 Groq 层
+        # 一起守（US-140；实测 08-10 那轮就因此超预算 20 分钟）
+        set_call_deadline(deadline)
         for code, reason in picked:
             if time.time() > deadline:
                 run.stopped_early = True
@@ -127,6 +131,7 @@ def main():
             except Exception as e:
                 print(f"  ⚠️ {code} 分析失败（跳过）: {e}")
 
+        set_call_deadline(None)
         if quant_early:
             run.stopped_early = True
 

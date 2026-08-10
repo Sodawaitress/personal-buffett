@@ -63,9 +63,16 @@ def run_material_scan(code: str, name: str = "", market: str = "", days: int = 7
 
 
 def run_material_scan_all(codes: list[str], days: int = 7, max_minutes: float = 25) -> dict:
-    """带时间预算：超过 max_minutes 就停(防 Groq 限流把每日 pipeline 拖过 120 分钟上限被杀)。"""
+    """带时间预算：超过 max_minutes 就停(防 Groq 限流把每日 pipeline 拖过 120 分钟上限被杀)。
+
+    US-140：预算只在「每只之间」检查是不够的 —— 单只内部撞 429 会 sleep 450s，
+    20 分钟预算实测跑成 60 分钟被 SIGKILL。把 deadline 一并交给 Groq 层。
+    """
     total = {"saved": 0, "material": 0, "stopped_early": False}
     deadline = time.time() + max_minutes * 60
+    from scripts.buffett_groq import set_call_deadline
+
+    set_call_deadline(deadline)
     for code in codes:
         if time.time() > deadline:
             total["stopped_early"] = True
@@ -77,6 +84,7 @@ def run_material_scan_all(codes: list[str], days: int = 7, max_minutes: float = 
             total["material"] += r["material"]
         except Exception as e:
             print(f"  material_scan {code} failed: {e}")
+    set_call_deadline(None)
     return total
 
 

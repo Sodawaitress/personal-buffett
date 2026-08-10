@@ -29,15 +29,95 @@ FORCE = os.environ.get("FORCE_FETCH", "0") == "1"
 GAP_SEC = float(os.environ.get("FETCH_GAP_SEC", "1.5"))
 
 
+def _yahoo_symbol(code: str, market: str) -> str:
+    """A股 → 6位.SS/.SZ；其余市场 code 本身就是 yahoo 代码（NVDA / 0700.HK / CYM.NZ）。"""
+    if market != "cn":
+        return code
+    pure = code.split(".")[0]
+    return f"{pure}.{'SS' if pure.startswith(('5', '6', '9')) else 'SZ'}"
+
+
+def _bulk_prices(codes: list) -> int:
+    """批量刷当日价格（US-140）——逐只 1a 层每只 ~30s，208 只根本跑不完一轮，
+    当日价格覆盖率只有 38%，把 daily_digest 的 50% 熔断卡死 → 快照冻了 14 天。
+
+    价格是唯一「全量覆盖」才有意义的数据（快照/熔断按覆盖率判断），所以单独
+    拎出来走批量接口：A股一次新浪请求拿全部，其余市场一次 yfinance 批量下载。
+    深度层（财务/技术面/资金）仍按预算逐只轮转，不变。
+    """
+    by_market = {}
+    for code in codes:
+        stock = db.get_stock(code)
+        if stock:
+            by_market.setdefault(stock.get("market", "nz"), []).append(code)
+
+    saved = 0
+
+    # ── A股：一次新浪批量（云端整批失败时 fetch_quotes 内部会退 yfinance）──
+    cn = by_market.get("cn", [])
+    if cn:
+        from scripts.stock_fetch import fetch_quotes
+
+        try:
+            quotes = fetch_quotes([(db.get_stock(c).get("name", c), c) for c in cn])
+            for code, q in quotes.items():
+                if q.get("price"):
+                    db.upsert_price(code, q["price"], change_pct=q.get("change"),
+                                    volume=q.get("amount"))
+                    saved += 1
+            print(f"  ✅ A股批量行情：{saved}/{len(cn)} 只")
+        except Exception as e:
+            print(f"  ⚠️ A股批量行情失败: {e}")
+
+    # ── 其余市场：一次 yfinance 批量下载（美/港/NZ/澳/韩）──
+    intl = [(c, m) for m, lst in by_market.items() if m != "cn" for c in lst]
+    if intl:
+        try:
+            import yfinance as yf
+
+            sym_map = {_yahoo_symbol(c, m): c for c, m in intl}
+            df = yf.download(list(sym_map), period="5d", group_by="ticker",
+                             progress=False, threads=True, auto_adjust=True)
+            ok = 0
+            for sym, code in sym_map.items():
+                try:
+                    hist = df[sym].dropna(subset=["Close"]) if len(sym_map) > 1 else df.dropna(subset=["Close"])
+                    if not len(hist):
+                        continue
+                    price = round(float(hist.iloc[-1]["Close"]), 2)
+                    prev = round(float(hist.iloc[-2]["Close"]), 2) if len(hist) >= 2 else None
+                    chg = round((price - prev) / prev * 100, 2) if prev else None
+                    db.upsert_price(code, price, change_pct=chg)
+                    ok += 1
+                except Exception:
+                    continue
+            saved += ok
+            print(f"  ✅ 海外批量行情：{ok}/{len(intl)} 只")
+        except Exception as e:
+            print(f"  ⚠️ 海外批量行情失败: {e}")
+
+    return saved
+
+
 def main():
     db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     codes = db.fetch_priority_codes()  # 持仓→观察→已卖出，同级按 staleness 轮转（US-122）
     mode = "全量强抓" if FORCE else "缓存优先(续跑)"
     print(f"📡 fetch-svc 启动：{len(codes)} 只自选股，预算 {BUDGET_MIN} 分钟，{mode}")
-    deadline = time.time() + BUDGET_MIN * 60
     done = 0
 
     with db.service_run("fetch-svc") as run:
+        # 先批量把当日价格全覆盖（快照熔断只看价格覆盖率），再花预算逐只挖深度层
+        print("💹 批量行情（全覆盖）…")
+        try:
+            n = _bulk_prices(codes)
+            print(f"✅ 批量行情完成：{n}/{len(codes)} 只有当日价格")
+            run.tick(n)
+        except Exception as e:
+            print(f"⚠️ 批量行情整体失败（不挡逐只抓取）: {e}")
+
+        # 逐只深度层的预算在批量之后才起算（US-139 同款教训）
+        deadline = time.time() + BUDGET_MIN * 60
         for code in codes:
             if time.time() > deadline:
                 run.stopped_early = True

@@ -8,6 +8,18 @@ from scripts.groq_ratelimit import throttle
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = "llama-3.3-70b-versatile"
 
+# 有时间预算的调用方（各 svc）在开跑前设一次；429 兜底要睡过这个点就直接放弃本次调用。
+# 不设则维持原行为（睡满 Retry-After）。
+# US-140：material scan 名义预算 20 分钟却跑成 60 分钟被 SIGKILL —— 因为预算只在
+# 「每只之间」检查，而单只内部一次 429 就 sleep(452s)，闸门形同虚设。
+_call_deadline = None
+
+
+def set_call_deadline(ts: float = None) -> None:
+    """ts = time.time() 时刻；None 清除。"""
+    global _call_deadline
+    _call_deadline = ts
+
 
 def _retry_after_seconds(resp) -> float:
     """从 429 响应头算等待秒数：优先 retry-after，其次 token/请求 reset。兜底 30s。"""
@@ -67,6 +79,11 @@ def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
                     print("    ⚠️ Groq 限流重试耗尽，切换备用方案")
                     return ""
                 wait = _retry_after_seconds(resp)
+                if _call_deadline and time.time() + wait > _call_deadline:
+                    left = max(_call_deadline - time.time(), 0)
+                    print(f"    ⏳ Groq 限流需等 {wait:.0f}s，但预算只剩 {left:.0f}s —— "
+                          f"放弃本次调用（不拖过预算被 SIGKILL）")
+                    return ""
                 print(f"    ⏳ Groq 限流兜底，等待 {wait:.1f}s 后重试（第{attempt+1}次）...")
                 time.sleep(wait)
                 continue

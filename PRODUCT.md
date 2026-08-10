@@ -5222,3 +5222,58 @@ DB 最新可用，慢的那天用稍旧数据下次自愈」，不是缺陷；mo
 - 不给 `_run_layer2` 做 DB 批量化重构（一次性取全量再算）—— 值得做但属独立优化，
   本 US 先靠「跳过当天已算」把量级降下来
 - 不引入 self-hosted runner 解决地理延迟（B 方案已定，不花钱）
+
+---
+
+## US-140 · 快照冻结 14 天：批量取价 + Groq 预算硬闸门
+
+> **实现状态（2026-08-11）**：✅ 已实现。本地实测批量取价 135/137 只 / 13 秒。
+
+### 背景
+US-138/139 之后 5 个服务连日全绿，但**网站快照从 07-29 起冻结 14 天**，Routine
+每天读到陈旧数据 → 连写 14 天 skip 日志、连推 8 天告警。
+
+**Routine 的诊断是错的**：它认定根因是 `daily_digest.py` 的熔断，连续 5 次请求
+运维手动跑 `gh workflow run digest-svc.yml`。实际那个熔断是**按设计正确工作**：
+```
+[daily_digest] 中止 commit — 只有 78/208 (38%) 只股票有当日新价格。
+  ...宁可让 Routine 读到昨天的 snapshot 并识别为陈旧，
+     也不要用只翻新元数据的伪 snapshot 骗过 Routine。（2026-07-01 事故教训）
+```
+手动重跑 digest-svc 一百次也是同一个结果 —— 熔断是症状的**守门人**，不是病因。
+
+**真根因在上游一层**：自选股涨到 208 只，fetch-svc 逐只抓（每只 ~30s，1c2 资金
+信号还常超时），40 分钟预算一天只覆盖 81 只 = 38% < 50% 阈值 → 熔断 → 快照冻结。
+而 `stock_fetch.fetch_quotes()`（monolith 时代就在用）**一次新浪请求就能拿全部
+A 股行情** —— 178/215 只自选股是 A 股，一次请求即覆盖 83%。
+
+**附带发现**：market-svc 3/4 次 cancelled。material scan 名义预算 20 分钟实际
+跑 60 分钟被 SIGKILL —— 预算只在「每只之间」检查，而单只内部撞 429 会
+`sleep(452s)`（Retry-After 头），每只睡 7.5 分钟，闸门形同虚设。analyze-svc
+同样受影响（08-10 那轮超预算 20 分钟，只是没撞破 90 分钟 timeout）。
+
+### Scope
+1. **fetch-svc 批量取价首道**（`_bulk_prices()`）：价格是唯一「全量覆盖才有意义」
+   的数据（快照/熔断按覆盖率判断），单独拎出来走批量接口 ——
+   - A股：一次 `fetch_quotes()` 新浪批量（云端整批失败时其内部退 yfinance）
+   - 其余市场：一次 `yf.download(tickers, group_by="ticker")` 批量下载
+   - 跑在逐只深度层**之前**，逐只预算在其之后才起算（US-139 同款教训）
+   - 深度层（财务/技术面/资金）仍按 40 分钟预算轮转，不变
+2. **Groq 预算硬闸门**：`buffett_groq.set_call_deadline(ts)`；429 兜底若要睡过
+   deadline 就直接返回空串让调用方降级，不睡。接进 material scan
+   （`run_material_scan_all` 用自己的 max_minutes）与 analyze-svc（LLM 预算）。
+   未设 deadline 的调用方（网页端即时请求）行为不变。
+
+### Acceptance Criteria
+- [x] 本地实跑 `_bulk_prices`：覆盖率 ≥95%（实测 135/137，13 秒）
+- [ ] 云端 fetch-svc 一轮后当日价格覆盖率 >50%，digest-svc 不再中止 commit
+- [ ] `snapshots/daily_snapshot.json` 重新出现每日更新
+- [ ] market-svc 在 60 分钟 timeout 内正常结束（非 cancelled）
+- [x] Groq 闸门四态测试：超预算不睡 / 预算充裕照睡 / 未设预算行为不变 / set-clear
+- [ ] Routine 恢复正常出日报（不再 skip）
+
+### 不做
+- 不调低 `daily_digest` 的 50% 熔断阈值（它是 2026-07-01 事故的守门人，
+  调低等于重新允许伪快照骗过 Routine）
+- 不给非 A 股做逐只兜底重试（批量拿不到的个别股票如 XRO.NZ 属数据问题，
+  不值得为它牺牲整轮时间）
