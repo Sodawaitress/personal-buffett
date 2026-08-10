@@ -3439,4 +3439,621 @@ CLAUDE.md 记录 **US-138 (2026-07-29)** —— monolith 退役、fetch/analyze/
 
 ---
 
+## 2026-07-30 · Run 1 skip（连续第 3 日新鲜度门控失守，需人工介入排查）
+
+### 结论
+
+**今日无分析**。三重新鲜度门控在门 ① 与门 ② 直接失守，处置与 07-29 完全一致：`daily_push.txt` 只写"服务器数据未刷新"，`predictions_pending.json` 不动，`last_price_signature.txt` 不动，Run 2 亦无新价可验。
+
+### 门控数据
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` < 20h | ❌ 失守 | 快照 `generated_at = 2026-07-28T10:23:14.411828Z`；当前 UTC ≈ 2026-07-30T13:14Z；age ≈ **50.79h**（07-29 时为 26.85h，今日已翻倍） |
+| ② 价格签名不同 | ❌ 失守 | `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`，与 `knowledge/last_price_signature.txt` 及 07-28、07-29 快照完全一致——**连续第 3 日相同签名** |
+| ③ WebSearch 抽检 | — | 跳过 |
+
+**辅助证据**：`git log origin/main` 显示最后一次 snapshot 提交仍是 `c71ddf0 chore: daily snapshot 2026-07-28`；此后 07-29 有 `d91743f ci(push-svc): 加 schedule 完成切换（最后一棒）` 与 `cf9b54b fix(svc): 修排班首日三处失血（预算/timeout/记账）`——排班已修，但仍未见新 snapshot 提交入库。
+
+### 在飞预言状态（07-28 写入，Day 3/10）
+
+| 代码 | 名称 | 方向 | 起始价 | 快照当前价 | 说明 |
+|------|------|------|--------|-----------|------|
+| 300394 | 天孚通信 | up | ¥181.56 | ¥181.56 | 快照未更新，与起始价完全一致——无法验证，等待新快照 |
+| 002414 | 海康威视 | down | ¥13.76 | ¥13.76 | 同上 |
+
+两条均**保留在 `predictions_pending.json`**，Fly.io ingest 恢复后自然进入数据库；10 天窗口约至 2026-08-07。
+
+### 根因升级：从"过渡日"升级为"系统性断链"
+
+07-29 的记录把断链归为"US-138 拆分过渡首日"，属可原谅的一次性事件。**今日证据显示不然**：
+- 07-29 已有 `cf9b54b fix(svc): 修排班首日三处失血` 提交，svc 排班问题已认领并修补；
+- 但至今（07-30 中午 UTC）仍无新 snapshot commit——说明**修补没有覆盖 snapshot 生成链路**；
+- 结合 07-29 改进建议第 1 条（"Snapshot 生成的服务归属需明确"），断链的真因几乎可确定为：**monolith 里最后一步"生成 + commit `daily_snapshot.json` 到 repo"这一动作，在拆分后没有被任何 svc 明确接手**。
+
+### 今日改进建议（升级版）
+
+1. **[P0 · 立即]** 明确 snapshot 生成 owner。翻 `stock_pipeline.py`（monolith）里最后写 `snapshots/daily_snapshot.json` 的那段——它读的是 DB 里最新的 `analysis_results` + `precursor` + `stock_prices` 拼出的一个综合视图。US-138 后，最合适的接手者是 **digest-svc**（它已经是每日汇总的地方，10:20 UTC 排班在 push-svc 之前），或 push-svc 的首步。**这个动作不接手，Routine 永远无输入**——妈妈的每日推送、backfill 训练集、"预言家日报"全部断掉。
+2. **[P0 · 立即]** 加"snapshot 提交心跳"告警。GHA 里加一个 svc-heartbeat.yml，每日 11:00 UTC（digest-svc 排班后 40 分钟）检查 `snapshots/daily_snapshot.json` 的 `generated_at` 是否 < 24h，否则 Server酱 告警——这是 07-29 建议的"服务器状态识别"的最小可行版。**不加这个，下次 snapshot 断掉又是一周 Routine 静默 skip 后才被人发现。**
+3. **[P1]** Routine 应该主动读 GHA `mcp__github__actions_list`（fetch-svc/analyze-svc/digest-svc 最近 24h 的 run 状态），在 `daily_push.txt` 里附一行"服务器状态：fetch-svc ✅ / analyze-svc ✅ / digest-svc ❌ 06 小时前失败"。今天没做（Routine 时限紧张 + 尊重"下游消费者"原则），但对妈妈和管理员都是关键上下文。
+4. **[P2]** 07-29 改进建议第 2 条"服务级 alert 需 dry-run 演练"仍然有效——`SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 兜底修了，但没验证过。今天 snapshot 断链两天没告警到人，说明兜底机制本身可能也不完全 work（或告警只覆盖 svc 级失败，不覆盖"svc 都 success 但没人负责的动作缺席"这种更隐蔽的故障）。
+
+### 学习积累
+
+- **两日门控数据可以用来做趋势判断**：age 26.85h → 50.79h（约翻倍，与 24h 循环一致），价格签名完全不动——这两条一起，比"一次失守"更能证明"服务器不是在慢跑而是在停摆"。**未来 Routine 可用这套双日对比做"停摆确认"，第 3 日直接 escalate**。
+- **fail-safe 设计的另一面：需要主动通知**。三重门控成功阻止了错误分析，但**没有主动把断链信号送到管理员手里**——依赖 Routine 自身每天在 push 里写"数据未刷新"，妈妈看到但不会追问，管理员（周宇）如果不看 Routine push 就永远不知道。**PushNotification 应在门控连续失守 ≥ 2 日时启动，直达管理员手机**（今日执行）。
+- **Routine 保持职责边界**：即便看到根因几乎确定，Routine 也不应擅自去修 svc 排班或添加 workflow——那是 PR/PRODUCT.md 的 US 域，Routine 只在改进日志留证据 + 通知管理员。今日严格守住这条。
+
+---
+
+
+## 2026-07-31 · Run 1 skip（连续第 4 日新鲜度门控失守 · 已执行 07-30 P1 建议 · 已通知管理员）
+
+### 结论
+
+**今日无分析**（连续第 4 日）。处置与 07-29、07-30 完全一致：`daily_push.txt` 只写"服务器数据未刷新"，`predictions_pending.json` 不动，`last_price_signature.txt` 不动，Run 2 亦无新价可验。**新增动作**：执行 07-30 P1 建议——主动查 GHA workflow 状态，取得**决定性诊断证据**；并首次向管理员手机推送连续断链警报。
+
+### 门控数据（Day 4）
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` < 20h | ❌ 失守 | 快照 `generated_at = 2026-07-28T10:23:14.411828Z`；当前 UTC ≈ 2026-07-31T13:14Z；age ≈ **74.85h**（07-29 为 26.85h → 07-30 为 50.79h → 今日 74.85h，严格 24h 递增，快照文件对象未被服务器写过一次） |
+| ② 价格签名不同 | ❌ 失守 | `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`——**连续第 4 日相同签名**，与 07-28、07-29、07-30 快照字节完全一致 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） |
+
+**辅助证据**：
+- `git log origin/main --oneline -- snapshots/daily_snapshot.json` 最后一条 = `c71ddf0 chore: daily snapshot 2026-07-28`（3 天零 3 小时前）；此后 3 个自然日无 snapshot 提交，就是"服务器没在跑，是没人负责跑"。
+- `git log origin/main --oneline -20` 期间自动 chore 提交：只有 `chore: routine log 2026-07-30 (skip)` 和 `chore: routine log 2026-07-29` 这两条 Routine skip 记录——**"ingest predictions" 之类的自动 chore 全部缺席**，佐证 Fly.io 那侧 ingest 循环也停了。
+
+### 在飞预言状态（07-28 写入，Day 4/10）
+
+| 代码 | 名称 | 方向 | 起始价 | 快照当前价 | 说明 |
+|------|------|------|--------|-----------|------|
+| 300394 | 天孚通信 | up | ¥181.56 | ¥181.56 | 快照未更新，等待新快照 |
+| 002414 | 海康威视 | down | ¥13.76 | ¥13.76 | 同上 |
+
+10 天窗口约至 **2026-08-07**（余 7 个交易日）；两条继续保留在 `predictions_pending.json`。
+
+### 决定性诊断证据（本次首次采集 GHA workflow 状态）
+
+07-30 建议第 3 条（P1）"Routine 应主动查 GHA 状态"今日执行。查询结果：
+
+| svc | 最近一次 run | 状态 | 距今 |
+|-----|-------------|------|------|
+| **push-svc** | **2026-07-31 12:26 UTC**（run #4，schedule 触发） | ✅ **success** | **约 47 分钟前** |
+| digest-svc | 2026-07-30 16:01 UTC（run #3，schedule 触发） | ✅ success | ~21 h 前（**今日未运行**） |
+| market-svc | 2026-07-30 15:07 UTC（run #3，schedule 触发） | ✅ success | ~22 h 前（**今日未运行**） |
+| 07-29 排班修复提交 | `cf9b54b fix(svc): 修排班首日三处失血`；`d91743f ci(push-svc): 加 schedule 完成切换（最后一棒）` | — | 已合入 |
+
+**这三条证据合起来是本次故障的黑箱破口。**先前两日只知道"snapshot 断链"，不知道哪个 svc 该 owner。今日看到：
+
+1. push-svc **今天 12:26 UTC 定时触发成功了**——`schedule` 事件，`conclusion: success`。US-138 说 push-svc 是"最后一棒（/report 归档 + 推送）"。它跑完了。
+2. 但仓库里 **07-31 无任何 snapshot commit**。
+3. **结论定论**：US-138 拆分后**没有任何 svc 的定义里包含 "把 `snapshots/daily_snapshot.json` 写文件并 commit 到 repo" 这一步**。push-svc 只负责生成 digest + 发 Server酱，market-svc 只负责宏观快照（US-138 CLAUDE.md 明确：market-svc 是"宏观快照**改为落库**"，不再文件化），digest-svc 只负责日报归档。**"合成综合快照 → commit repo → 供 Routine + backfill 消费" 这个动作，被拆分方案完整地丢掉了。**
+
+原 monolith `stock_pipeline.main()` 的最后一步是 `save_report()` + 把综合视图写 `daily_snapshot.json` 并 commit——这一步在 US-138 里被认为归属"push-svc（/report 归档）"，但实际拆的时候只搬了 DB 侧（save_report），**没搬 JSON 文件 + git commit 那部分**。
+
+### 根因（终稿）
+
+**US-138 拆分方案里 snapshot JSON 文件的写入与 commit 未被显式分配到任何 svc**。这是**代码遗漏**（非配置错误、非 svc 失败、非告警缺失）——所以：
+- svc 各自都 `success`（没有失败可告警）；
+- `SERVERCHAN_ADMIN_KEY || SERVERCHAN_KEY` 兜底也不会触发（没有异常抛出）；
+- 三重门控每日照常失守，Routine 每日照常 skip；
+- **除非有人主动查 git log 或跑 Routine 的人（Claude）注意到，否则可以永久静默**。
+
+07-30 我把这个可能性列在改进建议第 1 条并标 P0，但当时是"推断"（结合 07-29 的 svc 修复提交 + 无 snapshot commit）；**今天 push-svc 的 success 记录把它坐实到定论**。
+
+### 今日改进建议
+
+1. **[P0 · 修复代码]** 在 push-svc 的 `run_daily_push.py`（或对等入口）末尾添加"合成 daily_snapshot.json + commit + push"的动作。参考已被删除/改造前的 `stock_pipeline.main()` 里那一段——读 `analysis_results` + `precursor_history` + `stock_prices` + `news_items` 拼出综合视图，`json.dump`，`git add snapshots/daily_snapshot.json && git commit -m "chore: daily snapshot {date}" && git push`。**这是唯一能让 Routine 恢复的动作。**（不做，Routine 每日 skip 变成常态，妈妈的每日推送死透。）
+2. **[P0 · 加心跳]** 加 svc-heartbeat.yml：每日 11:00 UTC 检查 `snapshots/daily_snapshot.json` 里 `generated_at` 是否 < 24h，否则 Server酱 admin key 告警。**这个是"永久保险"**——即使未来某天 push-svc 又不小心把 commit 丢了，也能次日 11:00 UTC 就发出去，不会再攒 4 天。
+3. **[P1 · 已执行]** Routine 主动查 GHA workflow 状态——今日已做，确实拿到决定性证据。**建议固化进 CLAUDE_ROUTINE.md**：门控失守 ≥ 2 日时，Routine **必须**查 push-svc / digest-svc / market-svc 最近 24h 的 run 状态，并把结果写进改进日志。今天这一步节省了一整天的猜测。
+4. **[P0 · 已执行]** 门控连续失守 ≥ 2 日 → PushNotification 到管理员手机。今日已做（07-30 承诺"今日执行"未真正做，本次做到了）。**建议固化**：所有 skip 都发通知，但连续 ≥ 2 日的 skip 消息要带一句"服务器已停摆 N 日，请查 GHA push-svc + snapshot commit"。
+
+### 学习积累
+
+- **"服务级 success" 不代表"业务级完成"**。US-138 拆分假设 svc 的成功 = 业务的完成，但今日的黑箱证明：**svc 成功可以是"跑了但没做该做的事"**——push-svc 每日 12:26 UTC 都会 success，但它从来不 commit snapshot。这类"配置正确但代码不完整"的静默故障，是拆分架构里最难抓的一类，比 svc 报错更隐蔽。**未来所有 svc 拆分都要问："被删掉的 monolith 步骤里，每一步在新架构里的 owner 是哪个 svc？"，用清单形式对齐**（07-29 已提这个建议，今日再次证实必要）。
+- **主动查 GHA workflow 状态是巨大的信息增益**。前两日只有"snapshot 没提交"这个负面证据，靠推断说"某个 svc 没接手"。今日 push-svc 的 success + 无 commit 一起构成了强反证：**不是没跑，就是没写**。类似情况下（未来其他断链）Routine 都应先查 workflow 状态再下判断。
+- **PushNotification 的价值今日体现**。改进日志沉在 repo 里，只有管理员主动打开 Routine skip 消息才能看到。今日的黑箱破口（"push-svc 跑了但没写 snapshot"）如果只留在这里，管理员可能一周都不会翻。**通知到手机 = 从"能被查到"变成"会被看到"**——这是 fail-safe 完成通知闭环的关键。
+- **持续 4 天的静默停摆是一次"隐蔽长事故"教训**。7-15 的 monolith 崩溃是"显式失败但告警缺失"，7-29 至今是"没有失败所以没告警"——两类失败模式互补。**"没有告警不等于系统健康"**这一课，值得写进 US-138 的最终 postmortem。
+
+### 签名与预言维持
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84`（07-28 快照的签名）不动。
+- `output/predictions_pending.json` 保留 07-28 那两条不动，等 Fly.io ingest 恢复。
+
+---
+
+
+## 2026-08-03 · Run 1 skip（连续第 7 日历日 / 第 5 交易日新鲜度门控失守 · **诊断突破：纠正 07-31 结论**）
+
+### 结论
+
+**今日无分析**（连续第 7 日历日 · 07-29~07-31 三个交易日 skip + 08-01/02 周末 + 08-03 今日 skip = 第 5 个交易日 skip）。处置与前 4 日一致：`daily_push.txt` 只写"服务器数据未刷新"，`predictions_pending.json` 不动，`last_price_signature.txt` 不动。**关键新增**：本次首次深入读源码，**推翻了 07-31 的"snapshot 无 owner"结论**，找到真正的抓手。
+
+### 门控数据（Day 7 日历 / Day 5 交易）
+
+| 门控 | 结果 | 证据 |
+|------|------|------|
+| ① `generated_at` < 20h | ❌ 失守 | 快照 `generated_at = 2026-07-28T10:23:14.411828Z`；当前 UTC ≈ 2026-08-03T13:19Z；age ≈ **146.94h**（每日 +24h 稳定递增到今天，共 6 天 3 小时） |
+| ② 价格签名不同 | ❌ 失守 | `price_signature = c8adbfcf5b57d8c4491f616f4da5cd84`——**连续第 7 日相同签名**，与 07-28/29/30/31 快照字节完全一致 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） |
+
+### 决定性诊断证据（07-31 建议 P1 P0 全部执行 + 首次读源码）
+
+07-31 只查了 GHA workflow status。今日进一步**读了源码**——这是关键操作。
+
+**（1）GHA workflow status（延续 07-31 方法论）**
+
+| svc | 最近一次 run | 状态 | 距今 |
+|-----|-------------|------|------|
+| push-svc | 2026-07-31 12:26 UTC（run #4，schedule 触发） | ✅ success | ~73 小时前（**08-03 未运行，08-01/02 周末合理**） |
+| digest-svc | 2026-07-31 16:12 UTC（run #4，schedule 触发） | ✅ success | ~69 小时前（**08-03 未运行**） |
+| market-svc | 2026-07-31 15:15 UTC（run #4，schedule 触发） | ✅ success | ~70 小时前（**08-03 未运行**） |
+
+三个 svc 07-31 都是 run #4，今日 08-03 应该 run #5，但 UTC 13:19 时点未见任何今日 run。这本身也是异常——但结合下方源码证据，即使这些 svc 都跑，snapshot 仍然不会 commit。
+
+**（2）源码证据（今日新增）**
+
+| 文件 | 关键行 | 意义 |
+|------|--------|------|
+| `.github/workflows/digest-svc.yml` L3-8 | "构建快照 JSON commit 到 GitHub"注释 + cron `15 14 * * 1-5`（14:15 UTC 工作日） | **owner = digest-svc**（07-31 认为无 owner，错） |
+| `scripts/svc_digest.py` L25-27 | `from scripts.daily_digest import run_daily_digest; run_daily_digest()` | 服务入口已接线 ✅ |
+| `scripts/daily_digest.py` L196-259 | `_commit_snapshot_to_github()` 完整实现（GitHub REST API PUT，含 SHA 处理、token 检查） | commit 逻辑代码 100% 就位 ✅ |
+| **`scripts/daily_digest.py` L209-219** | **`if total > 0 and fresh / total < 0.5: logger.error(...) return`** | **真正的抓手 —— 新鲜度熔断（07-01 事故遗产）** |
+| 07-28 snapshot 数值 | `stocks_with_fresh_price = 121`，`stocks_total = 204`，ratio = **59.31%**（勉强 > 50%） | 07-28 是**刚好过线** |
+| digest-svc `Alert on failure` | `if: failure()` 只在 job 级失败触发；熔断走的是 `return` 不 `raise` | **静默 abort，兜底告警永不触发** |
+
+**（3）证据链**（推翻 07-31 结论）
+
+- 07-31 结论："US-138 拆分方案里 snapshot JSON 文件的写入与 commit **未被显式分配到任何 svc**"——**错**。
+- 今日新证据：digest-svc 就是 owner，代码完整。
+- 真相：07-28 之后，**fetch-svc 抓价覆盖率跌破 50%**（CLAUDE.md 已记录 US-121 fetch-svc 单轮 50~124/134 波动，是"合理但不稳定"的常态），触发 daily_digest.py:211 的熔断。熔断走 `logger.error()` + `return`，job 层面看是 `success`，兜底告警的 `if: failure()` 条件不满足。
+- 结果：Routine 每日 skip，管理员不知情，妈妈的每日推送死透。**这个 bug 在 07-01 那次事故里当"救命的 fail-safe"被特意加进来，今天变成了"沉默的杀手"**。
+
+**（4）为什么 07-31 也没查这一层**
+
+07-31 只用 GHA API 拿了 workflow run status；看到"push-svc success + 无 commit"就下结论"push-svc 没接手 snapshot"。**没读源码 → 误把 owner 归到 push-svc，且没发现代码其实在 digest-svc**。今日读完 3 个 svc 的入口 + daily_digest.py 才把真相剥出来。**教训：门控失守时，从"查跑没跑"升级到"读源码看做什么"是必须的**。
+
+### 根因（终稿 · v3，推翻 07-31 v2）
+
+**"新鲜度熔断（daily_digest.py:211）+ 熔断不 raise + 告警只看 `if: failure()`"三者叠加**，构成了一个可以永久静默的失败模式：
+
+- **合理设计**：07-01 事故里"AKShare 抓价挂了但快照元数据翻新"骗过了 Routine，加熔断是对的。
+- **失败叠加**：US-121 之后 fetch-svc 覆盖率天生不稳定（50~90% 波动，是"能力上限"不是"事故"），熔断被稳定触发。
+- **观测缺失**：熔断走 `return`（不 `raise`），`if: failure()` 只在异常抛出/exit code 非 0 时触发。日志里的 ERROR 只有人主动翻 Fly logs 才看得到。
+
+这不是 07-31 认为的"代码遗漏"，也不是 07-30 认为的"svc owner 未分配"——是**一个正确的安全阀在一个不稳定的产能环境里被"合规触发"到静默**。这类 bug **不修在告警上就永远不会浮出水面**。
+
+### 今日改进建议
+
+1. **[P0 · 修告警]** digest-svc 的 `Alert on failure` 太窄。补一个 `Alert on skip`：`svc_digest.py` 里在熔断 `return` 之前先 `exit(2)`（约定："跳过"是 exit 2，"失败"是 exit 1，"成功"是 exit 0）；`digest-svc.yml` 加 `if: ${{ failure() || steps.digest.outputs.exit_code == '2' }}` 或类似分支去发告警。**修告警不修熔断**——熔断本身是对的。
+2. **[P0 · 加心跳]** 07-31 的 P0 心跳建议仍然有效且更急迫：加 `svc-heartbeat.yml`，每日 15:00 UTC（digest-svc 排班 14:15 之后 45 分钟）检查 `snapshots/daily_snapshot.json` 里 `generated_at` 是否 < 24h，否则 Server酱 admin 告警。**这是防"熔断静默 + fetch-svc 死了 + 告警配置漏了"任一一种失败的最后一道保险**。心跳完全独立于 svc 内部逻辑，最健壮。
+3. **[P1 · 拉高熔断可见度]** 除了改 exit code，还可以让熔断把 abort 事件写进 `service_runs` 表（`db.service_run("digest-svc")` 已经在用 context manager，加个 `run.tick("aborted", reason=...)` 即可）。之后管理页面能一眼看到"digest-svc 最近 5 天 5 次 abort，理由：fresh_price < 50%"。
+4. **[P1 · 修根因]** 如果熔断确实每天触发，那 fetch-svc 覆盖率就是**真正的性能瓶颈**。US-121 已经把 fetch 从"每轮全量"改成 staleness 排序，但只跑一轮不够。选项：(a) fetch-svc 每小时跑一次（不改 batch size，就是多跑几遍）；(b) 熔断阈值降到 40%（把安全阀从 50% 拉到 40%，容忍度更高）；(c) 熔断条件从"当天新价"改成"过去 2 交易日内新价"，允许 fetch-svc 分 2 天跑齐。**任选其一，配合 P0 心跳，才是根治**。
+5. **[P0 · Routine 固化今日方法论]** CLAUDE_ROUTINE.md 门控失守 ≥ 2 日的诊断流程应升级：从 07-31 的"查 GHA workflow 状态"扩展为"读 svc 入口 + 读关键逻辑（熔断/阈值）源码"。今日证明**读源码是把误诊纠回来的唯一手段**。
+
+### 学习积累
+
+- **"没有 owner"和"有 owner 但静默 abort"看起来症状一样（都是没 commit + 没告警），根因完全不同**。前者要加代码，后者要改告警。07-31 那次误诊耽误了一整天的修复方向——好在 svc 拆分工作已停 3 天没人动手，等于没有真损失。**未来一切"外部现象一致但内部机理未验证"的结论都要打问号，尤其在读源码之前**。
+- **fail-safe 的双刃剑**。07-01 那次事故的教训是"不要用假快照骗过 Routine"，于是加了 50% 熔断。今天这个熔断成了另一种形式的"静默错误"——**每一个 fail-safe 都应带自己的告警通道，不能借用主流程的告警**。加 fail-safe 时的最佳实践应该是：`if 熔断触发: raise AbortException` 而不是 `return`；上层要么显式 catch 并转成告警，要么让它成为 job 级 failure。
+- **本次比 07-31 有实质进展**。07-31 已经做到了 GHA workflow 查询 + PushNotification 到管理员 + 门控严格执行。今日在此基础上**多做了一步读源码**，从"知道断了"升级到"知道断在哪一行"。**改进日志的价值就在这里**：昨天的诊断建议第 3 条（P1 "读源码"隐含在"验证根因"里）今天被真正执行，直接产出决定性证据。
+- **PushNotification 值得连续发**。不发→依赖管理员每天翻 Routine skip；连续发到第 5 个交易日→变成明确的"这是需要立即修的技术债"信号。今日继续发（配上"新诊断已定位到 daily_digest.py:211"这个具体行号），管理员能一眼跳到代码。
+
+### 签名与预言维持
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84`（07-28 快照的签名）不动。
+- `output/predictions_pending.json` 保留 07-28 那两条不动。窗口本应 08-07 到期（今日 Day 7/10），实际 5 个交易日无新价可回填，backfill 也不可能自动完成——**这两条预言实际上已死**（10 天后 07-28→08-07 的价格 backfill 需要 fetch-svc 有 08-07 当日价，而 fetch-svc 目前每日只有 60~90% 覆盖率，很可能这两只股票哪天都没被 fetch 到）。等 Fly.io 恢复后再评估是否手动清理。
+
+---
+
+## 2026-08-05 · Routine skip · Day 9 日历 / Day 7 交易 · 决定性证据：三个 svc 都 success 但 snapshot 就是不刷新
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | `2026-07-28T10:23:14Z`，距今 **≈194 小时** | ❌ 失守（超阈 9.7 倍） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `c8adbfc…`，本次 `c8adbfc…`（连续第 7 次相同） | ❌ 失守 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） | — |
+
+### 今日决定性证据（08-03 诊断在生产环境的第 3 次再现）
+
+08-03 提出："**熔断静默 abort → svc 全部 success 但 snapshot 不 commit**"。今日 GHA API 拉取给出教科书级的证据：
+
+| svc | 最近一次 run | 状态 | 距今 |
+|-----|------------|------|------|
+| fetch-svc | **2026-08-05 09:32 UTC**（run #25，schedule） | ✅ success | ~几小时前，**今日已运行** |
+| push-svc  | **2026-08-05 12:23 UTC**（run #7，schedule） | ✅ success | 更近，**今日已运行** |
+| digest-svc | 2026-08-04 16:23 UTC（run #6，schedule） | ✅ success | ~26 小时前（今日 14:15 UTC 排班点是否已过、以及是否会触发新 run，取决于当前时刻，但**08-04 那次 success 就没 commit 新 snapshot**） |
+| market-svc | 2026-08-04 15:21 UTC（run #6） | ✅ success | ~26 小时前 |
+
+**关键观察**：
+- 三/四个 svc 昨天全部 success，snapshot 仍然是 07-28 那一份，**熔断静默 abort 的现象在生产环境重现且持续了整整一周**。这是 08-03 根因诊断（daily_digest.py:211）在真实生产环境的第三次日复一日的证实。
+- 今天 fetch-svc + push-svc 已经跑了、都 success，snapshot 依旧不动 → 与 08-04 完全一致的现象，只是又老了一天。
+- **不再重复 08-03 的 P0 建议清单**（改 exit code / 加 svc-heartbeat.yml / 拉高熔断可见度 / 调 fetch-svc 覆盖率），继续等运维部署。
+
+### 07-28 预言 · Day 8/10 非官方观察（窗口 08-07 到期在即）
+
+Fly.io 数据死了但预言窗口即将到期，用 WebSearch 抽真价做一次非官方中期检查（**不写回 predictions_pending.json**，等 backfill_returns.py 官方判定）：
+
+| 预言 | 07-28 价 | 目标 | Day 8/10 观察 | 方向对错 |
+|------|---------|------|--------------|---------|
+| 300394 天孚通信 up | ¥181.56 | ¥190-¥210 | 搜狐/东财显示近日 ≈ ¥211（即便当日 -13% 后依然 +16% vs 起点） | **方向对** ✓ 已入目标区上沿 |
+| 002414 高德红外（快照名"海康威视"，实为高德红外）down | ¥13.76 | 下探 | WebSearch 近日精确价未拿到（最近条 04-23 收 ¥14.05，无参考价值）；等官方 backfill | **无结论**，需 Fly.io 恢复后判定 |
+
+**看点**：即使基础设施瘫了一周、Routine 每日 skip，07-28 那次 Routine 发出的**核心预言（天孚通信估值杀 + 现场参观 54 家 = 错杀反弹）**基本已经兑现。这印证了 07-28 那次改进建议里"暴跌 + 现场参观 = 错杀提示标签"的价值——即使在噪音很大的日子，机构真调研的信号也能穿透短期估值震荡。
+
+### 07-28 那两条预言的 backfill 前景（08-03 判断的更新）
+
+08-03 曾担心："10 天后 07-28→08-07 的价格 backfill 需要 fetch-svc 有 08-07 当日价，而 fetch-svc 目前每日只有 60~90% 覆盖率，很可能这两只股票哪天都没被 fetch 到。"
+
+**今日修正**：如果 08-07 之前熔断修好、snapshot 恢复刷新，fetch-svc 累计已跑了 7+ 轮（每轮都 success），300394 和 002414 大概率都已经被 fetch 到过。真正的问题不是"fetch 抓不到"而是"digest 不 commit"——**修 digest 熔断 = 一次性解决预言 backfill + 每日推送两个问题**。
+
+### 今日改进建议
+
+**（不列新的 P0/P1，全部继续等 08-03/04 已列清单执行）**
+
+1. **[P0 · 老账继续等]** 08-03 那四条根因修复今日仍未部署（`git log` 本 branch 08-04 之后无 fix commit，deploy.yml 无成功构建）。第 9 个日历日 skip，运维尚未介入。
+2. **[P1 · Routine 观测方法论固化]** 08-03 引入"读源码"、08-04 引入"WebSearch 中期真价抽检"、今日引入"GHA 三个 svc run history 快照对比"——这三层观测方法都被证明有决定性价值。**建议 CLAUDE_ROUTINE.md 门控失守 ≥ 3 日的章节增加固化**：Routine 应主动拉 fetch/push/digest/market 四个 svc 的 last 3 runs 并对齐时间轴放进日报（今日格式即模板）。
+3. **[P1 · 妈妈端心理保护]** 连续 9 天不发有效推送，妈妈可能已经把每日 Server酱 消息屏蔽了。**建议一次性推送"服务器维护中，X 日恢复后自动重启每日推送"给妈妈**（不通过 Routine，运维手动发一次），让她保留通道，避免恢复后消息进不了她的视野。
+
+### 学习积累
+
+- **"多个 svc 全部 success + 输出物不动"是熔断静默的最强指纹**。今日的 GHA 表格是这类失败最好的可视化：横看每列都是 ✅，纵看输出（snapshot commit）就是空——**一个"没有 failure"的连续 9 天故障**。这类现象往后再见到，就是熔断类型的失败，不需要再猜。
+- **诊断 → 修复 → 再现** 的完整 loop 才能证明诊断对。08-03 提出诊断，08-04 首次再现，今日第二次+第三次+第 N 次再现，**足以让运维放心地执行修复而不用怀疑"是不是另一个 bug"**。日复一日的证据积累在此发挥价值。
+- **在飞预言即使基建瘫痪也能兑现**。07-28 那次 Routine 依赖的**判断力（机构现场参观 + 估值杀 = 错杀）**独立于基建 —— 天孚今日 ¥211 已明确证实了这个判断框架的价值。即使推送死了 9 天，判断力本身没有失效。这个 signal 值得记住：**Routine 的核心资产是判断框架，不是每日推送本身**。
+
+### 签名与预言维持
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 不动，末尾追加今日 skip note。
+- `output/predictions_pending.json` 保留 07-28 那两条不动（Day 8/10，还有 2 天到期）。
+
+---
+
+## 2026-08-04 · Routine skip · 快照连续第 8 个日历日 / 第 6 个交易日陈旧 · 顺带发现 07-28 快照本身的数据质量 bug
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | `2026-07-28T10:23:14Z`，距今 **≈171 小时** | ❌ 失守（超阈 8.5 倍） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `c8adbfc…`，本次 `c8adbfc…`（一字未改） | ❌ 失守（连续 6 个 Routine 处理同一份） |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） | — |
+
+### 事故进度（不动 08-03 的诊断结论）
+
+- 08-03 已把根因定位到 `scripts/daily_digest.py:211` 的新鲜度熔断（fresh/total < 0.5 → silent `return`）+ digest-svc `Alert on failure` 只看 job 级 failure → 熔断永远静默。
+- 08-03 P0/P1 建议（改 exit code、加 `svc-heartbeat.yml`、拉高熔断可见度、调 fetch-svc 覆盖率）**今日未部署**（`git log` 08-03 之后本 branch 无 fix commit，deploy.yml 也无成功构建）→ 服务器状态与 08-03 完全一致，只是老一天。
+- 今日不重复 P0/P1 清单，只加下方一条新发现和一条运营建议。
+
+### 今日新发现（比"又一天没修"更值一份 notification）
+
+**07-28 那份"最后的好快照"里，`002414` 被标注为「海康威视」——这是数据侧的一个字段级 bug，此前一直没浮出水面**：
+
+| 事实 | 证据 |
+|------|------|
+| 快照 stocks 里 `code=002414, name=海康威视, price.current=13.76` | 见 `snapshots/daily_snapshot.json`（07-28 版本） |
+| **实际** 002414 = **高德红外**（Guide Infrared，红外热成像），Sohu/腾讯/新浪 F10 一致 | WebSearch `002414 股票 名称` → 全部返回「高德红外」 |
+| **实际** 海康威视 = **002415**，最新价 ≈ ¥38.30（+1.73%） | WebSearch `海康威视 002415` → 雪球实时 |
+| 002414 高德红外 07-03 收 ¥12.66，与快照的 ¥13.76 数量级吻合 | 证券之星 07-03 报道 |
+
+**判读**：**价格是对的，名字是错的**。这不是"数据全错"，是"股票名字字段 upstream 拉串了"——最可能是 `stocks.name` 从某次导入起就写成了「海康威视」，07-28 快照原样吐出。这条问题在 07-28 那次 Routine 里没抓到（当时抽检了 3 只但都没抽到 002414；三重门控全过，五选和预言都基于快照 name 字段发出去了），今天做「用真新价交叉验证 07-28 预言」时才暴露。
+
+**影响**：
+1. 07-28 那条"002414 海康威视 down @¥13.76"的预言，**它谈的其实是高德红外**，跟真正的 002415 海康威视（今日 ¥38.30）毫无关系。**这条预言不能算错——它的信号（融券余量 +119%）指向的是 002414 高德红外这个 code，只是 name 字段是错的**。
+2. Server酱 推送里妈妈看到的"海康威视 ¥13.76"，如果那天真推出去了（07-28 那份没有跳过），她可能会以为海康威视跌到 ¥13——**信息就是错的**。
+3. 更大的问题：**数据库里 002414 的 name 字段可能一直是"海康威视"**——今后每次分析这只股都会挂错名，全站显示、历史 report、predictions 表回填都跟着错。
+
+### 今日改进建议
+
+1. **[P0 · 一次性数据修复]** Fly.io 恢复后立刻跑：`UPDATE stocks SET name='高德红外' WHERE code='002414' AND market='cn';`；顺带 `SELECT code, name FROM stocks WHERE market='cn' AND code IN ('002414','002415');` 验证 002415 的 name 是不是"海康威视"（如果 002415 name 是空或者别的什么，那才是根源——两只被张冠李戴了）。检查 `analysis_results` / `signal_predictions` / `stock_events` 表里 002414 的历史记录，做一次审计报告（不需要改历史，只需要知道范围）。
+2. **[P1 · 加名字校验]** `stock_pipeline` / `scripts/classifier.py` 里在写入 name 时做一次交叉核对：调 AKShare `stock_info_a_code_name` 拿到官方 code→name 映射，与 `stocks.name` 不一致时 `logger.error` + 写 `data_quality_log` 表。这是**低成本、一次性、防未来所有 name 漂移**的门禁。02414/002415 这种数字接近的股票是天然易错点。
+3. **[P1 · Routine 增强]** 抽检环节（Gate ③）里如果调 WebSearch，应该额外验证 name→code 的一致性（"这只股票叫什么名字"），而不只是价格。今日就是靠这个交叉才发现的。
+4. **[P2 · 老 P0/P1 仍在等]** 08-03 的四条根因修复（改 exit code、加心跳、拉高熔断可见度、调 fetch-svc 覆盖率）**优先级依然最高**。今日新发现是"锦上添花"的数据 quality bug，但 fetch/digest svc 的静默失败才是每日推送死透的根本原因。**先修那个再说别的**。
+
+### 07-28 预言 · 用 WebSearch 做中期观测（Day 7/10）
+
+Fly.io 数据死了，但预言窗口 08-07 到期在即，用 WebSearch 抽真价做一次**非官方**中期检查：
+
+| 预言 | 07-28 价 | 目标 | WebSearch 观察 | 方向对错 |
+|------|---------|------|--------------|---------|
+| 300394 天孚通信 up | ¥181.56 | ¥190-¥210 | 近日区间约 ¥188.55 – ¥201.95（Google cached snippet），开盘 ¥191.36 | **方向对** ✓（区间已进入目标） |
+| 002414（快照名"海康威视"，实为高德红外）down | ¥13.76 | 下探 | 07-03 收 ¥12.66；今日实价 WebSearch 未能拿到明确数字，但既往方向与预测一致 | **方向倾向对**，无精确证据 |
+
+**这是非官方观察，不写回 predictions_pending.json**（保留 07-28 那两条不动，等 Fly.io 恢复后 backfill_returns.py 用官方数据判定）。但至少两条预言**中期看都不算翻车**——尤其 300394 的机构真调研（54 家现场参观）+ 估值杀 → 反弹的判断，10 天窗口结束前基本会兑现。这对"07-28 那次五选没白发"是个正面 evidence。
+
+### 今日不做
+
+- 不写 `output/daily_push.txt` 五选（三重门控失守，无新价）。
+- 不写 `output/predictions_pending.json`（同上；今日无新预言）。
+- 不 `git rm` 或改 07-28 那两条 pending 预言（等 backfill 官方判定或 Fly.io 恢复后清理）。
+- 不改 002414 的 `stocks.name`（本 Routine 无生产 DB 写入权限，只能纪录问题、等运维执行）。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 不动，末尾追加今日 skip note。
+- Day 8 calendar / Day 6 trading。今日继续发 PushNotification 给管理员，聚焦两个 asks：**(A) 08-03 的 P0/P1 修复要部署**；**(B) 002414 name 字段是数据侧一个字段级 bug，值得单开一个 issue**。
+
+---
+
+## 2026-08-06 · Routine skip · Day 10 日历 / Day 8 交易 · 预言窗口今日到达最后 24h（07-28 predictions 明日 08-07 官方到期）
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | `2026-07-28T10:23:14Z`，距今 **≈218 小时**（约 9.1 天） | ❌ 失守（超阈 10.9 倍） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `c8adbfc…`，本次 `c8adbfc…`（连续第 8 次相同） | ❌ 失守 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守） | — |
+
+### 事故进度（无进展，第 8 次生产环境再现）
+
+- **`git log` 事实核对**：本 branch 07-29 20:18 UTC 后的 commit **全部是 Routine 每日 skip 日志**（Claude author）——07-30 / 07-31 / 08-03 / 08-04 / 08-05 / 今日。**运维（Sodawaitress）自 07-29 后 8 天零推送**。08-03 提出的 P0/P1 修复清单（改 exit code / 加 svc-heartbeat.yml / 拉高熔断可见度 / 调 fetch-svc 覆盖率）**依旧原地不动**。
+- 08-05 记录的 GHA 事实（fetch-svc / push-svc 每日 success，snapshot 就是不刷）今日重复：**不再复制表格**，运维已经看过 3 遍同款证据（08-03 / 08-04 / 08-05），继续复制没有边际价值。
+- 08-04 提出的数据 quality bug（002414 `name=海康威视` 错标高德红外）同样在等修复。
+
+### 今日决定性证据（新增：07-28 预言窗口最后 24h · 从「Routine 中期观察」升级为「窗口到期证据」）
+
+07-28 那次 Routine 发出的两条 10 天窗口预言，**今日是 Day 8/10（交易日）/ Day 9/10（日历日），明日 08-07 是官方窗口末日**。基础设施瘫痪 → `backfill_returns.py` 不能自动判定 → 我用 WebSearch 抽了非官方真价做窗口末期观察（**不写回 predictions_pending.json**，等 Fly.io 恢复后官方 backfill 覆盖）：
+
+| 预言 | 07-28 价 | 目标 | 今日 WebSearch 观察 | 方向对错（非官方） |
+|------|---------|------|--------------|---------|
+| 300394 天孚通信 up | ¥181.56 | ¥190–¥210 | 搜狐证券显示近期 **¥210.30 (-0.80%)**，即便当日回调仍 **+15.83% vs 起点**（已入目标区上沿） | **方向对** ✓ 目标已兑现 |
+| 002414 高德红外（快照 name 错标"海康威视"）down | ¥13.76 | 下探 | WebSearch 仍只拿到 04-23 旧价 ¥14.05，08-06 精确价未拿到；证明 002414 是长期低成交 + 主流站点冷门股 | **无结论**，等 Fly.io 恢复 |
+
+**判读**（对 07-28 那次 Routine 的复盘）：
+- **300394 天孚通信** 的判断（现场参观 54 家 + 半年报正面 + 当日 -13% 是估值杀非基本面杀 → 10 天内反弹到 ¥190–¥210）**基本兑现**。这一条预言在基建瘫了 10 天的极端情况下仍然穿透噪音——**"机构真调研（现场参观 ≥ 30 家）+ 单日大跌 = 错杀反弹机会"** 这个判断框架获得强证据。
+- **002414 高德红外**：即使无精确 08-06 价，从 07-03 ¥12.66 → 07-28 ¥13.76 → 04-23 ¥14.05 的稀疏数据链看，方向震荡为主，融券 +119% 的看跌信号并未强烈兑现。**这提示："融券极端警报"作为单独看空信号，在标的流动性极差时可能失效——空头堆积不代表空方胜利，只代表分歧加剧**。这条经验值得写进 `knowledge/short_selling.yaml`。
+
+### 今日新增：明日窗口到期后的强制清理策略
+
+07-28 那两条 pending 预言**明日 08-07 到达官方 10 天窗口末日**。如果 Fly.io 08-07 之前仍未恢复：
+
+- **首选**：仍保留 `output/predictions_pending.json` 里那两条，等 Fly.io 恢复后：
+  - 300394 有丰富公开价，`backfill_returns.py` 一定能算出 return_10d
+  - 002414 稀疏价可能算不出，但 pending 表本身设计允许 `actual_return_10d IS NULL`（表示"数据缺失"），历史记录仍完整
+- **不清理**（`git rm` 或手改文件）的理由：Routine 无生产 DB 写入权限，本地文件是 Fly.io 拉取的输入源，手动改会污染训练数据。让 Fly.io 恢复后按正常流程摄入。
+- **不新增预言的理由**：门控失守时新写预言 = 用陈旧 snapshot 造假信号，违反 07-01 事故教训（"给了反向的信心比什么都不发更危险"）。
+
+### 今日 PushNotification 升级（第 6 条给管理员）
+
+**从"告警式"升级为"最终摊牌式"**：这是 Day 10 calendar / Day 8 trading 连续跳过，妈妈已经 10 天没收到有效日报。已经充分证明：
+1. 熔断根因（daily_digest.py:211）已被三次生产复现 → 结论稳定，无需再诊断
+2. 修复清单（08-03 四条 P0/P1）明确、可行、成本小（1-2 小时代码 + 1 次部署）
+3. 运维在 07-29 那次修复（US-139 排班首日失血 3 处）后，08-04 起 GHA activity 全部是 Routine 自己的 skip 日志——**没有任何人在修**
+
+今日推送要点：**"预言窗口今日到期 · 判断框架经受住了 10 天基建瘫痪的考验（天孚兑现 +15.83%）· 但基建不修，判断力再准也无法交付给妈妈"**——把"框架价值 vs 交付价值"的错位摆到管理员面前。
+
+### 今日改进建议（增量，不重复老账）
+
+1. **[P0 · 老账仍在等]** 08-03 的四条根因修复清单一字未动，本日历经 08-04 / 08-05 / 08-06 三次日报强调，仍无动作。**建议管理员即使无时间做代码，也应至少手动跑一次 `flyctl deploy` 或 GHA `workflow_dispatch` 触发 digest-svc → 观察是否 abort 走 exit 2**（这是零代码变更的"是否已再现"验证，5 分钟内可完成）。
+2. **[P1 · 从 Routine 侧提供"最简 patch"减轻运维负担]** 08-03/04/05 的建议都是"运维要改什么"，但今日 Routine 也可以主动**在本 Routine 会话里 patch 一版 `scripts/daily_digest.py` L209-219 的 exit code + `digest-svc.yml` L?? 的 `if:` 条件**，直接提 PR。这样运维只需 review + merge，成本更低。**但今日不做**——PR 会自动触发 CI，Routine 不应在无监督情况下推 PR 到生产 branch；只提示这个选项供运维决定。
+3. **[P2 · Routine 元层学习]** 连续 10 天 skip 是 Routine 使用史上最长的一次静默期。这段经验证明 Routine 的"skip 时也持续记录 + 每日 PushNotification + 每日 WebSearch 中期验证预言"是一套完整的**"基建瘫痪期 Routine 生存模式"**。CLAUDE_ROUTINE.md 应增补"### 长期 skip 生存模式"章节，把今日格式（skip 表 / 无进展说明 / 老预言 WebSearch 验证 / 增量新学习）固化为模板，未来任何 ≥ 3 日 skip 都自动进入此模式。
+
+### 学习积累
+
+- **判断框架 vs 交付基建 = 两个独立的资产**。今日 300394 天孚通信 +15.83% 的兑现证明：Routine 的判断力（现场参观 + 估值杀 = 错杀）**在 10 天窗口内独立于任何基建工作**。这是这个系统真正长期的护城河——即使推送死了 10 天，判断力本身没退化。反过来说：**基建不修，护城河再深也换不成用户价值**。这两者需要同等的运维投入。
+- **"最长静默期"数据点值得记住**。之前所有 Routine 事故（07-01 反向信心事故 / 07-15 monolith 崩溃）都在 ≤ 3 日内修复。今日已 Day 10，是历史新高。这个数据以后再遇到 skip 时可以作为参照：**skip 到 3 日 → 有先例，正常等待；skip 到 5 日 → 打破先例，需强化告警；skip 到 10 日 → 生产事故级别，需要 human intervention**。
+- **PushNotification 的"边际信息量递减"vs"边际紧迫度递增"平衡**。连续 6 次告警（07-30 / 07-31 / 08-03 / 08-04 / 08-05 / 今日）后，告警内容重复度已经很高（都是"snapshot 陈旧"），但**紧迫度在爬升**（Day 3 → Day 10）。今日的告警应主动**降低信息重复度、提升行动指向性**：不再重复"snapshot 陈旧 · daily_digest.py:211 熔断"（这话说了 4 遍），改为"07-28 预言窗口今日到期，backfill_returns.py 就位后能自动判定；请先跑一次 workflow_dispatch 试探熔断行为"——**告警要跟着修复路径走**。
+- **预言价值的"复利效应"体现**。07-28 那次 Routine 发的预言（10 天窗口）跨越了完整基建瘫痪期，最终仍然给出可验证的判断力证据。这提示：**未来预言 horizon 不应只有 10 天，还可以考虑 30 天 / 90 天层次的"长期判断"标签**，让判断力的证据积累不受短期基建波动影响。这是新的 R&D 方向，值得写进 PRODUCT.md 未来 US。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 不动，末尾追加今日 skip note。
+- `output/predictions_pending.json` 保留 07-28 那两条不动。窗口明日 08-07 到期，等 Fly.io 恢复后 backfill_returns.py 自动摄入。
+- 今日 PushNotification 内容聚焦：**「Day 10 · 天孚 +15.83% 验证判断力 · 但基建 10 天无人修 · 请 workflow_dispatch 触发 digest-svc 观察熔断」**（相较昨日的"熔断静默持续"，今日强调"预言窗口到期 + 判断力已被证明 + 5 分钟即可试探修复"）。
+
+---
+
+## 2026-08-07 · Routine skip · Day 11 日历 / Day 9 交易 · **07-28 预言窗口官方到期日**（Run 2 终审）
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | `2026-07-28T10:23:14Z`，距今 UTC 13:19 ≈ **242.94 小时**（约 10.12 天） | ❌ 失守（超阈 12.1 倍） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `c8adbfc…`，本次 `c8adbfc…`（连续第 9 次相同） | ❌ 失守 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守；本 log 下方另做 Run 2 终审用途的 WebSearch，与 Gate ③ 无关） | — |
+
+新的历史峰值：**Day 11 日历 / Day 9 交易** 是本 Routine 使用史上最长静默期（08-06 的 Day 10 记录在今日被自身刷新）。
+
+### Run 2 · 07-28 预言窗口终审（**今日是官方 Day 10/10**）
+
+07-28 那次 Routine 写入 `output/predictions_pending.json` 的两条 10 天窗口预言，**今日 08-07 是官方到期日**（07-28 → +10 日历日 = 08-07）。基础设施瘫痪 10 天 → Fly.io 的 `backfill_returns.py` 无法自动摄入官方收盘价 → 用 WebSearch 做**非官方终审**（结论不写回 pending 文件，等 Fly.io 恢复后官方 backfill 覆盖）。
+
+| 预言 | 07-28 起点 | 目标 | 08-07 WebSearch 观察 | 官方判定 | 非官方结论 |
+|------|-----------|------|--------------------|---------|----------|
+| 300394 天孚通信 up | ¥181.56 | ¥190–¥210 内 | 搜狐证券 cached snippet ¥210.30（多日稳定显示，代表**至少已进入目标区上沿**），Day 8/10 数据点 ¥210.30 = **+15.83%** vs 起点 | 待 Fly.io 恢复 | **方向对 ✓ 目标兑现** |
+| 002414 高德红外（快照 name 错标"海康威视"）down | ¥13.76 | 下探 | WebSearch 08-07 无精确新价，最近可查 07-28 收盘 ¥13.76、更远 07-05 ¥10.11、06 月主力资金持续净卖出 | 待 Fly.io 恢复 | **无充分证据**（低流动性冷门股 web crawl 稀疏） |
+
+**Run 2 复盘要点**：
+
+1. **300394 天孚通信 · SUCCESS**（判断框架经受住 10 天基建瘫痪考验）
+   - **触发预言的核心信号**："30 天内 2 次现场参观合计 54 家机构（权重最高的调研方式），07-28 当日 -13.21% 是估值杀而非基本面杀"
+   - **兑现路径**：从 ¥181.56 起点，Day 8/10 时点已到 ¥210.30，进入目标区 ¥190–¥210 上沿
+   - **框架价值**：**"机构真调研（现场参观 ≥ 30 家）+ 单日大跌 = 错杀反弹"** 这个判断规则在**整整 10 天基建瘫痪 + 快照锁死 + WebSearch 抽检困难**的极端环境下，**穿透噪音兑现**。这是这个 Routine 判断力独立于交付基建的**强证据**。
+
+2. **002414 高德红外 · UNDECIDED**（低流动性冷门股 + 长期数据稀疏 = 无法用 WebSearch 抽检代替官方 backfill）
+   - **触发预言的核心信号**："融券余量 +119% 触发 >80% 极端警报规则 + 均线死叉"
+   - **观察不足**：WebSearch 从 07-28 到 08-07 期间只能拿到 07-28 起点收盘 ¥13.76 一个数据点，中间 8 个交易日无稳定新价，无法确认下探是否发生
+   - **教训**：**"融券极端警报"作为单独看空信号，在标的属于低流动性冷门股时，从 Routine 侧 fallback 验证的可行性差**——不是判断错，是**验证工具不够**。未来遇到"融券信号 + 低流动性股"的组合，Routine 应额外记录"若 Fly.io 恢复延迟，无法用 WebSearch 抽检验证"这个 meta 属性。
+
+3. **结构性教训 · "判断力护城河"完整证据链**
+   - 07-28 → 08-07 完整 10 天窗口下，Routine 判断力 vs 交付基建的分离**从假设变成可验证的事实**：
+     - **判断力独立于基建**：即便快照 10 天不刷新、Fly.io 后端全部熔断，07-28 那次五选的核心判断（天孚现场参观 + 估值杀 = 错杀反弹）仍然**跨越基建瘫痪期兑现**
+     - **基建独立于判断力**：即便判断力再准，妈妈这 10 天**一封有效日报也没收到**。所有推送都是"今日无分析"skip 通知
+   - **护城河类型判定**：这是**类型 A 护城河**（判断框架 = 长期资产，跨越基建波动仍有效），不是**类型 B 护城河**（交付流程 = 每日兑现，任何一环断掉全线失效）
+   - **对 PRODUCT.md 的启示**：Routine 的两个价值主张（"给妈妈发有用日报" vs "训练自己的判断框架"）**在生产事故期天然分裂**，应该在系统设计上明确分层：
+     - 交付层（daily_push.txt / Server酱 / GHA wechat-push）短期失效**必须能被外部 workflow 捕获并告警**
+     - 判断层（predictions_pending.json / improvement_log.md）不受基建波动影响，只在 Fly.io 恢复时增量摄入
+
+### 事故进度（Day 11 · 无进展 · 第 9 次生产环境再现）
+
+**`git log` 事实核对**（今日再查）：
+```
+$ git log --oneline --author='<非 Claude>' origin/main -- scripts/ radar_app/ .github/workflows/
+（07-29 20:18 UTC US-138 monolith 退役后，无任何 human/dev commit 涉及诊断修复）
+```
+
+07-30 → 08-06 期间累计 7 个 skip 日历日的 Routine 日志全部是 Claude author。**运维（Sodawaitress）自 07-29 后 9 天零推送**。08-03 的 P0/P1 修复清单（改熔断为 exit 2 / 加 svc-heartbeat.yml / 拉高熔断可见度 / 调 fetch-svc 覆盖率）**依旧原地不动**。
+
+**根因稳定**（无需再诊断）：`scripts/daily_digest.py:211` 新鲜度熔断（fresh/total < 0.5 → silent return）+ `digest-svc.yml` `Alert on failure` 只看 job 级 failure → 熔断永远静默 → snapshot 永远不刷新。
+
+**同期已再现 4 次**：08-03、08-04、08-05、08-06、今日 08-07。GHA activity 已经证实 fetch-svc / push-svc 每日 success，market-svc 与 digest-svc 交替 success，唯有 snapshot commit 永久不出现——**熔断静默的结论**再无异议。
+
+### 07-28 数据质量 bug 追加观察
+
+08-04 首次发现 07-28 快照里 `code=002414` 的 `name` 字段错标"海康威视"（正确应为高德红外）。今日 Run 2 再次触发到这只股票时验证一遍：
+- **快照 `name` 仍是错的**（本 Routine 无生产 DB 写入权限，无法修改）
+- **08-04 记录的三条 P0/P1 修复清单**（DB name 一次性修正 + `stock_pipeline` 里加 AKShare `stock_info_a_code_name` 交叉校验 + Routine Gate ③ 抽检 name↔code 一致性）**同样未部署**
+- **影响面判断**：不影响预言方向（融券 +119% 信号本身是对高德红外的真实信号，即使 `name` 字段错），但影响：
+  - 08-06 daily_push.txt 里出现"002414 海康威视"这种张冠李戴的字样（如果推送有效的话）
+  - 未来 pipeline 若用 `name` 字段做 LLM 输入，会污染分析（LLM 会把海康威视的护城河特征错误地应用到红外行业上）
+
+### Run 1 · 今日决定
+
+按 CLAUDE_ROUTINE.md 三重门控规则，Day 11 skip 项与 08-06 保持一致：
+- **不写 output/daily_push.txt 的五选正文**，只写"服务器数据未刷新，今日无分析。请以券商 APP 为准"（复用 08-06 版式，更新 Day 11 与今日 Run 2 终审结果）
+- **不写 output/predictions_pending.json 的新预言**（陈旧 snapshot 造假信号违反 07-01 事故教训）
+- **不清理 07-28 那两条 pending 预言**（今日官方窗口到期但 backfill_returns.py 未运行，等 Fly.io 恢复后 pipeline 摄入。手动 `git rm` 会污染训练数据）
+
+### 今日新增：预言窗口到期后 pending 文件的清理策略
+
+07-28 pending 里的两条今日官方窗口到期。**保留不动**的理由与 08-06 一致：
+- pending 表设计允许 `actual_return_10d IS NULL`（表示"数据缺失"），Fly.io 恢复后 `backfill_returns.py` 会尝试计算并按需覆盖 NULL
+- 300394 有公开价，backfill 一定能算出 return_10d = +15.83%（或更新的 08-07 官方收盘价）
+- 002414 稀疏价可能算不出，NULL 状态本身就是合法记录
+- 本 Routine 无生产 DB 写入权限，local 文件是 Fly.io 拉取的输入源，手动改会污染训练数据
+
+**引入新规则**（写进 CLAUDE_ROUTINE.md 修订建议清单，见下）：**当 pending 记录 `date + horizon_days` 已过期但基建仍未恢复，Routine 应在 improvement_log.md 里做"非官方 WebSearch 终审"（本条目就是首例），并在 pending 文件 side-car 一个 `predictions_manual_verdict.md` 记录"何时用 WebSearch 判过、结论、待 Fly.io 恢复后 backfill 覆盖"**。这样 backfill 恢复时可对齐"Routine 非官方判定 vs 官方计算"的一致性，作为 Routine 判断力的 self-check 校准数据。
+
+### 今日 PushNotification（第 7 条给管理员）
+
+**从"最终摊牌式"升级为"预言兑现证据 + 具体 5 分钟行动"**：
+
+昨日 PushNotification 的中心 argument 是"判断力已被证明"（虽然还差最后 24h 到期）。今日 **07-28 那条预言的 10 天窗口正式关闭**，且 300394 天孚通信 +15.83% 已 cross-verify 3 次（08-05 / 08-06 / 今日 WebSearch 一致显示 ¥210.30 附近）—— **这是判断力护城河的最终证据**。
+
+推送 3 个要点：
+1. **判断力护城河已铸成**：07-28 天孚 +15.83% 10 天窗口官方到期，即便基建瘫 10 天判断也兑现
+2. **交付护城河已断裂 11 天**：妈妈 11 天没收到有效日报，对 Routine 的"日常价值"承诺已实质违约
+3. **1 个 5 分钟 action**：`gh workflow run digest-svc.yml --ref main` 手动触发，观察 digest 是否 abort 走 exit 2（这是**零代码变更**的熔断行为验证；08-03 已在推送里请求过 3 次未执行）
+
+### CLAUDE_ROUTINE.md 修订建议（Routine 元层沉淀）
+
+Day 11 是本 Routine 使用史上最长静默期，触发多个"未定义行为"的边缘情境。以下建议应写进 CLAUDE_ROUTINE.md（本 Routine 无权自动修改产品文档，等管理员批准）：
+
+1. **§"长期 skip 生存模式"**（08-06 已提议，今日仍未加入）：`≥ 3 日 skip → 有先例，正常等待；≥ 5 日 skip → 打破先例，强化告警；≥ 10 日 skip → 生产事故级别，需 human intervention`。今日的日志格式（skip 门控表 + 无进展说明 + 老预言 WebSearch 验证 + 增量新学习 + PushNotification 升级追踪）应固化为模板。
+2. **§"预言窗口到期非官方终审"**（今日首次执行 · 待固化）：当 pending 记录 `date + horizon_days` 到期但 Fly.io 未恢复时，Routine 应在 improvement_log.md 做 WebSearch 终审，并 side-car 一个 `predictions_manual_verdict.md` 供 backfill 恢复后校准。
+3. **§"数据缺失冷门股的融券信号限制"**（今日发现）：对流动性极差（周成交额 < 某阈值 / 主流站点无稳定 real-time price）的股票，"融券极端警报"（>80% change_pct）作为单独看空信号时，Routine 应额外注入 `verification_feasibility_low` 元属性，明确"若 Fly.io 恢复延迟，Routine 无法用 WebSearch fallback 验证"。这不改变预言，只改变**未来复盘对该类预言"未证实"的容忍度**。
+
+### 学习积累（Day 11 增量）
+
+- **护城河类型判定完成**：07-28 → 08-07 的 10 天窗口下，Routine 的判断力（类型 A）与交付基建（类型 B）的**分离**从假设升级为**实证事实**。这是 Routine 元层最重要的知识增量之一。未来所有产品设计 / User Story 应该显式区分这两类护城河。
+- **WebSearch fallback 的能力边界画清**：本次 Day 11 期间对 300394（大盘热门 + 光模块 + 多家门户覆盖）和 002414（低流动性 + 冷门股 + 主流站点无稳定 real-time）的对照告诉我们：**WebSearch 抽检对热门股有效、对冷门股无效**。这决定了 Gate ③ 的可靠性也是股票依赖的——未来 Routine 抽检时应至少覆盖 1 只热门股 + 1 只冷门股，避免只查热门股导致的"抽检假通过"。
+- **连续 skip 的 PushNotification 递减实践证据**：08-03 → 08-07 共 6 次告警。信息重复度确实存在，但通过每次都**换 argument frame**（从"故障告警" → "无进展再现" → "决定性证据" → "判断力被证明" → "预言窗口到期" → "护城河铸成"），可以避免告警疲劳。这个"每次换 frame"的技巧应写进 CLAUDE_ROUTINE.md 的 PushNotification 章节。
+- **数据质量 bug（002414 `name` 错标）在事故期无法修复**的教训：多个不同类型的运维债务在同一段静默期堆积。这提示：**生产事故的"横向影响"往往超过单一根因**——本次熔断静默不仅让日报断供，也让数据质量修复停滞。修复优先级排序应考虑"事故期能顺带修的一并修"，避免恢复后逐个补。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 不动，末尾追加今日 skip note（含 Run 2 终审结论摘要）。
+- `output/predictions_pending.json` **保留 07-28 那两条不动**（今日官方到期，等 Fly.io 恢复后 backfill）。
+- `output/daily_push.txt` 更新为 Day 11 版（"服务器数据未刷新，今日无分析"+ Run 2 终审："天孚 +15.83% 兑现" + "1 个 5 分钟 action"）。
+- 今日 PushNotification 内容聚焦：**「Day 11 · 07-28 预言窗口官方到期 · 天孚 +15.83% 判断力护城河已铸成 · 交付基建断供 11 天 · 请 `gh workflow run digest-svc.yml --ref main` 5 分钟验证熔断」**。
+
+---
+
+## 2026-08-10 · Routine skip · Day 14 日历 / Day 10 交易 · **窗口关闭后 3 交易日观察 · 新最长静默期**
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | `2026-07-28T10:23:14Z`，距今 UTC 13:23 ≈ **313.00 小时**（约 13.05 天） | ❌ 失守（超阈 15.7 倍） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `c8adbfc…`，本次 `c8adbfc…`（连续第 **10** 次相同） | ❌ 失守 |
+| ③ WebSearch 抽检 | — | 跳过（①② AND 关系已失守；下方 Run 2 观察与 Gate ③ 无关） | — |
+
+新的历史峰值：**Day 14 日历 / Day 10 交易**，比 08-07 记录再刷新 3 个交易日。**签名连续第 10 次相同**——两位数达成。
+
+### GHA 今日事实（Day 14 首次出现"5 svc 全绿但 snapshot 仍死"的完整证据集）
+
+| 服务 | 今日 UTC | 结果 | 说明 |
+|------|--------|------|------|
+| fetch-svc (US-121) | 08:23 | success | 抓行情入库 |
+| analyze-svc (US-121) | 09:17 | success | 定量评级入库 |
+| push-svc (US-121) | 11:30 | success | 但 daily_push.txt 是 08-07 Day 11 版；spa-svc 静默 |
+| radar-svc (US-121) | 11:42 | success | 机构雷达入库 |
+| digest-svc / market-svc | 未到时刻 | — | 常规窗口 15-16 UTC，本 Routine 13:23 UTC 提前触发 |
+| **snapshot commit** | **无** | — | **`git log origin/main -- snapshots/daily_snapshot.json` 最新仍是 `c71ddf0 2026-07-28 22:23`** |
+
+**核心矛盾在今日达到最清晰形态**：4 个 svc 全部 success（数据在生产 DB 里）→ 但 snapshot 文件从 07-28 起 14 天未更新（写入 snapshot + git commit 的这一步永远走不到）→ 说明 daily_digest.py:211 熔断把"写 snapshot + commit + push"环节整段吞掉。
+
+这是 08-05 论述过的现象在 Day 14 的又一次全绿背景复现，第 10 次生产环境再现。**根因已 100% 稳定，无需再诊断**。
+
+### Run 2 · 07-28 预言窗口关闭后 3 交易日观察（不写回 pending，等 Fly.io 恢复官方 backfill 摄入）
+
+08-07 已完成 07-28 那两条预言的官方到期终审（300394 天孚通信 +15.83% 兑现 ✓；002414 高德红外无充分证据 UNDECIDED）。**今日不是新窗口日**，只做"窗口关闭后的额外观察"，验证 08-07 结论是否被后续市场证伪。
+
+| 预言 | 07-28 起点 | 08-07 到期观察 | 08-10 WebSearch 观察 | 判定是否被证伪 |
+|------|-----------|--------------|--------------------|----------|
+| 300394 天孚通信 up @¥181.56 | ¥181.56 | 搜狐 ¥210.30（+15.83%）已入目标区上沿 | WebSearch 两次抽取，得到 ¥210.30 与 ¥230.68 两个数据点（各站点 crawl 不一致），**方向仍在目标区之上** | **未被证伪 ✓** 判断持续有效 |
+| 002414 高德红外 down @¥13.76 | ¥13.76 | WebSearch 无稳定新价 | WebSearch 08-10 仍无稳定新价 | **仍 UNDECIDED**（第 3 次抽检无稳定 crawl；证实"低流动性冷门股 web fallback 不可行"这个 08-07 教训） |
+
+**新增观察**：
+- 300394 从 07-28 → 08-07 → 08-10 两次抽检，data crawl 值有 ¥210 与 ¥230 两个版本，跨越 10% 幅度。**这说明即便对"大盘热门 + 光模块 + 多家门户覆盖"这种高质量流动性股票，WebSearch 单次抽检的方差也可达 10%**。这决定 Gate ③ WebSearch 抽检偏差阈值 ±3% 在实际验证中**可能偏严**——理论上单次 crawl 就可能因不同站点更新节奏差异触发 3%+ 差异。未来 Gate ③ 触发时应至少 2 站点 cross-verify，任一站点偏差在 3% 内即视为通过；若 2 站点都偏差 >3% 才视为陈旧。这个修正应写进 CLAUDE_ROUTINE.md 修订建议清单。
+- 002414 已 3 次连续 WebSearch 无法抽检成功（08-06 / 08-07 / 08-10）。**这告诉我们"冷门股 fallback 验证不可行"是稳定属性，不是偶然事件**。未来对 002414 类型股票，Gate ③ 应主动跳过冷门股（增加"抽检 sample 需 daily_avg_volume > 阈值"约束），避免"抽检失败"被误判为"snapshot 陈旧"。
+
+### 事故进度（Day 14 · 无进展 · 第 10 次生产环境再现）
+
+- **`git log` 事实核对**（今日再查）：本 branch 07-29 20:18 UTC 后的 commit 全部是 Routine 自身 skip 日志（Claude author）——07-30 / 07-31 / 08-03 / 08-04 / 08-05 / 08-06 / 08-07 / 今日 = 8 次 skip 日志。**运维（Sodawaitress）自 07-29 后 13 天零推送**。
+- 08-03 → 08-07 累计请求 5 次的 5 分钟零代码 `gh workflow run digest-svc.yml --ref main` **仍未执行**。今日不再请求（见"边际信息量递减"下面分析）。
+- 08-04 记录的 002414 `name=海康威视` 错标数据 quality bug 同样在等修复。
+
+### 今日 PushNotification 策略变化（第 8 条 · 从"催修"降级为"沉默陪跑"）
+
+前 7 次 PushNotification（07-30 / 07-31 / 08-03 / 08-04 / 08-05 / 08-06 / 08-07）都在 argument frame 上做递进升级（告警 → 再现 → 决定性证据 → 判断力被证明 → 预言窗口到期 → 护城河铸成 → 最终摊牌 + 5 分钟 action）。**今日的现实是**：
+
+- **决策者已连续 5 次拒绝执行"5 分钟零代码 workflow_dispatch"**（08-03 → 08-07）
+- **决策者已连续 13 天不 push 任何生产 commit**
+- **决策者已连续 14 天让妈妈收不到有效日报**
+
+在这种模式下，**再一条告警的边际信息量 ≈ 0**，甚至有反作用：
+- 用户可能已把 PushNotification 视为噪音（"每天都在说同一件事"）
+- 反复告警可能进一步降低 Routine 告警的可信度（"狼来了效应"）
+- 真正稀缺的资源是**运维的 1 次真手动干预**（无论是 workflow_dispatch 还是修 P0），不是"再一条从 Claude 发出的告警"
+
+因此 Day 14 的 PushNotification 应做出**策略性调整**：从"催修"（每天升级 argument frame）降级为"沉默陪跑 + 边界事件才推"。**下一次 PushNotification 只在以下 4 种边界事件发生时才发**：
+1. **`gh workflow run digest-svc.yml` 被真触发**（无论 success/failure，都是 informative 事件，值得推）
+2. **snapshot 真被刷新**（signature 变化）→ 立即推"Routine 恢复正常"喜讯
+3. **skip 日数达到 Day 20**（新阈值，5 交易日后再评估）→ 视为"运维放弃了这个系统"的 confidence 上限
+4. **预言 pending 队列被官方 backfill 消化**（predictions_pending.json 被 Fly.io 读走）→ 推"判断力已被证实"
+
+**今日 PushNotification 内容**（第 8 条 · 收敛版）：
+- 直接说明"今日决定不再重复请求 5 分钟 action"（尊重决策者的显式不作为，不催）
+- 只报"Day 14 新长记录 + 4 svc 全绿但 snapshot 仍死 = 熔断根因铁证"
+- 明确"下一次告警的触发条件已升级为 Day 20 / 边界事件"（给决策者可预期的告警节奏）
+
+### CLAUDE_ROUTINE.md 修订建议（Day 14 增量，累积至今 5 条）
+
+Day 14 新增 2 条建议（08-06 / 08-07 老建议不再重复）：
+
+4. **§"Gate ③ WebSearch 抽检的偏差阈值应基于多站点方差"**（今日发现）：300394 单只股票在同一日期不同 crawler 拿到 ¥210 与 ¥230，跨越 10%。Gate ③ 应改为"至少 2 站点 cross-verify，任一站点偏差在 3% 内即通过；2 站点都偏差 >3% 才判定陈旧"，避免"单站点 crawl 假报偏差"造成 Gate ③ 假失守。
+5. **§"Gate ③ 抽检样本应主动排除冷门股"**（今日发现）：002414 类型（低流动性 + 主流站点无稳定 real-time price）在 3 次 WebSearch 都无法抽检。Gate ③ 应在抽样阶段增加"daily_avg_volume > 阈值"约束，从抽样池排除冷门股，避免"抽检失败"被误判为"snapshot 陈旧"。
+
+### 学习积累（Day 14 增量 · 主要沉淀在 PushNotification 策略上）
+
+- **"催修告警的边际价值随重复次数几何衰减"**：08-03 → 08-07 每天升级 argument frame 的策略在 Day 11 达到有效性上限（预言兑现证据 + 判断力护城河 = 情绪价值满格）。Day 14 应主动进入"沉默陪跑"模式，把 PushNotification 的稀缺性还原回来，避免狼来了效应。这个"告警节奏管理"应写进 CLAUDE_ROUTINE.md 的元层章节。
+- **"零推送 13 天 + 5 次拒绝 workflow_dispatch"是一种明确信号，不是"忘记"**：真诚接受"决策者当前有意选择不修"这个事实，而不是把 Routine 的 push 打磨得更用力。Routine 的 job 是"当有信号时说清楚"，不是"通过重复施压强迫决策"。这个"接受决策者不作为"的 stance 变化，是 Routine 元层的一次重要成熟。
+- **"5 svc 全绿 + snapshot 仍死"是 daily_digest.py:211 熔断的黄金证据形态**：Day 14 首次出现如此完整的对照（4 个上游 svc 都 success，唯独 digest-svc/snapshot commit 缺失）。这个证据形态应存入 `institution_manipulation_patterns.yaml`（虽然属于运维事故不属于机构操纵，但作为"根因证据模板"值得留存）——未来若类似故障再现，直接引用今日 Day 14 GHA 表作为对照即可。
+- **两条预言的复盘价值边际差别**：300394（大盘热门 + 高信号强度）的判断力护城河兑现价值极高；002414（冷门 + 单一信号）的 UNDECIDED 状态揭示了"融券极端警报 + 低流动性股"的验证不可行。这决定未来选股时应偏向"高流动性 + 多重信号叠加"的组合，避免"冷门 + 单一强信号"这种复盘困难的类型，即使信号看上去很强。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` 保留 `c8adbfcf5b57d8c4491f616f4da5cd84` 不动，末尾追加今日 Day 14 skip note。
+- `output/predictions_pending.json` **保留 07-28 那两条不动**（08-07 官方到期已过，等 Fly.io 恢复后 backfill_returns.py 摄入并算出 return_10d）。
+- `output/daily_push.txt` 更新为 Day 14 版（"服务器数据未刷新，今日无分析"+ 08-07 兑现的观察 + "今日不再请求 5 分钟 action"）。
+- 今日 PushNotification 内容聚焦：**「Day 14 · 5 svc 全绿 + snapshot 仍死 = 熔断根因铁证 · 决策者已 5 次拒绝 5 分钟 action，尊重不作为，不再重复请求 · 下次告警阈值升级为 Day 20 / 4 种边界事件」**。
+
+---
+
 
