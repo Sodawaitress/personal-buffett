@@ -53,24 +53,31 @@ def _bulk_prices(codes: list) -> int:
 
     saved = 0
 
-    # ── A股：一次新浪批量（云端整批失败时 fetch_quotes 内部会退 yfinance）──
+    # ── 第一段 · A股：一次新浪批量，拿到就立刻写库 ──
+    # fallback=False：新浪缺的不在这里逐只兜底（178 只逐只 6~15 分钟且全有全无），
+    # 交给下面的 yfinance 批量一起捞。
     cn = by_market.get("cn", [])
+    cn_missing = list(cn)
     if cn:
         from scripts.stock_fetch import fetch_quotes
 
         try:
-            quotes = fetch_quotes([(db.get_stock(c).get("name", c), c) for c in cn])
+            quotes = fetch_quotes([(db.get_stock(c).get("name", c), c) for c in cn],
+                                  fallback=False)
             for code, q in quotes.items():
                 if q.get("price"):
                     db.upsert_price(code, q["price"], change_pct=q.get("change"),
                                     volume=q.get("amount"))
                     saved += 1
-            print(f"  ✅ A股批量行情：{saved}/{len(cn)} 只")
+                    cn_missing.remove(code)
+            print(f"  ✅ A股新浪批量：{saved}/{len(cn)} 只"
+                  + (f"（{len(cn_missing)} 只转 yfinance 批量）" if cn_missing else ""))
         except Exception as e:
-            print(f"  ⚠️ A股批量行情失败: {e}")
+            print(f"  ⚠️ A股新浪批量失败（全部转 yfinance 批量）: {e}")
 
-    # ── 其余市场：一次 yfinance 批量下载（美/港/NZ/澳/韩）──
+    # ── 第二段 · 海外 + 新浪没拿到的 A股：一次 yfinance 批量下载 ──
     intl = [(c, m) for m, lst in by_market.items() if m != "cn" for c in lst]
+    intl += [(c, "cn") for c in cn_missing]
     if intl:
         try:
             import yfinance as yf
@@ -92,9 +99,9 @@ def _bulk_prices(codes: list) -> int:
                 except Exception:
                     continue
             saved += ok
-            print(f"  ✅ 海外批量行情：{ok}/{len(intl)} 只")
+            print(f"  ✅ yfinance 批量：{ok}/{len(intl)} 只")
         except Exception as e:
-            print(f"  ⚠️ 海外批量行情失败: {e}")
+            print(f"  ⚠️ yfinance 批量失败: {e}")
 
     return saved
 

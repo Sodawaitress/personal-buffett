@@ -30,10 +30,13 @@ def _sina_prefix(code: str) -> str:
     """A股代码加交易所前缀"""
     return ("sh" if code.startswith(("6", "9")) else "sz") + code
 
-def fetch_quotes(cn_stocks: list = None):
+def fetch_quotes(cn_stocks: list = None, fallback: bool = True):
     """
     一次请求拉全部自选股行情（新浪财经接口）。
     cn_stocks: [(name, code), ...] 列表。
+    fallback: 新浪缺的股票是否逐只走 yfinance 兜底。调用方若能自己做**批量**兜底
+      （如 svc_fetch 的 yf.download），传 False —— 178 只逐只要 6~15 分钟，
+      而且要等全部跑完才返回，中途被 kill 就一条都没写（US-140 踩过）。
     """
     print("  📊 拉取行情...")
     if cn_stocks is None:
@@ -77,7 +80,7 @@ def fetch_quotes(cn_stocks: list = None):
 
     # 云端兜底：sina 从 GHA/Fly 常整批失败 → 缺的用 yfinance(雅虎 .SS/.SZ 云端可达)
     missing = [c for c in codes if c not in quotes and c[:1] in ("0", "3", "6", "9")]
-    if missing:
+    if missing and fallback:
         try:
             import yfinance as yf
         except Exception:
