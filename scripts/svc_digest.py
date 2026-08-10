@@ -23,9 +23,13 @@ def main():
     with db.service_run("digest-svc") as run:
         # 快照 + commit
         from scripts.daily_digest import run_daily_digest
-        run_daily_digest()
+        committed = run_daily_digest()
         run.tick()
-        print("  ✅ 快照已构建/提交")
+        if committed:
+            print("  ✅ 快照已构建并提交 GitHub")
+        else:
+            # 别再打 ✅ 糊过去：提交失败 = Routine 继续读陈旧快照（US-140，冻了 14 天没人知道）
+            print("  ❌ 快照未能提交 GitHub —— Routine 会继续读到陈旧快照")
 
         # 预测收益回填（挂了不影响快照）
         try:
@@ -35,6 +39,10 @@ def main():
             print("  ✅ 预测收益回填完成")
         except Exception as e:
             print(f"  ⚠️ 回填失败（不影响快照）: {e}")
+
+        # 回填先跑完（它不依赖快照），再让服务失败 → service_runs 记 failed + 告警响
+        if not committed:
+            raise RuntimeError("快照未提交 GitHub（详见上方日志：403=权限/401=token/熔断）")
 
     print("✅ digest-svc 完成")
 

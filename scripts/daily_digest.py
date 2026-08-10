@@ -196,7 +196,9 @@ def _build_snapshot() -> dict:
 # GitHub commit
 # ─────────────────────────────────────────────────────────────────
 
-def _commit_snapshot_to_github(snapshot: dict):
+def _commit_snapshot_to_github(snapshot: dict) -> bool:
+    """返回是否真的提交成功 —— 调用方要据此决定服务成败（US-140）。
+    此前无论 403/熔断/token 缺失都静默返回，外层照打 ✅，快照冻了 14 天没人知道。"""
     token = os.environ.get("GITHUB_TOKEN", "")
     if not token:
         logger.error(
@@ -204,7 +206,7 @@ def _commit_snapshot_to_github(snapshot: dict):
             "Claude Routine 会读到陈旧快照。"
             "在 Fly.io 设置: flyctl secrets set GITHUB_TOKEN=<PAT>"
         )
-        return
+        return False
 
     fresh = snapshot.get("stocks_with_fresh_price", 0)
     total = snapshot.get("stocks_total", 0)
@@ -216,7 +218,7 @@ def _commit_snapshot_to_github(snapshot: dict):
             "也不要用只翻新元数据的伪 snapshot 骗过 Routine。",
             fresh, total, (fresh / total * 100)
         )
-        return
+        return False
 
     content_bytes = json.dumps(snapshot, ensure_ascii=False, indent=2).encode("utf-8")
     encoded = base64.b64encode(content_bytes).decode()
@@ -249,6 +251,7 @@ def _commit_snapshot_to_github(snapshot: dict):
         r = requests.put(url, headers=headers, json=payload, timeout=15)
         if r.status_code in (200, 201):
             logger.info("[daily_digest] GitHub 快照已提交: %s", today)
+            return True
         else:
             logger.error(
                 "[daily_digest] GitHub commit 失败: HTTP %s — 快照未更新。"
@@ -257,6 +260,7 @@ def _commit_snapshot_to_github(snapshot: dict):
             )
     except Exception as e:
         logger.warning("[daily_digest] GitHub commit 异常: %s", e)
+    return False
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -338,12 +342,17 @@ def run_daily_digest():
         snapshot = _build_snapshot()
         if not snapshot:
             logger.warning("[daily_digest] 无自选股数据，跳过")
-            return
+            return False
 
-        _commit_snapshot_to_github(snapshot)
-        logger.info("[daily_digest] 快照已提交 GitHub，共 %d 只股票", len(snapshot.get("stocks", [])))
+        committed = _commit_snapshot_to_github(snapshot)
+        if committed:
+            logger.info("[daily_digest] 快照已提交 GitHub，共 %d 只股票", len(snapshot.get("stocks", [])))
+        else:
+            logger.error("[daily_digest] 快照未能提交 GitHub —— Routine 会继续读到陈旧快照")
 
         _ingest_predictions_from_github()
+        return committed
 
     except Exception as e:
         logger.warning("[daily_digest] run_daily_digest 异常: %s", e, exc_info=True)
+        return False
