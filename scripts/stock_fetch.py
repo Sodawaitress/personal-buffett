@@ -26,9 +26,23 @@ from scripts.config import (
 
 
 # ── 个股行情（新浪财经，境外IP可用）────────────────
+def _sina_exchange(code: str) -> str:
+    """A股代码 → 新浪交易所前缀 sh/sz/bj。
+
+    北交所（920xxx 新代码，及 43/83/87/88 开头的原精选层）必须用 bj —— 旧逻辑
+    9xx→sh 是给沪市 B 股的规则，把 920198 拼成 sh920198 永远拿不到价格
+    （920198 微创光电 / 920438 戈碧迦 因此从未有过行情，US-140 审计发现）。
+    Yahoo 完全不覆盖北交所（.BJ 返回 404），所以新浪是唯一源，前缀不能错。
+    """
+    pure = code.split(".")[0]
+    if pure.startswith(("92", "43", "83", "87", "88")):
+        return "bj"
+    return "sh" if pure.startswith(("5", "6", "9")) else "sz"
+
+
 def _sina_prefix(code: str) -> str:
     """A股代码加交易所前缀"""
-    return ("sh" if code.startswith(("6", "9")) else "sz") + code
+    return _sina_exchange(code) + code
 
 def fetch_quotes(cn_stocks: list = None, fallback: bool = True):
     """

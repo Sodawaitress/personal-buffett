@@ -28,7 +28,12 @@ def _get_all_watchlist_rows() -> list:
     from radar_app.data.core import get_conn
     with get_conn() as c:
         rows = c.execute("""
-            SELECT w.stock_code, s.market, s.name_cn, w.status, w.buy_price, w.added_at, w.user_id
+            -- s.name 必须一起取：全库 name_cn 都是 NULL，公司名实际存在 name 列。
+            -- 少取这一列 → 快照里 208 只股票的 name 全部回落成代码 → Routine 没有
+            -- 名字来源，只能自己「填」公司名，填错了也没人知道（002414 高德红外
+            -- 被写成海康威视，进了妈妈读的日报）。US-140。
+            SELECT w.stock_code, s.market, s.name, s.name_cn,
+                   w.status, w.buy_price, w.added_at, w.user_id
             FROM user_watchlist w
             LEFT JOIN stocks s ON s.code = w.stock_code
             WHERE w.removed_at IS NULL

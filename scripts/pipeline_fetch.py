@@ -57,9 +57,11 @@ def _fetch_1a_quote(code, market, log):
         elif market == "cn":
             import requests as req
 
+            from scripts.stock_fetch import _sina_exchange
+
             pure = code.split(".")[0]
-            # SH: 5xx (ETF/LOF), 6xx (stock), 9xx (preferred/B); SZ: everything else
-            prefix = "sh" if pure.startswith(("5", "6", "9")) else "sz"
+            # SH: 5xx (ETF/LOF), 6xx, 9xx(B股)；BJ: 92x/43/83/87/88（北交所）；其余 SZ
+            prefix = _sina_exchange(pure)
             price_saved = False
             try:
                 r = req.get(
@@ -85,7 +87,8 @@ def _fetch_1a_quote(code, market, log):
                 pass
 
             # A股价格云端兜底：sina 从 GHA/Fly 时常拉不到 → 用 yfinance(雅虎 .SS/.SZ，云端可达)
-            if not price_saved and pure[:1] in ("0", "3", "6", "9"):
+            # 北交所(prefix=bj)跳过：雅虎无覆盖，查 .BJ 只会 404 刷噪音
+            if not price_saved and prefix != "bj" and pure[:1] in ("0", "3", "6", "9"):
                 try:
                     import yfinance as yf
                     suffix = "SS" if prefix == "sh" else "SZ"

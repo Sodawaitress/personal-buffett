@@ -30,11 +30,17 @@ GAP_SEC = float(os.environ.get("FETCH_GAP_SEC", "1.5"))
 
 
 def _yahoo_symbol(code: str, market: str) -> str:
-    """A股 → 6位.SS/.SZ；其余市场 code 本身就是 yahoo 代码（NVDA / 0700.HK / CYM.NZ）。"""
+    """A股 → 6位.SS/.SZ；其余市场 code 本身就是 yahoo 代码（NVDA / 0700.HK / CYM.NZ）。
+    北交所返回 None —— 雅虎无覆盖（.BJ 一律 404），只能靠新浪 bj 前缀。"""
     if market != "cn":
         return code
+    from scripts.stock_fetch import _sina_exchange
+
     pure = code.split(".")[0]
-    return f"{pure}.{'SS' if pure.startswith(('5', '6', '9')) else 'SZ'}"
+    ex = _sina_exchange(pure)
+    if ex == "bj":
+        return None
+    return f"{pure}.{'SS' if ex == 'sh' else 'SZ'}"
 
 
 def _bulk_prices(codes: list) -> int:
@@ -82,7 +88,7 @@ def _bulk_prices(codes: list) -> int:
         try:
             import yfinance as yf
 
-            sym_map = {_yahoo_symbol(c, m): c for c, m in intl}
+            sym_map = {s: c for c, m in intl if (s := _yahoo_symbol(c, m))}
             df = yf.download(list(sym_map), period="5d", group_by="ticker",
                              progress=False, threads=True, auto_adjust=True)
             ok = 0
