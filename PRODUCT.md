@@ -5266,11 +5266,22 @@ A 股行情** —— 178/215 只自选股是 A 股，一次请求即覆盖 83%�
 
 ### Acceptance Criteria
 - [x] 本地实跑 `_bulk_prices`：覆盖率 ≥95%（实测 135/137，13 秒）
-- [ ] 云端 fetch-svc 一轮后当日价格覆盖率 >50%，digest-svc 不再中止 commit
-- [ ] `snapshots/daily_snapshot.json` 重新出现每日更新
-- [ ] market-svc 在 60 分钟 timeout 内正常结束（非 cancelled）
+- [x] 云端 fetch-svc 一轮后当日价格覆盖率 >50%（78→150→最终 205/208=99%），
+      digest-svc 不再中止 commit
+- [x] `snapshots/daily_snapshot.json` 重新提交（`f6fc870 chore: daily snapshot
+      2026-08-10`，上一次是 07-28；快照内 `stocks_with_fresh_price=205/208`）
 - [x] Groq 闸门四态测试：超预算不睡 / 预算充裕照睡 / 未设预算行为不变 / set-clear
-- [ ] Routine 恢复正常出日报（不再 skip）
+- [ ] market-svc 在 60 分钟 timeout 内正常结束（非 cancelled）—— 待下一次排班验
+- [ ] Routine 恢复正常出日报（不再 skip）—— 待明日 Routine 自行读新快照验
+
+### 追加修复（熔断放行后暴露的下一层，US-138 引入的回归）
+快照原由 Fly 的 `/api/trigger-digest` 提交（Fly secret 里有写权限的 PAT）；US-138
+把 digest 挪到 GHA 后 token 变成默认 `GITHUB_TOKEN`（只读）→ 403
+`Resource not accessible by integration`。
+- `digest-svc.yml` 加 `permissions: contents: write`（不需要新 secret）
+- `_commit_snapshot_to_github` / `run_daily_digest` 返回 bool；svc_digest 据此打 ❌
+  并在回填跑完后 raise → `service_runs` 记 failed + 告警响
+- **「提交失败照打 ✅」正是快照冻 14 天没人察觉的原因之一 —— digest-svc 一直是绿的**
 
 ### 不做
 - 不调低 `daily_digest` 的 50% 熔断阈值（它是 2026-07-01 事故的守门人，
