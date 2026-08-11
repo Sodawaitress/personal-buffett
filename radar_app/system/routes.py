@@ -134,10 +134,26 @@ def register_system_routes(app):
                 from scripts.precursor_scan import run_precursor_scan
                 result = run_precursor_scan()
                 app_ctx.logger.info("[trigger-scan] precursor done: %s", result)
-                update_job(job_id, "done")
             except Exception as e:
+                errors.append(f"precursor: {e}")
                 app_ctx.logger.warning("[trigger-scan] precursor failed: %s", e)
-                update_job(job_id, "failed", error=str(e))
+
+            # US-142 内部人增减持：同为东财源，只能在 Fly 悉尼跑（GHA 美国 runner
+            # 连不上），所以搭这趟车，不单开服务。失败不拖累前兆扫描。
+            try:
+                import db
+                from scripts.insider_moves import run_insider_refresh
+                codes = [c for c, _ in db.get_all_cn_watchlist_stocks()]
+                res = run_insider_refresh(codes)
+                app_ctx.logger.info("[trigger-scan] insider done: %s", res)
+            except Exception as e:
+                errors.append(f"insider: {e}")
+                app_ctx.logger.warning("[trigger-scan] insider failed: %s", e)
+
+            if errors:
+                update_job(job_id, "failed", error="; ".join(errors)[:500])
+            else:
+                update_job(job_id, "done")
 
         threading.Thread(target=_run, daemon=False, name="gh-scan-trigger").start()
         return jsonify({"status": "started", "job_id": job_id}), 202
