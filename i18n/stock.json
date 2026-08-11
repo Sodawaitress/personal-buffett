@@ -1402,5 +1402,17 @@
   "material_signals_label": {
     "en": "Material Moves",
     "zh": "重大动向"
+  },
+  "cheap_title": {
+    "en": "Cheap or expensive?",
+    "zh": "贵还是便宜"
+  },
+  "cheap_reason_label": {
+    "en": "Why",
+    "zh": "依据"
+  },
+  "cheap_note_label": {
+    "en": "Keep in mind",
+    "zh": "提醒"
   }
 }

@@ -49,6 +49,24 @@
     {# ── AI 推理摘要 ── #}
     <p class="brief-reasoning">{{ analysis.reasoning }}</p>
 
+    {# ── US-141 便宜还是贵，以及便宜是不是因为公司变差 ── #}
+    {% if cheapness and cheapness.tier != 'unknown' %}
+    <div class="cheap-card cheap-{{ cheapness.tier }}">
+      <div class="cheap-head">
+        <span class="cheap-label">{{ t.cheap_title }}</span>
+        <span class="cheap-headline">{{ cheapness.headline }}</span>
+      </div>
+      <details class="cheap-why">
+        <summary>{{ t.cheap_reason_label }}</summary>
+        <ul>{% for r in cheapness.reason %}<li>{{ r }}</li>{% endfor %}</ul>
+        {% if cheapness.actionable %}<p class="cheap-act">{{ cheapness.actionable }}</p>{% endif %}
+      </details>
+      {% if cheapness.warning %}
+      <div class="cheap-warn">{{ t.cheap_note_label }}：{{ cheapness.warning }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     {# ── 维度 pills ── #}
     {% if analysis.framework_used == 'fund_v1' %}
     {% set dims = [

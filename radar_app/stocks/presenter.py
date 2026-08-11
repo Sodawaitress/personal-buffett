@@ -655,6 +655,29 @@ def present_stock_page(bundle):
         except Exception:
             signal_conclusion = None
 
+    # US-141 便宜但没坏：估值分位 × 进化轴（复用 lifecycle 的进化轴，同一套判断不做两份）
+    cheapness = None
+    try:
+        from radar_app.stocks.lifecycle import _evolution
+        from scripts.buffett_signals import describe_cheapness
+
+        _fund = bundle.get("fund") or {}
+        _evo = _evolution(_fund, bundle.get("analysis"))
+        try:
+            from flask import session as _sess
+            _loc = _sess.get("locale", "en")
+        except Exception:
+            _loc = "zh"
+        cheapness = describe_cheapness(
+            (_fund.get("signals") or {}).get("pe_percentile_5y") or _fund.get("pe_percentile_5y"),
+            _evo.get("direction"),
+            # 英文界面下不塞中文依据（evidence 来自 lifecycle，仍是 zh-only，见 US-148）
+            _evo.get("evidence") if _loc == "zh" else [],
+            locale=_loc,
+        )
+    except Exception:
+        cheapness = None
+
     current_price_val = (bundle["price"] or {}).get("price") if bundle["price"] else None
     position_insight = _build_position_insight(
         bundle.get("watchlist_entry"),
@@ -711,6 +734,7 @@ def present_stock_page(bundle):
         "market_currency": MARKET_CURRENCY,
         # US-93
         "position_insight": position_insight,
+        "cheapness": cheapness,
         # US-94
         "analyst_consensus": bundle.get("analyst_consensus"),
         # US-95

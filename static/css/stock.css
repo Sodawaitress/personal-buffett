@@ -2490,3 +2490,44 @@
 }
 .lc2-evo-verdict { font-size: 13px; font-weight: 700; color: var(--acc); white-space: nowrap; }
 .lc2-evo-ev { font-size: 11.5px; color: var(--ink-faint); flex: 1 1 100%; }
+
+/* ── US-141 便宜但没坏 ─────────────────────────────────────────── */
+.cheap-card {
+  border: 1px solid var(--rule-light);
+  border-left: 3px solid var(--ink-muted);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 10px 14px;
+  margin: 14px 0 18px;
+}
+.cheap-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cheap-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--ink-muted); white-space: nowrap;
+}
+.cheap-headline { font-size: 16px; font-weight: 600; color: var(--ink); }
+/* 四态色条：错杀=绿(值得看)、陷阱/双杀=红(别碰)、好贵=蓝(观察)、横着=中性 */
+.cheap-mispriced        { border-left-color: #15803d; }
+.cheap-cheap_for_reason { border-left-color: #b91c1c; }
+.cheap-double_risk      { border-left-color: #b91c1c; }
+.cheap-good_but_pricey  { border-left-color: #1d4ed8; }
+.cheap-cheap_flat, .cheap-neutral { border-left-color: var(--rule); }
+.cheap-why { margin-top: 8px; font-size: 13px; }
+.cheap-why summary {
+  cursor: pointer; color: var(--ink-muted);
+  font-size: 12px; user-select: none;
+}
+.cheap-why ul { margin: 6px 0 0 18px; padding: 0; }
+.cheap-why li { margin: 2px 0; color: var(--ink-soft, var(--ink)); }
+.cheap-act { margin: 8px 0 0; color: var(--ink-muted); font-style: italic; }
+.cheap-warn {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--rule-light);
+  font-size: 12.5px; color: #b45309;
+}
+@media (prefers-color-scheme: dark) {
+  .cheap-warn { color: #fbbf24; }
+}
+:root[data-theme="dark"] .cheap-warn { color: #fbbf24; }
+:root[data-theme="light"] .cheap-warn { color: #b45309; }

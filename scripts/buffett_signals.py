@@ -548,3 +548,132 @@ def prophet_daily_score(participation: dict, survey_inst_today: int = 0) -> dict
         "event_inst": survey_inst_today,
         "spike": bool(participation.get("spike")),
     }
+
+
+# ── US-141 便宜但没坏 ────────────────────────────────────────────────────────
+# 小刚原话「跌很久就便宜，可以捡便宜货」——方向对，但「跌了多久」本身是负信号：
+# 中期(1-12月)动量为正，跌久的倾向继续跌；只有 3-5 年尺度才反转。所以不看跌了多久，
+# 看「便宜 + 公司没变差」还是「便宜是有原因的」。估值分位 × 进化轴 四态。
+
+_CHEAP_PCTL = 30   # PE 处于自身历史 30% 分位以下 = 便宜
+_RICH_PCTL = 70    # 70% 分位以上 = 贵
+
+# 低估值两态必带的挡刀句：老股民和新手都容易犯的同一个错
+_FALLING_KNIFE = "从高点跌了多少，不代表还能跌多少。"  # = _CHEAP_STR["zh"]["knife"]
+
+
+_CHEAP_STR = {
+    "zh": {
+        "unknown_head": "估值数据不足，判断不了贵还是便宜",
+        "unknown_reason": "缺少可比的历史估值（常见于亏损公司：市盈率为负，比不了）",
+        "unknown_act": "这种情况看市净率和现金流更实在。",
+        "pos": "当前市盈率处在自己过去 5 年的第 {p:.0f} 百分位",
+        "low": "（偏低）", "high": "（偏高）", "mid": "（居中）",
+        "mispriced_head": "便宜，而且不是因为公司变差",
+        "mispriced_r": "同时公司多年在变强",
+        "mispriced_act": "这种组合值得多花时间看，但便宜本身不构成买入理由。",
+        "trap_head": "便宜是有原因的",
+        "trap_r": "但公司多年在变弱——是基本面在下台阶，不是市场错杀",
+        "trap_act": "越跌越买在这种票上最容易亏，先弄清它为什么变弱。",
+        "flat_head": "便宜，公司没明显变好也没变坏",
+        "flat_r": "公司多年经营大致横着走",
+        "flat_act": "这种票靠估值修复赚钱，需要耐心和催化剂。",
+        "double_head": "贵，而且公司在变弱",
+        "double_r": "公司多年在变弱——估值和业绩可能一起往下",
+        "double_act": "这是最难赚钱的组合。",
+        "pricey_head": "好公司，但现在不便宜",
+        "pricey_r": "公司本身在变强或稳住",
+        "pricey_act": "贵不等于不能买，但买贵了要靠公司继续超预期才能赚回来。",
+        "neutral_head": "估值不高不低",
+        "neutral_act": "估值给不出方向，看公司本身和信号。",
+        "knife": "从高点跌了多少，不代表还能跌多少。",
+    },
+    "en": {
+        "unknown_head": "Not enough valuation data to say cheap or expensive",
+        "unknown_reason": "No comparable valuation history (common for loss-making firms: P/E is negative)",
+        "unknown_act": "Price-to-book and cash flow are more useful here.",
+        "pos": "P/E sits in the {p:.0f}th percentile of its own last 5 years",
+        "low": " (low)", "high": " (high)", "mid": " (middle)",
+        "mispriced_head": "Cheap — and not because the business got worse",
+        "mispriced_r": "The business has been improving for years",
+        "mispriced_act": "Worth a closer look, but cheap alone is not a reason to buy.",
+        "trap_head": "It is cheap for a reason",
+        "trap_r": "The business has been deteriorating for years — this is fundamentals stepping down, not a mispricing",
+        "trap_act": "Averaging down is where this type loses money. Understand why it is weakening first.",
+        "flat_head": "Cheap; the business is neither clearly better nor worse",
+        "flat_r": "Operations have been roughly flat for years",
+        "flat_act": "This type pays off through re-rating — needs patience and a catalyst.",
+        "double_head": "Expensive, and the business is weakening",
+        "double_r": "Years of deterioration — valuation and earnings can fall together",
+        "double_act": "This is the hardest combination to make money in.",
+        "pricey_head": "Good business, but not cheap right now",
+        "pricey_r": "The business itself is improving or holding up",
+        "pricey_act": "Expensive is not un-buyable, but paying up requires the company to keep beating expectations.",
+        "neutral_head": "Valuation is neither high nor low",
+        "neutral_act": "Valuation gives no direction here — look at the business and the signals.",
+        "knife": "How far it has fallen from the high says nothing about how much further it can fall.",
+    },
+}
+
+
+def describe_cheapness(pe_percentile, evo_direction: str, evo_evidence: list = None,
+                       locale: str = "zh") -> dict:
+    """估值分位(0-100，自身历史) × 进化轴方向(up/flat/down) → 四态人话标签。
+
+    返回 {tier, headline, reason, warning, actionable}。
+    headline 是给用户看的一句话，不含「安全边际」这类术语。
+    pe_percentile 为 None（亏损股/数据不足）时不硬猜，返回 unknown。
+    注：evo_evidence 来自 lifecycle._evolution，目前只有中文（既有欠债，见 US-148）。
+    """
+    L = _CHEAP_STR.get(locale) or _CHEAP_STR["zh"]
+    ev = list(evo_evidence or [])
+
+    if pe_percentile is None:
+        return {
+            "tier": "unknown",
+            "headline": L["unknown_head"],
+            "reason": [L["unknown_reason"]],
+            "warning": "",
+            "actionable": L["unknown_act"],
+        }
+
+    p = float(pe_percentile)
+    cheap = p <= _CHEAP_PCTL
+    rich = p >= _RICH_PCTL
+    pos = L["pos"].format(p=p)
+
+    if cheap and evo_direction == "up":
+        return {
+            "tier": "mispriced", "headline": L["mispriced_head"],
+            "reason": [pos + L["low"], L["mispriced_r"]] + ev[:3],
+            "warning": L["knife"], "actionable": L["mispriced_act"],
+        }
+    if cheap and evo_direction == "down":
+        return {
+            "tier": "cheap_for_reason", "headline": L["trap_head"],
+            "reason": [pos + L["low"], L["trap_r"]] + ev[:3],
+            "warning": L["knife"], "actionable": L["trap_act"],
+        }
+    if cheap:
+        return {
+            "tier": "cheap_flat", "headline": L["flat_head"],
+            "reason": [pos + L["low"], L["flat_r"]] + ev[:2],
+            "warning": L["knife"], "actionable": L["flat_act"],
+        }
+    if rich and evo_direction == "down":
+        return {
+            "tier": "double_risk", "headline": L["double_head"],
+            "reason": [pos + L["high"], L["double_r"]] + ev[:3],
+            "warning": "", "actionable": L["double_act"],
+        }
+    if rich:
+        return {
+            "tier": "good_but_pricey", "headline": L["pricey_head"],
+            "reason": [pos + L["high"], L["pricey_r"]] + ev[:2],
+            "warning": "", "actionable": L["pricey_act"],
+        }
+    return {
+        "tier": "neutral", "headline": L["neutral_head"],
+        "reason": [pos + L["mid"]] + ev[:2],
+        "warning": "", "actionable": L["neutral_act"],
+    }
