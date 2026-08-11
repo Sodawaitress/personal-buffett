@@ -2531,3 +2531,48 @@
 }
 :root[data-theme="dark"] .cheap-warn { color: #fbbf24; }
 :root[data-theme="light"] .cheap-warn { color: #b45309; }
+
+/* ── US-142 自己人在买还是在卖 ─────────────────────────────────── */
+.insider-card {
+  border: 1px solid var(--rule-light);
+  border-left: 3px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 12px 14px;
+  margin: 16px 0;
+}
+.insider-sell { border-left-color: #b91c1c; }
+.insider-buy  { border-left-color: #15803d; }
+.insider-head { display: flex; align-items: baseline; gap: 8px; }
+.insider-title {
+  font-family: -apple-system, sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--ink-muted);
+}
+.insider-window { font-size: 11px; color: var(--ink-muted); }
+.insider-headline { font-size: 15px; font-weight: 600; margin-top: 6px; color: var(--ink); }
+.insider-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.insider-item {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 5px 0; border-top: 1px solid var(--rule-light);
+  font-size: 13.5px;
+}
+.insider-date { color: var(--ink-muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.insider-item.insider-sell .insider-text { color: #b91c1c; }
+.insider-item.insider-buy  .insider-text { color: #15803d; }
+.insider-routine {
+  margin-top: 8px; font-size: 12px; color: var(--ink-muted); font-style: italic;
+}
+.insider-caveat {
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px dashed var(--rule-light);
+  font-size: 12.5px; color: var(--ink-muted); line-height: 1.55;
+}
+@media (prefers-color-scheme: dark) {
+  .insider-item.insider-sell .insider-text { color: #f87171; }
+  .insider-item.insider-buy  .insider-text { color: #4ade80; }
+}
+:root[data-theme="dark"] .insider-item.insider-sell .insider-text { color: #f87171; }
+:root[data-theme="dark"] .insider-item.insider-buy  .insider-text { color: #4ade80; }
+:root[data-theme="light"] .insider-item.insider-sell .insider-text { color: #b91c1c; }
+:root[data-theme="light"] .insider-item.insider-buy  .insider-text { color: #15803d; }

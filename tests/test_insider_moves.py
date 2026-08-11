@@ -165,6 +165,36 @@ def test_amount_missing_falls_back_to_ratios():
     assert classify_insider_move(-500, 0.0005, 0.2, "竞价交易", "董事")["kind"] == "routine"
 
 
+# ── 绝对金额：百分比会掩盖量级（黄立卖 1461 万股只占他持股 1%，读着像小事）──
+
+def test_amount_shown_for_large_trades():
+    from scripts.insider_moves import _fmt_amount
+    assert _fmt_amount(-14612400, 13.5) == "2.0亿元"
+    assert _fmt_amount(-2000000, 50) == "1.0亿元"
+
+def test_amount_hidden_for_small_trades():
+    from scripts.insider_moves import _fmt_amount
+    assert _fmt_amount(-500, 20) == ""       # 1 万元，不值一提
+    assert _fmt_amount(-15000, 20) == ""     # 30 万元
+
+def test_amount_magnitude_correct_in_english():
+    from scripts.insider_moves import _fmt_amount
+    # 2 亿不能写成 2 million（曾经的 bug）
+    assert _fmt_amount(-14612400, 13.5, "en") == "RMB 197 million"
+
+def test_amount_missing_price_is_silent():
+    from scripts.insider_moves import _fmt_amount
+    assert _fmt_amount(-14612400, None) == ""
+
+def test_amount_appears_in_item_text():
+    r = describe_insider_activity([_move(shares=-14612400, avg_price=13.5, ratio_own=1.32)])
+    assert "2.0亿元" in r["items"][0]["text"]
+
+def test_english_uses_ascii_colon():
+    r = describe_insider_activity([_move(holder_name="Zhang")], locale="en")
+    assert "：" not in r["items"][0]["text"]
+
+
 if __name__ == "__main__":
     import traceback
     passed = failed = 0

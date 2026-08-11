@@ -1414,5 +1414,17 @@
   "cheap_note_label": {
     "en": "Keep in mind",
     "zh": "提醒"
+  },
+  "insider_title": {
+    "en": "Insider buying & selling",
+    "zh": "自己人在买还是在卖"
+  },
+  "insider_window": {
+    "en": "last 6 months",
+    "zh": "近半年"
+  },
+  "insider_caveat_label": {
+    "en": "Read with care",
+    "zh": "怎么看这条"
   }
 }

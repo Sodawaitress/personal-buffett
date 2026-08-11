@@ -102,6 +102,8 @@ _STR = {
         "buy_one": "{who}买了自己公司的股票",
         "denom": "卖出{total:.2f}%的总股本，相当于他持股的{own:.0f}%",
         "denom_buy": "买入{total:.2f}%的总股本",
+        "amount": "，约 {amt}",
+        "colon": "：",
         "key": "（核心决策人）",
         "routine_note": "另有 {n} 笔属股权激励/解禁一类的机械交易，与看多看空无关，未计入",
         "none": "近半年没有高管或大股东买卖自己公司股票的记录",
@@ -114,6 +116,8 @@ _STR = {
         "buy_one": "{who} bought shares in their own company",
         "denom": "sold {total:.2f}% of all shares outstanding — about {own:.0f}% of what they personally held",
         "denom_buy": "bought {total:.2f}% of all shares outstanding",
+        "amount": ", roughly {amt}",
+        "colon": ": ",
         "key": " (key decision-maker)",
         "routine_note": "{n} more transactions were mechanical (equity incentives, lock-up expiry) and carry no view on the company — excluded",
         "none": "No insider buying or selling on record in the last six months",
@@ -122,6 +126,24 @@ _STR = {
         "caveat": "An executive may sell for entirely personal reasons (a house, a tax bill). One sale means little — repeated, large, or several people selling at once is what matters.",
     },
 }
+
+
+def _fmt_amount(shares, avg_price, locale="zh") -> str:
+    """成交金额人话化。**百分比会掩盖绝对量级** —— 大股东卖 1461 万股只占他持股 1%，
+    读起来像小事，加上「约 2 亿」才有感觉。"""
+    try:
+        amt = abs(float(shares or 0)) * float(avg_price or 0)
+    except Exception:
+        return ""
+    if amt < 1e6:
+        return ""
+    if locale == "en":
+        # A 股按人民币计价，别标成美元
+        # 英文不用「亿」这个单位，一律折成 million（2 亿 = RMB 197 million）
+        return f"RMB {amt/1e6:.0f} million"
+    if amt >= 1e8:
+        return f"{amt/1e8:.1f}亿元"
+    return f"{amt/1e4:.0f}万元"
 
 
 def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
@@ -160,9 +182,12 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         rt = abs(float(x.get("ratio_total") or 0))
         ro = abs(float(x.get("ratio_own") or 0))
         if x["direction"] == "sell" and ro:
-            line += "：" + L["denom"].format(total=rt, own=ro)
+            line += L["colon"] + L["denom"].format(total=rt, own=ro)
         elif rt:
-            line += "：" + L["denom_buy"].format(total=rt)
+            line += L["colon"] + L["denom_buy"].format(total=rt)
+        amt = _fmt_amount(x.get("shares"), x.get("avg_price"), locale)
+        if amt:
+            line += L["amount"].format(amt=amt)
         items.append({"text": line, "date": x.get("change_date", ""),
                       "direction": x["direction"], "weight": x["weight"]})
 

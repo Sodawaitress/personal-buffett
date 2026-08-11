@@ -655,6 +655,12 @@ def present_stock_page(bundle):
         except Exception:
             signal_conclusion = None
 
+    try:
+        from flask import session as _sess
+        _loc = _sess.get("locale", "en")
+    except Exception:
+        _loc = "zh"
+
     # US-141 便宜但没坏：估值分位 × 进化轴（复用 lifecycle 的进化轴，同一套判断不做两份）
     cheapness = None
     try:
@@ -663,11 +669,6 @@ def present_stock_page(bundle):
 
         _fund = bundle.get("fund") or {}
         _evo = _evolution(_fund, bundle.get("analysis"))
-        try:
-            from flask import session as _sess
-            _loc = _sess.get("locale", "en")
-        except Exception:
-            _loc = "zh"
         cheapness = describe_cheapness(
             (_fund.get("signals") or {}).get("pe_percentile_5y") or _fund.get("pe_percentile_5y"),
             _evo.get("direction"),
@@ -677,6 +678,20 @@ def present_stock_page(bundle):
         )
     except Exception:
         cheapness = None
+
+    # US-142 谁在卖自己公司的股票（A股，半年窗口）
+    insider = None
+    if market == "cn":
+        try:
+            import db as _db
+            from scripts.insider_moves import WINDOW_DAYS, describe_insider_activity
+
+            _rows = _db.get_insider_changes(bundle["code"], days=WINDOW_DAYS)
+            _r = describe_insider_activity(_rows, locale=_loc)
+            # 全是机械交易/无记录时不占版面（无料不报，US-68）
+            insider = _r if (_r.get("has_data") or _r.get("routine_skipped")) else None
+        except Exception:
+            insider = None
 
     current_price_val = (bundle["price"] or {}).get("price") if bundle["price"] else None
     position_insight = _build_position_insight(
@@ -735,6 +750,7 @@ def present_stock_page(bundle):
         # US-93
         "position_insight": position_insight,
         "cheapness": cheapness,
+        "insider": insider,
         # US-94
         "analyst_consensus": bundle.get("analyst_consensus"),
         # US-95

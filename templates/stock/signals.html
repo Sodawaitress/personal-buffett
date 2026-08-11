@@ -106,6 +106,33 @@
     </div>
     {% endif %}
 
+    {# ── US-142 自己人在买还是在卖：最直接的领先信号，与机构调研同层 ── #}
+    {% if insider %}
+    <div class="insider-card insider-{{ insider.net_direction or 'none' }}">
+      <div class="insider-head">
+        <span class="insider-title">{{ t.insider_title }}</span>
+        <span class="insider-window">{{ t.insider_window }}</span>
+      </div>
+      <div class="insider-headline">{{ insider.headline }}</div>
+      {% if insider['items'] %}
+      <ul class="insider-list">
+        {% for it in insider['items'] %}
+        <li class="insider-item insider-{{ it.direction }}">
+          <span class="insider-date">{{ it.date }}</span>
+          <span class="insider-text">{{ it.text }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if insider.routine_note %}
+      <div class="insider-routine">{{ insider.routine_note }}</div>
+      {% endif %}
+      {% if insider.caveat %}
+      <div class="insider-caveat"><b>{{ t.insider_caveat_label }}：</b>{{ insider.caveat }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     {# ── 层3 辅助信号（折叠，US-119）：综合研判 + 三列地图 + 行业 ── #}
     <details class="sig-fold">
       <summary class="sig-fold-summary">{{ t.sig_aux_label }}</summary>
