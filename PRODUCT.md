@@ -5497,3 +5497,36 @@ A 股行情** —— 178/215 只自选股是 A 股，一次请求即覆盖 83%�
 
 ### 不做
 - 不做仓位计算器、不做组合权重建议
+
+---
+
+## US-148 · 规则叙事层的 zh-only 欠债
+
+> **实现状态（2026-08-11）**：📝 待实现。US-141 做双语时发现的系统性欠债。
+
+### 背景
+双语规范（CLAUDE.md 强制）说的是「模板里的用户可见文字必须走 `t['key']`」，模板层
+一直守得住。但**规则函数生成的叙事正文全部只有中文**，它们绕过了 `t[]`：
+`describe_margin_context` / `describe_survey_context` / `describe_participation_context`
+/ `label_news_vs_institution` / `conclusion_text` / `_SIGNAL_CONTEXT` /
+`lifecycle._evolution` 的 evidence / `_PHASE_TABLE` 五阶段 …
+
+后果：Da-young 把界面切到英文，外壳是英文、**正文是中文**。这些恰恰是最有信息量的
+部分（信号情境、进化依据、阶段判断）。
+
+US-141 已按正确姿势做了（`describe_cheapness(locale=)` + 双语串表 + 「en 输出不含
+中文」的单测），可作为模板。
+
+### Scope
+- 给上述规则函数逐个加 `locale` 参数 + 双语串表（照 `_CHEAP_STR` 的写法）
+- 每个都加一条「en 输出无中文字符」的单测（正则挡回归）
+- `lifecycle._evolution` 的 evidence 是被多处引用的中间产物，优先做它
+
+### AC
+- [ ] 英文界面下 letter / signals / lifecycle 三页正文无中文字符
+- [ ] 每个改造过的函数都有 en-无中文 单测
+- [ ] locale 未知时回退中文（不报错）
+
+### 不做
+- 不引入 gettext/babel（现有 `i18n/*.json` + 串表够用，别为此加依赖）
+- 不用 LLM 实时翻译（成本、不确定性、且这些串是固定的）
