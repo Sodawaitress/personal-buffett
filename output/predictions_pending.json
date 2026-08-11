@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-08-11",
+    "code": "300124",
+    "name": "汇川技术",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "30天内12次调研+5次特定对象/现场调研 + 储能涨价5-15% = 定价力被机构提前验证",
+    "price_at_prediction": 64.34
+  },
+  {
+    "date": "2026-08-11",
+    "code": "300394",
+    "name": "天孚通信",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "现场参观真信号 + qs=90好公司但估值贵 + CPO禁令传闻带来的板块估值杀",
+    "price_at_prediction": 223.03
+  }
+]
