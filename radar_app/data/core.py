@@ -683,6 +683,11 @@ def _migrate():
         ("city_living_data",   "report_year",    "INTEGER"),
         # US-116 验证层：分类来源 auto/crowd/manual（配合 manual_override 防覆盖）
         ("stock_meta",         "type_source",    "TEXT DEFAULT 'auto'"),
+        # US-142 内部人交易：小刚要的「减持比例」—— 两个分母都存，缺一个用户就没感觉
+        ("insider_changes",    "ratio_total",    "REAL"),   # 占总股本 %
+        ("insider_changes",    "ratio_own",      "REAL"),   # 占其本人持股 %
+        ("insider_changes",    "reason",         "TEXT"),   # 竞价交易/大宗交易/股权激励…
+        ("insider_changes",    "kind",           "TEXT"),   # routine / opportunistic
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

@@ -225,16 +225,28 @@ def get_block_trades(code: str, days: int = 7) -> list:
 
 def upsert_insider_change(code: str, holder_name: str, role: str,
                            change_type: str, shares: float, avg_price: float,
-                           change_date: str):
+                           change_date: str, ratio_total: float = None,
+                           ratio_own: float = None, reason: str = None,
+                           kind: str = None):
+    """US-142 起多存四列：占总股本%/占本人持股%/变动原因/惯例或机会性。
+    ON CONFLICT DO UPDATE —— 旧行（老源存的，四列为空）会被新数据补齐。"""
     with get_conn() as c:
         c.execute(
             """
-            INSERT INTO insider_changes(code, holder_name, role, change_type, shares, avg_price, change_date)
-            VALUES(:code,:holder_name,:role,:change_type,:shares,:avg_price,:change_date)
-            ON CONFLICT DO NOTHING
+            INSERT INTO insider_changes(code, holder_name, role, change_type, shares,
+                                        avg_price, change_date, ratio_total, ratio_own,
+                                        reason, kind)
+            VALUES(:code,:holder_name,:role,:change_type,:shares,:avg_price,:change_date,
+                   :ratio_total,:ratio_own,:reason,:kind)
+            ON CONFLICT(code, holder_name, change_date, change_type) DO UPDATE SET
+                shares=excluded.shares, avg_price=excluded.avg_price,
+                ratio_total=excluded.ratio_total, ratio_own=excluded.ratio_own,
+                reason=excluded.reason, kind=excluded.kind
             """,
             {"code": code, "holder_name": holder_name, "role": role, "change_type": change_type,
-             "shares": shares, "avg_price": avg_price, "change_date": change_date},
+             "shares": shares, "avg_price": avg_price, "change_date": change_date,
+             "ratio_total": ratio_total, "ratio_own": ratio_own,
+             "reason": reason, "kind": kind},
         )
 
 
