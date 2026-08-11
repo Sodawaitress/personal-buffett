@@ -133,6 +133,38 @@ def test_english_keeps_both_denominators():
     assert "0.60%" in t and "30%" in t
 
 
+# ── 真实案例回归：只看比例会漏掉大股东（US-142 冒烟测抓到的错分）────────────
+
+def test_founder_block_trade_is_opportunistic_real_case():
+    """002414 高德红外 黄立(创始人) 2026-02-25 一笔卖 1461.24 万股：
+    占总股本 0.34%、但只占他本人持股 1.32%（持股基数极大）。
+    纯比例阈值把它判成 routine —— 这恰恰是最该报的那种。"""
+    c = classify_insider_move(
+        shares=-14612400, ratio_total=0.3422, ratio_own=1.32,
+        reason="大宗交易", position="董事", avg_price=13.5,
+    )
+    assert c["kind"] == "opportunistic", "创始人一笔卖两亿不能算机械交易"
+    assert c["direction"] == "sell"
+
+def test_block_trade_never_routine_even_when_small():
+    # 大宗交易是刻意协商的通道，不存在「机械发生」
+    c = classify_insider_move(-1000, 0.0001, 0.1, "大宗交易", "董事", avg_price=10)
+    assert c["kind"] == "opportunistic"
+
+def test_big_absolute_amount_triggers_even_with_tiny_ratios():
+    c = classify_insider_move(-2000000, 0.01, 0.5, "竞价交易", "高级管理人员", avg_price=50)
+    assert c["kind"] == "opportunistic", "1 亿的卖单不能因为比例小就忽略"
+
+def test_small_amount_stays_routine():
+    c = classify_insider_move(-500, 0.0005, 0.2, "竞价交易", "董事", avg_price=20)
+    assert c["kind"] == "routine"
+
+def test_amount_missing_falls_back_to_ratios():
+    # 没有均价时不能崩，退回比例判定
+    assert classify_insider_move(-14612400, 0.3422, 1.32, "竞价交易", "董事")["kind"] == "opportunistic"
+    assert classify_insider_move(-500, 0.0005, 0.2, "竞价交易", "董事")["kind"] == "routine"
+
+
 if __name__ == "__main__":
     import traceback
     passed = failed = 0

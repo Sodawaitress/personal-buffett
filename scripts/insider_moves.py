@@ -37,17 +37,28 @@ _ROUTINE_REASONS = ("股权激励", "行权", "解禁", "送转", "分红", "继
 # 占本人持股比例达到这个量级才算「动真格」（低于此且原因惯例 = 噪音）
 _MEANINGFUL_OWN_PCT = 5.0
 # 占总股本比例达到这个量级，无论原因都值得看
-_MEANINGFUL_TOTAL_PCT = 0.5
+_MEANINGFUL_TOTAL_PCT = 0.1
+# 绝对金额门槛（元）：**只看比例会漏掉大股东** —— 持股基数大的人卖一大笔，
+# 「占本人持股」永远显得小。真实案例：002414 黄立(创始人)一笔卖 1461 万股、
+# 占总股本 0.34%，但只占他本人持股 1.32% → 纯比例判定会误判成噪音。
+_MEANINGFUL_AMOUNT = 1e7
+# 刻意协商的交易通道：不存在「机械发生」的可能，是减持最典型的路径，永不算惯例
+_DELIBERATE_VEHICLES = ("大宗交易", "协议转让", "询价转让", "集中竞价减持")
 # 核心决策人：他们的动作比普通高管更有信息量
 _KEY_ROLES = ("董事长", "总经理", "总裁", "实际控制人", "控股股东", "首席执行官")
 
 
 def classify_insider_move(shares, ratio_total, ratio_own, reason: str = "",
-                          position: str = "") -> dict:
+                          position: str = "", avg_price=None) -> dict:
     """纯规则：一笔内部人交易 → {direction, kind, is_key_person, weight}。
 
     direction: sell / buy（shares 负数=卖）
     kind: routine（机械交易，无信息量）/ opportunistic（自主择时，有信息量）
+
+    三个「动真格」判据取或（缺一个就会漏）：
+      占本人持股 ≥5%（小股东的大动作）
+      占总股本 ≥0.1%（对股价有实际冲击）
+      绝对金额 ≥1000 万（大股东卖一大笔，但比例显得小 —— 002414 真实案例）
     """
     sh = float(shares or 0)
     direction = "sell" if sh < 0 else "buy"
@@ -57,15 +68,26 @@ def classify_insider_move(shares, ratio_total, ratio_own, reason: str = "",
     pos = str(position or "")
     is_key = any(k in pos for k in _KEY_ROLES)
 
-    routine_reason = any(k in rsn for k in _ROUTINE_REASONS)
-    big = ro >= _MEANINGFUL_OWN_PCT or rt >= _MEANINGFUL_TOTAL_PCT
+    try:
+        amount = abs(sh) * float(avg_price or 0)
+    except Exception:
+        amount = 0.0
 
-    # 机械原因 + 不大 = 噪音；机械原因但很大，仍按机会性看（大额就是选择）
-    kind = "routine" if (routine_reason and not big) else ("opportunistic" if big else "routine")
+    big = (ro >= _MEANINGFUL_OWN_PCT or rt >= _MEANINGFUL_TOTAL_PCT
+           or amount >= _MEANINGFUL_AMOUNT)
+    deliberate = any(k in rsn for k in _DELIBERATE_VEHICLES)
+    routine_reason = any(k in rsn for k in _ROUTINE_REASONS)
+
+    if deliberate:
+        kind = "opportunistic"          # 刻意协商的通道，没有「机械发生」的可能
+    elif routine_reason and not big:
+        kind = "routine"                # 机械原因 + 不大 = 噪音
+    else:
+        kind = "opportunistic" if big else "routine"
 
     weight = 0.0
     if kind == "opportunistic":
-        weight = min(3.0, ro / 10.0 + rt * 2)
+        weight = min(3.0, ro / 10.0 + rt * 2 + min(amount / 1e8, 1.0))
         if is_key:
             weight += 1.0
     return {
@@ -117,7 +139,7 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
     for m in rows:
         c = classify_insider_move(m.get("shares"), m.get("ratio_total"),
                                  m.get("ratio_own"), m.get("reason"),
-                                 m.get("role"))
+                                 m.get("role"), m.get("avg_price"))
         if c["kind"] == "routine":
             routine += 1
             continue
@@ -210,7 +232,8 @@ def run_insider_refresh(codes, days: int = None) -> dict:
             shares = d.get("CHANGE_SHARES")
             ratio_own = _own_pct(shares, d.get("END_HOLD_NUM"))
             cls = classify_insider_move(shares, d.get("CHANGE_RATIO"), ratio_own,
-                                        d.get("CHANGE_REASON"), d.get("POSITION_NAME"))
+                                        d.get("CHANGE_REASON"), d.get("POSITION_NAME"),
+                                        d.get("AVERAGE_PRICE"))
             try:
                 db.upsert_insider_change(
                     code=code,
@@ -249,6 +272,7 @@ if __name__ == "__main__":
                 "shares": d.get("CHANGE_SHARES"), "ratio_total": d.get("CHANGE_RATIO"),
                 "ratio_own": _own_pct(d.get("CHANGE_SHARES"), d.get("END_HOLD_NUM")),
                 "reason": d.get("CHANGE_REASON"), "change_date": str(d.get("CHANGE_DATE"))[:10],
+                "avg_price": d.get("AVERAGE_PRICE"),
             } for d in rows]
             for loc in ("zh", "en"):
                 r = describe_insider_activity(parsed, locale=loc)
