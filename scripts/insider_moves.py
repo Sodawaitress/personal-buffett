@@ -103,6 +103,8 @@ _STR = {
         "denom": "卖出{total:.2f}%的总股本，相当于他持股的{own:.0f}%",
         "denom_buy": "买入{total:.2f}%的总股本",
         "amount": "，约 {amt}",
+        "amount_only": "约 {amt}",
+        "denom_own_only": "卖掉了他持股的{own:.0f}%",
         "colon": "：",
         "key": "（核心决策人）",
         "routine_note": "另有 {n} 笔属股权激励/解禁一类的机械交易，与看多看空无关，未计入",
@@ -117,6 +119,8 @@ _STR = {
         "denom": "sold {total:.2f}% of all shares outstanding — about {own:.0f}% of what they personally held",
         "denom_buy": "bought {total:.2f}% of all shares outstanding",
         "amount": ", roughly {amt}",
+        "amount_only": "roughly {amt}",
+        "denom_own_only": "about {own:.0f}% of what they personally held",
         "colon": ": ",
         "key": " (key decision-maker)",
         "routine_note": "{n} more transactions were mechanical (equity incentives, lock-up expiry) and carry no view on the company — excluded",
@@ -181,11 +185,18 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         line = tmpl.format(who=who.strip())
         rt = abs(float(x.get("ratio_total") or 0))
         ro = abs(float(x.get("ratio_own") or 0))
-        if x["direction"] == "sell" and ro:
-            line += L["colon"] + L["denom"].format(total=rt, own=ro)
-        elif rt:
-            line += L["colon"] + L["denom_buy"].format(total=rt)
         amt = _fmt_amount(x.get("shares"), x.get("avg_price"), locale)
+        # 占比不足 0.01% 时别写「0.00%」—— 那是噪音，反而削弱可信度；让金额说话
+        rt_shown = rt >= 0.005
+        if x["direction"] == "sell" and ro and rt_shown:
+            line += L["colon"] + L["denom"].format(total=rt, own=ro)
+        elif x["direction"] == "sell" and ro:
+            line += L["colon"] + L["denom_own_only"].format(own=ro)
+        elif rt_shown:
+            line += L["colon"] + L["denom_buy"].format(total=rt)
+        elif amt:
+            line += L["colon"] + L["amount_only"].format(amt=amt)
+            amt = ""
         if amt:
             line += L["amount"].format(amt=amt)
         items.append({"text": line, "date": x.get("change_date", ""),

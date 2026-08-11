@@ -195,6 +195,27 @@ def test_english_uses_ascii_colon():
     assert "：" not in r["items"][0]["text"]
 
 
+# ── 不写 0.00%：噪音，反而削弱可信度（生产真数据暴露）────────────────────────
+
+def test_never_prints_zero_percent():
+    for kw in ({"shares": 30000, "ratio_total": 0.001, "ratio_own": 0, "avg_price": 500},
+               {"shares": -30000, "ratio_total": 0.002, "ratio_own": 8, "avg_price": 500}):
+        r = describe_insider_activity([_move(**kw)])
+        for it in r["items"]:
+            assert "0.00%" not in it["text"], it["text"]
+
+def test_small_ratio_sell_falls_back_to_own_share():
+    r = describe_insider_activity([_move(shares=-30000, ratio_total=0.002,
+                                         ratio_own=8, avg_price=300)])
+    t = r["items"][0]["text"]
+    assert "持股的8%" in t and "总股本" not in t
+
+def test_ratio_shown_when_meaningful():
+    r = describe_insider_activity([_move(shares=2000000, ratio_total=0.14,
+                                         ratio_own=0, avg_price=130)])
+    assert "0.14%" in r["items"][0]["text"]
+
+
 if __name__ == "__main__":
     import traceback
     passed = failed = 0
