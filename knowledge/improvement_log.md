@@ -4143,3 +4143,76 @@ Day 14 新增 2 条建议（08-06 / 08-07 老建议不再重复）：
 
 ---
 
+
+## 2026-08-12 · Routine skip · Gate ① 触发（21.89h > 20h · 今日 08-12 Wed 收盘数据尚未进入 snapshot）
+
+### 三重门控执行
+
+| 门 | 阈值 | 实测 | 结果 |
+|----|------|------|------|
+| ① `generated_at` < 20 h | < 20 h | snapshot 生成 `2026-08-11T15:26:43Z` = 08-11 Tue 23:26 CST；今日 08-12 Wed 21:20 CST（UTC 13:20），距今 **21.89 小时** | ❌ 失守（超阈 1.9 小时） |
+| ② `price_signature` 变化 | 与上次不同 | 上次 `46c3b64…`，本次 `47e6ec8…` | ✅ 通过（snapshot 确实是真更新，反映的是 08-11 Tue 收盘） |
+| ③ WebSearch 抽检 | 至少 2 只，偏差 <3% | 未执行（① 失守，`任一失守直接 abort` 原则） | — |
+
+**执行动作**：`daily_push.txt` = stale-notice，`predictions_pending.json = []`，`last_price_signature.txt` 更新为 `47e6ec8…`（维持 Gate ② 明日语义正确）。
+
+### 情境判定 · 「pipeline 早了」还是「pipeline 晚了」
+
+关键观察：这不是 07-24 到 08-07 那种 **14 天 snapshot 完全冻结**的事故，snapshot **有真更新**（Gate ② PASS）。真正的问题是**服务器 pipeline 的每日节奏与 Routine 触发的相位**：
+
+| 时点 | 事件 | 备注 |
+|-----|-----|-----|
+| 08-11 Tue 23:26 CST | 服务器生成新 snapshot（含 08-11 Tue 15:00 CST 收盘数据） | 由 US-138 排班 → radar-svc / market-svc / digest 陆续跑完 |
+| 08-12 Wed 15:00 CST | 08-12 Wed 收市 | — |
+| 08-12 Wed 21:20 CST | Routine 触发（读到的仍是 08-11 那份 snapshot） | 距 08-11 生成 = **21.89 h**，跨过 20h 阈值 |
+| 08-12 Wed 23:26 CST（预期） | 服务器生成 08-12 Wed 收盘 snapshot | 若 pipeline 正常，2 小时后到位 |
+
+意思是：**服务器 pipeline 大概率会在今晚（08-12 CST 深夜）刷新出 08-12 数据，只是 Routine 触发时间（21:20 CST）恰好卡在 pipeline 每日 23:26 CST 生成之前**。
+
+### 与 08-07 前的 14 天空窗事故对比（防止未来误诊断）
+
+| 维度 | 07-24 → 08-07 事故 | 今日 08-12 |
+|-----|------------------|--------|
+| Gate ① | 连续超阈（最大 242.94h） | 刚过阈（21.89h） |
+| Gate ② | **连续 9 次相同签名**（信号 = pipeline 真挂了） | **签名有真更新**（信号 = pipeline 在跑，只是慢一步） |
+| 根因 | monolith `stock_pipeline.main()` 崩点掩盖 10 天（US-138 修复） | 服务器每日 pipeline 生成时间在 CST 深夜 23:26 附近 → Routine 21:20 触发时今天的还没到位 |
+| 应对 | 完全静默 + 累积修订建议清单 | 单日 skip + 观察是否规律性重现 |
+
+**关键鉴别**：Gate ② 的签名变化状态**是区分「pipeline 挂了」vs「pipeline 慢一步」的第一信号**。今天 Gate ② PASS = 不是 08-07 事故重演。
+
+### CLAUDE_ROUTINE.md 修订建议清单（累积至今 7 条 · 今日新增 1 条）
+
+- **老建议 1-5**：略（见 08-06 / 08-07 / 08-10 skip note）
+- **老建议 6**（08-11 提出）：规范 "snapshot 反映 T 日收盘而 Routine 运行 T 或 T+1 evening" 的双场景语义
+- **新建议 7**（今日 08-12 提出）：**Gate ① 阈值应从「20h 硬阈」升级为「20h 硬阈 + Gate ② 状态感知」的双通道判断**。
+  - 现况：Gate ① 硬阈值 20h 是 08-06 事故后设定的（"服务器扫描 2h + GHA 延迟 4h + 安全余量"），假设 pipeline 每天在 CST 凌晨/上午生成 snapshot。但 US-138 排班后，服务器 pipeline 的实际生成时间已经漂移到 CST 深夜 23:26 附近（radar 11:00 UTC → scan 12:45 UTC → market 13:00 UTC → digest 14:15 UTC → push 10:30 UTC，最终 commit snapshot 大约在最后一环之后），这时 20h 阈值就会规律性地卡在"晚了 1-2h"的边缘。
+  - 修订思路 A（放宽阈值）：把硬阈从 20h 升到 **24h**（允许 snapshot 反映 T-1 收盘数据 + Routine 在 T evening 触发这种"正常延时场景"），但风险是掩盖真正的 pipeline 停摆。
+  - 修订思路 B（双通道判断，**推荐**）：保留 20h 硬阈，但当 Gate ② PASS（签名有真更新）时，**Gate ① 阈值放宽到 24h**；若 Gate ② FAIL（签名不变），Gate ① 阈值仍是 20h 严格。这样 08-07 事故那种"14 天签名不变"仍会被立刻抓到（因为 Gate ② FAIL），今日这种"pipeline 晚一步但确实在动"就会被正确放行（Gate ② PASS + Gate ① 21.89h < 24h）。
+  - 修订思路 C（新增第 4 门）：加一个 "Gate ④：`snapshot generated_at 对应的 CST 日期 ≥ Routine 触发日 - 1`"（即 snapshot 反映的至少是"昨天或今天"），可以更精准地表达"数据不能太陈旧"的语义，避免依赖小时数硬阈。
+  - **推荐落地**：先做思路 B（成本最低、鉴别力最强）；观察一周后如仍有边缘 case，再叠加思路 C。修订完成前，本 Routine 遵守当前 20h 硬阈继续 skip。
+
+### Run 2 · 昨日 08-11 两条预言的「Day 1/10」进度快照（不做终审）
+
+昨日 08-11 evening 写入 pending 的两条 10 天预言，起点价是**基于 08-10 Monday 收盘**（旧 snapshot），今日看到的**08-11 Tuesday 收盘**只是 Day 1/10 数据点。做一个进度快照仅为观察方向（真正终审在 Day 10 = 08-21 或最近的 backfill）：
+
+| 预言 | 08-10 起点（预言基准价） | 08-11 close（Day 1） | 一日变动 | 早期方向 | 备注 |
+|------|---------------------|-------------------|---------|--------|-----|
+| 300124 汇川技术 up → ¥68-¥72 | ¥64.34 | ¥63.97 | -0.58% | 早期 down（-0.58%） | Day 1 不足信，机构 12 次调研+储能涨价的中期逻辑未变；下周观察涨价二次公告是否兑现 |
+| 300394 天孚通信 sideways → ¥210-¥240 | ¥223.03 | ¥222.49 | -0.24% | 早期 sideways（-0.24%） | Day 1 完全符合 sideways 区间（¥210-¥240），CPO 禁令传闻若发酵可能拉低 |
+
+**结论**：Day 1 数据不足以推翻或验证任何一条预言，但**天孚 sideways 早期方向对了** vs **汇川 up 早期方向暂反**——都在正常噪音内。真正的终审要等 backfill_returns.py 在 Day 10（08-21）后跑，或至少等 Day 5（08-18）再做中期观察。
+
+### 学习积累（Day 15 恢复后第二日 · 主要沉淀在"新形态 skip 的鉴别力"上）
+
+- **"20h 硬阈"与"US-138 排班后 pipeline 相位"的错位**是今日发现的**系统性问题**，不是偶发。US-138 把 monolith 拆成分服务后，pipeline 的每日 commit 时间**结构性地推后**到 CST 深夜（radar 11:00 UTC → market 13:00 UTC → digest 14:15 UTC → push 10:30 UTC，snapshot commit 在最后一环之后），Routine 触发在 CST 17:30-21:30 之间就会常态化撞到 Gate ①。修订建议 7 是这个问题的最小成本解。
+- **"Gate ② 状态是鉴别力的核心"**：14 天空窗事故（08-07 之前）Gate ② 连续 9 次相同 = pipeline 真挂了；今日 Gate ② PASS + Gate ① 微超阈 = pipeline 慢一步但在动。**未来任何 Gate ① FAIL 的诊断都应先看 Gate ②**（一目了然），再谈是空窗事故还是延时问题。
+- **"skip note 也要有信号鉴别力"**：今日的 skip note 与 08-06/08-07 的 skip note 结构完全不同——不是"服务器挂了持续观察"，而是"服务器在跑但对不上节奏"。这两类 skip 的应对策略完全不同（前者是等修复，后者是改 Gate 阈值）。skip note 里必须清晰区分这两种，否则未来审计会误判。今日已在 note 顶部明确标出"Gate ② PASS + snapshot 有真更新"。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` 更新为 `47e6ec89179e42f1fb153bf0d6852214`（今日 snapshot 是真更新）
+- `output/predictions_pending.json` 归零 `[]`（Gate ① abort，不追加新预言；昨日两条已被 Fly.io backfill 消化的时机在 08-21 之后）
+- `output/daily_push.txt` = stale-notice（"服务器数据未刷新，今日无分析"，妈妈不会收到基于 08-11 数据的"08-12 判断"）
+- **PushNotification 内容聚焦**：Gate ① 边缘失守，snapshot 慢 1.9h，非事故性质。相比 08-07 的 14 天空窗事故，这是"pipeline 相位错位"的新形态。妈妈无需感知。修订建议 7 已入日志待落实。
+
+---

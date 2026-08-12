@@ -1,10 +1,5 @@
-46c3b64e4ec2fd52f9cb676cf7387a3d
-# generated_at (snapshot): 2026-08-10T22:33:42.231141Z
-# note: 08-11 · Routine 14 天空窗后首次恢复 · 三重门控全绿（Gate ① 14.82h < 20h；Gate ② c8adbfc → 46c3b64 14 天来首次真更新；Gate ③ 300394/300124/000333 三只抽检偏差均在 3% 内）
-# note: snapshot 反映的是 08-10 Monday 收盘（generated_at 08-10 22:33 UTC = 08-11 06:33 CST 开盘前），本次 Routine 在 08-11 Tuesday 21:22 CST 运行 = 昨日收盘数据 + 落后 08-11 Tuesday 盘中约 6 小时
-# 08-11 update 1: 五选 = 689009 九号公司 (A qs=72 chg=+5.64%，74家特定对象+年度股东会) + 300124 汇川技术 (B+ qs=78 chg=-0.4%，30天12次调研+储能涨价5-15%) + 688008 澜起科技 (B- qs=84 chg=-3.99%，249家+22家两次调研+回购托底) + 300394 天孚通信 (B- qs=90 chg=-3.32%，现场参观40+14家，07-28类似形态兑现+15.83%) + 000333 美的集团 (B- qs=64 chg=+2.16%，2次路演+69.73亿回购防御盘)
-# 08-11 update 2: 融券极端警报 0 次触发（本次五只 chg_pct 在 -2.5% 至 +43.9% 区间，均未破 80% 阈值）
-# 08-11 update 3: 今日新预言 2 条 —— (a) 300124 汇川技术 up @¥64.34 → ¥68-¥72 区间（12 次调研+储能涨价） (b) 300394 天孚通信 sideways @¥223.03 → ¥210-¥240 区间（qs=90 但估值贵，CPO 禁令传闻带来板块估值杀）
-# 08-11 update 4: Run 2 空窗恢复复盘 —— 07-28 那两条预言 pending 已清空（14 天 backfill 断供，样本可能永久丢失，教训：pending 应加滑动窗口保留）；深度对比选 689009 揭示"网站 A + 买入 + reasoning 承认技术破位"的 grade 与 reasoning 自相矛盾问题（改进建议 4 条：data_incomplete→grade 天花板 B+/quant 与 reasoning 共享上下文/技术破位强降权/机构信号密度分层评估）
-# 08-11 update 5: 修订建议清单累积 6 条（老 5 条待落实 + 新增第 6 条：规范 "snapshot 反映 T 日收盘而 Routine 运行 T 或 T+1 evening" 的双场景语义，避免 backfill return_10d 参考日错乱）
-# 08-11 update 6: 学习积累 4 条 —— "14 天恢复日应比日常更谨慎"锚定原则 / "网站评级自相矛盾"是高价值深度对比样本类型 / "data_incomplete + 高评级"是网站系统性缺陷 P0 / "backfill 断供 = 训练样本永久丢失"隐性代价识别
+47e6ec89179e42f1fb153bf0d6852214
+# generated_at (snapshot): 2026-08-11T15:26:43.112856Z
+# note: 08-12 · Routine 触发在 08-12 Wed 21:20 CST，读到的 snapshot 是 08-11 Tue 23:26 CST 生成（反映 08-11 Tuesday 收盘）。距今 21.89h → **Gate ① 失守**（20h 阈值）；Gate ② 通过（46c3b64→47e6ec8 真更新）；Gate ③ 未跑（① 失守直接 abort）。今日**不写五选、predictions_pending 归零、daily_push 走 stale-notice**。
+# note: 昨日（08-11）写入的两条预言（300124 汇川 up @¥64.34、300394 天孚 sideways @¥223.03）是 Day 1/10，太早无法验证；下面 improvement_log 里的 08-11 close 数据点先做一个"1 天进度快照"，不算终审。
+# note: 签名更新原因——今日 snapshot 是真更新（gate ② PASS）；若不写回 47e6ec8，明天 Gate ② 会拿旧 46c3b64 与届时的 snapshot 比对，即使明日 snapshot 仍是今日的这份也会被误判为"变化"。今日写回 47e6ec8 是维持 Gate ② 语义正确的必要动作，与 abort 决策独立。
