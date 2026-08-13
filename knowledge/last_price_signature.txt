@@ -1,5 +1,6 @@
-47e6ec89179e42f1fb153bf0d6852214
-# generated_at (snapshot): 2026-08-11T15:26:43.112856Z
-# note: 08-12 · Routine 触发在 08-12 Wed 21:20 CST，读到的 snapshot 是 08-11 Tue 23:26 CST 生成（反映 08-11 Tuesday 收盘）。距今 21.89h → **Gate ① 失守**（20h 阈值）；Gate ② 通过（46c3b64→47e6ec8 真更新）；Gate ③ 未跑（① 失守直接 abort）。今日**不写五选、predictions_pending 归零、daily_push 走 stale-notice**。
-# note: 昨日（08-11）写入的两条预言（300124 汇川 up @¥64.34、300394 天孚 sideways @¥223.03）是 Day 1/10，太早无法验证；下面 improvement_log 里的 08-11 close 数据点先做一个"1 天进度快照"，不算终审。
-# note: 签名更新原因——今日 snapshot 是真更新（gate ② PASS）；若不写回 47e6ec8，明天 Gate ② 会拿旧 46c3b64 与届时的 snapshot 比对，即使明日 snapshot 仍是今日的这份也会被误判为"变化"。今日写回 47e6ec8 是维持 Gate ② 语义正确的必要动作，与 abort 决策独立。
+b5cac746ba36847410def94501c32069
+# generated_at (snapshot): 2026-08-12T15:24:41.413881Z
+# note: 08-13 · Routine 触发在 08-13 Thu 21:18 CST，读到的 snapshot 是 08-12 Wed 23:24 CST 生成（反映 08-12 Wednesday 收盘）。距今 21.90h → **Gate ① 失守**（20h 阈值），与昨日 08-12 完全同型（21.89h）。Gate ② 通过（47e6ec8→b5cac74 真更新）；Gate ③ 未跑（① 失守直接 abort）。今日**不写五选、predictions_pending 归零、daily_push 走 stale-notice**。
+# note: 昨日（08-12）observed pattern 今日精确复现 = US-138 排班后 pipeline 每日 CST 23:24 附近 commit + Routine 每日 CST 21:18 附近触发 → Gate ① 恒定超阈 ~1.9h。**修订建议 7（Gate ② 状态感知 Gate ①）从"observed once"升级为"structural pattern confirmed"**；未落实前继续遵守 20h 硬阈 skip（宁可静默也不推陈旧分析，2026-07-01 事故核心教训）。
+# note: 08-11 预言（300124 汇川 up @¥64.34、300394 天孚 sideways @¥223.03）今日进入 Day 2/10 —— snapshot 08-12 Wed 收盘：汇川 ¥63.15（-1.85% 累计，方向暂反），天孚 ¥240.05（+7.63% 累计 · 单日 +7.89% 触及 sideways 上沿边界，若明日不回落则 sideways 预言面临上破验证）。终审仍在 Day 10（08-21 前后）。
+# note: 签名更新原因——今日 snapshot 是真更新（gate ② PASS，47e6ec8→b5cac74）；若不写回 b5cac74，明天 Gate ② 会拿旧签名与届时 snapshot 比对，即使明天 snapshot 是真更新也可能出现语义混淆。写回是维持 Gate ② 明日判断正确的必要动作。
