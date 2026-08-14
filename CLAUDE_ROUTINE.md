@@ -81,7 +81,24 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 **快照新鲜度门控（三重校验，必须全部通过才继续）：**
 
-**① `generated_at` 时间戳距今 < 20 小时**（服务器扫描 2h + GHA 延迟 4h + 安全余量）。超过 20h 视为服务器未刷新。
+> **求值顺序（重要）：先算 ② 再判 ①。** Gate ② 的状态决定 Gate ① 用哪个阈值。任何 Gate ① FAIL 的诊断都必须先看 Gate ②——它一目了然地区分「pipeline 真挂了」和「pipeline 在动但慢一步」。
+
+**① `generated_at` 距今的小时数 —— 双通道阈值（US-149，2026-08-15 落地；原 20h 硬阈见下方沿革）**
+
+| Gate ② 状态 | Gate ① 阈值 | 含义 |
+|---|---|---|
+| **PASS**（签名有真更新） | **< 26 小时** | pipeline 确实在跑，只是 US-138 分服务排班把 snapshot 推到了 CST 深夜。允许「snapshot 反映 T-1 收盘 + Routine 在 T evening 触发」这个常态延时场景。 |
+| **FAIL**（签名与上次相同） | **< 20 小时**（严格） | 签名不变 = 服务器空跑/停摆。保持原硬阈，立即抓住。 |
+
+26h 的来历：US-138 排班后 snapshot 实际生成在 CST 23:20 前后，Routine 触发在 CST 21:30 前后，结构性间隔 ≈ 22.2h；留 ~4h 余量到 26h，既覆盖常态相位又不至于放过真正的停摆（真停摆时 Gate ② 必然 FAIL，走 20h 严格通道）。
+
+**Gate ① 走 26h 宽通道放行时**（即 22h < age < 26h 且 Gate ② PASS），正文顶部必须标注数据基准日，不许含糊：
+
+```
+📅 本文基于 {snapshot 里 price.fetched_at 对应的 CST 交易日} 收盘数据
+```
+
+**沿革**：20h 硬阈是 2026-08-06 事故后设的，当时假设 pipeline 在 CST 凌晨/上午出快照。US-138 拆分服务后生成时间结构性推后到 CST 深夜，20h 遂在 08-12 / 08-14 两次规律性误杀了健康数据（两次都是 Gate ② PASS、Gate ① 21.9h / 22.15h 微超阈）。改进日志「修订建议 7 · 思路 B」，P0。
 
 **② 价格签名 (`price_signature`) 与上次 Routine 处理的不同（2026-07-01 事故教训）**
 
@@ -103,8 +120,12 @@ price_signature = hashlib.md5(json.dumps(sig_input).encode()).hexdigest()
 
 选出五只后、写 daily_push.txt 之前，用 WebSearch 抽 2-3 只查真实收盘价：
 - 查询格式：`"{股票名} {代码} 股价 今日 收盘"` 或英文 ticker
+- **对比的基准日** = snapshot 里 `price.fetched_at` 对应的 CST 交易日，**不是** Routine 运行当天（Gate ① 走 26h 宽通道时两者差一天，用错基准会必然误判陈旧）
 - 与 snapshot 里的 `price.current` 对比
-- 任意一只偏差 > 3% → 服务器数据已陈旧，中止推送
+- **单只必须 2 个站点交叉验证**：任一站点偏差 ≤ 3% 即该只通过；**2 个站点都 > 3%** 才判该只失败
+- 任意一只失败 → 服务器数据已陈旧，中止推送
+
+> 为什么要 2 站点：08-10 实测 300394 天孚同日 crawl 到 ¥210 与 ¥230 两个版本，跨度 10%。单站点抽检的方差本身就能超过 3%，会把健康数据误判成陈旧。
 
 **三重门控任一失守时**：
 - 顶部标注：`⚠️ 数据陈旧（{触发的检查名}：{证据}）`
