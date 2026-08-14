@@ -96,6 +96,40 @@ def fetch_lhb_signals(days: int = 7) -> dict:
 
 # ── 2. 北向资金趋势（5日/10日累计） ─────────────────────────────────
 
+# 净流入绝对值小于这个数（亿元）视为「零」，既不算流入也不算流出。
+_NB_EPSILON = 0.01
+
+# 超过这么多自然日没有新数据，就认定数据源已停更（US-151）。
+# 北向是交易日数据，7 天足以跨过任何一个长假的前半段而不误杀。
+_NB_STALE_DAYS = 7
+
+
+def _is_northbound_stale(as_of: str, today: str = "") -> bool:
+    """北向数据是否已停更。as_of / today 都是 'YYYY-MM-DD'。
+
+    2026-07 官方停止公布日度北向数据后，akshare 持续返回 0.0 / 空，而
+    `northbound_history` 里 07-09 那条旧记录会被下游当成「今天的值」。
+    没有这个判定，一串 0.0 会被读成「外资连续 N 天买入」——凭空的看多证据。
+    """
+    if not as_of:
+        return True
+    from datetime import date as _date
+    try:
+        y, m, d = (int(x) for x in as_of.split("-")[:3])
+        latest = _date(y, m, d)
+    except (ValueError, TypeError):
+        return True
+    if today:
+        try:
+            y, m, d = (int(x) for x in today.split("-")[:3])
+            ref = _date(y, m, d)
+        except (ValueError, TypeError):
+            ref = _date.today()
+    else:
+        ref = _date.today()
+    return (ref - latest).days > _NB_STALE_DAYS
+
+
 def fetch_northbound_trend(days: int = 10) -> dict:
     """
     使用 pipeline 已存入 DB 的今日北向净流入，每天追加到 northbound_history，
@@ -103,7 +137,8 @@ def fetch_northbound_trend(days: int = 10) -> dict:
 
     依赖：pipeline 的 _fetch_north_bound → save_north_bound → market_data 已先行运行。
     返回 {"d5_net": 亿, "d10_net": 亿, "signal": str, "consecutive": N,
-           "direction": "inflow"|"outflow"|"mixed"}
+           "direction": "inflow"|"outflow"|"flat", "stale": bool, "as_of": "YYYY-MM-DD"}
+    数据源停更时返回 {"stale": True, ...}，调用方必须据此把该分项判为 invalid。
     """
     import db
     # 从 market_data 取今日已拉的北向值，追加到历史表
@@ -120,24 +155,37 @@ def fetch_northbound_trend(days: int = 10) -> dict:
     if not hist:
         return {}
 
-    nets = [r["total_net"] for r in hist if r["total_net"] is not None]  # index0 = 最新
-    if not nets:
+    rows = [r for r in hist if r["total_net"] is not None]  # index0 = 最新
+    if not rows:
         return {}
+    nets = [r["total_net"] for r in rows]
+
+    # US-151：数据源死活判定。官方 2026-07 起停止公布日度北向数据，
+    # akshare 从那之后返回 0.0 或空。不判这一下，下面的「连续同向」会把
+    # 一串 0.0 读成「连续 N 天净流入」，凭空造出看多证据。
+    as_of = str(rows[0].get("date", ""))[:10]
+    stale = _is_northbound_stale(as_of)
+    if stale:
+        return {"stale": True, "as_of": as_of, "direction": "unknown",
+                "consecutive": 0, "signal": "数据源已停更"}
 
     d5  = sum(nets[:5])  if len(nets) >= 5  else sum(nets)
     d10 = sum(nets[:10]) if len(nets) >= 10 else sum(nets)
 
-    # 连续同向天数
-    if nets:
-        direction = "inflow" if nets[0] >= 0 else "outflow"
+    # 连续同向天数。0.0 既不是流入也不是流出 —— 原来 `n >= 0` 把 0.0 算进
+    # 「流入」，停更后那串 0.0 就变成了「连续 N 天买入」的假证据。
+    if abs(nets[0]) < _NB_EPSILON:
+        direction, consecutive = "flat", 0
+    else:
+        direction = "inflow" if nets[0] > 0 else "outflow"
         consecutive = 0
         for n in nets:
-            if (direction == "inflow" and n >= 0) or (direction == "outflow" and n < 0):
+            if abs(n) < _NB_EPSILON:
+                break
+            if (direction == "inflow" and n > 0) or (direction == "outflow" and n < 0):
                 consecutive += 1
             else:
                 break
-    else:
-        direction, consecutive = "mixed", 0
 
     # 信号强度
     if d5 >= 100:
@@ -158,6 +206,8 @@ def fetch_northbound_trend(days: int = 10) -> dict:
         "consecutive": consecutive,
         "direction":   direction,
         "today_net":   nets[0] if nets else 0,
+        "stale":       False,
+        "as_of":       as_of,
     }
 
 
@@ -807,7 +857,18 @@ def compute_intention_score(code: str, lhb: dict, northbound: dict,
     nb  = northbound or {}
     con = nb.get("consecutive", 0)
     dir_nb = nb.get("direction", "")
-    if con and dir_nb:
+    # US-151：数据源停更 / 压根没传进来 → 判 invalid，整项退出加权平均
+    # （分子分母同时剔除，跟 participation 的处理一致），而不是按 0 分投票。
+    # 原来这里恒 valid=True，造成两个方向相反的失真：
+    #   批量链路 一串 0.0 被读成「连续买入」→ 每只 A 股白送 +1.07 分
+    #   实时链路 northbound 恒为 {} → 按 0 分参与平均 → 所有 A 股意向分被稀释 ~13%
+    if not nb or nb.get("stale") or dir_nb in ("", "unknown"):
+        as_of = nb.get("as_of") or ""
+        desc  = ("北向资金已于 2026-07 起停止公布日度数据"
+                 + (f"（最后数据 {as_of}）" if as_of else "")
+                 + "，本项不参与评分")
+        comps["northbound"] = {"dir": 0.0, "weight": 1.5, "desc": desc, "valid": False}
+    elif con and dir_nb in ("inflow", "outflow"):
         sign = +1 if dir_nb == "inflow" else -1
         dir_v = sign * min(con / 5.0, 1.0)
         if sign > 0:
@@ -816,9 +877,11 @@ def compute_intention_score(code: str, lhb: dict, northbound: dict,
         else:
             desc = (f"外资已连续{con}天卖出（北向资金持续流出）"
                     f"——境外机构在撤退，值得警惕")
+        comps["northbound"] = {"dir": dir_v, "weight": 1.5, "desc": desc, "valid": True}
     else:
-        dir_v, desc = 0.0, "外资近期买卖方向不明确，处于观望状态"
-    comps["northbound"] = {"dir": dir_v, "weight": 1.5, "desc": desc, "valid": True}
+        comps["northbound"] = {"dir": 0.0, "weight": 1.5,
+                               "desc": "外资近期买卖方向不明确，处于观望状态",
+                               "valid": True}
 
     # ── 3. 龙虎榜净买卖 (weight 1.5) ─────────────────────
     # 龙虎榜 = 交易所公布的当日成交量异常股票，

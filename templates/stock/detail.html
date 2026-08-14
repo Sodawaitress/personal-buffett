@@ -498,7 +498,13 @@
             <span class="signal-col-cred">{{ t.col_medium_reliable }}</span>
           </div>
           {% if market == "cn" %}
-            {% if north_bound and north_bound.get("total_net") is not none %}
+            {# US-151：停更先判，见 signals.html 同处注释 #}
+            {% if north_bound and north_bound.get("stale") %}
+            <div class="srow">
+              <span class="srow-label">{{ t.srow_north_bound }}</span>
+              <span class="srow-val muted">{{ t.lbl_nb_discontinued }}</span>
+            </div>
+            {% elif north_bound and north_bound.get("total_net") is not none %}
             <div class="srow">
               <span class="srow-label">{{ t.srow_north_bound }}</span>
               <span class="srow-val {{ 'up' if north_bound.total_net >= 0 else 'down' }}">

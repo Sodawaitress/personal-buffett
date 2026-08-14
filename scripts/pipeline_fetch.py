@@ -603,6 +603,10 @@ def _fetch_industry_signal_for_stock(code, market, log):
         log(f"       ⚠️ 行业信号失败: {e}")
 
 
+# 进程内「今天已经试过北向了」标记，见 _fetch_north_bound 里的说明
+_NB_LAST_TRY = ""
+
+
 def _fetch_north_bound(market, log):
     if market != "cn":
         return
@@ -617,6 +621,17 @@ def _fetch_north_bound(market, log):
                 return
         except Exception:
             pass
+    # US-151：抓取失败时 save_north_bound 不写，fetched_at 就永远停在停更那天，
+    # 上面的 24h 缓存门于是对每一只股票都判失效 —— 每轮 pipeline 每只 A 股各发一次
+    # 注定失败的东财请求（211 只 ≈ 200+ 次/天），正好压在 radar/market 的 timeout 瓶颈上。
+    # 用 _NB_RETRY_ON 限成每天只试一次：数据源哪天恢复了仍能自动接上。
+    global _NB_LAST_TRY
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if _NB_LAST_TRY == today:
+        log("       北向资金今日已试过（数据源停更中），跳过")
+        return
+    _NB_LAST_TRY = today
+
     try:
         from scripts.stock_fetch import fetch_north_bound
 
@@ -626,7 +641,7 @@ def _fetch_north_bound(market, log):
             sign = "📈" if data.get("total_net", 0) >= 0 else "📉"
             log(f"       {sign} 北向净流入 {data.get('total_net', 0):+.2f}亿")
         else:
-            log("       ⚠️ 北向资金无数据")
+            log("       ⚠️ 北向资金无数据（2026-07 起官方停止公布日度数据）")
     except Exception as e:
         log(f"       ⚠️ 北向资金获取失败: {e}")
 

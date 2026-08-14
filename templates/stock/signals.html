@@ -239,7 +239,14 @@
           <span class="signal-col-cred">中等可信</span>
         </div>
         {% if market == "cn" %}
-          {% if north_bound and north_bound.get("total_net") is not none %}
+          {# US-151：停更必须先判。否则 total_net=0.0 会走「有数据」分支，
+             把 07-09 的僵尸值渲染成绿色 ▲，且空态分支永远进不去。 #}
+          {% if north_bound and north_bound.get("stale") %}
+          <div class="srow">
+            <span class="srow-label">北向资金</span>
+            <span class="srow-val muted">{{ t.lbl_nb_discontinued }}</span>
+          </div>
+          {% elif north_bound and north_bound.get("total_net") is not none %}
           <div class="srow">
             <span class="srow-label">北向资金</span>
             <span class="srow-val {{ 'up' if north_bound.total_net >= 0 else 'down' }}">

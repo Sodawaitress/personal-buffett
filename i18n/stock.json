@@ -419,6 +419,10 @@
     "en": "Accumulating…",
     "zh": "数据积累中"
   },
+  "lbl_nb_discontinued": {
+    "en": "Discontinued (since Jul 2026)",
+    "zh": "已停止公布（2026年7月起）"
+  },
   "lbl_data_stale_prefix": {
     "en": "Data may be outdated:",
     "zh": "⏰ 数据可能过期："
