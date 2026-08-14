@@ -6,7 +6,7 @@ import threading
 
 from flask import current_app, flash, jsonify, redirect, render_template, request, session, url_for
 
-from radar_app.data.jobs import create_job, update_job
+from radar_app.data.jobs import create_job, get_job, update_job
 from radar_app.shared.auth import login_required
 from radar_app.shared.i18n import clear_i18n_cache
 from radar_app.system.service import (
@@ -157,6 +157,34 @@ def register_system_routes(app):
 
         threading.Thread(target=_run, daemon=False, name="gh-scan-trigger").start()
         return jsonify({"status": "started", "job_id": job_id}), 202
+
+    @app.route("/api/scan-status/<int:job_id>")
+    def scan_status(job_id):
+        """US-150：让 GHA 能等扫描真正跑完再往下走。
+
+        /api/job/<id> 是 @login_required 的（给浏览器用），GHA 只有 SCAN_TOKEN，
+        所以单开这个 token 鉴权的只读端点。
+
+        为什么需要它：trigger-scan 立刻返回 202，扫描在 Fly 后台跑 75+ 分钟。
+        digest-svc 原来靠 cron 时间「猜」扫描跑完了没有 —— 实测 08-14 的快照里
+        precursor 的 cache_age_hours 从 1.3h 一路到 0.0h，说明取快照时扫描还在写，
+        妈妈那封信的「机构层」读到的是扫了一半的数据。
+        """
+        if not _check_scan_token():
+            return jsonify({"error": "unauthorized"}), 401
+
+        job = get_job(job_id)
+        if not job:
+            return jsonify({"error": "not found"}), 404
+        return jsonify(
+            {
+                "job_id": job_id,
+                "status": job.get("status"),
+                "started_at": str(job.get("started_at") or ""),
+                "finished_at": str(job.get("finished_at") or ""),
+                "error": job.get("error"),
+            }
+        )
 
     @app.route("/api/trigger-backup", methods=["POST"])
     def trigger_backup():

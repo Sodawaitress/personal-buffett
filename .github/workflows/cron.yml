@@ -60,13 +60,48 @@ jobs:
   # digest 已交给 digest-svc（US-138），此处不再触发，避免双跑
   light:
     runs-on: ubuntu-latest
+    # US-150：本 job 现在一直等到 Fly 上的扫描真跑完才结束，
+    # 好让 digest-svc 挂在它后面，而不是靠 cron 猜时间。
+    timeout-minutes: 100
     env:
       APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
     steps:
       - name: Trigger precursor scan
+        id: trigger
         run: |
           HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
             -X POST "${APP_URL}/api/trigger-scan" \
             -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
           echo "scan → HTTP $HTTP"; cat /tmp/scan.json
           [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
+          JOB_ID=$(python3 -c "import json;print(json.load(open('/tmp/scan.json')).get('job_id') or '')")
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+          echo "扫描 job_id = $JOB_ID"
+
+      # trigger-scan 立刻返回 202，真正的扫描在 Fly 后台跑 75+ 分钟。
+      # 实测证据（08-14 快照）：precursor 的 cache_age_hours 从 1.3h 连续分布到 0.0h
+      # —— 说明 digest 取快照时扫描还在写，妈妈那封信的机构层读到的是扫了一半的数据。
+      - name: Wait for scan to finish
+        if: steps.trigger.outputs.job_id != ''
+        run: |
+          JOB_ID="${{ steps.trigger.outputs.job_id }}"
+          DEADLINE=$(( $(date +%s) + 90*60 ))
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            sleep 60
+            BODY=$(curl -s "${APP_URL}/api/scan-status/${JOB_ID}" \
+              -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
+            STATUS=$(python3 -c "import json,sys;print(json.loads(sys.argv[1]).get('status',''))" "$BODY" 2>/dev/null || echo "")
+            echo "[$(date -u +%H:%M:%SZ)] scan status = ${STATUS:-<unreachable>}"
+            case "$STATUS" in
+              done)   echo "✅ 扫描完成，下游可以安全取快照"; exit 0 ;;
+              failed) echo "⚠️ 扫描报错，仍放行下游（旧 precursor 缓存好过没有）"; exit 0 ;;
+            esac
+          done
+          echo "⚠️ 等满 90 分钟仍未结束，放行下游（行为与改动前一致，不更差）"
+
+      # 拿不到 job_id（镜像还没部署 /api/scan-status）时的退路：按实测时长盲等
+      - name: Fallback blind wait
+        if: steps.trigger.outputs.job_id == ''
+        run: |
+          echo "未拿到 job_id，退回盲等 80 分钟（实测扫描 ~75 分钟）"
+          sleep $(( 80*60 ))

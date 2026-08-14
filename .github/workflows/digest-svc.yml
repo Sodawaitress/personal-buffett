@@ -3,8 +3,15 @@ name: digest-svc (US-121)
 # 快照服务：从 Neon 汇总自选股 → 构建快照 JSON commit 到 GitHub + 回填预测收益。
 # 纯 DB 驱动、无 LLM。独立于 analyze-svc：读 DB 最新价即可提交快照。
 on:
+  # US-150：主路径改成「扫描真跑完就收快照」，不再靠 cron 猜时间。
+  # Daily Cron 的 light job 现在阻塞到 Fly 扫描 done 才结束，
+  # 挂在它后面 = 保证快照里的 precursor 是完整的（原来是扫一半就被收走）。
+  workflow_run:
+    workflows: ["Daily Cron"]
+    types: [completed]
   schedule:
-    # 14:15 UTC = 22:15 CST，全部服务写完 DB 后再收快照（US-139）
+    # 兜底：链断了（Daily Cron 没触发/被取消）仍然出一份快照。
+    # digest 幂等，同日多跑一次只是重新提交，无害。
     - cron: '15 14 * * 1-5'
   workflow_dispatch:
 
@@ -12,6 +19,12 @@ jobs:
   digest:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # workflow_run 对 Daily Cron 的任何一次运行都会触发。只挡掉被取消的；
+    # 扫描失败也放行——用旧 precursor 缓存出快照，好过没有快照
+    # （没快照 = 妈妈收到「今日无分析」）。
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion != 'cancelled'
     # 快照要 commit 回本仓（snapshots/daily_snapshot.json）。GHA 默认 token 只读 →
     # 403 "Resource not accessible by integration"（US-140：US-138 把 digest 从
     # Fly 挪到 GHA 时丢了 Fly secret 里那个有写权限的 PAT，快照因此冻结）。
