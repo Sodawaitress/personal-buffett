@@ -17,6 +17,7 @@ from radar_app.data.core import get_conn
 from radar_app.data.market import get_precursor_cache
 from radar_app.data.stocks import get_user_watchlist
 from radar_app.shared.market import detect_market
+from scripts.buffett_utils import summarize_to_sentence
 
 
 def _token_ok() -> bool:
@@ -79,7 +80,7 @@ def _build_stock_snapshot(wl_row: dict, added_cutoff: date) -> dict:
             "grade": analysis.get("grade", ""),
             "conclusion": analysis.get("conclusion", ""),
             "moat": analysis.get("moat", ""),
-            "reasoning": (analysis.get("reasoning") or "")[:300],
+            "reasoning": summarize_to_sentence(analysis.get("reasoning") or "", 300),
             "trade_block": analysis.get("trade_block", ""),
             "framework": analysis.get("framework_used", ""),
             "quant_score": analysis.get("quant_score"),

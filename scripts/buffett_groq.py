@@ -45,8 +45,36 @@ def _retry_after_seconds(resp) -> float:
 
 
 def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
+    """返回正文。截断与否见 `last_finish_reason()`（US-152）。"""
+    text, _ = call_groq_meta(system, user_msg, max_tokens)
+    return text
+
+
+# 最近一次调用的 finish_reason。Groq 撞 max_tokens 时是 "length"，
+# 正常收尾是 "stop"。原来这个信号被整个丢掉，半句话的分析被当成完整结果
+# 直接写进 DB —— 08-14 快照实测 210 只里有 70 只（33%）的 reasoning
+# 停在半句上，例如 AAPL 停在「基于以上，」。
+_LAST_FINISH_REASON = ""
+
+
+def last_finish_reason() -> str:
+    return _LAST_FINISH_REASON
+
+
+def call_groq_meta(system: str, user_msg: str, max_tokens: int = 300):
+    """同 _call_groq，但额外返回 finish_reason。
+
+    返回 (text, finish_reason)。调用失败/无 key 时返回 ("", "")。
+    """
+    global _LAST_FINISH_REASON
+    _LAST_FINISH_REASON = ""
+    return _call_groq_impl(system, user_msg, max_tokens)
+
+
+def _call_groq_impl(system: str, user_msg: str, max_tokens: int = 300):
+    global _LAST_FINISH_REASON
     if not GROQ_API_KEY:
-        return ""
+        return "", ""
 
     # 主动配速：按 TPM 12,000 精确投放，绝大多数情况下根本不会撞 429。
     waited = throttle(system, user_msg, max_tokens)
@@ -77,13 +105,13 @@ def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
             if resp.status_code == 429:
                 if attempt >= 2:
                     print("    ⚠️ Groq 限流重试耗尽，切换备用方案")
-                    return ""
+                    return "", ""
                 wait = _retry_after_seconds(resp)
                 if _call_deadline and time.time() + wait > _call_deadline:
                     left = max(_call_deadline - time.time(), 0)
                     print(f"    ⏳ Groq 限流需等 {wait:.0f}s，但预算只剩 {left:.0f}s —— "
                           f"放弃本次调用（不拖过预算被 SIGKILL）")
-                    return ""
+                    return "", ""
                 print(f"    ⏳ Groq 限流兜底，等待 {wait:.1f}s 后重试（第{attempt+1}次）...")
                 time.sleep(wait)
                 continue
@@ -95,13 +123,17 @@ def _call_groq(system: str, user_msg: str, max_tokens: int = 300) -> str:
                     f"    📊 Groq token用量: 输入{usage.get('prompt_tokens','?')} + "
                     f"输出{usage.get('completion_tokens','?')} = {usage.get('total_tokens','?')}"
                 )
-            return data["choices"][0]["message"]["content"].strip()
+            choice = (data.get("choices") or [{}])[0]
+            _LAST_FINISH_REASON = choice.get("finish_reason", "") or ""
+            if _LAST_FINISH_REASON == "length":
+                print(f"    ✂️ Groq 撞 max_tokens={max_tokens} 被截断（finish_reason=length）")
+            return choice.get("message", {}).get("content", "").strip(), _LAST_FINISH_REASON
         except requests.Timeout:
             wait = (attempt + 1) * 5
             print(f"    ⏳ Groq 超时，等待 {wait}s 后重试（第{attempt+1}次）...")
             time.sleep(wait)
         except Exception as e:
             print(f"    ⚠️ Groq 错误（不重试）: {e}")
-            return ""
+            return "", ""
     print("    ⚠️ Groq 重试3次失败，切换备用方案")
-    return ""
+    return "", ""

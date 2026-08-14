@@ -32,7 +32,8 @@ from scripts.buffett_context import (
     build_v3_price_context,
     build_warning_context,
 )
-from scripts.buffett_utils import parse_dim, parse_trade_block, split_dims_output, strip_trade_block
+from scripts.buffett_utils import (parse_dim, parse_trade_block, split_dims_output,
+                                   strip_trade_block, summarize_to_sentence)
 from scripts.config import BUFFETT_PROFILES
 
 
@@ -427,7 +428,7 @@ def analyze_stock_v2(code: str, name: str, market: str,
     return {
         "conclusion":       conclusion,
         "grade":            grade,
-        "reasoning":        letter_text[:200],
+        "reasoning":        summarize_to_sentence(letter_text),
         "letter_html":      _safe_letter(letter_text),
         "raw_output":       raw,
         "framework_used":   framework_name,
@@ -611,7 +612,7 @@ Write a 150–250 word analysis letter.
         return {
             "conclusion":        conclusion,
             "grade":             grade,
-            "reasoning":         reasoning[:200],
+            "reasoning":         summarize_to_sentence(reasoning),
             "letter_html":       letter_html,
             "raw_output":        "（Layer 2 量化备用）",
             "framework_used":    framework_name,
@@ -630,7 +631,7 @@ Write a 150–250 word analysis letter.
     return {
         "conclusion":        conclusion,
         "grade":             grade,
-        "reasoning":         letter_text[:200],
+        "reasoning":         summarize_to_sentence(letter_text),
         "letter_html":       _safe_letter(letter_text),
         "raw_output":        raw,
         "framework_used":    framework_name,

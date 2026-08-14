@@ -6,6 +6,7 @@
 
 import json
 from datetime import datetime, timezone, timedelta
+from scripts.buffett_utils import summarize_to_sentence
 
 CN_TZ = timezone(timedelta(hours=8))
 _FRAMEWORK_LABELS = {
@@ -205,7 +206,7 @@ def build_export_bundle(code: str, user_id: int = None) -> dict:
     if latest_analysis:
         grade = latest_analysis.get("grade", "—")
         conclusion = latest_analysis.get("conclusion", "—")
-        reasoning = (latest_analysis.get("reasoning") or "")[:200]
+        reasoning = summarize_to_sentence(latest_analysis.get("reasoning") or "")
         framework_used = latest_analysis.get("framework_used", "—")
         analysis_date = latest_analysis.get("analysis_date", "—")
         sys_analysis = f"""

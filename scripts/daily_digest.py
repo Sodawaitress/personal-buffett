@@ -12,6 +12,7 @@ import os
 from datetime import date, datetime, timedelta
 
 import requests
+from scripts.buffett_utils import summarize_to_sentence
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,7 @@ def _build_snapshot() -> dict:
                 "grade": ana.get("grade", ""),
                 "conclusion": ana.get("conclusion", ""),
                 "moat": moat,
-                "reasoning": (ana.get("reasoning") or "")[:300],
+                "reasoning": summarize_to_sentence(ana.get("reasoning") or "", 300),
                 "quant_score": q,
                 "data_incomplete": ana.get("data_incomplete", 0),
                 "data_quality": "incomplete" if is_incomplete else "ok",

@@ -19,6 +19,8 @@ from datetime import datetime, timedelta
 import akshare as ak
 
 from scripts.config import CN_TZ
+from scripts.northbound_status import (NB_EPSILON as _NB_EPSILON,
+                                       is_northbound_stale as _is_northbound_stale)
 
 
 # ── 工具 ─────────────────────────────────────────────────────────────
@@ -95,40 +97,6 @@ def fetch_lhb_signals(days: int = 7) -> dict:
 
 
 # ── 2. 北向资金趋势（5日/10日累计） ─────────────────────────────────
-
-# 净流入绝对值小于这个数（亿元）视为「零」，既不算流入也不算流出。
-_NB_EPSILON = 0.01
-
-# 超过这么多自然日没有新数据，就认定数据源已停更（US-151）。
-# 北向是交易日数据，7 天足以跨过任何一个长假的前半段而不误杀。
-_NB_STALE_DAYS = 7
-
-
-def _is_northbound_stale(as_of: str, today: str = "") -> bool:
-    """北向数据是否已停更。as_of / today 都是 'YYYY-MM-DD'。
-
-    2026-07 官方停止公布日度北向数据后，akshare 持续返回 0.0 / 空，而
-    `northbound_history` 里 07-09 那条旧记录会被下游当成「今天的值」。
-    没有这个判定，一串 0.0 会被读成「外资连续 N 天买入」——凭空的看多证据。
-    """
-    if not as_of:
-        return True
-    from datetime import date as _date
-    try:
-        y, m, d = (int(x) for x in as_of.split("-")[:3])
-        latest = _date(y, m, d)
-    except (ValueError, TypeError):
-        return True
-    if today:
-        try:
-            y, m, d = (int(x) for x in today.split("-")[:3])
-            ref = _date(y, m, d)
-        except (ValueError, TypeError):
-            ref = _date.today()
-    else:
-        ref = _date.today()
-    return (ref - latest).days > _NB_STALE_DAYS
-
 
 def fetch_northbound_trend(days: int = 10) -> dict:
     """

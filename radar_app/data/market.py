@@ -30,9 +30,9 @@ def get_north_bound() -> dict:
             # US-151：这张表只存最新一行，没有任何时效过滤——北向 2026-07 停更后
             # 07-09 那条会被无限期当成「今天的值」返回。模板据此显示停更说明，
             # 而不是把陈旧的 0.00 渲染成绿色 ▲。
-            from scripts.institutional_radar import _is_northbound_stale
+            from scripts.northbound_status import is_northbound_stale
 
-            data["stale"] = _is_northbound_stale(str(data.get("date", ""))[:10])
+            data["stale"] = is_northbound_stale(str(data.get("date", ""))[:10])
             return data
         except Exception:
             return {}

@@ -13,7 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from scripts.institutional_radar import _is_northbound_stale
+from scripts.northbound_status import is_northbound_stale as _is_northbound_stale
 
 
 # ── 停更判定 ────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ from radar_app.stocks.service import (
 from scripts.config import CN_TZ
 from scripts.institutional_radar import compute_intention_score, _classify_inst_sellers, _build_observations
 from scripts.precursor_signals import fetch_precursor_signals
+from scripts.buffett_utils import summarize_to_sentence
 
 
 def _demo_block():
@@ -1216,7 +1217,7 @@ def _fetch_moat_summary(code: str) -> dict:
             if not moat_snippet and row["moat"]:
                 moat_snippet = row["moat"][:200]
             result["moat_text"] = moat_snippet
-            result["reasoning"] = (row["reasoning"] or "")[:300]
+            result["reasoning"] = summarize_to_sentence(row["reasoning"] or "", 300)
 
         # Historical PE from stock_prices (rough: price / latest_eps)
         prices = cur.execute(
