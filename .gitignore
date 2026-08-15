@@ -16,3 +16,7 @@ prod_snap.db
 
 ._*
 deploy/oracle/run/
+
+# macOS AppleDouble 垃圾（外置磁盘上写代码会大量产生；
+# 还会让 flyctl builder 报 xattr 错，见 CLAUDE.md 部署章节）
+._*

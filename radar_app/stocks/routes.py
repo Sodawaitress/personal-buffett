@@ -1353,36 +1353,6 @@ def _fetch_market_timing(code: str) -> dict:
     return result
 
 
-def _fetch_em_keywords(code: str) -> dict | None:
-    """东方财富：个股所属概念的热度（反映行业/消费方向市场温度）。"""
-    try:
-        import akshare as ak
-        # 转换为东财格式 600519 → SH600519
-        pure = code.split(".")[0]
-        suffix = "SH" if pure.startswith(("6", "9")) else "SZ"
-        sym = f"{suffix}{pure}"
-        df = ak.stock_hot_keyword_em(symbol=sym)
-        if df.empty:
-            return None
-        # 取热度最高的3个概念
-        df = df.sort_values("热度", ascending=False).head(3)
-        top = [{"concept": r["概念名称"], "heat": int(r["热度"])}
-               for _, r in df.iterrows()]
-        top_heat   = top[0]["heat"] if top else 0
-        top_concept = top[0]["concept"] if top else ""
-        # 简单解读：取最高热度绝对值作参考
-        level = ("热度极高" if top_heat > 5000 else
-                 "热度较高" if top_heat > 1000 else
-                 "热度一般" if top_heat > 200  else "热度偏低")
-        return {
-            "top_concepts": top,
-            "top_heat":     top_heat,
-            "level":        level,
-            "interp":       f"市场最关注的概念是「{top_concept}」，{level}（{top_heat:,}）。"
-        }
-    except Exception as e:
-        print(f"[em_keywords] {e}")
-        return None
 
 
 def _fetch_biz_description(code: str, market: str, stock: dict) -> dict:
