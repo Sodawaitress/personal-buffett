@@ -151,7 +151,13 @@ price_signature = hashlib.md5(json.dumps(sig_input).encode()).hexdigest()
 - 重复：昨天已经讲过且无新进展
 
 **数据缺失但机构活跃的特殊规则（重要，禁止违反）：**
-当 analysis.data_quality == "incomplete"（moat 含 "0/35" 或 quant_score < 15）且 precursor.score ≥ 3 时：
+当 analysis.data_quality == "incomplete"（`data_incomplete=1` 或 quant_score < 15）且 precursor.score ≥ 3 时：
+
+> **不要再用 moat 含 "0/35" 判数据完整性（US-156 已废除）。** `0/35` 不代表
+> 财务数据缺失，而代表这只股票走的是新版类型感知评级——那套 components 里
+> 没有 moat 这一项，旧代码对缺失键默认取 0 才渲染成 `0/35`。生产实测 34 只
+> `0/35` 的股票，财务行和年报数据一只不缺。误判的后果是这些股票被下面的
+> 「完全回避」规则从五选里系统性排除。现在缺项渲染为 `—`。
 - 网站评级（D/E）不可信，**禁止**在推送中直接引用网站评级结论（如"网站评级D，建议卖出"）
 - 在 [公司底] 层写：「⚠️ 财务数据未完整拉取，网站评级不可信，以下仅据机构信号独立判断」
 - 重点分析放在机构层（第二层），凭调研密度/方向做判断

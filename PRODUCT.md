@@ -5746,3 +5746,135 @@ AAPL 的实例，妈妈在卡片上读到的是：
 
 抽出零依赖的 `scripts/northbound_status.py`（只依赖 datetime），
 两边共用。测试回落到 40s。
+
+
+---
+
+## US-154 · 生产数据源体检（先有尺子再谈修）
+
+> **实现状态（2026-08-15）**：✅ 已实现。`scripts/audit_data_freshness.py` + `audit-svc.yml`。
+
+### 背景
+
+排查数据源新鲜度时，我从本地 `data/radar.db` 查出一串「停更」的表，
+但**生产库是 Neon，本地那个是旧开发库**。拿本地结论当生产事实，得出的
+「6 个数据源停更」几乎全是假的：
+
+| 表 | 本地（错） | 生产（真） |
+|---|---|---|
+| analyst_consensus | 停在 07-09 | 08-14，131 行 |
+| stock_fund_flow | 停在 07-08 | 08-14，2739 行 |
+| market_data | 停在 07-28 | 08-14，85 行 |
+| signal_predictions | 05-09，4 行 | 08-11，56 行 |
+| insider_changes | 06-10，3 行 | 08-13，294 行 |
+
+### Scope
+- 18 张表逐个定「预算天数」（按业务节奏，不用统一阈值）
+- 财务拉取失败率按市场分组 + 护城河 0/35 拆解（区分「没财务行」和「有行但算 0」）
+- company_type 覆盖率、北向实际数值、stock_fundamentals 空壳率
+- 只读；schedule 每周一 + workflow_dispatch；结果进 job summary 和 artifact
+
+### AC
+- [x] 在生产 Neon 上跑，报告标明 backend 和「是否生产」
+- [x] 本地跑时显式标注「结论不算数」
+- [x] 不写任何表、不推送、不 commit
+- [x] 退出码恒为 0（体检不是门禁）
+
+### 不做
+- 不做告警（先积累几周基线，免得一上来就狼来了）
+
+---
+
+## US-156 · 「护城河 0/35」是假的数据缺失信号
+
+> **实现状态（2026-08-15）**：✅ 已实现。
+
+### 背景
+
+US-154 的生产审计给出关键事实：**34 只 `moat=0/35` 的股票，
+「无财务行」0 只、「annual_json 是空列表」0 只** —— 财务数据一只不缺。
+
+所以 `0/35` 根本不是 `score_moat` 算出来的。真凶是
+`buffett_analyst.analyze_stock_v3._comp`：
+
+```python
+c = components.get(key, [0, [], []])   # 缺键默认 0
+```
+
+新版类型感知评级的 components 是 `{quality, value, ...}`，**没有 moat 键**
+（`pipeline_analysis.py` 的注释早就写明了）。缺键取 0 → 渲染成「护城河 0/35」。
+
+### 后果链（这才是严重的地方）
+
+```
+新评级体系 → components 无 moat → _comp 默认 0 → moat = "0/35"
+  → daily_digest: is_incomplete = "0/35" in moat → data_quality = "incomplete"
+    → CLAUDE_ROUTINE:「incomplete 且 precursor 弱 → 完全回避」
+      → 用新版评级打分的股票被系统性排除出妈妈的五选
+```
+
+也就是说，**评级体系越新的股票越容易被踢出推荐**。
+
+### Scope
+- `_comp` 缺键返回 `None` 而非 0；新增 `_sc()` 把缺项渲染成 `—`
+- `daily_digest` 改用权威字段 `data_incomplete`
+  （`quantitative_rating`：4 个关键财务字段中少于 2 个有值才置 1）
+- `CLAUDE_ROUTINE.md` 同步废除「moat 含 0/35」这个判据
+
+### AC
+- [x] 缺失键渲染 `—`，真的 0 分仍渲染 `0/35`（区分「缺项」和「零分」）
+- [x] 旧版四件套齐全时行为完全不变
+- [x] 新评级 + 财务齐全 → 不再判 incomplete
+- [x] 真缺数据 / quant_score<15 仍被判出来，不放水
+
+### 不做
+- 不给新评级体系补一个假的 moat 分（那是把两套体系强行对齐，会误导）
+- 不回填存量记录：轮转会自然覆盖
+
+---
+
+## US-157 · industry_signals 只有 1 行（待决策，未实现）
+
+> **实现状态（2026-08-15）**：📝 已定位根因，**需要产品决策**后再动。
+
+### 现状
+生产 `industry_signals` 只有 1 行、26 天没更新（最后 2026-07-20）。
+
+### 两个独立的原因
+
+**① 映射表覆盖 3/9，且 key 的概念就是错的**
+
+`_INDUSTRY_MAP` 只有 `cycle_commodity` / `growth_tech` / `bank_insurance`，
+而实际 `company_type` 分布（本地样本 146 只）：
+
+| company_type | 只数 | 有映射 |
+|---|---|---|
+| mature_value | 87 | ❌ |
+| growth_tech | 38 | ✅ |
+| pre_profit / turnaround / etf / 其他 | 21 | ❌ |
+
+74% 拿不到信号。而且 **`company_type` 是商业形态不是行业** ——
+茅台和长江电力都是 `mature_value`，映射到同一个板块没有意义。
+正确的 key 应该是 `stock_industry_map.industry`（存的就是东财板块名）。
+
+**② 板块数据从运行环境根本抓不到**
+
+实测 `_fetch_board_30d("半导体")` 返回 `None`，`fetch_industry_signal` 返回 `{}`。
+这和前兆扫描是同一约束：**东财只能从 Fly 悉尼访问，GHA 美国 runner 连不上**。
+所以哪怕把映射表扩全，也一行都写不进去。
+
+### 因此需要决策
+修它 = 把行业信号挪到 Fly 的 trigger-scan 链路（像 precursor scan 那样）
++ 用 `stock_industry_map` 重做 key。这是 US-95 的重新设计，会改变用户看到的东西，
+不是纯 bug 修复。**先问过再做。**
+
+### 不做（现在）
+- 不扩 `_INDUSTRY_MAP`：抓不到数据，扩了也是空的
+- 不删这个功能：信号本身有价值，只是跑错了地方
+
+---
+
+## 附：unpriced_signals 为 0 行不是 bug
+
+`unpriced_signals` 只由 `/api/.../scan` 和 POST 端点写入，是**用户手动触发**的
+功能，不在每日 pipeline 里。0 行 = 这个功能没人用过，不是链路坏了。

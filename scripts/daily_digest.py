@@ -89,7 +89,21 @@ def _build_snapshot() -> dict:
         if ana:
             moat = ana.get("moat", "")
             q = ana.get("quant_score")
-            is_incomplete = "0/35" in moat or (q is not None and q < 15)
+            # US-156：不能再用 "0/35" 这个字符串判数据完整性。
+            #
+            # "0/35" 不代表「护城河数据缺失」，而代表「这只股票用的是新版
+            # 类型感知评级，那套 components 里压根没有 moat 这一项」——
+            # buffett_analyst._comp 对缺失键默认返回 0，于是渲染成 "0/35"。
+            # 生产实测：34 只 moat=0/35 的股票，stock_fundamentals 全都有行、
+            # annual_json 全都是真实年报，一只都不缺数据。
+            #
+            # 后果链：0/35 → data_quality=incomplete → CLAUDE_ROUTINE 的
+            # 「incomplete 且 precursor 弱 → 完全回避」→ 用新评级体系打分的
+            # 股票被系统性地从妈妈的信里排除。
+            #
+            # data_incomplete 才是权威字段（quantitative_rating: 4 个关键
+            # 财务字段中少于 2 个有值才置 1），且早就存在库里。
+            is_incomplete = bool(ana.get("data_incomplete")) or (q is not None and q < 15)
             snap["analysis"] = {
                 "date": ana.get("analysis_date", ""),
                 "grade": ana.get("grade", ""),

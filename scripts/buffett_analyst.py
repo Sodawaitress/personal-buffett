@@ -133,8 +133,18 @@ def analyze_stock_v3(code: str, name: str, market: str,
     reasoning  = quant_result.get("reasoning", "")
 
     def _comp(key):
-        c = components.get(key, [0, [], []])
-        sc = c[0] if c else 0
+        """US-156：键缺失返回 None，不再默认 0。
+
+        新版类型感知评级的 components 是 {quality, value, ...}，没有 moat /
+        growth_management / safety 这些键。原来缺键默认 [0,[],[]]，渲染出
+        「护城河 0/35」，读起来像「这公司没有护城河 / 财务数据缺失」，
+        实际只是换了套评分体系。下游还拿这个字符串当「数据不完整」的判据，
+        把这些股票从妈妈的信里排掉了。
+        """
+        c = components.get(key)
+        if not c:
+            return None, []
+        sc = c[0]
         reasons = c[1] if len(c) > 1 else []
         return sc, reasons[:2]  # 最多取前2条原因
 
@@ -147,21 +157,25 @@ def analyze_stock_v3(code: str, name: str, market: str,
     _na = "No data" if locale == "en" else "数据不足"
     _red = "Red flags" if locale == "en" else "红旗"
 
+    def _sc(val, denom):
+        """US-156：缺项渲染成「—」，不能渲染成 0/满分（会被读成「得 0 分」）。"""
+        return "—" if val is None else f"{val}/{denom}"
+
     if locale == "en":
         quant_lines = [
             f"Quant score: {score}/100 → Grade {grade} · {conclusion_display}",
-            f"Moat {moat_sc}/35: {'; '.join(moat_reasons) or _na}",
-            f"Growth/Mgmt {growth_sc}/30: {'; '.join(growth_reasons) or _na}",
-            f"Safety {safety_sc}/20: {'; '.join(safety_reasons) or _na}",
-            f"Valuation {val_sc}/15: {'; '.join(val_reasons) or _na}",
+            f"Moat {_sc(moat_sc, 35)}: {'; '.join(moat_reasons) or _na}",
+            f"Growth/Mgmt {_sc(growth_sc, 30)}: {'; '.join(growth_reasons) or _na}",
+            f"Safety {_sc(safety_sc, 20)}: {'; '.join(safety_reasons) or _na}",
+            f"Valuation {_sc(val_sc, 15)}: {'; '.join(val_reasons) or _na}",
         ]
     else:
         quant_lines = [
             f"量化评分：{score}/100 → {grade}级 · {conclusion}",
-            f"护城河 {moat_sc}/35：{'; '.join(moat_reasons) or _na}",
-            f"成长/管理层 {growth_sc}/30：{'; '.join(growth_reasons) or _na}",
-            f"安全性 {safety_sc}/20：{'; '.join(safety_reasons) or _na}",
-            f"估值 {val_sc}/15：{'; '.join(val_reasons) or _na}",
+            f"护城河 {_sc(moat_sc, 35)}：{'; '.join(moat_reasons) or _na}",
+            f"成长/管理层 {_sc(growth_sc, 30)}：{'; '.join(growth_reasons) or _na}",
+            f"安全性 {_sc(safety_sc, 20)}：{'; '.join(safety_reasons) or _na}",
+            f"估值 {_sc(val_sc, 15)}：{'; '.join(val_reasons) or _na}",
         ]
     if quant_result.get("red_flags"):
         quant_lines.append(f"⚠️ {_red}: {'; '.join(quant_result['red_flags'][:2])}")
@@ -272,7 +286,7 @@ Write a 150–250 word analysis letter.
             "raw_output":        "（Layer 2 量化备用）",
             "framework_used":    framework_name,
             "trade_block":       None,
-            "moat":              f"{moat_sc}/35",
+            "moat":              _sc(moat_sc, 35),
             "management":        f"{growth_sc}/30",
             "valuation":         f"{val_sc}/15",
             "fund_flow_summary": f"安全性 {safety_sc}/20",
@@ -291,10 +305,10 @@ Write a 150–250 word analysis letter.
         "raw_output":        raw,
         "framework_used":    framework_name,
         "trade_block":       trade_block,
-        "moat":              f"{moat_sc}/35：{'; '.join(moat_reasons) or '—'}",
+        "moat":              f"{_sc(moat_sc, 35)}：{'; '.join(moat_reasons) or '—'}",
         "management":        f"{growth_sc}/30：{'; '.join(growth_reasons) or '—'}",
         "valuation":         f"{val_sc}/15：{'; '.join(val_reasons) or '—'}",
-        "fund_flow_summary": f"安全性 {safety_sc}/20：{'; '.join(safety_reasons) or '—'}",
+        "fund_flow_summary": f"安全性 {_sc(safety_sc, 20)}：{'; '.join(safety_reasons) or '—'}",
         "behavioral":        "—",
         "macro_sensitivity": "—",
     }
