@@ -128,6 +128,24 @@ def audit_moat(conn, existing):
     return {"as_of": str(newest)[:10], "by_market": by_market}
 
 
+def audit_northbound(conn, existing):
+    """北向到底是「真有数」还是「每天写一堆 0」。
+
+    US-151 是按「2026-07 起停更」的前提做的，但那个前提来自本地旧库。
+    生产 northbound_history 每天都在写 —— 必须看清写进去的是不是 0.0，
+    否则 stale 判定（按日期）永远不触发，而 0.0 仍会稀释评分。
+    """
+    if "northbound_history" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT date AS d, total_net AS v FROM northbound_history
+        ORDER BY date DESC LIMIT 15
+    """)
+    nonzero = sum(1 for r in rows if (r.get("v") or 0) != 0)
+    return {"recent": [(str(r["d"])[:10], r["v"]) for r in rows],
+            "nonzero_in_last_15": nonzero}
+
+
 def audit_fundamentals(conn, existing):
     """财务表本身有多少行是空壳（有 code 但关键字段全 NULL）。"""
     if "stock_fundamentals" not in existing:
@@ -155,10 +173,12 @@ def main():
         tables = audit_tables(conn, existing)
         moat = audit_moat(conn, existing)
         fundamentals = audit_fundamentals(conn, existing)
+        northbound = audit_northbound(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
-               "tables": tables, "moat": moat, "fundamentals": fundamentals}
+               "tables": tables, "moat": moat, "fundamentals": fundamentals,
+               "northbound": northbound}
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -189,6 +209,12 @@ def main():
             print(f"  {mkt:8} 共{b['total']:4} 只 · 护城河0/35 {b['moat0']:4} "
                   f"({b['moat0']*100//b['total']:3}%) · incomplete {b['incomplete']:4} "
                   f"({b['incomplete']*100//b['total']:3}%)")
+
+    if northbound:
+        print(f"\n── 北向实际数值（近 15 条）──")
+        print(f"  非零条数: {northbound['nonzero_in_last_15']}/15")
+        for d, v in northbound["recent"]:
+            print(f"    {d}  {v}")
 
     if fundamentals:
         print(f"\n── stock_fundamentals 空壳率 ──")
