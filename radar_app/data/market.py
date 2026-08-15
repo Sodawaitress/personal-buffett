@@ -27,12 +27,22 @@ def get_north_bound() -> dict:
         try:
             data = json.loads(row["payload"])
             data["fetched_at"] = row["fetched_at"]
-            # US-151：这张表只存最新一行，没有任何时效过滤——北向 2026-07 停更后
-            # 07-09 那条会被无限期当成「今天的值」返回。模板据此显示停更说明，
-            # 而不是把陈旧的 0.00 渲染成绿色 ▲。
-            from scripts.northbound_status import is_northbound_stale
+            # US-151/155：这张表只存最新一行且无时效过滤。北向有两种死法，
+            # 模板要都能认出来，否则会把死数据渲染成绿色 ▲ 的 +0.00B：
+            #   ① 日期不再推进（抓取链路停了）
+            #   ② 日期天天新但值恒为 0（生产实况：抓取照跑，源已空）
+            # ② 只看这一行看不出来，要回历史表看连续零值。
+            from scripts.northbound_status import (is_northbound_dead,
+                                                   is_northbound_stale)
 
-            data["stale"] = is_northbound_stale(str(data.get("date", ""))[:10])
+            stale = is_northbound_stale(str(data.get("date", ""))[:10])
+            if not stale:
+                hist = c.execute(
+                    "SELECT total_net FROM northbound_history "
+                    "ORDER BY date DESC LIMIT 10"
+                ).fetchall()
+                stale = is_northbound_dead([r["total_net"] for r in hist])
+            data["stale"] = stale
             return data
         except Exception:
             return {}

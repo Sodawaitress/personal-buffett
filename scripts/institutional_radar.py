@@ -21,6 +21,7 @@ import akshare as ak
 
 from scripts.config import CN_TZ
 from scripts.northbound_status import (NB_EPSILON as _NB_EPSILON,
+                                       is_northbound_dead as _is_northbound_dead,
                                        is_northbound_stale as _is_northbound_stale)
 
 
@@ -133,10 +134,14 @@ def fetch_northbound_trend(days: int = 10) -> dict:
     # akshare 从那之后返回 0.0 或空。不判这一下，下面的「连续同向」会把
     # 一串 0.0 读成「连续 N 天净流入」，凭空造出看多证据。
     as_of = str(rows[0].get("date", ""))[:10]
-    stale = _is_northbound_stale(as_of)
-    if stale:
+    # 两种死法都要认：① 日期不再推进（抓取链路整个停了）
+    # ② 日期天天新但值恒为 0（US-155 实测的生产实况：抓取照跑，源已空）
+    if _is_northbound_stale(as_of):
         return {"stale": True, "as_of": as_of, "direction": "unknown",
-                "consecutive": 0, "signal": "数据源已停更"}
+                "consecutive": 0, "signal": "数据源已停更（无新数据）"}
+    if _is_northbound_dead(nets):
+        return {"stale": True, "as_of": as_of, "direction": "unknown",
+                "consecutive": 0, "signal": "数据源已停更（连续零值）"}
 
     d5  = sum(nets[:5])  if len(nets) >= 5  else sum(nets)
     d10 = sum(nets[:10]) if len(nets) >= 10 else sum(nets)

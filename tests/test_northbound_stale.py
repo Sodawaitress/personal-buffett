@@ -105,3 +105,39 @@ def test_invalid_component_drops_out_of_average():
     score = sum(v["dir"] * v["weight"] for v in valid.values()) / w_max * 10.0
     assert w_max == 2.0          # 1.5 的北向权重没有留在分母里
     assert score == 10.0         # 满分不被死信号拖低
+
+
+# ── US-155：日期天天新但值恒为 0（我在 US-151 漏掉的生产实况）────────
+
+from scripts.northbound_status import is_northbound_dead
+
+
+def test_production_reality_fresh_date_all_zero():
+    """生产 2026-07-23~08-14 实测 15/15 全零，而日期天天在更新。
+
+    US-151 只按日期判 stale，在生产里永远不触发 —— 假看多信号是消掉了，
+    但该分项仍以 valid=True / dir=0.0 参与加权平均，13% 的稀释还在。
+    """
+    assert _is_northbound_stale("2026-08-14", today="2026-08-15") is False  # 日期是新的
+    assert is_northbound_dead([0.0] * 15) is True                           # 但值是死的
+
+
+def test_single_flat_day_is_not_dead():
+    """单日净额恰好持平是正常行情，不能判死。"""
+    assert is_northbound_dead([0.0, 12.3, -5.1, 8.0, 3.2]) is False
+
+
+def test_too_few_observations_not_dead():
+    """观测太少不足以判死，宁可放过也别误杀。"""
+    assert is_northbound_dead([0.0, 0.0]) is False
+    assert is_northbound_dead([]) is False
+    assert is_northbound_dead(None) is False
+
+
+def test_recent_nonzero_revives():
+    """数据源恢复（最近有非零）→ 不再判死，信号照常参与评分。"""
+    assert is_northbound_dead([15.2, 0.0, 0.0, 0.0, 0.0, 0.0]) is False
+
+
+def test_none_values_ignored():
+    assert is_northbound_dead([None, 0.0, 0.0, 0.0, 0.0, 0.0]) is True

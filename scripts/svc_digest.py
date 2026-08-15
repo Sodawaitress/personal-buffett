@@ -40,6 +40,19 @@ def main():
         except Exception as e:
             print(f"  ⚠️ 回填失败（不影响快照）: {e}")
 
+        # US-155：分析结果的 7d/30d 收益标注。生产从来没有任何东西调用过
+        # backfill()（只有本地 launchd 在跑，且它因 SELECT 漏列每次必崩），
+        # 所以 label_7d_return / label_30d_return 全表为空 →
+        # get_accuracy_stats() 的 WHERE 永远不成立 → /report/accuracy 一直是空页，
+        # 系统无法衡量自己的评级准不准。挂了同样不影响快照。
+        try:
+            from scripts.backfill_returns import backfill
+            backfill()
+            run.tick()
+            print("  ✅ 分析收益标注回填完成")
+        except Exception as e:
+            print(f"  ⚠️ 收益标注回填失败（不影响快照）: {e}")
+
         # 回填先跑完（它不依赖快照），再让服务失败 → service_runs 记 failed + 告警响
         if not committed:
             raise RuntimeError("快照未提交 GitHub（详见上方日志：403=权限/401=token/熔断）")

@@ -23,6 +23,22 @@ def _parse(s: str):
         return None
 
 
+def is_northbound_dead(nets, min_obs: int = 5) -> bool:
+    """连续这么多个观测全是 0 → 数据源已死（US-155）。
+
+    为什么光看日期不够：US-151 只按 `as_of` 判停更，但生产的抓取链路
+    **每天照常写一行**，只是值恒为 0.0（2026-07-23 ~ 08-14 实测 15/15 全零）。
+    日期天天新 → 按日期判永远不 stale → 该分项继续以 valid=True、dir=0.0
+    参与加权平均 → 1.5/11.2 ≈ 13% 的权重按 0 分投票，系统性压低所有 A 股意向分。
+
+    一天为 0 是正常行情（当天净额恰好持平），连续 5 天全 0 不是行情是没数据。
+    """
+    vals = [v for v in (nets or []) if v is not None]
+    if len(vals) < min_obs:
+        return False
+    return all(abs(float(v)) < NB_EPSILON for v in vals)
+
+
 def is_northbound_stale(as_of: str, today: str = "") -> bool:
     """北向数据是否已停更。as_of / today 都是 'YYYY-MM-DD'。
 
