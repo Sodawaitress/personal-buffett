@@ -1,0 +1,51 @@
+name: audit-svc (US-154)
+
+# 数据源体检：在生产 Neon 上跑，报告哪些表在悄悄停更、财务拉取失败率多少。
+# 只读，不写任何表、不推送、不 commit —— 随时可以手动跑，不会打扰妈妈。
+#
+# 为什么要有它：2026-08-15 排查时几个表被判成「停更」，但那是从本地
+# data/radar.db（旧开发库）查的，生产在 Neon 上。不在生产跑的新鲜度结论不算数。
+on:
+  schedule:
+    # 每周一 03:00 UTC = 11:00 CST，周末的数据静默期过去之后
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run freshness audit
+        run: python -m scripts.audit_data_freshness | tee /tmp/audit.txt
+
+      - name: Publish to job summary
+        if: always()
+        run: |
+          {
+            echo '## 数据源体检'
+            echo '```'
+            cat /tmp/audit.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload JSON
+        if: always()
+        run: python -m scripts.audit_data_freshness --json > /tmp/audit.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: data-freshness-audit
+          path: /tmp/audit.json
+          retention-days: 30

@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""US-154：数据源新鲜度体检 —— 哪些表在悄悄停更、哪些字段大面积拉不到。
+
+为什么要有这个：2026-08-15 排查时，几个表被判成「停更」，但那是从本地
+`data/radar.db`（旧开发库）查的，生产在 Neon 上。**不在生产环境跑的
+新鲜度结论一律不算数。** 本脚本走 radar_app 的 get_conn，在 GHA 里带
+DATABASE_URL 跑就是生产真相。
+
+用法：
+    python -m scripts.audit_data_freshness            # 人读的报告
+    python -m scripts.audit_data_freshness --json     # 机器读
+
+退出码恒为 0：这是体检不是门禁，不该因为发现问题就把 workflow 弄红。
+"""
+import argparse
+import json
+import sys
+from datetime import date, datetime, timedelta
+
+from sqlalchemy import inspect, text
+
+from radar_app.data.core import DATABASE_URL, get_conn, get_engine
+
+# 表 → 用来判新鲜度的时间列。写死而不是自动猜：自动猜会在
+# fetched_at(写入时间) 和 trade_date(业务时间) 之间摇摆，两者语义不同。
+TABLES = {
+    "stock_prices":        ("fetched_at",   2,  "价格"),
+    "analysis_results":    ("analysis_date", 2, "个股分析"),
+    "reports":             ("analysis_date", 2, "报告"),
+    "stock_news":          ("fetched_date", 2,  "个股新闻"),
+    "market_news":         ("fetched_date", 2,  "市场新闻"),
+    "precursor_history":   ("snapshot_date", 2, "前兆信号"),
+    "block_trades":        ("trade_date",   4,  "大宗交易"),
+    "insider_changes":     ("change_date",  10, "内部人增减持"),
+    "stock_fund_flow":     ("date",         4,  "资金流向"),
+    "northbound_history":  ("date",         4,  "北向（已知停更）"),
+    "analyst_consensus":   ("fetched_at",   8,  "分析师一致预期"),
+    "inst_quarterly":      ("updated_at",   95, "机构季度持仓"),
+    "market_data":         ("fetched_at",   3,  "宏观快照"),
+    "industry_signals":    ("fetched_at",   4,  "行业信号"),
+    "unpriced_signals":    ("created_at",   8,  "未定价信号"),
+    "signal_predictions":  ("created_at",   8,  "信号预测"),
+    "supply_chain_links":  ("scanned_at",  30,  "供应链"),
+    "stock_fundamentals":  ("updated_at",   8,  "财务基本面"),
+}
+
+
+def _rows(conn, sql, **params):
+    """行只支持按列名取值（get_conn 的 row factory），不能用下标。"""
+    return [dict(r) for r in conn.execute(text(sql), params).fetchall()]
+
+
+def _scalar(conn, sql, **params):
+    """sql 必须把结果列命名为 v，例如 SELECT COUNT(*) AS v FROM t。"""
+    r = conn.execute(text(sql), params).fetchone()
+    return dict(r).get("v") if r else None
+
+
+def audit_tables(conn, existing):
+    out = []
+    today = date.today()
+    for table, (col, budget_days, label) in TABLES.items():
+        if table not in existing:
+            out.append({"table": table, "label": label, "status": "MISSING"})
+            continue
+        try:
+            total = _scalar(conn, f"SELECT COUNT(*) AS v FROM {table}") or 0
+            newest = _scalar(conn, f"SELECT MAX({col}) AS v FROM {table}")
+        except Exception as e:
+            out.append({"table": table, "label": label, "status": "ERROR",
+                        "error": str(e)[:160]})
+            continue
+
+        age_days = None
+        newest_s = str(newest)[:10] if newest else ""
+        if newest_s:
+            try:
+                y, m, d = (int(x) for x in newest_s.split("-")[:3])
+                age_days = (today - date(y, m, d)).days
+            except (ValueError, TypeError):
+                pass
+
+        if total == 0:
+            status = "EMPTY"
+        elif age_days is None:
+            status = "UNKNOWN"
+        elif age_days > budget_days:
+            status = "STALE"
+        else:
+            status = "OK"
+
+        out.append({"table": table, "label": label, "status": status,
+                    "rows": total, "newest": newest_s, "age_days": age_days,
+                    "budget_days": budget_days})
+    return out
+
+
+def audit_moat(conn, existing):
+    """财务拉取失败率：护城河 0/35 说明财务字段一个都没拿到。
+
+    08-14 快照实测 96/210（A股 68/175）—— 近一半的股票在用残缺数据出评级。
+    """
+    if "analysis_results" not in existing:
+        return {}
+    newest = _scalar(conn, "SELECT MAX(analysis_date) AS v FROM analysis_results")
+    if not newest:
+        return {}
+    rows = _rows(conn, """
+        SELECT a.code AS code, a.moat AS moat, a.data_incomplete AS di,
+               a.quant_score AS qs, s.market AS market
+        FROM analysis_results a
+        LEFT JOIN stocks s ON s.code = a.code
+        WHERE a.analysis_date = :d
+    """, d=newest)
+
+    by_market = {}
+    for r in rows:
+        mkt = (r.get("market") or "unknown").lower()
+        b = by_market.setdefault(mkt, {"total": 0, "moat0": 0, "incomplete": 0})
+        b["total"] += 1
+        if "0/35" in (r.get("moat") or ""):
+            b["moat0"] += 1
+        # data_quality 是展示层算出来的，DB 里只有这两个原始字段：
+        # radar_app 判 incomplete 的口径 = moat 含 0/35 或 quant_score < 15
+        qs = r.get("qs")
+        if r.get("di") or (qs is not None and qs < 15) or "0/35" in (r.get("moat") or ""):
+            b["incomplete"] += 1
+    return {"as_of": str(newest)[:10], "by_market": by_market}
+
+
+def audit_fundamentals(conn, existing):
+    """财务表本身有多少行是空壳（有 code 但关键字段全 NULL）。"""
+    if "stock_fundamentals" not in existing:
+        return {}
+    cols = {c["name"] for c in inspect(get_engine()).get_columns("stock_fundamentals")}
+    probes = [c for c in ("pe_current", "pb_current", "annual_json") if c in cols]
+    if not probes:
+        return {"note": "stock_fundamentals 无可探测的关键字段", "columns": sorted(cols)}
+    total = _scalar(conn, "SELECT COUNT(*) AS v FROM stock_fundamentals") or 0
+    allnull = _scalar(conn, "SELECT COUNT(*) AS v FROM stock_fundamentals WHERE " +
+                      " AND ".join(f"{c} IS NULL" for c in probes)) or 0
+    return {"total": total, "all_key_fields_null": allnull, "probed": probes}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+
+    backend = DATABASE_URL.split("://")[0]
+    is_prod = not DATABASE_URL.startswith("sqlite")
+
+    with get_conn() as conn:
+        existing = set(inspect(get_engine()).get_table_names())
+        tables = audit_tables(conn, existing)
+        moat = audit_moat(conn, existing)
+        fundamentals = audit_fundamentals(conn, existing)
+
+    payload = {"backend": backend, "is_production": is_prod,
+               "checked_at": datetime.utcnow().isoformat() + "Z",
+               "tables": tables, "moat": moat, "fundamentals": fundamentals}
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    print(f"\n{'='*66}")
+    print(f"数据源体检 · backend={backend} · {'生产' if is_prod else '⚠️ 本地库，结论不算数'}")
+    print(f"{'='*66}\n")
+
+    order = {"EMPTY": 0, "STALE": 1, "MISSING": 2, "ERROR": 3, "UNKNOWN": 4, "OK": 5}
+    icon = {"OK": "✅", "STALE": "🔴", "EMPTY": "⬛", "MISSING": "❓",
+            "ERROR": "💥", "UNKNOWN": "❔"}
+    print(f"{'':2} {'表':22} {'最新':11} {'滞后':>6} {'预算':>5} {'行数':>8}  说明")
+    print("-" * 78)
+    for t in sorted(tables, key=lambda x: (order.get(x["status"], 9), x["table"])):
+        age = f"{t['age_days']}d" if t.get("age_days") is not None else "-"
+        print(f"{icon.get(t['status'],'?'):2} {t['table']:22} {t.get('newest','-'):11} "
+              f"{age:>6} {str(t.get('budget_days','-'))+'d':>5} "
+              f"{t.get('rows','-'):>8}  {t['label']}")
+        if t.get("error"):
+            print(f"   └─ {t['error']}")
+
+    if moat:
+        print(f"\n── 财务拉取失败率（{moat['as_of']} 当日分析）──")
+        for mkt, b in sorted(moat["by_market"].items()):
+            if not b["total"]:
+                continue
+            print(f"  {mkt:8} 共{b['total']:4} 只 · 护城河0/35 {b['moat0']:4} "
+                  f"({b['moat0']*100//b['total']:3}%) · incomplete {b['incomplete']:4} "
+                  f"({b['incomplete']*100//b['total']:3}%)")
+
+    if fundamentals:
+        print(f"\n── stock_fundamentals 空壳率 ──")
+        print(f"  {fundamentals}")
+
+    bad = [t for t in tables if t["status"] in ("EMPTY", "STALE", "ERROR", "MISSING")]
+    print(f"\n共 {len(tables)} 张表，{len(bad)} 张需要关注\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
