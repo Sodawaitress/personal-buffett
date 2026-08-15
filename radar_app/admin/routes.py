@@ -73,25 +73,16 @@ def register_admin_routes(app):
                 "under 120 words, no Markdown formatting."
             )
 
+        # US-153：必须走 buffett_groq，不能直连 Groq。这里原本自己 requests.post，
+        # 绕过了 scripts.groq_ratelimit 的 TPM 令牌桶 —— 提问箱一活跃就会把
+        # svc_analyze 的 12k TPM 预算撞穿，触发 429 长睡，正是 US-140 那次
+        # SIGKILL 事故的同一根因。第四份 _call_groq 副本，前三份已合并。
         try:
-            import requests as _req
-            groq_key = os.environ.get("GROQ_API_KEY", "")
-            resp = _req.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                json={
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [
-                        {"role": "system", "content": sys_prompt},
-                        {"role": "user",   "content": question},
-                    ],
-                    "max_tokens": 200,
-                    "temperature": 0.4,
-                },
-                timeout=20,
-            )
-            resp.raise_for_status()
-            answer = resp.json()["choices"][0]["message"]["content"].strip()
+            from scripts.buffett_groq import _call_groq
+
+            answer = _call_groq(sys_prompt, question, max_tokens=200).strip()
+            if not answer:
+                raise RuntimeError("Groq 无响应")
         except Exception:
             answer = "暂时无法回答，稍后再试。" if locale == "zh" else "Couldn't answer right now — please try again shortly."
 

@@ -13,6 +13,7 @@ institutional_radar.py — 机构行为追踪
 """
 
 import math
+import os
 import time
 from datetime import datetime, timedelta
 
@@ -208,6 +209,16 @@ def fetch_insider_changes(days: int = 30) -> dict:
 
     missing_codes = [c for c in codes if c not in codes_with_db]
     if not missing_codes:
+        return result
+
+    # US-153：Step 2 的网络兜底走 ak.stock_share_hold_change_sse/szse，
+    # 从 NZ 和 Fly 悉尼都 ConnectionReset —— 四个月只攒下 11 行数据，
+    # 已被 US-142 的 insider_moves（东财源，搭 trigger-scan 每天在 Fly 上跑）取代。
+    # 保留 Step 1 读 DB（读的正是 insider_moves 写进去的），但不再每天白等 60 秒
+    # 打一批注定 reset 的请求。数据源哪天可达了，把这个开关打开即可。
+    if os.environ.get("INSIDER_NET_FALLBACK", "").lower() not in ("1", "true"):
+        print(f"    ↩︎ 跳过 {len(missing_codes)} 只的网络兜底"
+              f"（已知不可达，数据由 insider_moves 供给）")
         return result
 
     # ── Step 2: 网络补齐，限时 60 秒 ──
