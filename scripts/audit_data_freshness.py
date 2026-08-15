@@ -128,6 +128,63 @@ def audit_moat(conn, existing):
     return {"as_of": str(newest)[:10], "by_market": by_market}
 
 
+def audit_moat_detail(conn, existing):
+    """护城河 0/35 的股票，到底有没有财务数据打底。
+
+    区分两种情况（应对方式完全不同）：
+      A. stock_fundamentals 压根没这只 → 抓取失败，可修
+      B. 有财务行但护城河仍算 0 → 打分逻辑问题，不是抓取问题
+    """
+    if not {"analysis_results", "stock_fundamentals", "stocks"} <= existing:
+        return {}
+    newest = _scalar(conn, "SELECT MAX(analysis_date) AS v FROM analysis_results")
+    if not newest:
+        return {}
+    rows = _rows(conn, """
+        SELECT a.code AS code, s.market AS market,
+               CASE WHEN f.code IS NULL THEN 0 ELSE 1 END AS has_fund,
+               f.pe_current AS pe, f.annual_json AS annual
+        FROM analysis_results a
+        JOIN stocks s ON s.code = a.code
+        LEFT JOIN stock_fundamentals f ON f.code = a.code
+        WHERE a.analysis_date = :d AND a.moat LIKE :pat
+    """, d=newest, pat="%0/35%")
+    out = {}
+    for r in rows:
+        mkt = (r.get("market") or "unknown").lower()
+        b = out.setdefault(mkt, {"moat0": 0, "no_fund_row": 0,
+                                 "has_row_no_pe": 0, "has_row_no_annual": 0})
+        b["moat0"] += 1
+        if not r.get("has_fund"):
+            b["no_fund_row"] += 1
+        else:
+            if r.get("pe") is None:
+                b["has_row_no_pe"] += 1
+            if not r.get("annual"):
+                b["has_row_no_annual"] += 1
+    return out
+
+
+def audit_company_type(conn, existing):
+    """industry_signals 的上游闸门：没有 company_type 就整个跳过不抓。
+
+    生产 industry_signals 只有 1 行、26 天没更新 —— 先确认是不是被这个闸门卡住。
+    """
+    if "stock_meta" not in existing or "stocks" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT s.market AS market,
+               COUNT(*) AS total,
+               SUM(CASE WHEN m.company_type IS NULL OR m.company_type = ''
+                        THEN 1 ELSE 0 END) AS missing
+        FROM stocks s
+        LEFT JOIN stock_meta m ON m.code = s.code
+        GROUP BY s.market
+    """)
+    return {r["market"] or "unknown": {"total": r["total"], "missing": r["missing"]}
+            for r in rows}
+
+
 def audit_northbound(conn, existing):
     """北向到底是「真有数」还是「每天写一堆 0」。
 
@@ -174,11 +231,14 @@ def main():
         moat = audit_moat(conn, existing)
         fundamentals = audit_fundamentals(conn, existing)
         northbound = audit_northbound(conn, existing)
+        company_type = audit_company_type(conn, existing)
+        moat_detail = audit_moat_detail(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "northbound": northbound}
+               "northbound": northbound, "company_type": company_type,
+               "moat_detail": moat_detail}
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -209,6 +269,19 @@ def main():
             print(f"  {mkt:8} 共{b['total']:4} 只 · 护城河0/35 {b['moat0']:4} "
                   f"({b['moat0']*100//b['total']:3}%) · incomplete {b['incomplete']:4} "
                   f"({b['incomplete']*100//b['total']:3}%)")
+
+    if moat_detail:
+        print(f"\n── 护城河 0/35 的股票拆解 ──")
+        for mkt, b in sorted(moat_detail.items()):
+            print(f"  {mkt:8} 0/35 共{b['moat0']:4} 只 · 无财务行 {b['no_fund_row']:4} "
+                  f"· 有行无PE {b['has_row_no_pe']:4} · 有行无年报 {b['has_row_no_annual']:4}")
+
+    if company_type:
+        print(f"\n── company_type 覆盖率（industry_signals 的上游闸门）──")
+        for mkt, b in sorted(company_type.items()):
+            got = b["total"] - b["missing"]
+            pct = got * 100 // b["total"] if b["total"] else 0
+            print(f"  {mkt:8} {got:4}/{b['total']:4} 只有分类 ({pct:3}%)")
 
     if northbound:
         print(f"\n── 北向实际数值（近 15 条）──")
