@@ -160,8 +160,20 @@ def audit_moat_detail(conn, existing):
         else:
             if r.get("pe") is None:
                 b["has_row_no_pe"] += 1
-            if not r.get("annual"):
+            # 关键：annual_json = '[]' 作为字符串非空，解析出来却是空列表。
+            # score_moat 只在 annual_data 与 signals 都空时才返回 0 分，
+            # 所以「有 annual_json 但它是 []」正是护城河 0/35 的真凶候选。
+            annual = r.get("annual")
+            if not annual:
                 b["has_row_no_annual"] += 1
+            else:
+                try:
+                    parsed = json.loads(annual) if isinstance(annual, str) else annual
+                except (ValueError, TypeError):
+                    parsed = None
+                if not parsed:
+                    b.setdefault("annual_json_is_empty_list", 0)
+                    b["annual_json_is_empty_list"] += 1
     return out
 
 
@@ -274,7 +286,8 @@ def main():
         print(f"\n── 护城河 0/35 的股票拆解 ──")
         for mkt, b in sorted(moat_detail.items()):
             print(f"  {mkt:8} 0/35 共{b['moat0']:4} 只 · 无财务行 {b['no_fund_row']:4} "
-                  f"· 有行无PE {b['has_row_no_pe']:4} · 有行无年报 {b['has_row_no_annual']:4}")
+                  f"· 有行无PE {b['has_row_no_pe']:4} · 有行无年报 {b['has_row_no_annual']:4} "
+                  f"· 年报是空列表 {b.get('annual_json_is_empty_list', 0):4}")
 
     if company_type:
         print(f"\n── company_type 覆盖率（industry_signals 的上游闸门）──")
