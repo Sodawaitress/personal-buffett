@@ -526,6 +526,21 @@ def get_industry_capture_dates(limit=60):
         return [r["date"] for r in rows]
 
 
+def sector_mapped_on(sector_label, date_str):
+    """这个行业今天是否已经刷过映射（US-158 断点续跑用）。
+
+    GHA 上每个行业实测 40–55s，49 个跑不完一次 workflow 的时限。
+    与其无限加超时，不如让刷新可以分几次跑完。
+    """
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT COUNT(*) AS v FROM stock_industry_map "
+            "WHERE industry LIKE :pat AND updated_at >= :d",
+            {"pat": f'%"{sector_label}"%', "d": date_str},
+        ).fetchone()
+        return bool((dict(row).get("v") if row else 0) or 0)
+
+
 def get_latest_industry_signature(exclude_date=None):
     """最近一次捕获的全行业涨跌幅指纹（US-158 非交易日守卫用）。
 

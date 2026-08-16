@@ -31,11 +31,12 @@ def main():
     if not args.gaps_only:
         print("🏭 刷新 个股→行业 映射（49 个行业，每个 1 次调用）…")
         res = refresh_stock_industry_map(sleep_s=args.sleep)
-        print(f"\n  行业数 {res['sectors']} · 映射 {res['mapped']} 只")
+        print(f"\n  行业数 {res['sectors']} · 本次映射 {res['mapped']} 只 "
+              f"· 跳过 {res.get('skipped', 0)} 个今日已刷新")
         if res["failed"]:
             print(f"  ⚠️ 失败 {len(res['failed'])} 个: {res['failed'][:10]}")
-        # 一个都没映射到才算真失败；部分成功好过完全不刷新
-        if res["sectors"] and res["mapped"] == 0:
+        # 一个都没映射到、且不是因为全都刷过了 → 真失败
+        if res["sectors"] and res["mapped"] == 0 and not res.get("skipped"):
             print("❌ 一只都没映射到，判定失败")
             return 1
 

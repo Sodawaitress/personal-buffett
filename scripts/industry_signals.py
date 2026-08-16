@@ -300,8 +300,20 @@ def refresh_stock_industry_map(sleep_s: float = 1.5) -> dict:
     if not sectors:
         return {"sectors": 0, "mapped": 0, "failed": ["<行业列表拉取失败>"]}
 
-    mapped, failed = 0, []
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    mapped, failed, skipped = 0, [], 0
     for i, s in enumerate(sectors, 1):
+        # 断点续跑：今天已经刷过的行业直接跳过。
+        # GHA 上每个行业实测 40–55s，49 个跑不完一次 workflow 的时限；
+        # 与其无限加超时，不如让它可以分几次跑完 —— 这也和 US-158 其余部分
+        # 「靠数据自愈、不靠单次成功」的原则一致。
+        try:
+            if db.sector_mapped_on(s["label"], today):
+                skipped += 1
+                continue
+        except Exception:
+            pass
+
         try:
             det = ak.stock_sector_detail(sector=s["label"])
             if det is None or det.empty or "code" not in det.columns:
@@ -315,10 +327,11 @@ def refresh_stock_industry_map(sleep_s: float = 1.5) -> dict:
         except Exception as e:
             failed.append(f"{s['name']}({type(e).__name__})")
         if i % 10 == 0:
-            print(f"    [{i}/{len(sectors)}] 已映射 {mapped} 只")
+            print(f"    [{i}/{len(sectors)}] 已映射 {mapped} 只 · 跳过 {skipped} 个已刷新")
         time.sleep(sleep_s)
 
-    return {"sectors": len(sectors), "mapped": mapped, "failed": failed}
+    return {"sectors": len(sectors), "mapped": mapped,
+            "skipped": skipped, "failed": failed}
 
 
 # ── 缺口检测：让数据自己说话 ────────────────────────────────
