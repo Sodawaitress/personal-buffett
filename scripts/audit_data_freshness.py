@@ -177,6 +177,26 @@ def audit_moat_detail(conn, existing):
     return out
 
 
+def audit_industry_coverage(conn, existing):
+    """自选股里有多少拿到了行业归属（US-158 的映射覆盖率）。
+
+    这是行业信号能否生效的前提：映射不上的股票，信号卡片根本不会出现。
+    """
+    if not {"stock_industry_map", "stocks", "user_watchlist"} <= existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT s.market AS market,
+               COUNT(DISTINCT s.code) AS total,
+               COUNT(DISTINCT CASE WHEN m.code IS NOT NULL THEN s.code END) AS mapped
+        FROM stocks s
+        JOIN user_watchlist w ON w.code = s.code
+        LEFT JOIN stock_industry_map m ON m.code = s.code
+        GROUP BY s.market
+    """)
+    return {r["market"] or "unknown": {"total": r["total"], "mapped": r["mapped"]}
+            for r in rows}
+
+
 def audit_industry_gaps(conn, existing):
     """行业日线缺口 —— US-158 的自检核心。
 
@@ -262,12 +282,14 @@ def main():
         company_type = audit_company_type(conn, existing)
         moat_detail = audit_moat_detail(conn, existing)
         industry_gaps = audit_industry_gaps(conn, existing)
+        industry_cov = audit_industry_coverage(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
                "northbound": northbound, "company_type": company_type,
-               "moat_detail": moat_detail, "industry_gaps": industry_gaps}
+               "moat_detail": moat_detail, "industry_gaps": industry_gaps,
+               "industry_coverage": industry_cov}
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -298,6 +320,12 @@ def main():
             print(f"  {mkt:8} 共{b['total']:4} 只 · 护城河0/35 {b['moat0']:4} "
                   f"({b['moat0']*100//b['total']:3}%) · incomplete {b['incomplete']:4} "
                   f"({b['incomplete']*100//b['total']:3}%)")
+
+    if industry_cov:
+        print(f"\n── 自选股行业映射覆盖率（US-158）──")
+        for mkt, b in sorted(industry_cov.items()):
+            pct = b["mapped"] * 100 // b["total"] if b["total"] else 0
+            print(f"  {mkt:8} {b['mapped']:4}/{b['total']:4} ({pct:3}%)")
 
     if industry_gaps:
         g = industry_gaps
