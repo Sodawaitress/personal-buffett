@@ -502,6 +502,25 @@ _SCHEMA_SQL = """
             signal_json  TEXT
         );
 
+        -- US-158：行业当日表现的逐日留存。动量由这张表自己算，不依赖任何
+        -- 外部历史接口 —— 东财的历史 K 线主机全被拒、同花顺翻页会导致封号
+        -- （2026-08-16 实测两者皆亲历）。我们拥有这份时间序列。
+        -- 唯一键 (date, sector_label) 保证幂等：同一天被多个服务重复捕获无害，
+        -- 这正是「挂 5 个服务、任何一个跑起来都补上」的前提。
+        CREATE TABLE IF NOT EXISTS industry_daily (
+            date          TEXT NOT NULL,
+            sector_label  TEXT NOT NULL,
+            sector_name   TEXT,
+            change_pct    REAL,
+            company_count INTEGER,
+            avg_price     REAL,
+            captured_at   TEXT DEFAULT (CURRENT_TIMESTAMP),
+            PRIMARY KEY (date, sector_label)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_industry_daily_label
+            ON industry_daily(sector_label, date);
+
         -- US-97 自动供应链溯源
         CREATE TABLE IF NOT EXISTS supply_chain_links (
             id               INTEGER PRIMARY KEY AUTOINCREMENT,

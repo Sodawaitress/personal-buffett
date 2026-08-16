@@ -529,7 +529,10 @@ def _fetch_1b_financials(code, market, log):
         _fetch_advanced(code, market, log)
     if market == "cn":
         _fetch_analyst_consensus(code, log)
-        _fetch_industry_signal_for_stock(code, market, log)
+        # US-158：行业信号不再逐股拉取。改为整个 pipeline 每天捕获一次
+        # 全部 49 个行业（1 次调用），动量从 industry_daily 自己算。
+        # 原来是每只股票各查一次自己的 company_type 板块，既浪费又只覆盖 3/9 种类型。
+        _capture_industry_daily_once(log)
 
 
 def _fetch_analyst_consensus(code, log):
@@ -562,45 +565,32 @@ def _fetch_analyst_consensus(code, log):
         log(f"       ⚠️ 分析师共识失败: {e}")
 
 
-def _fetch_industry_signal_for_stock(code, market, log):
-    """Fetch industry signal (24h cache) based on company_type from stock_meta."""
-    if market != "cn":
+# US-158：行业日线捕获的进程内去重标记。整个 pipeline 一天只需捕获一次，
+# 但为了防洞它挂在多个服务上 —— 服务之间靠 DB 唯一键幂等，进程内靠这个变量。
+_INDUSTRY_CAPTURED_ON = ""
+
+
+def _capture_industry_daily_once(log):
+    """每天捕获一次全部行业当日表现（1 次调用，49 个行业）。
+
+    幂等：(date, sector_label) 是唯一键，重复捕获无害。这正是「挂 5 个服务、
+    任何一个跑起来都补上」的前提 —— 新浪没有历史接口，漏掉的一天补不回来，
+    所以宁可重复捕获也不能漏。
+    """
+    global _INDUSTRY_CAPTURED_ON
+    today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    if _INDUSTRY_CAPTURED_ON == today:
         return
     try:
-        meta = db.get_stock_meta(code) or {}
-        company_type = meta.get("company_type")
-        if not company_type:
+        from scripts.industry_signals import capture_daily
+        res = capture_daily(today)
+        if res.get("skipped"):
+            log("       ⚠️ 行业日线捕获失败（下一个服务会再试）")
             return
-        from scripts.industry_signals import get_industry_key, fetch_industry_signal, fetch_cycle_commodity_signal
-        industry_key = get_industry_key(company_type)
-        if not industry_key:
-            return
-        existing = get_industry_signal(industry_key)
-        if existing:
-            fetched = existing.get("fetched_at", "")
-            try:
-                dt = datetime.fromisoformat(str(fetched).replace(" ", "T"))
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
-                age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
-                if age_h < 24:
-                    log(f"       行业信号缓存有效（{age_h:.0f}h前，{company_type}）")
-                    return
-            except Exception:
-                pass
-        if company_type == "cycle_commodity":
-            data = fetch_cycle_commodity_signal()
-        else:
-            data = fetch_industry_signal(company_type)
-        if data:
-            save_industry_signal(industry_key, data)
-            change = data.get("change_30d", 0)
-            signal = data.get("signal", "")
-            log(f"       🏭 行业信号 {data.get('label','')} {change:+.1f}% ({signal})")
-        else:
-            log(f"       ⚠️ 行业信号：{company_type} 无数据")
+        _INDUSTRY_CAPTURED_ON = today
+        log(f"       🏭 行业日线已留存 {res['captured']} 个行业")
     except Exception as e:
-        log(f"       ⚠️ 行业信号失败: {e}")
+        log(f"       ⚠️ 行业日线捕获异常: {type(e).__name__}: {e}")
 
 
 # 进程内「今天已经试过北向了」标记，见 _fetch_north_bound 里的说明

@@ -66,13 +66,17 @@ def _material_events(code: str):
 
 
 def _get_industry_signal_for_stock(code: str, market: str, meta: dict):
+    """US-158：改为按个股真实行业查，不再走 company_type。
+
+    原来用 company_type（商业形态）当行业：茅台和长江电力都是 mature_value，
+    映射到同一个板块没有意义；而且映射表只覆盖 3/9 种类型，74% 的股票
+    永远拿不到信号。现在动量直接从 industry_daily 算，**不发任何网络请求**。
+    """
     if market != "cn":
         return None
     try:
-        from scripts.industry_signals import get_industry_key
-        company_type = (meta or {}).get("company_type")
-        industry_key = get_industry_key(company_type) if company_type else None
-        return get_industry_signal(industry_key) if industry_key else None
+        from scripts.industry_signals import get_signal_for_stock
+        return get_signal_for_stock(code) or None
     except Exception:
         return None
 

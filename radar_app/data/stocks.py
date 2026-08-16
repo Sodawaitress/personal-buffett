@@ -483,6 +483,85 @@ def get_stock_industry(code):
         return row["industry"] if row else None
 
 
+# ── US-158 行业日线留存 ────────────────────────────────────
+
+def upsert_industry_daily(date, sector_label, sector_name, change_pct,
+                          company_count=None, avg_price=None):
+    """幂等写入。同一天被多个服务重复捕获是**设计如此**，不是浪费：
+    5 个每日服务各捕获一次 = 5 次机会，任何一个跑起来就不会漏这天。"""
+    with get_conn() as c:
+        c.execute(
+            """INSERT INTO industry_daily
+                   (date, sector_label, sector_name, change_pct, company_count, avg_price)
+               VALUES(:d,:l,:n,:p,:cc,:ap)
+               ON CONFLICT(date, sector_label) DO UPDATE SET
+                   sector_name=excluded.sector_name,
+                   change_pct=excluded.change_pct,
+                   company_count=excluded.company_count,
+                   avg_price=excluded.avg_price""",
+            {"d": date, "l": sector_label, "n": sector_name, "p": change_pct,
+             "cc": company_count, "ap": avg_price},
+        )
+
+
+def get_industry_series(sector_label, limit=60):
+    """取某行业最近 N 个交易日的涨跌幅，最新在前。"""
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT date, change_pct FROM industry_daily "
+            "WHERE sector_label=:l AND change_pct IS NOT NULL "
+            "ORDER BY date DESC LIMIT :n",
+            {"l": sector_label, "n": limit},
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_industry_capture_dates(limit=60):
+    """已捕获的日期（去重，最新在前）——缺口检测用。"""
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT DISTINCT date FROM industry_daily ORDER BY date DESC LIMIT :n",
+            {"n": limit},
+        ).fetchall()
+        return [r["date"] for r in rows]
+
+
+def get_latest_industry_signature(exclude_date=None):
+    """最近一次捕获的全行业涨跌幅指纹（US-158 非交易日守卫用）。
+
+    新浪在节假日返回上一交易日的数据，日期上看不出来。指纹相同 = 同一个
+    交易日的重复数据，再存一次会让那天的涨跌被动量重复计入。
+    """
+    import hashlib
+    import json as _json
+
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT MAX(date) AS v FROM industry_daily WHERE date <> :d",
+            {"d": exclude_date or ""},
+        ).fetchone()
+        last = dict(row).get("v") if row else None
+        if not last:
+            return None
+        rows = c.execute(
+            "SELECT sector_label, change_pct FROM industry_daily WHERE date=:d",
+            {"d": last},
+        ).fetchall()
+    payload = _json.dumps(
+        sorted((r["sector_label"], r["change_pct"]) for r in rows),
+        ensure_ascii=False,
+    )
+    return hashlib.md5(payload.encode()).hexdigest()
+
+
+def count_industry_daily(date):
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT COUNT(*) AS v FROM industry_daily WHERE date=:d", {"d": date}
+        ).fetchone()
+        return (dict(row).get("v") if row else 0) or 0
+
+
 def update_annual_json(code, annual):
     """只更新 annual_json，不动 pe/pb/signals（US-116 #3：advanced 补字段后回写）。"""
     with get_conn() as c:

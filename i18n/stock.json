@@ -875,6 +875,10 @@
     "en": "30-day sector return",
     "zh": "板块近30日涨跌"
   },
+  "industry_signal_accruing": {
+    "en": "· accruing",
+    "zh": "· 数据积累中"
+  },
   "industry_signal_cycle_up": {
     "en": "Uptrend confirmed",
     "zh": "上行周期确认"

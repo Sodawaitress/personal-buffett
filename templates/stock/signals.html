@@ -454,6 +454,11 @@
       <div class="industry-signal-meta">
         {{ t.industry_signal_30d }}：
         <span class="industry-signal-change {% if isig.get('change_30d', 0) >= 0 %}up{% else %}down{% endif %}">{{ '%+.1f'|format(isig.get('change_30d', 0)) }}%</span>
+        {# US-158：动量由我们自己逐日累积（新浪无历史接口）。不满 30 个交易日
+           就必须显示已积累天数——宁可让人看到「还在攒」，也不假装是完整的 30 日。#}
+        {% if isig.get('days_available') and not isig.get('mature') %}
+        <span class="industry-signal-maturity muted">{{ t.industry_signal_accruing }} {{ isig.days_available }}/30</span>
+        {% endif %}
       </div>
     </div>
     {% endif %}

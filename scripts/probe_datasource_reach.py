@@ -49,10 +49,11 @@ def _t(fn, *a, **kw):
 def _probes():
     import requests
 
-    def http(url, **kw):
+    def http(url, headers=None, **kw):
         def go():
-            r = requests.get(url, timeout=TIMEOUT,
-                             headers={"User-Agent": "Mozilla/5.0"}, **kw)
+            h = {"User-Agent": "Mozilla/5.0"}
+            h.update(headers or {})
+            r = requests.get(url, timeout=TIMEOUT, headers=h, **kw)
             r.raise_for_status()
             body = r.text
             return f"HTTP {r.status_code} · {len(body)}B · {body[:60]!r}"
@@ -65,10 +66,13 @@ def _probes():
         ("裸HTTP", "东财 push2 行情",
          http("https://push2.eastmoney.com/api/qt/clist/get"
               "?pn=1&pz=5&fs=m:90+t:2&fields=f12,f14,f3")),
-        ("裸HTTP", "东财 板块日K",
+        ("裸HTTP", "东财 板块列表",
+         http("https://push2.eastmoney.com/api/qt/clist/get"
+              "?pn=1&pz=100&fs=m:90+t:2&fields=f12,f14,f3")),
+        ("裸HTTP", "东财 板块日K(BK0447)",
          http("https://push2his.eastmoney.com/api/qt/stock/kline/get"
-              "?secid=90.BK1036&klt=101&fqt=1&lmt=5"
-              "&fields1=f1,f2&fields2=f51,f53")),
+              "?secid=90.BK0447&klt=101&fqt=1&lmt=30"
+              "&fields1=f1,f2,f3&fields2=f51,f52,f53")),
         ("裸HTTP", "新浪 行情",
          http("https://hq.sinajs.cn/list=sh600519",
               headers={"Referer": "https://finance.sina.com.cn",

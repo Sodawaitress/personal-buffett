@@ -41,11 +41,32 @@ def _build_market_data() -> dict:
     return {"quotes": quotes, "fund_flow": fund_flow}
 
 
+
+def _capture_industry_daily(svc_name):
+    """US-158：留存今天的行业表现。**故意挂在 5 个每日服务上**。
+
+    新浪没有历史接口，漏掉的一天永远补不回来，而这个系统有连续 14 天不跑的
+    前科。捕获只要 1 次 HTTP 调用、(date, sector_label) 唯一键幂等，
+    所以宁可 5 个服务各捕获一次，也不接受「漏一天就是永久的洞」。
+    永不抛：它是搭车的，不能拖垮宿主服务。
+    """
+    try:
+        from scripts.industry_signals import capture_daily
+        res = capture_daily()
+        if res.get("skipped"):
+            print(f"  ⚠️ [{svc_name}] 行业日线捕获失败（其余服务会再试）")
+        else:
+            print(f"  🏭 [{svc_name}] 行业日线已留存 {res['captured']} 个行业")
+    except Exception as e:
+        print(f"  ⚠️ [{svc_name}] 行业日线捕获异常: {type(e).__name__}: {e}")
+
+
 def main():
     db.init_db()  # 幂等，确保 service_runs 等表在 Neon 上存在
     data = _build_market_data()
     print(f"🏦 radar-svc 启动：{len(data['quotes'])} 只 A股，预算 {BUDGET_MIN} 分钟")
     with db.service_run("radar-svc") as run:
+        _capture_industry_daily("radar-svc")
         section = run_institutional_radar(data, budget_min=BUDGET_MIN)
         run.tick()
 

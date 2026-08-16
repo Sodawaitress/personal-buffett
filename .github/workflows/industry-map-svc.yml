@@ -1,0 +1,52 @@
+name: industry-map-svc (US-158)
+
+# 个股→行业 映射刷新。49 个行业各 1 次 akshare 调用（封装接口，非裸爬）。
+#
+# 为什么放周末：行业归属很少变动，没必要挤占每日 pipeline 的请求预算。
+# 而且两个数据源（东财/同花顺）实测都会对密集请求限流——2026-08-16 调研时
+# 亲手把自己封过一次，那次教训直接决定了本服务的节奏（1.5s 间隔 + 周频）。
+on:
+  schedule:
+    # 周六 02:00 UTC = 10:00 CST，非交易日
+    - cron: '0 2 * * 6'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Refresh stock→industry map
+        run: python -m scripts.refresh_industry_map | tee /tmp/map.txt
+
+      - name: Publish to job summary
+        if: always()
+        run: |
+          {
+            echo '## 个股→行业 映射刷新'
+            echo '```'
+            cat /tmp/map.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ industry-map-svc 失败" \
+              --data-urlencode "desp=个股→行业映射刷新挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              >/dev/null && echo "已推送失败告警"
+          fi

@@ -37,7 +37,7 @@ TABLES = {
     "analyst_consensus":   ("fetched_at",   8,  "分析师一致预期"),
     "inst_quarterly":      ("updated_at",   95, "机构季度持仓"),
     "market_data":         ("fetched_at",   3,  "宏观快照"),
-    "industry_signals":    ("fetched_at",   4,  "行业信号"),
+    "industry_daily":      ("date",         4,  "行业日线(US-158)"),
     "unpriced_signals":    ("created_at",   8,  "未定价信号"),
     "signal_predictions":  ("created_at",   8,  "信号预测"),
     "supply_chain_links":  ("scanned_at",  30,  "供应链"),
@@ -177,6 +177,22 @@ def audit_moat_detail(conn, existing):
     return out
 
 
+def audit_industry_gaps(conn, existing):
+    """行业日线缺口 —— US-158 的自检核心。
+
+    这个系统所有的沉默失败都是「跑了、返回了、没报错、但没产出」，
+    只有查数据本身才能发现。新浪无历史接口，漏掉的天补不回来，
+    所以缺口必须尽早暴露。
+    """
+    if "industry_daily" not in existing:
+        return {}
+    try:
+        from scripts.industry_signals import find_gaps
+        return find_gaps(30)
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
 def audit_company_type(conn, existing):
     """industry_signals 的上游闸门：没有 company_type 就整个跳过不抓。
 
@@ -245,12 +261,13 @@ def main():
         northbound = audit_northbound(conn, existing)
         company_type = audit_company_type(conn, existing)
         moat_detail = audit_moat_detail(conn, existing)
+        industry_gaps = audit_industry_gaps(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
                "northbound": northbound, "company_type": company_type,
-               "moat_detail": moat_detail}
+               "moat_detail": moat_detail, "industry_gaps": industry_gaps}
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -281,6 +298,18 @@ def main():
             print(f"  {mkt:8} 共{b['total']:4} 只 · 护城河0/35 {b['moat0']:4} "
                   f"({b['moat0']*100//b['total']:3}%) · incomplete {b['incomplete']:4} "
                   f"({b['incomplete']*100//b['total']:3}%)")
+
+    if industry_gaps:
+        g = industry_gaps
+        if g.get("error"):
+            print(f"\n── 行业日线缺口 ──\n  💥 {g['error']}")
+        else:
+            icon = "✅" if not g["missing"] else "🔴"
+            print(f"\n── 行业日线缺口（US-158）──")
+            print(f"  {icon} 应有 {g['expected']} 天 · 已捕获 {g['captured']} 天 "
+                  f"· 覆盖率 {g['coverage_pct']}%")
+            if g["missing"]:
+                print(f"     缺: {g['missing'][:12]}")
 
     if moat_detail:
         print(f"\n── 护城河 0/35 的股票拆解 ──")
