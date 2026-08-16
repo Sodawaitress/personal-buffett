@@ -3,6 +3,11 @@ name: Daily Cron
 # US-138：monolith 已退役。pipeline job 不再排班，仅保留手动触发作全量回滚入口
 # （日常活已拆给 fetch/analyze/radar/market/digest/push-svc）。
 # light job 的 precursor scan 仍需每日跑：东财只能在 Fly 悉尼跑，GHA 美国 runner 连不上。
+# ⚠️ US-158 修订（2026-08-16）：「地理」这个说法不准确。
+# 两地实测（scripts/probe_datasource_reach.py，GHA 美国 + 新西兰本地）结果一致：
+# 东财 push2 两地都通、push2his（历史K线）两地都被拒 —— 是东财在拒绝这类
+# 客户端特征，不是地理封锁。Fly 悉尼能跑通的具体是哪些 datacenter 端点尚未
+# 逐个复测，所以下面的安排先保持不动，但别再把「地理」当成既定原因去推理。
 
 on:
   schedule:

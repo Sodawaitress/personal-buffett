@@ -6,6 +6,11 @@
 生产 `insider_changes` 四个月只攒下 11 行。东财 datacenter 从 Fly 可达且字段全是
 结构化的（CHANGE_RATIO / END_HOLD_NUM / CHANGE_REASON），比解析公告标题可靠得多。
 ⚠️ 东财只能在 Fly 悉尼跑，GHA 美国 runner 连不上（与 precursor scan 同一约束）。
+⚠️ US-158 修订（2026-08-16）：「地理」这个说法不准确。
+两地实测（scripts/probe_datasource_reach.py，GHA 美国 + 新西兰本地）结果一致：
+东财 push2 两地都通、push2his（历史K线）两地都被拒 —— 是东财在拒绝这类
+客户端特征，不是地理封锁。Fly 悉尼能跑通的具体是哪些 datacenter 端点尚未
+逐个复测，所以下面的安排先保持不动，但别再把「地理」当成既定原因去推理。
 
 为什么要区分惯例 vs 机会性：内部人交易是学术上少数稳健的异常，但
 Cohen-Malloy-Pomorski (2012) 证明**只有机会性交易有信息量** —— 股权激励行权、
