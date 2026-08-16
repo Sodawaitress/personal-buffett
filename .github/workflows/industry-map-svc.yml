@@ -14,7 +14,10 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # GHA 上 stock_sector_detail 实测每个行业 ~40s（本地只要 2.2s），
+    # 49 个行业要 30+ 分钟。首次跑撞 20 分钟被 cancel（只完成 30/49）。
+    # 映射是逐只即时写库的，超时不会丢已完成的部分，但还是给足时间。
+    timeout-minutes: 50
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PYTHONUNBUFFERED: "1"
@@ -28,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Refresh stock→industry map
-        run: python -m scripts.refresh_industry_map | tee /tmp/map.txt
+        run: python -m scripts.refresh_industry_map --sleep 0.8 | tee /tmp/map.txt
 
       - name: Publish to job summary
         if: always()
