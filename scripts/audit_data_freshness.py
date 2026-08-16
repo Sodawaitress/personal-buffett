@@ -184,12 +184,14 @@ def audit_industry_coverage(conn, existing):
     """
     if not {"stock_industry_map", "stocks", "user_watchlist"} <= existing:
         return {}
+    # user_watchlist 的外键列叫 stock_code（不是 code）；
+    # stock_industry_map.code 存的是纯 6 位，A 股的 stocks.code 也是纯 6 位，直接 join。
     rows = _rows(conn, """
         SELECT s.market AS market,
                COUNT(DISTINCT s.code) AS total,
                COUNT(DISTINCT CASE WHEN m.code IS NOT NULL THEN s.code END) AS mapped
         FROM stocks s
-        JOIN user_watchlist w ON w.code = s.code
+        JOIN user_watchlist w ON w.stock_code = s.code
         LEFT JOIN stock_industry_map m ON m.code = s.code
         GROUP BY s.market
     """)
