@@ -1,0 +1,37 @@
+name: probe-svc (US-157)
+
+# 行业数据源可达性探针，跑在 GHA 美国 runner 上。
+# 只是发请求看通不通，不写 DB、不推送、不 commit。手动触发。
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROBE_WHERE: gha
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install baostock || echo "baostock 装不上，该项会记 ❌"
+
+      - name: Probe
+        run: python -m scripts.probe_datasource_reach | tee /tmp/probe.txt
+
+      - name: Publish to job summary
+        if: always()
+        run: |
+          {
+            echo '## 数据源可达性 · GHA(美国) runner'
+            echo '```'
+            cat /tmp/probe.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
