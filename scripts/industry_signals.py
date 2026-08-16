@@ -21,7 +21,7 @@
 | 能力 | 东财 | 同花顺 | 新浪 | baostock |
 |---|---|---|---|---|
 | 板块列表+当日涨跌（1 次调用） | ✅ 100个 | ✅ 90个 | ✅ 49个 | — |
-| 成分股 | ⚠️ 截断~100 | ❌ 第1页且**会封号** | ✅ **完整** | ✅ 全市场 |
+| 成分股 | ✅ **完整（可翻页）** | ❌ 第1页且**会封号** | ✅ 完整 | ✅ 全市场 |
 | 历史K线（可回溯自愈） | ❌ 全主机被拒 | ✅ | ❌ | ❌ |
 | 分类粒度 | 细(100) | 细(90) | 粗(49) | 粗(84,证监会) |
 
@@ -34,13 +34,23 @@
    板块名只有 15% 对得上（东财 100 个 vs 同花顺 90 个）。
 3. 试过用成分股重合度自动桥接（避免人工维护映射表）：判别力确实有
    （东财半导体 ∩ 同花顺半导体 = 19 只，∩ 同花顺白酒 = 0 只），
-   但**两边成分股列表都被截断到 ~100 且排序规则不同**，大板块
-   （电池 ~300 只）会出现两个「前 100 名」完全不相交，实测就是 0%。
-   这条路死在数据截断上，不是死在算法上。
+   但当时两边取到的都是截断列表且排序不同，大板块出现两个「前 100 名」
+   完全不相交。后来发现东财其实可以翻页（同花顺不行），但桥接本身
+   已无必要——见下面的「两套体系并行」。
 4. **抓 90 个同花顺板块的成分股页会被封号** —— 实测亲历。
 
-所以：**新浪单源**。分类粗（49 个）但自洽、完整、走 akshare 封装
-（非裸爬）、请求量极低。粗粒度对 ±5% 的门槛判断完全够用。
+所以：**两套体系并行，绝不桥接**（adata 多源模式的正确用法）。
+
+| 源 | 板块数 | 成分股 | 覆盖 | 角色 |
+|---|---|---|---|---|
+| 东财 push2 | 100 | ✅ 完整（可翻页） | ~全市场 | **主源**，附带主力净流入 |
+| 新浪行业 | 49 | ✅ 完整 | A股约 55% | 兜底（东财漏掉的） |
+
+关键：每只股票**只归属一套体系**，动量也从同一套体系的序列算 ——
+所以永远不需要在两套分类之间做名称映射，也就没有那 15% 名称重合的问题。
+
+（东财翻页实测：半导体 BK1036 total=185，第1页 100 + 第2页 85 = 完整。
+ 同花顺翻页返回 401，这是两者的关键差别，此前误以为东财也翻不了页。）
 
 ## 动量怎么来：自己累积，因为我们承担不起「永久的洞」
 
@@ -69,9 +79,91 @@ MOMENTUM_DAYS = 30
 MIN_DAYS_FOR_SIGNAL = 5
 
 
-# ── 捕获：每日 1 次调用 ────────────────────────────────────
+# ── 数据源适配器：两套体系并行，各自独立 ────────────────────
 
-def fetch_sector_spot() -> list:
+_EM_HEADERS = {"User-Agent": "Mozilla/5.0"}
+_EM_BASE = "https://push2.eastmoney.com/api/qt/clist/get"
+
+
+def _em_get(params: str, tries: int = 3):
+    """东财 push2 请求（带退避）。push2his 历史主机是被拒的，push2 可用。"""
+    import time
+
+    import requests
+    for i in range(tries):
+        try:
+            r = requests.get(f"{_EM_BASE}?{params}", timeout=25, headers=_EM_HEADERS)
+            r.raise_for_status()
+            d = r.json()
+            diff = (d.get("data") or {}).get("diff")
+            items = list(diff.values()) if isinstance(diff, dict) else (diff or [])
+            return items, (d.get("data") or {}).get("total")
+        except Exception:
+            if i == tries - 1:
+                raise
+            time.sleep(3 * (i + 1))
+    return [], None
+
+
+def fetch_spot_em() -> list:
+    """东财 100 个行业板块的当日表现。**1 次调用**。f3=涨跌幅(×100)，f62=主力净流入。"""
+    try:
+        items, _ = _em_get("pn=1&pz=200&fs=m:90+t:2&fields=f12,f14,f3,f62")
+    except Exception as e:
+        print(f"    ⚠️ 东财行业当日表现失败: {type(e).__name__}: {e}")
+        return []
+    out = []
+    for b in items:
+        try:
+            out.append({
+                "label": f"em:{b['f12']}",
+                "name": str(b.get("f14", "")).strip(),
+                "change_pct": round(float(b.get("f3", 0)) / 100.0, 4),
+                "company_count": None,
+                "avg_price": None,
+            })
+        except (TypeError, ValueError, KeyError):
+            continue
+    return [x for x in out if x["name"]]
+
+
+def fetch_constituents_em(label: str) -> list:
+    """东财板块成分股。**翻页拿完整列表**（单页上限 100）。"""
+    bk = label.split(":", 1)[-1]
+    codes, pn = [], 1
+    while pn <= 10:                      # 单板块最多 1000 只，足够
+        items, total = _em_get(f"pn={pn}&pz=100&fs=b:{bk}&fields=f12")
+        codes.extend(str(i["f12"]) for i in items if i.get("f12"))
+        if not items or (total and len(codes) >= total):
+            break
+        pn += 1
+    return codes
+
+
+def fetch_spot_sina() -> list:
+    """新浪 49 个行业的当日表现。**1 次调用**。"""
+    rows = _fetch_sector_spot_sina_raw()
+    return [{**r, "label": f"sina:{r['label']}"} for r in rows]
+
+
+def fetch_constituents_sina(label: str) -> list:
+    import akshare as ak
+    det = ak.stock_sector_detail(sector=label.split(":", 1)[-1])
+    if det is None or det.empty or "code" not in det.columns:
+        return []
+    return [str(x) for x in det["code"]]
+
+
+# 顺序即优先级：东财粒度更细（100 vs 49）且覆盖更全，新浪只补东财漏掉的。
+SOURCES = [
+    ("em",   fetch_spot_em,   fetch_constituents_em),
+    ("sina", fetch_spot_sina, fetch_constituents_sina),
+]
+
+
+# ── 捕获：每日每源 1 次调用 ────────────────────────────────
+
+def _fetch_sector_spot_sina_raw() -> list:
     """拉全部行业当日表现。**一次调用拿全部 49 个行业**。
 
     返回 [{"label","name","change_pct","company_count","avg_price"}, ...]。
@@ -100,6 +192,21 @@ def fetch_sector_spot() -> list:
         except (TypeError, ValueError):
             continue
     return [x for x in out if x["label"] and x["name"]]
+
+
+def fetch_sector_spot() -> list:
+    """全部数据源的当日表现合并（每源 1 次调用）。"""
+    out = []
+    for name, spot_fn, _ in SOURCES:
+        try:
+            rows = spot_fn()
+            if rows:
+                out.extend(rows)
+            else:
+                print(f"    ⚠️ 数据源 {name} 无数据（其余源继续）")
+        except Exception as e:
+            print(f"    ⚠️ 数据源 {name} 异常: {type(e).__name__}: {e}")
+    return out
 
 
 def _signature(rows: list) -> str:
@@ -259,6 +366,11 @@ def get_signal_for_stock(code: str) -> dict:
             label, name = payload.get("label", ""), payload.get("name", "")
         except ValueError:
             pass
+
+    # 兼容 label 加源前缀之前写入的记录（US-158 首版是裸 label，
+    # 加东财源后统一成 "sina:xxx" / "em:BKxxxx"）。没前缀的一律当新浪。
+    if label and ":" not in label:
+        label = f"sina:{label}"
     if not label:
         # 旧格式：只存了行业名（东财口径）。用名字反查 label，查不到就放弃。
         name = industry
@@ -285,53 +397,70 @@ def _label_for_name(name: str) -> str:
 
 # ── 映射刷新：每周一次，49 次调用 ──────────────────────────
 
-def refresh_stock_industry_map(sleep_s: float = 1.5) -> dict:
-    """重建 个股→行业 映射。49 个行业各 1 次 akshare 调用。
+def refresh_stock_industry_map(sleep_s: float = 1.0) -> dict:
+    """重建 个股→行业 映射。按 SOURCES 的优先级，先到先得。
 
-    放在周末非交易日跑：行业归属很少变，没必要挤占每日 pipeline 的请求预算。
-    单个行业失败不影响其余——部分刷新好过完全不刷新。
+    东财优先（100 个板块，粒度比新浪细一倍，且成分股可翻页拿全）；
+    新浪只补东财漏掉的股票。**一只股票只归属一套体系**——动量也从同一套
+    体系的序列算，所以永远不需要在两套分类之间做名称映射。
+
+    断点续跑：今天已刷过的板块跳过。GHA 上单次 workflow 时限跑不完全部，
+    与其无限加超时，不如让它分几次跑完（与 US-158 其余部分同一原则）。
+    单个板块失败不影响其余——部分刷新好过完全不刷新。
     """
     import time
 
-    import akshare as ak
     import db
 
-    sectors = fetch_sector_spot()
-    if not sectors:
-        return {"sectors": 0, "mapped": 0, "failed": ["<行业列表拉取失败>"]}
-
     today = datetime.now(CN_TZ).strftime("%Y-%m-%d")
-    mapped, failed, skipped = 0, [], 0
-    for i, s in enumerate(sectors, 1):
-        # 断点续跑：今天已经刷过的行业直接跳过。
-        # GHA 上每个行业实测 40–55s，49 个跑不完一次 workflow 的时限；
-        # 与其无限加超时，不如让它可以分几次跑完 —— 这也和 US-158 其余部分
-        # 「靠数据自愈、不靠单次成功」的原则一致。
-        try:
-            if db.sector_mapped_on(s["label"], today):
-                skipped += 1
-                continue
-        except Exception:
-            pass
+    seen: set = set()          # 已被更高优先级的源认领的股票
+    stats = {"by_source": {}, "mapped": 0, "skipped": 0, "failed": []}
 
+    for src_name, spot_fn, cons_fn in SOURCES:
         try:
-            det = ak.stock_sector_detail(sector=s["label"])
-            if det is None or det.empty or "code" not in det.columns:
-                failed.append(s["name"])
-                continue
-            payload = json.dumps({"label": s["label"], "name": s["name"]},
-                                 ensure_ascii=False)
-            for raw in det["code"].astype(str):
-                db.save_stock_industry(raw.split(".")[0].zfill(6), payload)
-                mapped += 1
+            boards = spot_fn()
         except Exception as e:
-            failed.append(f"{s['name']}({type(e).__name__})")
-        if i % 10 == 0:
-            print(f"    [{i}/{len(sectors)}] 已映射 {mapped} 只 · 跳过 {skipped} 个已刷新")
-        time.sleep(sleep_s)
+            stats["failed"].append(f"<{src_name} 板块列表>({type(e).__name__})")
+            continue
+        if not boards:
+            stats["failed"].append(f"<{src_name} 板块列表为空>")
+            continue
 
-    return {"sectors": len(sectors), "mapped": mapped,
-            "skipped": skipped, "failed": failed}
+        n_src = 0
+        for i, b in enumerate(boards, 1):
+            try:
+                if db.sector_mapped_on(b["label"], today):
+                    stats["skipped"] += 1
+                    continue
+            except Exception:
+                pass
+
+            try:
+                codes = cons_fn(b["label"])
+            except Exception as e:
+                stats["failed"].append(f"{b['name']}({type(e).__name__})")
+                time.sleep(sleep_s)
+                continue
+
+            payload = json.dumps({"label": b["label"], "name": b["name"],
+                                  "source": src_name}, ensure_ascii=False)
+            for raw in codes:
+                pure = str(raw).split(".")[0].zfill(6)
+                if pure in seen:
+                    continue          # 更高优先级的源已经认领
+                db.save_stock_industry(pure, payload)
+                seen.add(pure)
+                n_src += 1
+                stats["mapped"] += 1
+
+            if i % 20 == 0:
+                print(f"    [{src_name} {i}/{len(boards)}] 累计 {stats['mapped']} 只")
+            time.sleep(sleep_s)
+
+        stats["by_source"][src_name] = n_src
+        print(f"  ✔ {src_name}: 认领 {n_src} 只")
+
+    return stats
 
 
 # ── 缺口检测：让数据自己说话 ────────────────────────────────

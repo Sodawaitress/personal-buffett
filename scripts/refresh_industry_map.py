@@ -29,14 +29,15 @@ def main():
     from scripts.industry_signals import find_gaps, refresh_stock_industry_map
 
     if not args.gaps_only:
-        print("🏭 刷新 个股→行业 映射（49 个行业，每个 1 次调用）…")
+        print("🏭 刷新 个股→行业 映射（东财优先，新浪兜底）…")
         res = refresh_stock_industry_map(sleep_s=args.sleep)
-        print(f"\n  行业数 {res['sectors']} · 本次映射 {res['mapped']} 只 "
-              f"· 跳过 {res.get('skipped', 0)} 个今日已刷新")
+        print(f"\n  本次映射 {res['mapped']} 只 · 跳过 {res.get('skipped', 0)} 个今日已刷新")
+        for src, n in (res.get("by_source") or {}).items():
+            print(f"    {src:6} 认领 {n} 只")
         if res["failed"]:
             print(f"  ⚠️ 失败 {len(res['failed'])} 个: {res['failed'][:10]}")
-        # 一个都没映射到、且不是因为全都刷过了 → 真失败
-        if res["sectors"] and res["mapped"] == 0 and not res.get("skipped"):
+        # 一只都没映射到、且不是因为全都刷过了 → 真失败
+        if res["mapped"] == 0 and not res.get("skipped"):
             print("❌ 一只都没映射到，判定失败")
             return 1
 

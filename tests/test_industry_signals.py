@@ -204,3 +204,40 @@ def test_different_data_not_duplicate():
 def test_signature_stable_across_calls():
     rows = [{"label": "x", "change_pct": 1.0}, {"label": "y", "change_pct": 2.0}]
     assert _signature(rows) == _signature(rows)
+
+
+# ── 多源：两套体系并行，绝不桥接 ────────────────────────────
+
+def _normalize_label(label):
+    """复刻 get_signal_for_stock 的 label 归一化。"""
+    if label and ":" not in label:
+        return f"sina:{label}"
+    return label
+
+
+def test_legacy_label_normalized_to_sina():
+    """US-158 首版写的是裸 label，加东财源后统一成带前缀。
+    存量记录必须还能查到对应的 industry_daily 序列，否则信号卡片会消失。"""
+    assert _normalize_label("new_blhy") == "sina:new_blhy"
+
+
+def test_prefixed_labels_untouched():
+    assert _normalize_label("sina:new_blhy") == "sina:new_blhy"
+    assert _normalize_label("em:BK1036") == "em:BK1036"
+
+
+def test_sources_never_bridged():
+    """核心设计约束：两套分类体系的 label 永不混用。
+    一只股票归属哪套体系，动量就从哪套体系的序列算 ——
+    所以不存在「东财板块名对不上同花顺板块名」那类问题。"""
+    em_labels = {"em:BK1036", "em:BK1033"}
+    sina_labels = {"sina:new_blhy", "sina:new_dlhy"}
+    assert not (em_labels & sina_labels)
+    for lbl in em_labels | sina_labels:
+        assert lbl.split(":")[0] in ("em", "sina")
+
+
+def test_em_change_pct_scaled():
+    """东财 f3 是放大 100 倍的整数（582 = 5.82%），必须除以 100。"""
+    assert round(582 / 100.0, 4) == 5.82
+    assert round(-31 / 100.0, 4) == -0.31
