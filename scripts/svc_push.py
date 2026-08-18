@@ -20,10 +20,22 @@ bootstrap_paths()
 
 import db
 from scripts.config import CN_TZ, SERVERCHAN_KEY
-from scripts.stock_report import admin_user_id, build_user_push_content
+from scripts.stock_report import admin_user_id, build_user_push_payload
 from scripts.stock_pipeline import send_serverchan
 
 SKIP_PUSH = bool(os.environ.get("SKIP_PUSH"))
+
+
+def _commit_ledger(user_id, pending, who):
+    """推送成功之后才记账（US-160）。记账失败不该让整个服务挂掉 ——
+    最坏结果只是这批条目明天再推一次，比丢掉它们轻。"""
+    if not pending:
+        return
+    try:
+        from radar_app.data.push_ledger import commit_pushed
+        commit_pushed(user_id, pending)
+    except Exception as e:
+        print(f"  ⚠️ {who} 推送台账记账失败（明天会重推这批）: {type(e).__name__}: {e}")
 
 
 def main():
@@ -34,7 +46,9 @@ def main():
     with db.service_run("push-svc") as run:
         # ── Admin 有用日报（US-123）：一份 digest 两处用 —— 存档 + 推送 ──
         admin_id = admin_user_id()
-        content = build_user_push_content(admin_id, {}, {}, date_str) if admin_id else ""
+        # US-160：算内容与记账分开 —— 干跑不该吃掉条目，发送失败也不该
+        # 把条目永久吞掉（吞掉的后果是这件事再也不会提醒了）。
+        content, pending = build_user_push_payload(admin_id, date_str) if admin_id else ("", [])
 
         # 归档 /report（US-138 归位）：与推送同源同一份，无料时存占位（US-124）
         report = (content.replace("\n详情见网页。", "").rstrip()
@@ -50,7 +64,8 @@ def main():
         elif content:
             print(f"  📲 admin 有用日报：{len(content)} 字符" + ("（SKIP）" if SKIP_PUSH else ""))
             if not SKIP_PUSH:
-                send_serverchan(SERVERCHAN_KEY, f"今天该注意的 · {date_str}", content)
+                send_serverchan(SERVERCHAN_KEY, f"今天有变化的 · {date_str}", content)
+                _commit_ledger(admin_id, pending, "admin")
             run.tick()
         else:
             print("  · admin：无重大变化，不打扰")
@@ -70,7 +85,7 @@ def main():
                 print(f"  ⚠️ {name} 无 wecom_webhook，跳过")
                 continue
 
-            content = build_user_push_content(uid, {}, {}, date_str)
+            content, pending = build_user_push_payload(uid, date_str)
             if not content:
                 print(f"  · {name}：无重大变化，不打扰")
                 continue
@@ -78,6 +93,7 @@ def main():
             print(f"  📲 {name}：{len(content)} 字符" + ("（SKIP）" if SKIP_PUSH else ""))
             if not SKIP_PUSH:
                 send_serverchan(key, f"股票日报 {date_str} — {name}", content)
+                _commit_ledger(uid, pending, name)
             run.tick()
 
     print("✅ push-svc 完成")

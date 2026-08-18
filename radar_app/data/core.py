@@ -507,6 +507,26 @@ _SCHEMA_SQL = """
         -- （2026-08-16 实测两者皆亲历）。我们拥有这份时间序列。
         -- 唯一键 (date, sector_label) 保证幂等：同一天被多个服务重复捕获无害，
         -- 这正是「挂 5 个服务、任何一个跑起来都补上」的前提。
+        -- US-160：推送台账。解决「每天推送内容几乎一样」。
+        --
+        -- 根因：「今天该注意的」五个板块里有四个取的是**当前状态**而非**今日事件**
+        --   早期预警  get_stock_events 无任何日期过滤 → 同一条永远重复
+        --   机构领先  get_signal_conclusion = 当前结论 → 不变就天天播
+        --   机构脚印  latest_dir = 当前趋势 → 持续就天天播
+        --   催化剂    未来 7 天内的事 → 同一件事连播 7 天
+        -- 而系统此前**完全没有任何推送去重机制**。
+        --
+        -- item_key = 身份（这是"哪一件事"），state_hash = 内容（这件事"现在什么样"）。
+        -- 只有身份首次出现、或身份不变但状态变了，才值得再打扰一次。
+        CREATE TABLE IF NOT EXISTS push_ledger (
+            user_id     INTEGER NOT NULL,
+            item_key    TEXT NOT NULL,
+            state_hash  TEXT NOT NULL,
+            first_seen  TEXT DEFAULT (CURRENT_TIMESTAMP),
+            last_pushed TEXT DEFAULT (CURRENT_TIMESTAMP),
+            PRIMARY KEY (user_id, item_key)
+        );
+
         CREATE TABLE IF NOT EXISTS industry_daily (
             date          TEXT NOT NULL,
             sector_label  TEXT NOT NULL,
