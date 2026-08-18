@@ -7,6 +7,7 @@ from radar_app.legacy.pipeline import classify_stock_code, start_pipeline_job
 from radar_app.shared.market import detect_market
 from radar_app.shared.runtime import CN_TZ
 from radar_app.watchlist.presenter import calc_judgment_growth, calc_performance_stats, present_performance_row, present_watchlist_stock
+from radar_app.data.analysis import get_leaderboard
 from radar_app.data.stocks import get_news_sentiment_map, get_upcoming_events_for_user
 from radar_app.watchlist.query import (
     get_active_notifications,
@@ -28,6 +29,24 @@ def build_watchlist_context(user_id):
         market = row.get("market") or detect_market(code)
         stocks.append(present_watchlist_stock(row, get_watchlist_snapshot(code, market), sentiment_map.get(code)))
 
+    # US-159：质量分排名并进每只股票。复用 get_leaderboard（与原擂台同一套
+    # 计算），所以名次/升降/走势线在卡片和列表里就地可渲染，不再需要独立视图 ——
+    # 也因此筛选自动生效（就是同一个列表），不会再出现「筛了 A股 却排出港美股」。
+    try:
+        board = {b["code"]: b for b in (get_leaderboard(user_id) or [])}
+    except Exception:
+        board = {}
+    for s in stocks:
+        b = board.get(s["code"]) or {}
+        s["rank"] = b.get("rank")
+        s["score_change"] = b.get("score_change")
+        s["rank_change"] = b.get("rank_change")
+        s["spark"] = b.get("spark") or []
+
+    # 榜单上最新的分析日期：比它旧的股票要标出来，否则等于拿不同日子的分排名次
+    dates = [s.get("analysis_date") for s in stocks if s.get("analysis_date")]
+    freshest = max(dates) if dates else ""
+
     # 差评（D/D-）沉底，稳定排序保留"新在前"（US-125）
     stocks.sort(key=lambda s: s.get("is_poor", False))
 
@@ -38,6 +57,7 @@ def build_watchlist_context(user_id):
         "watching": [s for s in stocks if s["status"] == "watching"],
         "sold":    [s for s in stocks if s["status"] == "sold"],
         "has_cn_stocks": any(s.get("market") == "cn" for s in stocks),
+        "freshest_analysis_date": freshest,
         "wl_markets": markets,
         "notifications": get_active_notifications(user_id),
         "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),

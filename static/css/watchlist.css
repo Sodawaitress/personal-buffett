@@ -2853,42 +2853,6 @@
 }
 
 /* ── 擂台赛榜单（US-120） ───────────────────────────── */
-.wl-arena-view { max-width: 640px; margin: 0 auto; }
-.arena-head { display: flex; align-items: baseline; gap: 10px; margin: 4px 2px 14px; flex-wrap: wrap; }
-.arena-title { font-family: var(--serif); font-size: 18px; color: var(--ink); }
-.arena-sub { font-size: 12px; color: var(--ink-muted); }
-.arena-row {
-  display: grid; grid-template-columns: 40px 1fr 54px auto auto; align-items: center; gap: 10px;
-  padding: 11px 14px; border: 1px solid var(--rule-light); border-radius: 8px;
-  margin-bottom: 7px; text-decoration: none; background: var(--paper);
-  transition: transform .08s ease, box-shadow .08s ease;
-}
-.arena-spark { display: inline-flex; align-items: center; height: 18px; }
-.arena-spark .spark { width: 52px; height: 18px; }
-.arena-spark .spark.up   { color: var(--green); }
-.arena-spark .spark.down { color: var(--red); }
-.arena-spark polyline { stroke: currentColor; }
-@media (max-width: 520px) { .arena-row { grid-template-columns: 34px 1fr auto auto; } .arena-spark { display: none; } }
-.arena-row:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.08); }
-.arena-row.rank-1 { border-color: var(--gold); background: linear-gradient(90deg, rgba(212,175,55,.10), transparent 60%); }
-.arena-row.rank-2 { border-left: 3px solid #b8b8b8; }
-.arena-row.rank-3 { border-left: 3px solid #cd7f32; }
-.arena-row.nr { opacity: .6; }
-.arena-medal { font-size: 20px; text-align: center; color: var(--ink-muted); font-weight: 600; }
-.arena-name { font-size: 14px; color: var(--ink); display: flex; align-items: center; gap: 7px; min-width: 0; }
-.arena-name > .arena-grade {
-  font-size: 10px; color: var(--ink-faint); border: 1px solid var(--rule-light);
-  border-radius: 3px; padding: 0 4px; flex-shrink: 0;
-}
-.arena-score { font-family: var(--serif); font-size: 16px; color: var(--ink); display: flex; align-items: baseline; gap: 5px; }
-.arena-schg { font-size: 11px; font-family: -apple-system, sans-serif; }
-.arena-schg.up { color: var(--green); }
-.arena-schg.down { color: var(--red); }
-.arena-rank { min-width: 42px; text-align: right; font-size: 12px; }
-.arena-rchg.up { color: var(--green); }
-.arena-rchg.down { color: var(--red); }
-.arena-rchg.flat { color: var(--ink-faint); }
-.arena-rchg.new { color: var(--accent); font-weight: 600; }
 
 /* ── US-125 差评掉落动画：多邻国式沉底 ── */
 @keyframes wl-sink {
@@ -2908,3 +2872,47 @@
 .wl-status { margin-right: auto; display: flex; align-items: center; gap: 10px; }
 .wl-status-tag { font-size: 13px; font-weight: 600; color: var(--ink-muted); white-space: nowrap; }
 .wl-status-tag b { color: var(--ink); font-weight: 700; }
+
+/* ── US-159 质量分名次：擂台从独立视图降级为一种排序 ──────────────
+   名次装饰默认隐藏，只有 body.wl-rank-on（选中「质量分」排序）时显形。
+   其它排序下名次没有意义，显示出来只会干扰。 */
+.wl-rank-col,
+.rank-badge            { display: none; }
+body.wl-rank-on .wl-rank-col { display: revert; }
+body.wl-rank-on .rank-badge  { display: flex; }
+
+.wl-rank-hint {
+  margin: .5rem 0 .75rem;
+  padding: .45rem .7rem;
+  font-size: .82rem;
+  color: var(--ink-muted);
+  background: var(--paper-2, rgba(0,0,0,.03));
+  border-radius: 6px;
+}
+
+.rank-badge {
+  align-items: center;
+  gap: .35rem;
+  margin-bottom: .35rem;
+  font-size: .8rem;
+}
+.rank-badge-medal { font-weight: 700; }
+.rank-badge-score { font-variant-numeric: tabular-nums; color: var(--ink); }
+.rank-badge-chg   { font-size: .72rem; font-variant-numeric: tabular-nums; }
+.rank-badge-chg.up   { color: var(--up, #c0392b); }
+.rank-badge-chg.down { color: var(--down, #27865c); }
+
+/* 陈旧标记：这只股票的分不是最新那天算的 —— 跨股票比较时必须看得见 */
+.rank-badge-stale {
+  font-size: .68rem;
+  padding: 0 .3rem;
+  border-radius: 3px;
+  color: var(--ink-muted);
+  border: 1px solid var(--rule, rgba(0,0,0,.15));
+}
+
+.rank-inline { font-size: .8rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rank-inline.nr { color: var(--ink-faint); font-weight: 400; }
+.rank-badge.rank-1 .rank-badge-medal, .rank-inline.rank-1 { color: #b8860b; }
+.rank-badge.rank-2 .rank-badge-medal, .rank-inline.rank-2 { color: #8a8a8a; }
+.rank-badge.rank-3 .rank-badge-medal, .rank-inline.rank-3 { color: #a0642a; }

@@ -49,6 +49,10 @@ def get_leaderboard(user_id, baseline_days=7):
             "name": latest["name"],
             "grade": latest["grade"],
             "score": latest["quant_score"],
+            # US-159：必须带出来。排名是跨股票比较，各股的分算于哪天决定了
+            # 这个比较成不成立 —— 生产实测轮转是 2 天一圈，同一榜单上会同时
+            # 出现「昨天算的分」和「前天算的分」。
+            "analysis_date": latest["analysis_date"],
             "score_change": (latest["quant_score"] - prev["quant_score"]) if prev else None,
             "spark": spark,
             "_baseline_score": baseline["quant_score"] if baseline else None,
@@ -74,7 +78,7 @@ def get_leaderboard(user_id, baseline_days=7):
             "rank": cur, "code": x["code"], "name": x["name"],
             "grade": x["grade"], "score": x["score"],
             "score_change": x["score_change"], "rank_change": rc,
-            "spark": x["spark"],
+            "spark": x["spark"], "analysis_date": x["analysis_date"],
         })
 
     # 无分的股票（NR，排最后不占名次）

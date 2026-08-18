@@ -47,6 +47,9 @@ def present_watchlist_stock(row, snapshot, avg_sentiment=None):
         "has_letter": bool(analysis and analysis.get("letter_html")),
         "pending_job": snapshot["pending_job"],
         "analysis_date": analysis.get("analysis_date", "") if analysis else "",
+        # US-159：质量分排名要在卡片/列表里就地渲染，分数必须进上下文。
+        # 原来只有独立的 /api/leaderboard 才拿得到，导致擂台成了第三个视图。
+        "quant_score": (analysis.get("quant_score") if analysis else None),
         "moat_direction": signals.get("moat_direction", ""),
         "roic_latest": signals.get("roic_latest"),
         "fcf_quality": signals.get("fcf_quality_avg"),

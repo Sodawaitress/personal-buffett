@@ -1,6 +1,12 @@
 {
-  "wl_filter_label": { "en": "Filter", "zh": "筛选" },
-  "wl_filter_clear": { "en": "Clear", "zh": "清除" },
+  "wl_filter_label": {
+    "en": "Filter",
+    "zh": "筛选"
+  },
+  "wl_filter_clear": {
+    "en": "Clear",
+    "zh": "清除"
+  },
   "add_code_placeholder": {
     "en": "Ticker (e.g. AAPL, ATM.NZ, 600519)",
     "zh": "代码（如 600031 或 ATM.NZ）"
@@ -213,34 +219,6 @@
     "en": "List",
     "zh": "列表"
   },
-  "wl_view_arena": {
-    "en": "Arena",
-    "zh": "擂台"
-  },
-  "wl_arena_title": {
-    "en": "Quality Score Arena",
-    "zh": "质量分擂台"
-  },
-  "wl_arena_sub": {
-    "en": "Ranked by quality score · updates after each daily analysis",
-    "zh": "按质量分排名 · 每日分析后更新"
-  },
-  "wl_arena_empty": {
-    "en": "No scored stocks yet — run an analysis first.",
-    "zh": "还没有评分的股票——先跑一次分析。"
-  },
-  "wl_arena_new": {
-    "en": "NEW",
-    "zh": "新"
-  },
-  "wl_arena_nr": {
-    "en": "NR",
-    "zh": "未评"
-  },
-  "wl_arena_load_fail": {
-    "en": "Failed to load leaderboard.",
-    "zh": "榜单加载失败。"
-  },
   "notif_banner_text": {
     "en": " stocks rated D for 6 consecutive times. Review recommended.",
     "zh": " 只股票已连续 6 次评为 D 级，建议审视是否继续跟踪"
@@ -300,5 +278,25 @@
   "sentiment_title": {
     "en": "7-day news sentiment",
     "zh": "近7日新闻情绪"
+  },
+  "wl_sort_score": {
+    "en": "Quality score",
+    "zh": "质量分"
+  },
+  "wl_rank_hint": {
+    "en": "Ranked by quality score across your whole watchlist — filters apply.",
+    "zh": "按质量分在全部自选股里排名 · 筛选同时生效"
+  },
+  "wl_rank_hint_latest": {
+    "en": "latest analysis",
+    "zh": "最新分析"
+  },
+  "wl_rank_stale": {
+    "en": "older",
+    "zh": "较旧"
+  },
+  "wl_rank_stale_title": {
+    "en": "This stock's score comes from an earlier analysis than the newest one on this board.",
+    "zh": "这只股票的分来自更早一次分析，不是榜单上最新那天算的"
   }
 }
