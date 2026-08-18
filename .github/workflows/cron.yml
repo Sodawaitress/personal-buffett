@@ -9,11 +9,14 @@ name: Daily Cron
 # 客户端特征，不是地理封锁。Fly 悉尼能跑通的具体是哪些 datacenter 端点尚未
 # 逐个复测，所以下面的安排先保持不动，但别再把「地理」当成既定原因去推理。
 
+# US-150：改为事件驱动，挂在 market-svc 之后（链序见 analyze-svc.yml 顶部注释）。
+# 本 workflow 的 light job 会阻塞到 Fly 上的 precursor 扫描真跑完（约 75 分钟），
+# 所以它天然是"东财消费者"的最后一棒，digest 挂在它后面才拿得到完整的
+# precursor 数据。
 on:
-  schedule:
-    # 12:45 UTC = 20:45 CST，只为触发 Fly 上的 precursor scan（light job）
-    # 夹在 radar(11:00) 与 market(13:00) 之间，三个东财消费者串行（US-139）
-    - cron: '45 12 * * 1-5'
+  workflow_run:
+    workflows: ["market-svc (US-138)"]
+    types: [completed]
   workflow_dispatch:
 
 jobs:
@@ -21,6 +24,7 @@ jobs:
   # 迁 Neon 后 DB 在云上，pipeline 不必挤在 Fly 512MB 上
   pipeline:
     # 只在手动触发时跑：定时那一路已全部拆给各 svc（US-138）
+    # 全量回滚入口，仍然只手动触发（链式触发时不跑重活）
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -65,6 +69,12 @@ jobs:
   # digest 已交给 digest-svc（US-138），此处不再触发，避免双跑
   light:
     runs-on: ubuntu-latest
+    # US-150：链式触发时只挡掉「被取消」的上游。上游 failure 仍放行 ——
+    # 各服务本就设计成互相独立（analyze 挂了也该把已有报告推出去），
+    # 一环挂掉不该让全天归零。
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion != 'cancelled'
     # US-150：本 job 现在一直等到 Fly 上的扫描真跑完才结束，
     # 好让 digest-svc 挂在它后面，而不是靠 cron 猜时间。
     timeout-minutes: 100

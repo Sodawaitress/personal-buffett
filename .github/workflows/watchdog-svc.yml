@@ -1,0 +1,63 @@
+name: watchdog-svc (US-150)
+
+# 事件驱动链的看门狗。
+#
+# US-150 把 6 个服务串成 fetch → … → digest 的 workflow_run 链，只留
+# fetch-svc 一个 cron 锚点。好处是消灭了 1.5 小时空转和「靠 cron 猜上游跑完没」；
+# 代价是**链断了就没有第二条路**。
+#
+# 所以这里查的不是「任务跑没跑」，而是「该有的产物在不在」——
+# 这个仓库所有的沉默失败（快照冻结 14 天、backfill 从没成功过、北向变 0 值
+# 5 周、行业信号 26 天没更新）都是「跑了、返回了、没报错、但没产出」。
+#
+# 判据只有一个：**今天的快照 commit 了吗**。没有就补跑 digest 并告警。
+on:
+  schedule:
+    # 13:00 UTC = 21:00 CST。链条正常时 digest 约 11:36 UTC 就完成了，
+    # 留 1.4 小时余量；而 Claude Routine 约 13:30 UTC 才读快照，
+    # 所以这里补跑还来得及救当天那封信。
+    - cron: '0 13 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write        # 需要能 dispatch digest-svc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Is today's snapshot present?
+        id: check
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          GEN=$(python3 -c "import json;print(json.load(open('snapshots/daily_snapshot.json')).get('generated_at',''))" 2>/dev/null || echo "")
+          echo "今天 $TODAY · 快照 generated_at=$GEN"
+          if [ "${GEN:0:10}" = "$TODAY" ]; then
+            echo "fresh=1" >> "$GITHUB_OUTPUT"
+            echo "✅ 今天的快照已就位，链条正常"
+          else
+            echo "fresh=0" >> "$GITHUB_OUTPUT"
+            echo "🔴 今天还没有快照 —— 链条可能在中途断了"
+          fi
+
+      - name: Recover — dispatch digest-svc
+        if: steps.check.outputs.fresh == '0'
+        run: |
+          gh workflow run digest-svc.yml --repo "${{ github.repository }}"
+          echo "已补跑 digest-svc"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Alert
+        if: steps.check.outputs.fresh == '0'
+        run: |
+          KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
+          if [ -n "$KEY" ]; then
+            curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+              --data-urlencode "title=⚠️ 链条断了，已补跑 digest" \
+              --data-urlencode "desp=今天还没有快照，watchdog 已补跑 digest-svc。查哪一环断的：https://github.com/${{ github.repository }}/actions" \
+              >/dev/null && echo "已推送告警"
+          fi

@@ -2,17 +2,16 @@ name: digest-svc (US-121)
 
 # 快照服务：从 Neon 汇总自选股 → 构建快照 JSON commit 到 GitHub + 回填预测收益。
 # 纯 DB 驱动、无 LLM。独立于 analyze-svc：读 DB 最新价即可提交快照。
+# US-150：链条最后一棒，挂在 Daily Cron 之后 —— 它会阻塞到 Fly 扫描真跑完，
+# 这样快照里的 precursor 才是完整的（原来 digest 抢跑，机构层数据长期是残的）。
+#
+# ⚠️ 不再保留 schedule 兜底：实测它不是兜底，是**无条件双跑**
+#（08-18 workflow_run 14:43 + schedule 14:53 各跑一次，08-17 那次 schedule
+# 还失败了报了假警）。真正的兜底是下面 job 里的 watchdog 判断。
 on:
-  # US-150：主路径改成「扫描真跑完就收快照」，不再靠 cron 猜时间。
-  # Daily Cron 的 light job 现在阻塞到 Fly 扫描 done 才结束，
-  # 挂在它后面 = 保证快照里的 precursor 是完整的（原来是扫一半就被收走）。
   workflow_run:
     workflows: ["Daily Cron"]
     types: [completed]
-  schedule:
-    # 兜底：链断了（Daily Cron 没触发/被取消）仍然出一份快照。
-    # digest 幂等，同日多跑一次只是重新提交，无害。
-    - cron: '15 14 * * 1-5'
   workflow_dispatch:
 
 jobs:
