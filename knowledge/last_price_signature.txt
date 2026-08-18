@@ -1,6 +1,7 @@
-61e7a19a322ed7f456dbc63751f44437
-# generated_at (snapshot): 2026-08-14T15:17:38.619375Z
-# note: 08-17 Mon · Routine 触发在 08-17 Mon 21:17 CST，读到的 snapshot 是 08-14 Fri 23:17 CST 生成（反映 08-14 Fri 收盘）。距今 71.99h → **Gate ① 严重失守**（26h 宽通道也远超）；Gate ② 通过（3a16e60→61e7a19 真更新——就是从 Thu snapshot 换成 Fri snapshot）；Gate ③ 未跑（① 失守直接 abort）。**今日不写五选、predictions_pending 保持 []、daily_push 走 stale-notice**。
-# note: 与 08-12/08-14 的「22h 相位错位」不同型——今日是「Monday-after-weekend gap」型：Fri 收盘后 → 周末无 pipeline → Mon Routine 21:17 CST 触发时，Mon 23:20 CST 的 snapshot 还没出来，只能读到 3 个日历日前的 Fri snapshot。这类 skip 在当前 schedule 下**每周一必然发生**，是结构性的（周一 Routine 天然读不到当日数据）。
-# note: 08-11 两条预言 300124 汇川 up @¥64.34、300394 天孚 sideways @¥223.03 · 今日 = Day 6 日历/Day 3 交易日；本次用 08-14 Fri close 做 Day 3 观察（见 improvement_log），不做终审（Day 10 = 08-21 日历 / 08-25 交易）。
-# note: 签名更新原因——本次读到的 snapshot 与上次 Routine 处理的 snapshot 不同（同一逻辑上，Fri close 覆盖了 Thu close），维持 Gate ② 明日语义正确。
+e1d1b5de29539fe964de3fa0c0f7ae57
+# generated_at (snapshot): 2026-08-17T15:01:11.944366Z
+# note: 08-18 Tue · Routine 触发在 08-18 Tue 21:11 CST，读到的 snapshot 是 08-17 Mon 23:01 CST 生成（反映 08-17 Mon 收盘）。距今 22.17h → Gate ① 走 26h 宽通道 PASS；Gate ② PASS（61e7a19→e1d1b5d 真更新，Fri close 被 Mon close 覆盖）；Gate ③ WebSearch 抽检 2 只 × 2 站点 PASS（300394 ¥286.55/¥286.56 vs 快照 ¥286.56 偏差 0.003%；002415 ¥35.09/¥35.09 vs 快照 ¥35.09 偏差 0%）。**今日五选正常发布**。
+# note: US-149 26h 双通道阈值今日**第一次成功走 wide channel 放行 22h 相位错位场景**（前两次同型 08-12/08-14 是阈值未落地前的合规 skip）——阈值升级的价值在今日兑现。
+# note: 今日五选主题「机构脚印 + 防御平衡」：300394 天孚(+7% 趋势确认)/300124 汇川(机构收筹)/301349 信德(最新鲜调研)/002415 海康(⚠ 融券 -86.8% 触发强制提示规则)/002142 宁波银行(防御票三层俱佳)。行业分散：通信+工控+材料+安防+金融。
+# note: 新增预言 2 条 → predictions_pending.json：301349 信德新材 sideways @¥47.02、002415 海康威视 up @¥35.09；Day 10 终审 08-28 交易日左右。
+# note: 08-11 两条旧预言 Day 5 交易日进度：300124 汇川 -3.68%（方向仍反）、300394 天孚 +28.48%（已破 sideways 上界远矣），Day 10 = 08-25 交易日 终审。
