@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-08-20",
+    "code": "300476",
+    "name": "胜宏科技",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "30天6次现场参观（机构调研密度全场最高）+ 今日跌停+8.92%，机构建仓 vs 散户杀跌错位；判断 sideways 因板块回调消化情绪需时间，机构不撤则价格企稳",
+    "price_at_prediction": 245.38
+  },
+  {
+    "date": "2026-08-20",
+    "code": "000333",
+    "name": "美的集团",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "融券余量连续两日 +86.5% 极端上升（今+86.5% / 昨+86.9%，触发强制提示）vs 公司累计回购69.73亿托底；多空对峙延续，基本面稳但资金结构不平衡",
+    "price_at_prediction": 84.72
+  }
+]
