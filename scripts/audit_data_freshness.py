@@ -195,8 +195,27 @@ def audit_industry_coverage(conn, existing):
         LEFT JOIN stock_industry_map m ON m.code = s.code
         GROUP BY s.market
     """)
-    return {r["market"] or "unknown": {"total": r["total"], "mapped": r["mapped"]}
-            for r in rows}
+    out = {r["market"] or "unknown": {"total": r["total"], "mapped": r["mapped"]}
+           for r in rows}
+
+    # US-161：按来源拆开。东财只能在 Fly 上跑（封数据中心 IP），所以
+    # 「em: 行数是 0」= Fly 那条路没通，而不是覆盖率天然只能到 57%。
+    # 不拆来源的话这两种情况长得一样，会一直误判成「新浪的结构性上限」。
+    try:
+        srcs = _rows(conn, """
+            SELECT CASE
+                     WHEN industry LIKE :em   THEN 'em'
+                     WHEN industry LIKE :sina THEN 'sina'
+                     ELSE 'legacy'
+                   END AS src,
+                   COUNT(*) AS n
+            FROM stock_industry_map
+            GROUP BY 1
+        """, em='%"em:%', sina='%"sina:%')
+        out["_by_source"] = {r["src"]: r["n"] for r in srcs}
+    except Exception as e:
+        out["_by_source"] = {"error": f"{type(e).__name__}: {str(e)[:80]}"}
+    return out
 
 
 def audit_industry_gaps(conn, existing):
@@ -326,8 +345,15 @@ def main():
     if industry_cov:
         print(f"\n── 自选股行业映射覆盖率（US-158）──")
         for mkt, b in sorted(industry_cov.items()):
+            if mkt.startswith("_"):
+                continue
             pct = b["mapped"] * 100 // b["total"] if b["total"] else 0
             print(f"  {mkt:8} {b['mapped']:4}/{b['total']:4} ({pct:3}%)")
+        by_src = industry_cov.get("_by_source") or {}
+        if by_src:
+            print(f"  全市场映射来源: {by_src}")
+            if not by_src.get("em"):
+                print("     🔴 em 为 0 —— Fly 上的东财源没通（不是新浪的结构性上限）")
 
     if industry_gaps:
         g = industry_gaps
