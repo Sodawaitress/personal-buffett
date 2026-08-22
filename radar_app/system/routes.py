@@ -165,11 +165,27 @@ def register_system_routes(app):
                 from scripts.industry_signals import capture_daily_em, refresh_map_em
                 cap = capture_daily_em()
                 app_ctx.logger.info("[trigger-scan] em industry capture: %s", cap)
-                # 映射每周刷一次就够（行业归属很少变），周六跑
-                from datetime import datetime as _dt
-                if _dt.now().weekday() == 5:
-                    mp = refresh_map_em()
-                    app_ctx.logger.info("[trigger-scan] em industry map: %s", mp)
+
+                # 映射每天刷一批（每轮 25 个板块，跳过 7 天内刷过的）。
+                # 首次上线实测：东财限流导致一轮只成功 ~20 个板块，所以不追求
+                # 单次跑完，追求每天有进展、四五天内收敛。
+                mp = refresh_map_em()
+                app_ctx.logger.info("[trigger-scan] em industry map: %s", mp)
+
+                # 全军覆没才算错（否则限流导致的零星失败会天天报警）。
+                # 不这样surface的话，refresh_map_em 返回的 failed 只留在
+                # 返回值里，外面完全看不见 —— 08-22 我就据此误判过一次
+                # 「三段全成功」，因为它返回 failed 字典而不是抛异常。
+                if not mp.get("boards"):
+                    # 连板块列表都拿不到 = 东财整体不可达。这条**必须**报出来，
+                    # 否则 refresh_map_em 只是安静地返回 failed 字典，
+                    # job 状态照样 done（08-22 我就这么误判过一次）。
+                    errors.append(f"industry_em: 板块列表拉取失败 "
+                                  f"（{'; '.join(mp.get('failed', [])[:2])}）")
+                elif mp.get("attempted") and not mp.get("mapped"):
+                    errors.append(
+                        f"industry_em: {mp['attempted']} 个板块全部失败 "
+                        f"（{'; '.join(mp.get('failed', [])[:3])}）")
             except Exception as e:
                 errors.append(f"industry_em: {e}")
                 app_ctx.logger.warning("[trigger-scan] em industry failed: %s", e)

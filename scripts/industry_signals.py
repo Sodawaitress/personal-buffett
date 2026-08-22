@@ -259,39 +259,67 @@ def capture_daily_em(date_str: str = None, force: bool = False) -> dict:
     return _capture_one_source(fetch_spot_em(), date_str, force, tag="em")
 
 
-def refresh_map_em(sleep_s: float = 0.6) -> dict:
-    """只用东财刷映射。**必须在 Fly 上调用**（同上）。
+def refresh_map_em(sleep_s: float = 2.5, max_boards: int = 12,
+                   refresh_days: int = 7) -> dict:
+    """只用东财刷映射。**必须在 Fly 上调用**（东财封数据中心 IP）。
 
-    东财 100 个板块、成分股可翻页拿全，覆盖 A股全市场；新浪只有 49 个粗分类、
-    覆盖约 55%（缺科创板/北交所）。所以东财跑成功后，映射会以它为准 ——
-    save_stock_industry 是 upsert，同一只股票会被东财的记录覆盖掉新浪的。
+    ## 为什么要分批 + 跨天收敛
+
+    2026-08-22 首次上线实测：东财在 Fly 上确实通了，但一轮只映射到 **263 只**
+    （约 6 个板块，~44 只/板块），远不是 100 个板块的全量。
+
+    同日本地复测更精确地定位了原因：**502 是按 IP 计的限流，不纯是黑名单**。
+    新西兰住宅 IP 头几发 200，连打 6 个板块后板块列表本身就 502 了。
+    GHA 那些共享 runner IP 早被别人打热，所以第一发就 502。
+
+    所以不追求单次跑完，追求**每次都有进展、最终收敛**：每轮只做
+    `max_boards` 个「最近 refresh_days 天没刷过」的板块，trigger-scan
+    每天跑一次，100 个板块约 8 天覆盖完，之后进入每周滚动刷新。
+    这和 sina 那边的断点续跑是同一个思路。
+
+    ## 为什么映射以东财为准
+
+    `save_stock_industry` 是 upsert。东财 100 个细分板块覆盖 A股全市场，
+    新浪只有 49 个粗分类、覆盖约 55%（缺科创板/北交所）。所以东财成功刷到
+    哪只，就把那只从新浪的记录覆盖成东财的。
     """
     import time
+    from datetime import timedelta as _td
 
     import db
 
     boards = fetch_spot_em()
     if not boards:
-        return {"source": "em", "boards": 0, "mapped": 0,
+        return {"source": "em", "boards": 0, "attempted": 0, "mapped": 0,
                 "failed": ["<东财板块列表为空（IP 被封？）>"]}
 
+    cutoff = (datetime.now(CN_TZ) - _td(days=refresh_days)).strftime("%Y-%m-%d")
+    todo = []
+    for b in boards:
+        try:
+            if db.sector_mapped_on(b["label"], cutoff):
+                continue          # refresh_days 内刷过了
+        except Exception:
+            pass
+        todo.append(b)
+
     mapped, failed = 0, []
-    for i, b in enumerate(boards, 1):
+    for i, b in enumerate(todo[:max_boards], 1):
         try:
             codes = fetch_constituents_em(b["label"])
         except Exception as e:
             failed.append(f"{b['name']}({type(e).__name__})")
-            time.sleep(sleep_s)
+            time.sleep(sleep_s * 2)      # 失败多半是限流，退避久一点
             continue
         payload = json.dumps({"label": b["label"], "name": b["name"],
                               "source": "em"}, ensure_ascii=False)
         for raw in codes:
             db.save_stock_industry(str(raw).split(".")[0].zfill(6), payload)
             mapped += 1
-        if i % 25 == 0:
-            print(f"    [em {i}/{len(boards)}] 累计 {mapped} 只")
         time.sleep(sleep_s)
-    return {"source": "em", "boards": len(boards), "mapped": mapped,
+
+    return {"source": "em", "boards": len(boards), "pending": len(todo),
+            "attempted": min(len(todo), max_boards), "mapped": mapped,
             "failed": failed}
 
 
