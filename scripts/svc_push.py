@@ -20,7 +20,7 @@ bootstrap_paths()
 
 import db
 from scripts.config import CN_TZ, SERVERCHAN_KEY
-from scripts.stock_report import admin_user_id, build_user_push_payload
+from scripts.stock_report import admin_user_id, build_user_push_payload, digest_user_ids
 from scripts.stock_pipeline import send_serverchan
 
 SKIP_PUSH = bool(os.environ.get("SKIP_PUSH"))
@@ -48,7 +48,18 @@ def main():
         admin_id = admin_user_id()
         # US-160：算内容与记账分开 —— 干跑不该吃掉条目，发送失败也不该
         # 把条目永久吞掉（吞掉的后果是这件事再也不会提醒了）。
-        content, pending = build_user_push_payload(admin_id, date_str) if admin_id else ("", [])
+        # US-162：候选股票并入 DIGEST_USER_IDS 声明的账号。
+        # 生产实测：妈妈的 198 只自选股在 id=2（QQ），而 admin(id=4) 只有 33 只 ——
+        # 那 198 只从来没进过这份日报。台账仍记在 admin 名下（跟的是收件人）。
+        if admin_id:
+            uids = digest_user_ids(admin_id)
+            extra = [u for u in uids if u != admin_id]
+            if extra:
+                print(f"  📚 候选股票覆盖账号: {uids}")
+            content, pending = build_user_push_payload(admin_id, date_str,
+                                                      extra_user_ids=extra)
+        else:
+            content, pending = "", []
 
         # 归档 /report（US-138 归位）：与推送同源同一份，无料时存占位（US-124）
         report = (content.replace("\n详情见网页。", "").rstrip()

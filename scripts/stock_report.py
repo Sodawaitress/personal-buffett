@@ -1,5 +1,6 @@
 """Report and push-content builders extracted from stock_pipeline."""
 
+import os
 import db as _db
 
 _GRADE_ORDER = ["A+", "A", "B+", "B", "B-", "C+", "C", "D", "D-"]
@@ -125,8 +126,32 @@ def build_user_push_content(user_id: int, data: dict, ai_analysis: dict,
     return content
 
 
-def build_user_push_payload(user_id: int, date_str: str):
+def digest_user_ids(primary: int) -> list:
+    """这份日报要覆盖谁的自选股（US-162）。
+
+    背景：推送只有**一个收件人**（全局 Server酱 key），但候选股票来自
+    `admin_user_id()` 一个账号。生产实测发现错配 —— 妈妈的实际自选股
+    198 只在 id=2（QQ 账号）上，而 admin(id=4) 只有 33 只，所以那 198 只
+    **从来没进过每日「今天有变化的」推送**（她只在五选信里被覆盖，
+    因为快照的 scope 是 all_users）。
+
+    用环境变量声明而不是硬编码 id：改覆盖范围不用改代码。
+    默认只有 primary，保持原行为。
+    """
+    ids = [primary]
+    raw = os.environ.get("DIGEST_USER_IDS", "")
+    for part in raw.replace("，", ",").split(","):
+        part = part.strip()
+        if part.isdigit() and int(part) not in ids:
+            ids.append(int(part))
+    return ids
+
+
+def build_user_push_payload(user_id: int, date_str: str, extra_user_ids=()):
     """今天该**变化**了的（US-160 改写自 US-123）。返回 (正文, 待记账条目)。
+
+    `extra_user_ids`：额外并入候选股票的账号（US-162）。台账仍记在
+    `user_id` 名下 —— 台账跟的是**收件人**（谁被打扰过），不是股票的主人。
 
     原来标题写「今天该注意的」，但五个板块里有四个取的是**当前状态**，
     不是今日事件：早期预警无日期过滤、机构结论/脚印是当前值、催化剂是
@@ -141,9 +166,11 @@ def build_user_push_payload(user_id: int, date_str: str):
     """
     from radar_app.data.push_ledger import filter_changed, state_hash
 
-    holdings = _db.get_user_holdings(user_id) or []
-    watching = _db.get_user_watching(user_id) or []
-    codes = list(dict.fromkeys(list(holdings) + list(watching)))
+    codes = []
+    for uid in [user_id, *extra_user_ids]:
+        codes.extend(_db.get_user_holdings(uid) or [])
+        codes.extend(_db.get_user_watching(uid) or [])
+    codes = list(dict.fromkeys(codes))
     if not codes:
         return "", []
 
