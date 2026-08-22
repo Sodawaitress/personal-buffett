@@ -144,7 +144,8 @@ def test_payload_returns_pending_separately():
 
     from scripts import stock_report
     sig = inspect.signature(stock_report.build_user_push_payload)
-    assert list(sig.parameters) == ["user_id", "date_str"]
+    # 前两个参数固定；US-162 之后可以有额外的 extra_user_ids
+    assert list(sig.parameters)[:2] == ["user_id", "date_str"]
     src = inspect.getsource(stock_report.build_user_push_payload)
     assert "return \"\\n\".join(lines), changed" in src
     assert "commit_pushed" not in src        # 这个函数绝不能自己记账
