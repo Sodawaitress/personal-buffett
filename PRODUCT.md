@@ -6214,3 +6214,67 @@ Routine 13:30 UTC 读时，快照已生成 114 分钟，且含当日收盘
   真正的兜底是查产物的 watchdog
 - 不为了压缩总时长而并发跑东财消费者（US-139 串行化是有原因的）
 - 不动 fetch 的时间锚（A股 15:00 CST 收盘是硬约束）
+
+---
+
+## US-150 修订 · workflow_run 有三层嵌套上限（2026-08-22 实测踩坑）
+
+### 出了什么事
+
+08-19 上线事件驱动链，08-21 实测：
+
+```
+fetch    07:37→08:25  schedule      OK
+analyze  08:25→08:57  workflow_run  OK   第 1 层
+push     08:57→09:01  workflow_run  OK   第 2 层
+radar    09:01→09:53  workflow_run  OK   第 3 层
+market   没触发（上次运行还是 08-18）    第 4 层  ← 断在这里
+cron     没触发
+digest   13:36 workflow_dispatch  ← watchdog 补跑的
+```
+
+**根因是 GitHub 的硬限制，不是配置错误。** 官方文档原文：
+
+> "You can't use `workflow_run` to chain together more than three levels of
+> workflows. For example, if you attempt to trigger five workflows (named `B`
+> to `F`) to run sequentially after an initial workflow `A` has run
+> (that is: A → B → C → D → E → F), workflows `E` and `F` will not be run."
+
+超限**不报错、不告警，下游就是不跑**。所有 name 引用都是对的，第一版结构
+测试只查「链序对不对」，所以没抓到这个断裂。
+
+### watchdog 第一周就证明了自己
+
+`watchdog-svc` 08-21 检测到「今天没有快照」，自动 dispatch digest 并告警 ——
+**妈妈的信没有断供**。这正是 US-150 引入它的理由：链条断了要有第二条路，
+而且判据必须是「产物在不在」而不是「任务跑没跑」。
+
+### 修法：把链切成两段，中间显式桥接
+
+```
+段1  fetch(cron) -> analyze(1) -> push(2) -> radar(3)          <=3 层
+        radar 末尾 gh workflow run market-svc.yml
+段2  market(dispatch) -> Daily Cron(1) -> digest(2)            <=3 层
+```
+
+`workflow_dispatch` 会重置嵌套计数。这个手法 watchdog 已在生产验证过
+（它就是用 `gh workflow run` 补跑 digest 的）。
+
+**为什么不用可复用工作流**（`workflow_call` + orchestrator）：那是更「正确」
+的架构，但要把 6 个 svc 的 `github.event.inputs.x` 改成 `inputs.x`，其中包括
+push-svc 的 `SKIP_PUSH`。那一行上面有条血泪注释：
+
+> 不能写 `inputs.skip_push || '1'`：那样定时那一路会永远落到 '1'，排了班也不推。
+
+**那正是给妈妈推送的服务，而且有人在这里踩过坑。** 不在这条路上冒风险。
+
+### AC
+- [x] 任何一段的 workflow_run 深度 <= 3（测试断言，超了就红）
+- [x] 段间有显式桥接，`if: always()`（radar 挂了也放行下游）
+- [x] 桥接有 `actions: write` 权限
+- [x] market-svc 不能用 workflow_run（测试断言，改回去会再次静默断链）
+- [ ] 下一个交易日实测：market / Daily Cron / digest 三个都被触发
+
+### 不做
+- 不改用可复用工作流：见上，风险落在妈妈的推送上
+- 不删 watchdog：它刚证明了自己，而且桥接本身也可能断

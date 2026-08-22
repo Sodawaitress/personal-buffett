@@ -24,10 +24,11 @@ name: market-svc (US-138)
 #
 # 失败传播：只挡 cancelled，failure 仍放行下游 —— 各服务本就设计成互相独立
 # （analyze 挂了也该把已有报告推出去），一环挂掉不该让全天归零。
+# ⚠️ 本服务由 radar-svc 末尾的 `gh workflow run` **桥接**触发，不是 workflow_run。
+# 原因：GitHub 硬限制 workflow_run 最多串三层，而 market 在链上是第 4 层。
+# 08-21 实测 market/DailyCron/digest 三个全没触发。详见 radar-svc.yml 里
+# 「Bridge to market-svc」那一步的注释。改回 workflow_run 会再次静默断链。
 on:
-  workflow_run:
-    workflows: ["radar-svc (US-121)"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       material_days:

@@ -38,6 +38,9 @@ jobs:
       github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion != 'cancelled'
     timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write        # US-150 桥接：需要 dispatch market-svc
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PYTHONUNBUFFERED: "1"
@@ -62,3 +65,23 @@ jobs:
               --data-urlencode "desp=机构雷达服务跑挂了。查看：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
               >/dev/null && echo "已推送失败告警"
           fi
+
+      # ── US-150 链段桥接（2026-08-22 实测踩坑后补）────────────────────
+      # GitHub 硬限制：workflow_run 最多串三层。
+      #   "You can't use workflow_run to chain together more than three levels
+      #    of workflows ... workflows E and F will not be run."
+      # 我们的链 fetch → analyze(1) → push(2) → radar(3) → market(4) 正好超限，
+      # 08-21 实测 market/DailyCron/digest 三个全没触发（靠 watchdog 补跑才没断供）。
+      #
+      # 所以在第 3 层末尾**显式改用 dispatch 跨段** —— workflow_dispatch 会重置
+      # 嵌套计数，于是 market(dispatch) → DailyCron(1) → digest(2) 又在限内。
+      # 这个手法 watchdog 已在生产验证过（它就是用 gh workflow run 补跑 digest 的）。
+      #
+      # if: always() —— radar 挂了也要放行下游，与本链其余部分的失败传播策略一致。
+      - name: Bridge to market-svc (resets workflow_run nesting depth)
+        if: always()
+        run: |
+          gh workflow run market-svc.yml --repo "${{ github.repository }}"
+          echo "已 dispatch market-svc（跨段桥接，绕开三层嵌套上限）"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
