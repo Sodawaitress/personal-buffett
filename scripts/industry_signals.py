@@ -155,6 +155,11 @@ def fetch_constituents_sina(label: str) -> list:
 
 
 # 顺序即优先级：东财粒度更细（100 vs 49）且覆盖更全，新浪只补东财漏掉的。
+#
+# ⚠️ US-161：东财在 **GHA runner 上必然 502**（封数据中心 IP 段），所以在
+# GHA 跑的 capture_daily / refresh_stock_industry_map 实际只有新浪会成功 ——
+# 这是设计如此，不是 bug（多源降级）。东财那一半改由 Fly 上的 trigger-scan
+# 搭车跑（capture_daily_em / refresh_map_em），先例见 insider_moves。
 SOURCES = [
     ("em",   fetch_spot_em,   fetch_constituents_em),
     ("sina", fetch_spot_sina, fetch_constituents_sina),
@@ -207,6 +212,87 @@ def fetch_sector_spot() -> list:
         except Exception as e:
             print(f"    ⚠️ 数据源 {name} 异常: {type(e).__name__}: {e}")
     return out
+
+
+# ── 单源入口：东财只能在 Fly 上跑（US-161）────────────────────
+
+def _capture_one_source(rows, date_str=None, force=False, tag=""):
+    """把一个源的当日表现写进 industry_daily。守卫与 capture_daily 相同。"""
+    import db
+
+    date_str = date_str or datetime.now(CN_TZ).strftime("%Y-%m-%d")
+    if not force:
+        try:
+            y, m, d = (int(x) for x in date_str.split("-"))
+            if datetime(y, m, d).weekday() >= 5:
+                return {"date": date_str, "captured": 0, "skipped": True,
+                        "reason": "weekend", "source": tag}
+        except (ValueError, TypeError):
+            pass
+    if not rows:
+        return {"date": date_str, "captured": 0, "skipped": True,
+                "reason": "fetch_failed", "source": tag}
+
+    n = 0
+    for r in rows:
+        try:
+            db.upsert_industry_daily(date_str, r["label"], r["name"],
+                                     r["change_pct"], r["company_count"],
+                                     r["avg_price"])
+            n += 1
+        except Exception as e:
+            print(f"    ⚠️ 行业 {r['name']} 写入失败: {e}")
+    return {"date": date_str, "captured": n, "skipped": False,
+            "reason": "", "source": tag}
+
+
+def capture_daily_em(date_str: str = None, force: bool = False) -> dict:
+    """只捕获东财源。**必须在 Fly 上调用** —— 东财封数据中心 IP 段，
+    从 GHA runner 打 push2 会 502（2026-08-22 实测：新西兰住宅 IP 五种参数
+    组合全部 200，GHA 的 Azure IP 全部 502）。
+
+    不做「重复数据」指纹比对：这里只有东财一个源的 100 个板块，
+    与 capture_daily（两源合并 149 个）的指纹口径不同，混在一起比会互相误判。
+    非交易日靠周末守卫挡，节假日会多写一天重复数据 —— 那点误差对 ±5% 的
+    门槛判断无影响，比漏掉一天轻。
+    """
+    return _capture_one_source(fetch_spot_em(), date_str, force, tag="em")
+
+
+def refresh_map_em(sleep_s: float = 0.6) -> dict:
+    """只用东财刷映射。**必须在 Fly 上调用**（同上）。
+
+    东财 100 个板块、成分股可翻页拿全，覆盖 A股全市场；新浪只有 49 个粗分类、
+    覆盖约 55%（缺科创板/北交所）。所以东财跑成功后，映射会以它为准 ——
+    save_stock_industry 是 upsert，同一只股票会被东财的记录覆盖掉新浪的。
+    """
+    import time
+
+    import db
+
+    boards = fetch_spot_em()
+    if not boards:
+        return {"source": "em", "boards": 0, "mapped": 0,
+                "failed": ["<东财板块列表为空（IP 被封？）>"]}
+
+    mapped, failed = 0, []
+    for i, b in enumerate(boards, 1):
+        try:
+            codes = fetch_constituents_em(b["label"])
+        except Exception as e:
+            failed.append(f"{b['name']}({type(e).__name__})")
+            time.sleep(sleep_s)
+            continue
+        payload = json.dumps({"label": b["label"], "name": b["name"],
+                              "source": "em"}, ensure_ascii=False)
+        for raw in codes:
+            db.save_stock_industry(str(raw).split(".")[0].zfill(6), payload)
+            mapped += 1
+        if i % 25 == 0:
+            print(f"    [em {i}/{len(boards)}] 累计 {mapped} 只")
+        time.sleep(sleep_s)
+    return {"source": "em", "boards": len(boards), "mapped": mapped,
+            "failed": failed}
 
 
 def _signature(rows: list) -> str:

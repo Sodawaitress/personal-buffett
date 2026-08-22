@@ -150,6 +150,30 @@ def register_system_routes(app):
                 errors.append(f"insider: {e}")
                 app_ctx.logger.warning("[trigger-scan] insider failed: %s", e)
 
+            # US-161 行业信号的东财源：同样只能在这里跑，搭 trigger-scan 这趟车
+            # （与上面 insider_moves 同一理由，同一先例）。
+            #
+            # 为什么不在 GHA 跑：东财**封数据中心 IP 段**。2026-08-22 实测同一个
+            # push2 URL —— 新西兰住宅 IP 五种参数组合全部 200；GHA runner
+            # （20.118.28.218，Azure 段）502 Bad Gateway。这不是参数问题也不是
+            # 地理问题，是 IP 信誉问题。Fly 的出口没被封（证据：precursor_history
+            # 7214 行滞后 0 天，它走的就是东财）。
+            #
+            # 后果如果不修：新浪只覆盖 A股约 55%，缺科创板/北交所 —— 自选股里
+            # 43% 的股票永远拿不到行业信号（实测覆盖率卡在 57%）。
+            try:
+                from scripts.industry_signals import capture_daily_em, refresh_map_em
+                cap = capture_daily_em()
+                app_ctx.logger.info("[trigger-scan] em industry capture: %s", cap)
+                # 映射每周刷一次就够（行业归属很少变），周六跑
+                from datetime import datetime as _dt
+                if _dt.now().weekday() == 5:
+                    mp = refresh_map_em()
+                    app_ctx.logger.info("[trigger-scan] em industry map: %s", mp)
+            except Exception as e:
+                errors.append(f"industry_em: {e}")
+                app_ctx.logger.warning("[trigger-scan] em industry failed: %s", e)
+
             if errors:
                 update_job(job_id, "failed", error="; ".join(errors)[:500])
             else:
