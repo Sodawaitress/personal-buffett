@@ -177,6 +177,34 @@ def audit_moat_detail(conn, existing):
     return out
 
 
+def audit_users(conn, existing):
+    """多用户系统的账号概览：谁有多少自选股、推送开没开。
+
+    **邮箱只保留域名**（如 ***@qq.com）—— 识别账号够用，不把完整地址
+    打进 CI 日志。这是私有仓库，但没必要把 PII 往日志里堆。
+    """
+    if not {"users", "user_watchlist"} <= existing:
+        return []
+    rows = _rows(conn, """
+        SELECT u.id AS id, u.email AS email, u.display_name AS name,
+               u.role AS role,
+               COUNT(DISTINCT CASE WHEN w.removed_at IS NULL
+                                   THEN w.stock_code END) AS n
+        FROM users u
+        LEFT JOIN user_watchlist w ON w.user_id = u.id
+        GROUP BY u.id, u.email, u.display_name, u.role
+        ORDER BY u.id
+    """)
+    out = []
+    for r in rows:
+        em = str(r.get("email") or "")
+        dom = ("***@" + em.split("@", 1)[1]) if "@" in em else "(无邮箱)"
+        out.append({"id": r["id"], "domain": dom,
+                    "name": r.get("name") or "", "role": r.get("role") or "",
+                    "watchlist": r["n"]})
+    return out
+
+
 def audit_industry_coverage(conn, existing):
     """自选股里有多少拿到了行业归属（US-158 的映射覆盖率）。
 
@@ -304,13 +332,14 @@ def main():
         moat_detail = audit_moat_detail(conn, existing)
         industry_gaps = audit_industry_gaps(conn, existing)
         industry_cov = audit_industry_coverage(conn, existing)
+        users = audit_users(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
-               "industry_coverage": industry_cov}
+               "industry_coverage": industry_cov, "users": users}
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -341,6 +370,12 @@ def main():
             print(f"  {mkt:8} 共{b['total']:4} 只 · 护城河0/35 {b['moat0']:4} "
                   f"({b['moat0']*100//b['total']:3}%) · incomplete {b['incomplete']:4} "
                   f"({b['incomplete']*100//b['total']:3}%)")
+
+    if users:
+        print(f"\n── 账号概览 ──")
+        print(f"  {'id':>3} {'邮箱域':16}{'名字':14}{'角色':8}自选股")
+        for u in users:
+            print(f"  {u['id']:>3} {u['domain']:16}{u['name'][:12]:14}{u['role']:8}{u['watchlist']:4}")
 
     if industry_cov:
         print(f"\n── 自选股行业映射覆盖率（US-158）──")
