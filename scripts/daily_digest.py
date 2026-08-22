@@ -143,9 +143,16 @@ def _build_snapshot() -> dict:
                             for e in events[:5]
                         ],
                     },
+                    # US-163：带出原始余量和 meaningful 标记。
+                    # 原来只给 change_pct，读的人无法判断 +6700% 是真信号还是
+                    # 分母太小的假象；而 direction 读的键根本不存在
+                    # （fetch_short_selling_trend 返回的是 trend），所以它一直是空串。
                     "short_selling": {
                         "change_pct": sh.get("change_pct"),
-                        "direction": sh.get("direction", ""),
+                        "direction": sh.get("trend", ""),
+                        "latest_short": sh.get("latest_short"),
+                        "base_short": sh.get("base_short"),
+                        "meaningful": sh.get("meaningful", True),
                     },
                 }
             else:

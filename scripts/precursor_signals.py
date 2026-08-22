@@ -212,6 +212,11 @@ def _find_margin_row(code: str, is_sse: bool, lookback_start: int, lookback_end:
     return None
 
 
+# 融券余量（万股）低于这个数时，百分比变化没有参考意义。
+# 1 万股对任何有正常流动性的 A 股都是可忽略的量。
+_SHORT_MIN_BASE_MN = 1.0
+
+
 def fetch_short_selling_trend(code: str, days: int = 30) -> dict:
     """
     返回 {
@@ -241,6 +246,30 @@ def fetch_short_selling_trend(code: str, days: int = 30) -> dict:
 
     change_pct = round((latest - earliest) / earliest * 100, 1)
 
+    # US-163：分母太小的时候百分比是噪音，不是信号。
+    #
+    # 实测 2026-08-22：泰晶科技(603738) 报出 +6700%。融券余量从接近零涨到一个
+    # 小数字，百分比就会爆表 —— 而 CLAUDE_ROUTINE 那条「绝对值 > 80% 必须
+    # 写进正文」的强制规则**只看 change_pct 不看分母**，于是这种假象会被原样
+    # 写成「⚠ 有资金在押注下跌」推给妈妈。
+    #
+    # 不把它判成 invalid（数据是真的），而是标出来让下游自己决定 ——
+    # 同时把原始余量带出去，读的人才有判断的依据。
+    meaningful = earliest >= _SHORT_MIN_BASE_MN and latest >= _SHORT_MIN_BASE_MN
+
+    if not meaningful:
+        return {
+            "latest_short": round(latest, 1),
+            "base_short":   round(earliest, 1),
+            "change_pct":   change_pct,
+            "trend":        "中性",
+            "meaningful":   False,
+            "desc":         (f"融券余量基数过小（{earliest:.2f}万→{latest:.2f}万股），"
+                             f"{change_pct:+.0f}% 这个百分比不具参考意义"),
+            "valid":        True,
+            "history":      rows,
+        }
+
     if change_pct >= 30:
         trend = "做空增加"
         desc = f"融券余量近30日增加{change_pct:.0f}%（{earliest:.1f}万→{latest:.1f}万股）——聪明钱在做空，对后市谨慎"
@@ -253,8 +282,10 @@ def fetch_short_selling_trend(code: str, days: int = 30) -> dict:
 
     return {
         "latest_short": round(latest, 1),
+        "base_short":   round(earliest, 1),
         "change_pct":   change_pct,
         "trend":        trend,
+        "meaningful":   True,
         "desc":         desc,
         "valid":        True,
         "history":      rows,
