@@ -185,14 +185,20 @@ def audit_users(conn, existing):
     """
     if not {"users", "user_watchlist"} <= existing:
         return []
+    # 带上推送设置：一个有 198 只自选股但收不到推送的账号，
+    # 和一个有 2 只自选股却天天收推送的账号，长得完全不一样但都「正常」。
+    # 不把这两列放一起看，这种错配就永远发现不了。
     rows = _rows(conn, """
         SELECT u.id AS id, u.email AS email, u.display_name AS name,
                u.role AS role,
+               COALESCE(ps.notify_daily, 0) AS daily,
+               CASE WHEN COALESCE(ps.wecom_webhook, '') <> '' THEN 1 ELSE 0 END AS hook,
                COUNT(DISTINCT CASE WHEN w.removed_at IS NULL
                                    THEN w.stock_code END) AS n
         FROM users u
         LEFT JOIN user_watchlist w ON w.user_id = u.id
-        GROUP BY u.id, u.email, u.display_name, u.role
+        LEFT JOIN user_push_settings ps ON ps.user_id = u.id
+        GROUP BY u.id, u.email, u.display_name, u.role, ps.notify_daily, ps.wecom_webhook
         ORDER BY u.id
     """)
     out = []
@@ -201,7 +207,7 @@ def audit_users(conn, existing):
         dom = ("***@" + em.split("@", 1)[1]) if "@" in em else "(无邮箱)"
         out.append({"id": r["id"], "domain": dom,
                     "name": r.get("name") or "", "role": r.get("role") or "",
-                    "watchlist": r["n"]})
+                    "watchlist": r["n"], "daily": r["daily"], "hook": r["hook"]})
     return out
 
 
@@ -373,9 +379,11 @@ def main():
 
     if users:
         print(f"\n── 账号概览 ──")
-        print(f"  {'id':>3} {'邮箱域':16}{'名字':14}{'角色':8}自选股")
+        print(f"  {'id':>3} {'邮箱域':16}{'名字':14}{'角色':8}{'自选':>5}{'日推':>5}{'webhook':>8}  收得到吗")
         for u in users:
-            print(f"  {u['id']:>3} {u['domain']:16}{u['name'][:12]:14}{u['role']:8}{u['watchlist']:4}")
+            gets = "✅" if (u["daily"] and u["hook"]) else "❌"
+            print(f"  {u['id']:>3} {u['domain']:16}{u['name'][:12]:14}{u['role']:8}"
+                  f"{u['watchlist']:5}{u['daily']:5}{u['hook']:8}  {gets}")
 
     if industry_cov:
         print(f"\n── 自选股行业映射覆盖率（US-158）──")
