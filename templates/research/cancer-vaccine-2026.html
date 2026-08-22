@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>癌症疫苗来了？涨的那只，正是系统让你减持的</title>
+<style>
+  :root{
+    --paper:#EBE3D2; --paper2:#F4EEDF; --card:#FBF7EC; --ink:#2C2A22; --ink2:#6C6450; --line:#DDD3BB;
+    --jade:#3F7E56; --jade-bg:#E4EEDF; --gold:#B4882A; --gold-bg:#F3E8C8; --verm:#B0442E; --verm-bg:#F3DDD3;
+    --seal:#B0442E;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0E1512; --paper2:#141C18; --card:#182019; --ink:#EAE4D4; --ink2:#9AA091; --line:#26302A;
+    --jade:#6DB587; --jade-bg:#17251C; --gold:#DCB259; --gold-bg:#241E12; --verm:#DE7157; --verm-bg:#26170F;
+    --seal:#DE7157;
+  }}
+  :root[data-theme="light"]{--paper:#EBE3D2;--paper2:#F4EEDF;--card:#FBF7EC;--ink:#2C2A22;--ink2:#6C6450;--line:#DDD3BB;--jade:#3F7E56;--jade-bg:#E4EEDF;--gold:#B4882A;--gold-bg:#F3E8C8;--verm:#B0442E;--verm-bg:#F3DDD3;--seal:#B0442E;}
+  :root[data-theme="dark"]{--paper:#0E1512;--paper2:#141C18;--card:#182019;--ink:#EAE4D4;--ink2:#9AA091;--line:#26302A;--jade:#6DB587;--jade-bg:#17251C;--gold:#DCB259;--gold-bg:#241E12;--verm:#DE7157;--verm-bg:#26170F;--seal:#DE7157;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.7;
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+  .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:620px;margin:0 auto;padding:26px 18px 60px;}
+  .backlink{display:inline-block;margin-bottom:18px;color:var(--ink2);text-decoration:none;font-size:13px;}
+  .backlink:hover{color:var(--jade);}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:8px;}
+  .mh-l .kick{font-size:11px;letter-spacing:.28em;color:var(--ink2);}
+  .mh-l h1{font-size:26px;margin:4px 0 0;line-height:1.2;text-wrap:balance;}
+  .seal{font-family:"Songti SC","STSong",serif;color:#fff;background:var(--seal);border-radius:5px;
+    padding:6px 8px;font-size:12px;line-height:1.2;text-align:center;letter-spacing:.1em;white-space:nowrap;}
+  .date{font-size:12px;color:var(--ink2);margin:8px 0 22px;}
+
+  .update{background:var(--jade-bg);border:1px solid var(--jade);border-radius:12px;padding:16px 18px;margin-bottom:22px;}
+  .update-t{font-size:16px;font-weight:800;color:var(--jade);margin-bottom:4px;}
+  .update-d{font-size:11px;letter-spacing:.1em;color:var(--ink2);margin-bottom:10px;}
+  .update ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .update li{font-size:14px;line-height:1.5;padding-left:22px;position:relative;}
+  .update li::before{content:"✓";position:absolute;left:0;top:0;color:var(--jade);font-weight:800;}
+  .update li.new::before{content:"＋";color:var(--gold);}
+  .update li.watch::before{content:"→";color:var(--verm);}
+  .update b{color:var(--ink);}
+  .update>p{font-size:14.5px;margin:0 0 12px;}
+  .klesson{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .kl-term{font-size:14.5px;font-weight:800;color:var(--jade);margin-bottom:5px;}
+  .klesson p{font-size:13.5px;margin:0;line-height:1.6;}
+  .kl-fwd{background:var(--gold-bg);border-left:4px solid var(--gold);border-radius:8px;padding:11px 14px;font-size:14px;margin-top:4px;}
+
+  .thesis{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--jade);border-radius:12px;padding:18px 20px;margin-bottom:14px;}
+  .thesis h2{font-size:15px;margin:0 0 8px;color:var(--jade);}
+  .thesis p{margin:0;font-size:15.5px;}
+  .thesis b{color:var(--ink);}
+  .hl-j{color:var(--jade);font-weight:700;} .hl-v{color:var(--verm);font-weight:700;}
+
+  section{margin-top:30px;}
+  .eyebrow{font-size:11px;letter-spacing:.24em;color:var(--ink2);margin-bottom:4px;}
+  h3.song{font-size:21px;margin:0 0 10px;text-wrap:balance;}
+  p{font-size:15px;} p.lead{font-size:15.5px;}
+  .big{font-size:19px;font-weight:800;} .big.mono{font-weight:800;}
+
+  .bucket{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:var(--card);border-left:5px solid var(--bc);}
+  .bucket.storm{--bc:var(--verm);} .bucket.anchor{--bc:var(--jade);} .bucket.weak{--bc:var(--gold);}
+  .b-head{display:flex;align-items:baseline;gap:8px;margin-bottom:3px;}
+  .b-head .ico{font-size:19px;} .b-head .t{font-size:17px;font-weight:800;}
+  .b-sub{font-size:13px;color:var(--ink2);margin-bottom:12px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .chip{font-size:12.5px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:var(--paper2);white-space:nowrap;}
+  .chip .n{color:var(--verm);font-weight:700;} .chip.up .n{color:var(--jade);}
+  .chip .g{color:var(--ink2);font-size:11px;}
+  .takeaway{font-size:14px;background:var(--tb);border-radius:8px;padding:9px 12px;}
+  .bucket.storm .takeaway{--tb:var(--verm-bg);} .bucket.anchor .takeaway{--tb:var(--jade-bg);} .bucket.weak .takeaway{--tb:var(--gold-bg);}
+  .takeaway b{color:var(--ink);}
+
+  .timeline{border:1px solid var(--line);border-radius:12px;padding:6px 18px 10px;background:var(--card);}
+  .tl-row{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line);}
+  .tl-row:last-child{border-bottom:0;}
+  .tl-date{flex:0 0 74px;text-align:right;}
+  .tl-date .d{font-size:17px;font-weight:800;} .tl-date .w{font-size:11px;color:var(--ink2);}
+  .tl-body{flex:1;} .tl-body .co{font-size:15px;font-weight:700;} .tl-body .no{font-size:12.5px;color:var(--ink2);}
+  .tl-flag{display:inline-block;font-size:11px;color:#fff;background:var(--verm);border-radius:4px;padding:1px 7px;margin-left:6px;}
+
+  ol.advice{list-style:none;counter-reset:a;padding:0;margin:0;}
+  ol.advice li{counter-increment:a;position:relative;padding:12px 0 12px 44px;border-bottom:1px solid var(--line);font-size:15.5px;}
+  ol.advice li:last-child{border-bottom:0;}
+  ol.advice li::before{content:counter(a);position:absolute;left:0;top:11px;width:28px;height:28px;border-radius:50%;
+    background:var(--jade);color:#fff;font-family:"Songti SC",serif;font-size:15px;display:grid;place-items:center;font-weight:700;}
+  ol.advice b{color:var(--verm);}
+
+  ul.fuse{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+  ul.fuse li{position:relative;padding:10px 14px 10px 16px;background:var(--verm-bg);border-radius:9px;font-size:14.5px;border-left:3px solid var(--verm);}
+  ul.fuse li b{color:var(--ink);}
+  .tailwind{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:14px 0;background:var(--card);}
+  .tw-row{display:flex;gap:12px;align-items:baseline;padding:11px 15px;border-bottom:1px solid var(--line);}
+  .tw-row:last-child{border-bottom:0;}
+  .tw-co{flex:0 0 88px;font-weight:800;font-size:15px;color:var(--jade);}
+  .tw-v{font-size:13px;color:var(--ink);}
+  .keepcull{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 6px;}
+  @media(max-width:520px){.keepcull{grid-template-columns:1fr;}}
+  .kc{border:1px solid var(--line);border-radius:12px;padding:14px 15px;}
+  .kc-keep{background:var(--jade-bg);border-left:4px solid var(--jade);}
+  .kc-cull{background:var(--verm-bg);border-left:4px solid var(--verm);}
+  .kc-h{font-size:16px;font-weight:800;}
+  .kc-keep .kc-h{color:var(--jade);} .kc-cull .kc-h{color:var(--verm);}
+  .kc-s{font-size:12px;color:var(--ink2);margin:2px 0 9px;}
+  .kc ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .kc li{font-size:13px;line-height:1.5;} .kc li b{color:var(--ink);}
+  .rules{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+  .rule{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-left:4px solid var(--jade);border-radius:11px;padding:13px 16px;background:var(--jade-bg);}
+  .rule-n{flex:0 0 78px;text-align:center;font-size:26px;font-weight:800;color:var(--jade);line-height:1;}
+  .rule-n.song-s{font-size:19px;}
+  .rule-b{font-size:14px;} .rule-b b{color:var(--ink);}
+  .lesson{margin-top:22px;background:var(--gold-bg);border:1px solid var(--gold);border-radius:12px;padding:16px 18px;}
+  .lesson-t{font-size:16px;font-weight:800;margin-bottom:6px;}
+  .lesson p{margin:0;font-size:14.5px;} .lesson b{color:var(--ink);}
+  .foot{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);line-height:1.6;}
+</style><style>
+  /* 本篇新增：融券读法四行表 —— 复用 rules 的边框语言，只加一个网格 */
+  .matrix{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0;background:var(--card);}
+  .mx-row{display:grid;grid-template-columns:1fr 1.15fr .7fr 1.5fr;gap:0;border-top:1px solid var(--line);}
+  .mx-row:first-child{border-top:none;background:var(--paper2);}
+  .mx-row>div{padding:9px 11px;font-size:13px;line-height:1.45;}
+  .mx-row.head>div{font-size:11.5px;letter-spacing:.1em;color:var(--ink2);}
+  .mx-row.danger{background:var(--verm-bg);}
+  .mx-row.good{background:var(--jade-bg);}
+  .mx-row .why{font-weight:700;}
+  @media (max-width:520px){
+    .mx-row{grid-template-columns:1fr 1fr;}
+    .mx-row.head{display:none;}
+    .mx-row>div:nth-child(4){grid-column:1/-1;border-top:1px dashed var(--line);}
+  }
+  .selfcheck{background:var(--gold-bg);border-left:4px solid var(--gold);border-radius:8px;padding:13px 15px;margin:16px 0;font-size:14px;}
+  .selfcheck .sc-t{font-weight:800;color:var(--gold);margin-bottom:5px;font-size:14.5px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  {% if not embed %}<a class="backlink" href="/research">← 行业专栏</a>{% endif %}
+  <div class="masthead">
+    <div class="mh-l">
+      <div class="kick song">私人巴菲特 · 深度研究</div>
+      <h1 class="song">癌症疫苗来了？涨的那只，正是系统让你减持的</h1>
+    </div>
+    <div class="seal song">深度<br>研究</div>
+  </div>
+  <div class="date mono">2026年8月23日发布 · 事件：8月19日 Moderna/默沙东 mRNA 疫苗三期成功</div>
+
+  <div class="thesis">
+    <h2 class="song">先看这一句</h2>
+    <p>消息是<b>真的</b>，但它和你能买到的东西之间，隔着<span class="hl-v">一台手术、一种癌、一个 K 药、还有三年</span>。<br><br>
+    这波行情里，自选股中<b>唯一涨的</b>是系统给 <span class="hl-v">C 级 / 减持 / 29 分</span>的沃森生物（+6.48%），而<b>质量最高的三只全在跌</b>。<span class="hl-v">涨的是故事，跌的是实质。</span></p>
+  </div>
+
+  <section>
+    <div class="eyebrow song">现象 · 到底发生了什么</div>
+    <h3 class="song">真突破，但被标题砍掉了五个限定条件</h3>
+    <p class="lead">8 月 19 日，Moderna 与默沙东宣布个性化 mRNA 疫苗 <b>intismeran autogene</b> 联合 <b>Keytruda（K 药）</b>三期成功，1137 人，达到主要终点。Moderna 股价一夜 <span class="big mono">+177%</span>。</p>
+    <p>但「癌症疫苗来了」这四个字，砍掉了五件事：</p>
+    <div class="rules">
+      <div class="rule"><span class="rule-n mono">1</span><span class="rule-b"><b>不是防癌针。</b>是<b>辅助治疗</b>——必须先动手术把肿瘤<b>完全切干净</b>，再打疫苗降低复发概率。</span></div>
+      <div class="rule"><span class="rule-n mono">2</span><span class="rule-b"><b>不是治已有的癌。</b>终点是「不复发」（RFS），不是「把肿瘤治好」。</span></div>
+      <div class="rule"><span class="rule-n mono">3</span><span class="rule-b"><b>只有一种癌。</b>目前只做出<b>黑色素瘤</b>（IIB–IV 期），其他癌种还在早期试验。</span></div>
+      <div class="rule"><span class="rule-n mono">4</span><span class="rule-b"><b>不能单独用。</b>必须配 K 药（PD-1）一起打，它只是<b>组合疗法的一半</b>。</span></div>
+      <div class="rule"><span class="rule-n mono">5</span><span class="rule-b"><b>还没上市。</b>预计 2027 年申报，<b>最快 2027–2028 才可能获批</b>。</span></div>
+    </div>
+    <p>还有一个流传很广的数字要纠正：网上说的「降低复发风险 <b>49%</b>」来自<b>二期</b>（KEYNOTE-942，HR 0.51）。<span class="hl-v">这次三期只说了「统计学显著且有临床意义」，具体数字没公布。</span></p>
+    <p>而且它是<b>个性化</b>的——每个病人先测自己肿瘤的基因突变，再定制生产一份专属 mRNA。这决定了它短期内<b>不可能便宜，也不可能大规模铺开</b>。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">知识 · 关联链条</div>
+    <h3 class="song">这个药和哪些药有关：PD-1 是绕不开的一环</h3>
+    <p class="lead">「疫苗公司」反而是关联<b>最弱</b>的一类——预防性疫苗（打一针防传染病）和个性化肿瘤疫苗，是<span class="hl-v">两种完全不同的东西</span>。真正的链条是这样：</p>
+    <div class="tailwind">
+      <div class="tw-row"><span class="tw-co">个性化 mRNA 疫苗</span><span class="tw-v mono">教免疫系统认出这个病人特有的肿瘤突变</span></div>
+      <div class="tw-row"><span class="tw-co">↓ 必须联合</span><span class="tw-v mono"></span></div>
+      <div class="tw-row"><span class="tw-co">PD-1 抑制剂（K 药）</span><span class="tw-v mono">松开免疫系统的刹车</span></div>
+      <div class="tw-row"><span class="tw-co">↑ 上游依赖</span><span class="tw-v mono"></span></div>
+      <div class="tw-row"><span class="tw-co">mRNA 原料 → LNP 递送 → CDMO</span><span class="tw-v mono">LNP 占成本 40–50%，壁垒最高</span></div>
+    </div>
+    <p>所以真正的关联方是三类：<b>PD-1 药企</b>、<b>LNP 与原料</b>、<b>CDMO（卖铲人）</b>。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">现象 · 你的自选股对照</div>
+    <h3 class="song">涨的是「减持」，跌的是「买入」</h3>
+    <div class="chips">
+      <span class="chip">沃森生物 <span class="n">+6.48%</span> <span class="g">C/减持/29分</span></span>
+      <span class="chip">药明康德 <span class="n">−3.00%</span> <span class="g">B+/买入/88分</span></span>
+      <span class="chip">百济神州 <span class="n">−3.22%</span> <span class="g">A/买入/70分</span></span>
+      <span class="chip">康龙化成 <span class="n">−5.74%</span> <span class="g">B+/买入/69分</span></span>
+    </div>
+    <p>而且外部也验证了：这一天 <b>26 只医药股涨停</b>，随后<span class="hl-v">多家公司连夜发澄清公告，说自己没有实质相关业务</span>。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">知识 · 先补两个词</div>
+    <h3 class="song">看懂下面的判断，只需要这两个概念</h3>
+
+    <div class="klesson">
+      <div class="kl-term">① 融券 = 借股票来卖，赌它跌</div>
+      <p>正常买股票是「先买后卖，赌涨」。融券反过来：<b>先向券商借股票卖掉，等跌了再买回来还，赚差价</b>。所以「融券余量」= 现在有多少股票是被借来做空的，它是一个<b>用真金白银下注的看跌指标</b>。<br>看它的<b>变化方向</b>：增加 = 有人在新建空头仓位；减少 = 空头在平仓离场。</p>
+    </div>
+
+    <div class="klesson">
+      <div class="kl-term">② 机构调研 = 基金公司派人去公司问问题</div>
+      <p>上市公司要公开披露「谁来调研过我」。基金经理不会随便花时间跑一趟，所以<b>调研次数是「聪明钱在认真做功课」的痕迹</b>。<br><span class="hl-v">「30 日调研 0 次」的意思是：过去一个月，没有任何一家机构去看过这家公司。</span></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow song">知识 · 本篇核心</div>
+    <h3 class="song">融券要看上下文，光看方向会读反</h3>
+    <p class="lead">同一个「融券增加」，在不同处境下含义<b>完全相反</b>。这张表是这轮行情实证出来的：</p>
+    <div class="matrix">
+      <div class="mx-row head"><div>融券</div><div>股价位置</div><div>调研</div><div>怎么读</div></div>
+      <div class="mx-row"><div class="mono">增加</div><div>创新高 / 财报刚超预期</div><div>有</div><div class="why">🛡️ <b>对冲</b>，不是看空。和「买入」评级<b>不矛盾</b></div></div>
+      <div class="mx-row"><div class="mono">增加</div><div>下跌中 / 无利好</div><div class="mono">0 次</div><div class="why">⚠️ 真看空</div></div>
+      <div class="mx-row danger"><div class="mono">减少</div><div><b>概念拉升中</b></div><div class="mono">0 次</div><div class="why">🚨 <b>最危险</b>：空头趁高位脱身，散户在接</div></div>
+      <div class="mx-row good"><div class="mono">减少</div><div>长期下跌后</div><div>有</div><div class="why">✅ 空头认输，可能是底</div></div>
+    </div>
+    <p>再加一条<b>分母检查</b>：百分比大得反常（超过 500%）时，<span class="hl-v">先看原始余量</span>。融券余量从接近零涨到一个小数字，百分比就会爆表——那是<b>分母噪音，不是信号</b>。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow song">现象 × 知识 · 三个真实案例</div>
+    <h3 class="song">同样是医药股，三种完全不同的性质</h3>
+
+    <div class="bucket storm">
+      <div class="b-head"><span class="ico">🚨</span><span class="t">消息出货 · 沃森生物</span></div>
+      <div class="b-sub">C 级 / 减持 / 29 分 · 当日 +6.48%</div>
+      <div class="chips">
+        <span class="chip">30 日调研 <span class="n">0 次</span></span>
+        <span class="chip">融券 <span class="n">−29.7%</span></span>
+        <span class="chip"><span class="g">新闻：「生物疫苗概念涨 8.06%」</span></span>
+      </div>
+      <p>如果一家公司真因为癌症疫苗受益，你会先看到<b>机构去调研</b>（去问：你们 mRNA 平台能不能做肿瘤疫苗？产能多少？），确认了再买——调研会留下痕迹。</p>
+      <p>但这里是 <b>0 次</b>。<span class="hl-v">没有一个专业人士认为这件事值得跑一趟问清楚，股价却涨了 6.48%。</span>那是谁在买？看到「癌症疫苗」标题就买的人。同时空头在平仓（−29.7%）——原本做空的人<b>趁这波涨幅了结跑了，不是被打败，是趁高位脱身</b>。</p>
+      <p>它确实有 mRNA 平台（当年和艾博做过新冠 mRNA），所以概念不算凭空捏造。但<span class="hl-v">新冠 mRNA 和个性化新抗原肿瘤疫苗是两回事</span>：前者标准化大批量，后者一人一版定制。</p>
+    </div>
+
+    <div class="bucket anchor">
+      <div class="b-head"><span class="ico">🛡️</span><span class="t">对冲不是看空 · 药明康德</span></div>
+      <div class="b-sub">B+ / 买入 / 88 分（自选股里最高）· 当日 −3.00% · 融券 +33.5%</div>
+      <p>「买入评级」和「融券增加」看起来矛盾，但把时间线摆开就通了：</p>
+      <div class="timeline">
+        <div class="tl-row"><span class="tl-date mono">8/4</span><span class="tl-body">半年报炸裂，股价连续大涨，市值重返 4200 亿</span></div>
+        <div class="tl-row"><span class="tl-date mono">8/7</span><span class="tl-body">联邦法院批准初步禁令，禁止国防部执行 1260H 清单列名——<b>重大利好</b></span></div>
+        <div class="tl-row"><span class="tl-date mono">同期</span><span class="tl-body">股价<b>创历史新高</b>，融券余量同步增加</span></div>
+      </div>
+      <p><span class="hl-j">在创历史新高 + 财报大超预期的股票上融券增加，更可能是持仓者买保险，不是有人押它崩。</span>真正看空的人不会等到利好落地、股价新高才建仓。</p>
+      <p>所以这两个数字不矛盾——它们讲的是两件事：一个是<b>生意质量</b>，一个是<b>有人在高位对冲</b>。</p>
+    </div>
+
+    <div class="bucket weak">
+      <div class="b-head"><span class="ico">🔍</span><span class="t">分歧点 · 百济神州</span></div>
+      <div class="b-sub">A 级 / 买入 / 70 分 · 当日 −3.22% · 融券 +67.8% · 30 日调研 2 次</div>
+      <p>这是<b>两批专业资金在同一只股票上得出相反结论</b>：一批派人去调研（在认真评估），另一批借券做空 67.8%（真金白银押它跌）。</p>
+      <p>分歧点找到了：<span class="hl-v">它 A 股 / 港股 / 美股三地上市，三地估值准绳差异巨大</span>。8 月 5 日发净利润 <b>+627%</b> 的快报，8 月 6 日 A 股高开低走，开盘半小时抛压 540 万股——「利好后砸盘」在它身上屡见不鲜。所以那 67.8% 很可能是<b>跨市场套利的一条腿</b>，不是单纯看跌。</p>
+      <p><b>和沃森生物的本质区别</b>：沃森是「专业资金都不关心，散户在买」，百济是「专业资金分成两派对赌」。<span class="hl-v">前者要躲开，后者要研究。</span>分歧会解决——那个关键点一旦落地，股价会单边走。</p>
+    </div>
+  </section>
+
+  <div class="selfcheck">
+    <div class="sc-t">⚠️ 一次自我纠错：我也传过一个站不住的说法</div>
+    <p>研究这件事时，我一开始说「真正的受益逻辑在卖铲人身上」并指向药明康德。查了半年报之后，<b>这个连接很弱</b>：</p>
+    <p class="mono" style="font-size:13px;margin:8px 0;">小分子 D&amp;M 149.9亿 (+72.7%) ｜ TIDES 72.6亿 (+44.3%) ｜ mRNA <b>没有单独披露</b></p>
+    <p><b>TIDES = 多肽 + 寡核苷酸，不是 mRNA。</b>寡核苷酸是化学固相合成的短链，mRNA 是酶法体外转录的长链 + LNP 包裹——<b>两套完全不同的工艺和产能</b>。药明扩的「固相合成釜 13 万升」是 TIDES 的产能，和 mRNA 疫苗没关系。</p>
+    <p><span class="hl-v">教训：「听起来合理的产业链传导」必须落到财报的业务分部口径上验证</span>，否则就是在传播噪音——哪怕结论（这公司好）是对的，理由是错的。</p>
+  </div>
+
+  <div class="takeaway">
+    <div class="lesson-t song">📌 这波该怎么做</div>
+    <div class="rules">
+      <div class="rule"><span class="rule-n mono">1</span><span class="rule-b"><b>不要在这个位置加沃森生物。</b>涨的钱来自看新闻的人，聪明钱没进来，空头还借机走了。概念冷了会跌回去。</span></div>
+      <div class="rule"><span class="rule-n mono">2</span><span class="rule-b"><b>药明康德值得拿住，但理由不是癌症疫苗</b>——是它自己的生意：营收 +38.9%、净利 +83.2%、全年指引上调到 585 亿、法院官司赢了。<b>好公司配错理由，下次就会在错的地方加仓。</b></span></div>
+      <div class="rule"><span class="rule-n mono">3</span><span class="rule-b"><b>百济神州盯住那个分歧点</b>，不是现在买或卖。搞清楚三地估值差什么时候收敛。</span></div>
+      <div class="rule"><span class="rule-n mono">4</span><span class="rule-b">真正的 mRNA 专属受益方是<b>金斯瑞、近岸蛋白、东富龙</b>这类卖铲子的——<span class="hl-v">自选股里一个都没有</span>。要不要加，是另一个决定。</span></div>
+    </div>
+  </div>
+
+  <div class="foot mono">
+    数据来源：本站快照（2026-08-22）· Moderna/Merck 官方公告 · 公司半年报<br>
+    仅供参考，不构成投资建议
+  </div>
+</div>
+
+</body>
+</html>

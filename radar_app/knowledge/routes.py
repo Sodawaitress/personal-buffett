@@ -6,7 +6,8 @@ from radar_app.knowledge.service import match_situation
 
 _FLOAT_FIELDS = {"change_pct", "price_change_pct", "latest", "avg_30d", "score"}
 _INT_FIELDS   = {"n_inst", "days_ago", "event_count"}
-_BOOL_FIELDS  = {"spike", "has_specific", "short_increasing", "pa_spike"}
+_BOOL_FIELDS  = {"spike", "has_specific", "short_increasing", "pa_spike",
+                 "has_survey", "meaningful"}
 
 
 def _coerce(raw: dict) -> dict:

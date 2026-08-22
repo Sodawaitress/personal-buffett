@@ -6,6 +6,14 @@
 
 ARTICLES = [
     {
+        "slug": "cancer-vaccine-2026",
+        "title": "癌症疫苗来了？涨的那只，正是系统让你减持的",
+        "subtitle": "创新药 · 融券读法 · 现象与知识",
+        "cover": "💉",
+        "date": "2026-08-23",
+        "template": "research/cancer-vaccine-2026.html",
+    },
+    {
         "slug": "base-and-sprint-2026",
         "title": "稳稳保底 · 放心冲刺：无忧做短线",
         "subtitle": "投资心法 · 仓位分法",

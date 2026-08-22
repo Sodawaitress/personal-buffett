@@ -7,8 +7,24 @@ one_liner: 借股票来卖、押注下跌，主要是机构在操作
 # triggers: null = 兜底，总是匹配
 # 可用字段：change_pct（融券余量近30日变化%）、price_change_pct（当日涨跌幅%）
 #            pa_spike（机构参与度是否飙升）、has_survey（是否有近期专项调研）
+#            meaningful（融券基数是否够大，US-163；false 时百分比是分母噪音）
 
 situations:
+
+  # 放在最前面：这是数据有效性闸门，不是行为判断。
+  # 基数太小的时候，下面所有基于 change_pct 的判断都不成立。
+  - id: base_too_small
+    label: 融券基数过小，本期无参考意义
+    triggers:
+      all:
+        - {field: meaningful, op: "==", value: false}
+    body: |
+      这只股票的融券余量太小（首尾都不到 1 万股），
+      算出来的百分比是分母造成的，不是真实的做空动向。
+      余量从接近零涨到一个小数字，百分比就会爆表。
+    note: |
+      2026-08-22 实测：泰晶科技报出「融券 +6700%」，就是这种情况。
+      看到异常大的百分比，先看原始余量（base_short → latest_short）。
 
   - id: squeeze_active
     label: 轧空可能正在发生
@@ -133,6 +149,26 @@ situations:
     note: |
       这是组合信号里可信度较高的底部参考。
       调研到真正买入还有时间差，不代表马上涨。
+
+  # 比 forced_cover 更具体：多了「近期无机构调研」这个条件。
+  # 同样是「融券减少 + 价格涨」，有机构在看和没人在看，是两件事。
+  - id: news_driven_exit
+    label: 消息拉升 · 空头趁高位脱身
+    triggers:
+      all:
+        - {field: change_pct,       op: "<",  value: -15}
+        - {field: price_change_pct, op: ">",  value: 1.0}
+        - {field: has_survey,       op: "==", value: false}
+    body: |
+      股价在涨、做空的人在平仓离场，但近期**没有任何机构
+      来调研过**。也就是说：没有一个专业人士认为这件事
+      值得跑一趟问清楚，价格却涨了。
+      那么买盘来自哪里？通常是看到消息标题的散户。
+    note: |
+      这是「消息出货」的典型形态——空头不是被打败，是趁高位脱身。
+      概念热度退了容易跌回去。2026-08 癌症疫苗行情里，沃森生物
+      当日 +6.48%、30 日调研 0 次、融券 −29.7%，随后多家同概念
+      公司连夜发澄清公告说没有实质业务。
 
   - id: forced_cover
     label: 空头认亏平仓（被迫的）
