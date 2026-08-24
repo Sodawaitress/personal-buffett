@@ -404,28 +404,27 @@ def audit_em_convergence(conn, existing):
     """US-158 东财映射的实际收敛速度 —— 决定行业筛选多久才真的可用。
 
     设计是每天 12 个板块、约 8 天覆盖 100 个板块。但 502 是按 IP 限流的，
-    实际能刷成几个板块要看当天运气。这里报「已刷板块数 / 每天新增」，
-    算得出真实 ETA，而不是拿设计值当承诺。
+    实际能刷成几个板块看当天运气，所以要报**实测**进度，不能拿设计值当承诺。
+
+    注意 stock_industry_map 没有 source 列 —— 来源编码在 industry 这个
+    JSON 文本的标签前缀里（"em:BKxxxx" / "sina:xxx"），和 audit_industry_coverage
+    用的是同一套判据。
     """
-    if "industry_daily" not in existing or "stock_industry_map" not in existing:
+    if "stock_industry_map" not in existing:
         return {}
     out = {}
     try:
+        out["em_total"] = _scalar(conn,
+            "SELECT COUNT(*) AS v FROM stock_industry_map WHERE industry LIKE :p",
+            p='%"em:%') or 0
         rows = _rows(conn, """
             SELECT substr(updated_at,1,10) AS d, COUNT(*) AS n
-            FROM stock_industry_map WHERE source='em'
+            FROM stock_industry_map WHERE industry LIKE :p
             GROUP BY 1 ORDER BY 1 DESC LIMIT 8
-        """)
-        out["em_by_day"] = [(r["d"], r["n"]) for r in rows]
+        """, p='%"em:%')
+        out["em_by_day"] = [(str(r["d"]), r["n"]) for r in rows]
     except Exception as e:
-        out["em_by_day_error"] = str(e)[:120]
-    try:
-        out["em_sectors"] = _scalar(conn,
-            "SELECT COUNT(DISTINCT industry) AS v FROM stock_industry_map WHERE source='em'") or 0
-        out["em_total"] = _scalar(conn,
-            "SELECT COUNT(*) AS v FROM stock_industry_map WHERE source='em'") or 0
-    except Exception as e:
-        out["sector_error"] = str(e)[:120]
+        out["error"] = f"{type(e).__name__}: {str(e)[:120]}"
     return out
 
 
@@ -617,10 +616,10 @@ def main():
 
     if em_conv:
         print(f"\n── 东财行业映射收敛进度（US-158）──")
-        print(f"  已覆盖板块 {em_conv.get('em_sectors')} 个 · 映射 {em_conv.get('em_total')} 只")
+        print(f"  东财已映射 {em_conv.get('em_total')} 只 · 按日新增：")
         for d, n in em_conv.get("em_by_day", []):
-            print(f"    {d}  +{n}")
-        if em_conv.get("em_by_day_error"): print(f"    {em_conv['em_by_day_error']}")
+            print(f"    {d}  {n} 只")
+        if em_conv.get("error"): print(f"    {em_conv['error']}")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
