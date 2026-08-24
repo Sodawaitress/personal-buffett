@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-24T13:52:30.677778Z",
+  "generated_at": "2026-08-24T22:25:48.339619Z",
   "scope": "all_users",
-  "price_snapshot_at": "2026-08-24T13:52:30.677798Z",
+  "price_snapshot_at": "2026-08-24T22:25:48.339638Z",
   "stocks_with_fresh_price": 238,
   "stocks_total": 239,
   "price_signature": "2c18b1b68794b46848feea16a480b749",
@@ -345,7 +345,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -414,7 +414,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 2.46,
         "is_active": true,
         "survey": {
@@ -502,7 +502,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 1.02,
         "is_active": false,
         "survey": {
@@ -571,7 +571,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 1.58,
         "is_active": false,
         "survey": {
@@ -647,7 +647,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.81,
         "is_active": false,
         "survey": {
@@ -716,7 +716,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -775,21 +775,21 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "64/100",
         "reasoning": "按成熟价值股的标准看：质量 64/100（ROE 19.7%（巴菲特线 15%）），估值合理。普通公司，普通价。",
         "quant_score": 64,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 3.22,
+        "cache_age_hours": 0.1,
+        "score": 2.5,
         "is_active": true,
         "survey": {
-          "count_30d": 2,
+          "count_30d": 1,
           "days_since_latest": 26,
           "events": [
             {
@@ -797,20 +797,14 @@
               "n_inst": 14,
               "method": "路演活动",
               "is_specific": false
-            },
-            {
-              "date": "2026-06-25",
-              "n_inst": 34,
-              "method": "路演活动",
-              "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": 105.7,
+          "change_pct": 101.2,
           "direction": "做空增加",
           "latest_short": 468.0,
-          "base_short": 227.5,
+          "base_short": 232.6,
           "meaningful": true
         }
       },
@@ -867,7 +861,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 3.84,
         "is_active": true,
         "survey": {
@@ -936,7 +930,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 1.93,
         "is_active": false,
         "survey": {
@@ -1012,7 +1006,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1081,7 +1075,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 2.02,
         "is_active": true,
         "survey": {
@@ -1150,7 +1144,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 1.2,
         "is_active": false,
         "survey": {
@@ -1226,7 +1220,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1295,7 +1289,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 13.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -1364,7 +1358,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.8,
         "score": 3.88,
         "is_active": true,
         "survey": {
@@ -1452,7 +1446,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.0,
         "score": 2.62,
         "is_active": true,
         "survey": {
@@ -1521,7 +1515,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 13.6,
         "score": 3.63,
         "is_active": true,
         "survey": {
@@ -1593,17 +1587,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "44/100",
         "reasoning": "按成长科技股的标准看：质量 44/100（营收 10年复合增速 26%），估值偏贵。普通公司，偏贵。",
         "quant_score": 44,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 1.04,
         "is_active": false,
         "survey": {
@@ -1679,7 +1673,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 3.65,
         "is_active": true,
         "survey": {
@@ -1779,7 +1773,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.01,
         "is_active": false,
         "survey": {
@@ -1848,7 +1842,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 1.48,
         "is_active": false,
         "survey": {
@@ -1917,7 +1911,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 2.1,
         "is_active": true,
         "survey": {
@@ -1999,7 +1993,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2058,17 +2052,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "42/100",
         "reasoning": "按成熟价值股的标准看：质量 42/100（ROE 10.3%（巴菲特线 15%）），估值合理。普通公司，普通价。\n⚠ 利润是正的，但经营现金流只有利润的-11%——赚的钱没真正进账户",
         "quant_score": 42,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2137,7 +2131,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 0.52,
         "is_active": false,
         "survey": {
@@ -2206,7 +2200,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 0.4,
         "is_active": false,
         "survey": {
@@ -2275,7 +2269,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2344,7 +2338,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 5.12,
         "is_active": true,
         "survey": {
@@ -2422,18 +2416,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "49/100",
         "reasoning": "按成熟价值股的标准看：质量 49/100（ROE 11.1%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。",
         "quant_score": 49,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 4.69,
+        "cache_age_hours": 0.1,
+        "score": 3.79,
         "is_active": true,
         "survey": {
           "count_30d": 3,
@@ -2460,10 +2454,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": -33.2,
-          "direction": "做空减少",
+          "change_pct": -25.9,
+          "direction": "中性",
           "latest_short": 20.3,
-          "base_short": 30.3,
+          "base_short": 27.4,
           "meaningful": true
         }
       },
@@ -2510,17 +2504,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "—",
+        "moat": "13/100",
         "reasoning": "按成熟价值股的标准看：质量 13/100（ROE 3.3%（巴菲特线 15%）），估值合理。质量偏弱。\n⚠ 利润是正的，但经营现金流只有利润的-18%——赚的钱没真正进账户",
         "quant_score": 13,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2589,7 +2583,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.9,
         "score": 1.57,
         "is_active": false,
         "survey": {
@@ -2658,7 +2652,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 3.5,
         "is_active": true,
         "survey": {
@@ -2746,7 +2740,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 0.03,
         "is_active": false,
         "survey": {
@@ -2805,29 +2799,29 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "34/100",
         "reasoning": "按成熟价值股的标准看：质量 34/100（ROE 2.0%（巴菲特线 15%）），估值贵。又弱又贵。",
         "quant_score": 34,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 1.96,
-        "is_active": false,
+        "cache_age_hours": 0.2,
+        "score": 2.0,
+        "is_active": true,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 39.3,
+          "change_pct": 46.5,
           "direction": "做空增加",
           "latest_short": 54.4,
-          "base_short": 39.0,
+          "base_short": 37.1,
           "meaningful": true
         }
       },
@@ -2884,7 +2878,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.1,
         "score": 3.29,
         "is_active": true,
         "survey": {
@@ -2943,18 +2937,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "25/100",
         "reasoning": "按成熟价值股的标准看：质量 25/100（ROE 9.0%（巴菲特线 15%）），估值便宜。便宜有便宜的道理，警惕价值陷阱。\n⚠ 利润是正的，但经营现金流只有利润的61%——赚的钱没真正进账户",
         "quant_score": 25,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 1.2,
+        "cache_age_hours": 0.1,
+        "score": 1.46,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -2962,10 +2956,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 24.0,
+          "change_pct": 29.2,
           "direction": "中性",
           "latest_short": 36.7,
-          "base_short": 29.6,
+          "base_short": 28.4,
           "meaningful": true
         }
       },
@@ -3022,7 +3016,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 2.09,
         "is_active": true,
         "survey": {
@@ -3091,7 +3085,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 1.31,
         "is_active": false,
         "survey": {
@@ -3167,7 +3161,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 2.58,
         "is_active": true,
         "survey": {
@@ -3236,7 +3230,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 13.5,
         "score": 1.65,
         "is_active": false,
         "survey": {
@@ -3305,7 +3299,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.0,
+        "cache_age_hours": 13.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3374,7 +3368,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -3456,7 +3450,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.9,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -3556,7 +3550,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 0.14,
         "is_active": false,
         "survey": {
@@ -3625,7 +3619,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 1.47,
         "is_active": false,
         "survey": {
@@ -3694,7 +3688,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 1.43,
         "is_active": false,
         "survey": {
@@ -3776,7 +3770,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 1.44,
         "is_active": false,
         "survey": {
@@ -3835,18 +3829,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "35/100",
         "reasoning": "按困境反转股的标准看：质量 35/100（恢复趋势：ROE 仍在恶化、利润率改善），估值便宜。便宜有便宜的道理，警惕价值陷阱。",
         "quant_score": 35,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 2.5,
+        "cache_age_hours": 0.1,
+        "score": 3.97,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -3854,10 +3848,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 47.5,
+          "change_pct": 39.4,
           "direction": "做空增加",
           "latest_short": 109.7,
-          "base_short": 74.4,
+          "base_short": 78.7,
           "meaningful": true
         }
       },
@@ -3914,7 +3908,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3983,7 +3977,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 1.88,
         "is_active": false,
         "survey": {
@@ -4059,7 +4053,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 1.0,
         "is_active": false,
         "survey": {
@@ -4141,7 +4135,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.96,
         "is_active": false,
         "survey": {
@@ -4217,7 +4211,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.9,
         "score": 1.9,
         "is_active": false,
         "survey": {
@@ -4286,7 +4280,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.8,
         "score": 0.8,
         "is_active": false,
         "survey": {
@@ -4345,7 +4339,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
         "moat": "36/100",
@@ -4355,7 +4349,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4414,18 +4408,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "52/100",
         "reasoning": "按成熟价值股的标准看：质量 52/100（ROE 21.0%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的64%——赚的钱没真正进账户",
         "quant_score": 52,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 3.13,
+        "cache_age_hours": 0.2,
+        "score": 3.88,
         "is_active": true,
         "survey": {
           "count_30d": 3,
@@ -4452,10 +4446,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": -2.7,
+          "change_pct": -17.6,
           "direction": "中性",
           "latest_short": 19.7,
-          "base_short": 20.2,
+          "base_short": 23.9,
           "meaningful": true
         }
       },
@@ -4512,7 +4506,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4581,7 +4575,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 1.96,
         "is_active": false,
         "survey": {
@@ -4650,7 +4644,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4719,7 +4713,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4788,7 +4782,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 13.9,
         "score": 0.99,
         "is_active": false,
         "survey": {
@@ -4847,17 +4841,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "52/100",
         "reasoning": "按成熟价值股的标准看：质量 52/100（ROE 13.2%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。",
         "quant_score": 52,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4916,17 +4910,17 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "30/100",
         "reasoning": "按困境反转股的标准看：质量 30/100（恢复趋势：ROE 仍在恶化），估值便宜。便宜有便宜的道理，警惕价值陷阱。",
         "quant_score": 30,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 1.63,
         "is_active": false,
         "survey": {
@@ -4995,7 +4989,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 3.04,
         "is_active": true,
         "survey": {
@@ -5089,7 +5083,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5158,7 +5152,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.1,
         "score": 0.16,
         "is_active": false,
         "survey": {
@@ -5227,7 +5221,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5296,7 +5290,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.1,
         "score": 0.22,
         "is_active": false,
         "survey": {
@@ -5365,7 +5359,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.3,
         "score": 4.98,
         "is_active": true,
         "survey": {
@@ -5465,7 +5459,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 1.61,
         "is_active": false,
         "survey": {
@@ -5534,7 +5528,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -5610,7 +5604,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.6,
         "score": 3.5,
         "is_active": true,
         "survey": {
@@ -5676,17 +5670,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "6/100",
         "reasoning": "按成熟价值股的标准看：质量 6/100（ROE 1.4%（巴菲特线 15%）），估值贵。又弱又贵。\n⚠ 利润是正的，但经营现金流只有利润的-967%——赚的钱没真正进账户",
         "quant_score": 6,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 1.59,
         "is_active": false,
         "survey": {
@@ -5752,17 +5746,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "39/100",
         "reasoning": "按成熟价值股的标准看：质量 39/100（ROE 8.0%（巴菲特线 15%）），估值贵。又弱又贵。",
         "quant_score": 39,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 2.19,
         "is_active": true,
         "survey": {
@@ -5831,7 +5825,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 3.95,
         "is_active": true,
         "survey": {
@@ -5903,18 +5897,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "59/100",
         "reasoning": "按成熟价值股的标准看：质量 59/100（ROE 14.3%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。",
         "quant_score": 59,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 0.35,
+        "cache_age_hours": 0.2,
+        "score": 0.6,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -5922,10 +5916,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 6.9,
+          "change_pct": 12.1,
           "direction": "中性",
           "latest_short": 15.8,
-          "base_short": 14.8,
+          "base_short": 14.1,
           "meaningful": true
         }
       },
@@ -5972,7 +5966,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "减持",
         "moat": "26/100",
@@ -5982,8 +5976,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 3.78,
+        "cache_age_hours": 0.1,
+        "score": 3.88,
         "is_active": true,
         "survey": {
           "count_30d": 1,
@@ -5998,10 +5992,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 67.2,
+          "change_pct": 60.3,
           "direction": "做空增加",
           "latest_short": 17.2,
-          "base_short": 10.3,
+          "base_short": 10.8,
           "meaningful": true
         }
       },
@@ -6048,17 +6042,17 @@
       "is_new": false,
       "watched_by": "4,2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "54/100",
         "reasoning": "按成长科技股的标准看：质量 54/100（营收 10年复合增速 26%），估值合理。普通公司，普通价。",
         "quant_score": 54,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 3.95,
         "is_active": true,
         "survey": {
@@ -6399,7 +6393,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6468,7 +6462,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -6905,17 +6899,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "—",
+        "moat": "10/100",
         "reasoning": "按未盈利成长股的标准看：质量 10/100（营收 6年复合增速 -14%），估值数据不足。质量偏弱。",
         "quant_score": 10,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 0.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6984,7 +6978,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.4,
         "is_active": false,
         "survey": {
@@ -7053,7 +7047,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7129,7 +7123,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 0.37,
         "is_active": false,
         "survey": {
@@ -7188,7 +7182,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
         "moat": "10/100",
@@ -7198,7 +7192,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -7257,17 +7251,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "52/100",
         "reasoning": "按成长科技股的标准看：质量 52/100（营收 6年复合增速 22%），估值便宜。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的-21%——赚的钱没真正进账户",
         "quant_score": 52,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 3.47,
         "is_active": true,
         "survey": {
@@ -7343,7 +7337,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.1,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7412,7 +7406,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 1.91,
         "is_active": false,
         "survey": {
@@ -7488,7 +7482,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 13.9,
         "score": 0.89,
         "is_active": false,
         "survey": {
@@ -7557,7 +7551,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.3,
+        "cache_age_hours": 47.8,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7633,7 +7627,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.9,
         "score": 0.76,
         "is_active": false,
         "survey": {
@@ -7702,7 +7696,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.8,
         "score": 0.87,
         "is_active": false,
         "survey": {
@@ -7771,7 +7765,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 14.0,
         "score": 0.18,
         "is_active": false,
         "survey": {
@@ -7840,7 +7834,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.14,
         "is_active": false,
         "survey": {
@@ -7899,17 +7893,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "74/100",
         "reasoning": "按成长科技股的标准看：质量 74/100（营收 10年复合增速 18%），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 74,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 0.21,
         "is_active": false,
         "survey": {
@@ -7978,7 +7972,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 0.3,
         "is_active": false,
         "survey": {
@@ -8047,7 +8041,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 1.85,
         "is_active": false,
         "survey": {
@@ -8123,7 +8117,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 2.19,
         "is_active": true,
         "survey": {
@@ -8199,7 +8193,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -8271,18 +8265,18 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "0/100",
         "reasoning": "按困境/重整股的标准看：质量 0/100（生存检查：近3年亏3年、负债率84%偏高），估值数据不足。生存堪忧。",
         "quant_score": 0,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 0.25,
+        "cache_age_hours": 0.2,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -8350,7 +8344,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.6,
         "score": 0.63,
         "is_active": false,
         "survey": {
@@ -8419,7 +8413,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 0.86,
         "is_active": false,
         "survey": {
@@ -8478,29 +8472,29 @@
       "is_new": false,
       "watched_by": "4,7",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "42/100",
         "reasoning": "按成熟价值股的标准看：质量 42/100（ROE 3.9%（巴菲特线 15%）），估值偏贵。普通公司，偏贵。",
         "quant_score": 42,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 2.62,
-        "is_active": true,
+        "cache_age_hours": 0.2,
+        "score": 0.33,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 12.3,
+          "change_pct": 6.6,
           "direction": "中性",
           "latest_short": 144.5,
-          "base_short": 128.7,
+          "base_short": 135.5,
           "meaningful": true
         }
       },
@@ -8557,7 +8551,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 3.21,
         "is_active": true,
         "survey": {
@@ -8975,7 +8969,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.3,
         "score": 2.35,
         "is_active": true,
         "survey": {
@@ -9044,7 +9038,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9113,7 +9107,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.7,
         "score": 0.53,
         "is_active": false,
         "survey": {
@@ -9182,7 +9176,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9251,7 +9245,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.3,
         "score": 0.4,
         "is_active": false,
         "survey": {
@@ -9320,7 +9314,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.6,
         "score": 4.58,
         "is_active": true,
         "survey": {
@@ -9404,18 +9398,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "—",
+        "moat": "53/100",
         "reasoning": "按成熟价值股的标准看：质量 53/100（ROE 12.1%（巴菲特线 15%）），估值贵。普通公司，太贵。",
         "quant_score": 53,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 3.09,
+        "cache_age_hours": 0.2,
+        "score": 3.02,
         "is_active": true,
         "survey": {
           "count_30d": 2,
@@ -9436,10 +9430,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 1.8,
+          "change_pct": 0.5,
           "direction": "中性",
           "latest_short": 88.0,
-          "base_short": 86.5,
+          "base_short": 87.5,
           "meaningful": true
         }
       },
@@ -9496,7 +9490,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.35,
         "is_active": false,
         "survey": {
@@ -9565,7 +9559,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -9624,17 +9618,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "56/100",
         "reasoning": "按成长科技股的标准看：质量 56/100（营收 10年复合增速 82%），估值合理。普通公司，普通价。\n⚠ 利润是正的，但经营现金流只有利润的-948%——赚的钱没真正进账户",
         "quant_score": 56,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 0.2,
         "score": 1.5,
         "is_active": false,
         "survey": {
@@ -9700,19 +9694,19 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "37/100",
         "reasoning": "按困境反转股的标准看：质量 37/100（恢复趋势：ROE 仍在恶化），估值便宜。便宜有便宜的道理，警惕价值陷阱。",
         "quant_score": 37,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 2.38,
-        "is_active": true,
+        "cache_age_hours": 0.2,
+        "score": 1.54,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
           "days_since_latest": 34,
@@ -9726,10 +9720,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 19.4,
+          "change_pct": 20.8,
           "direction": "中性",
           "latest_short": 50.8,
-          "base_short": 42.6,
+          "base_short": 42.1,
           "meaningful": true
         }
       },
@@ -9776,17 +9770,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "60/100",
         "reasoning": "按成长科技股的标准看：质量 60/100（营收 10年复合增速 38%），估值合理。普通公司，普通价。",
         "quant_score": 60,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 3.48,
         "is_active": true,
         "survey": {
@@ -9845,17 +9839,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "52/100",
         "reasoning": "按成熟价值股的标准看：质量 52/100（ROE 8.0%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。",
         "quant_score": 52,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 3.48,
         "is_active": true,
         "survey": {
@@ -9914,17 +9908,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "减持",
-        "moat": "—",
+        "moat": "30/100",
         "reasoning": "按成熟价值股的标准看：质量 30/100（ROE 2.5%（巴菲特线 15%）），估值偏贵。质量弱又不便宜。",
         "quant_score": 30,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 0.03,
         "is_active": false,
         "survey": {
@@ -9983,17 +9977,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "65/100",
         "reasoning": "按成熟价值股的标准看：质量 65/100（ROE 13.4%（巴菲特线 15%）），估值偏贵。普通公司，偏贵。",
         "quant_score": 65,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 1.02,
         "is_active": false,
         "survey": {
@@ -10062,7 +10056,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.3,
         "score": 5.0,
         "is_active": true,
         "survey": {
@@ -10140,7 +10134,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
         "moat": "30/100",
@@ -10150,7 +10144,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 2.6,
         "is_active": true,
         "survey": {
@@ -10216,7 +10210,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
         "moat": "30/100",
@@ -10226,7 +10220,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10295,7 +10289,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10364,7 +10358,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10423,7 +10417,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "减持",
         "moat": "12/100",
@@ -10433,7 +10427,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10502,7 +10496,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 2.08,
         "is_active": true,
         "survey": {
@@ -10571,7 +10565,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.1,
         "score": 4.23,
         "is_active": true,
         "survey": {
@@ -10647,7 +10641,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 13.9,
         "score": 3.17,
         "is_active": true,
         "survey": {
@@ -10723,7 +10717,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10792,7 +10786,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 2.08,
         "is_active": true,
         "survey": {
@@ -10851,18 +10845,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "62/100",
         "reasoning": "按成熟价值股的标准看：质量 62/100（ROE 16.0%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。",
         "quant_score": 62,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 6.0,
-        "score": 0.14,
+        "cache_age_hours": 0.2,
+        "score": 0.17,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -10870,10 +10864,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -2.9,
+          "change_pct": 1.8,
           "direction": "中性",
           "latest_short": 25.4,
-          "base_short": 26.2,
+          "base_short": 24.9,
           "meaningful": true
         }
       },
@@ -10930,7 +10924,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -10999,7 +10993,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 13.9,
         "score": 2.13,
         "is_active": true,
         "survey": {
@@ -11075,7 +11069,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 3.25,
         "is_active": true,
         "survey": {
@@ -11175,7 +11169,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.7,
         "score": 1.88,
         "is_active": false,
         "survey": {
@@ -11244,7 +11238,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 0.25,
         "is_active": false,
         "survey": {
@@ -11313,7 +11307,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 0.77,
         "is_active": false,
         "survey": {
@@ -11382,7 +11376,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 1.04,
         "is_active": false,
         "survey": {
@@ -11451,7 +11445,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 2.15,
         "is_active": true,
         "survey": {
@@ -11517,17 +11511,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "41/100",
         "reasoning": "按成长科技股的标准看：质量 41/100（营收 10年复合增速 22%），估值偏贵。普通公司，偏贵。",
         "quant_score": 41,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 1.21,
         "is_active": false,
         "survey": {
@@ -11596,7 +11590,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.3,
+        "cache_age_hours": 13.9,
         "score": 1.77,
         "is_active": false,
         "survey": {
@@ -11672,7 +11666,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 1.3,
         "is_active": false,
         "survey": {
@@ -11731,7 +11725,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
         "moat": "70/100",
@@ -11741,8 +11735,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 2.89,
+        "cache_age_hours": 0.2,
+        "score": 2.69,
         "is_active": true,
         "survey": {
           "count_30d": 1,
@@ -11757,10 +11751,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": -12.5,
+          "change_pct": 23.8,
           "direction": "中性",
           "latest_short": 19.6,
-          "base_short": 22.4,
+          "base_short": 15.9,
           "meaningful": true
         }
       },
@@ -11807,17 +11801,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "3/100",
         "reasoning": "按成熟价值股的标准看：质量 3/100（ROE 0.9%（巴菲特线 15%）），估值贵。又弱又贵。\n⚠ 利润是正的，但经营现金流只有利润的-307%——赚的钱没真正进账户",
         "quant_score": 3,
         "data_incomplete": 0,
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -11886,7 +11880,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.06,
         "is_active": false,
         "survey": {
@@ -11955,7 +11949,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 0.09,
         "is_active": false,
         "survey": {
@@ -12024,7 +12018,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 1.66,
         "is_active": false,
         "survey": {
@@ -12090,17 +12084,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "67/100",
         "reasoning": "按成熟价值股的标准看：质量 67/100（ROE 17.3%（巴菲特线 15%）），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 67,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 4.66,
         "is_active": true,
         "survey": {
@@ -12182,7 +12176,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -12241,18 +12235,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B+",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "81/100",
         "reasoning": "按成长科技股的标准看：质量 81/100（营收 10年复合增速 33%），估值合理。好公司，价格合理。",
         "quant_score": 81,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 0.12,
+        "cache_age_hours": 0.2,
+        "score": 0.33,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -12260,10 +12254,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -2.4,
+          "change_pct": -6.6,
           "direction": "中性",
           "latest_short": 14.4,
-          "base_short": 14.7,
+          "base_short": 15.4,
           "meaningful": true
         }
       },
@@ -12310,18 +12304,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "50/100",
         "reasoning": "按成熟价值股的标准看：质量 50/100（ROE 12.0%（巴菲特线 15%）），估值合理。普通公司，普通价。",
         "quant_score": 50,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 0.75,
+        "cache_age_hours": 0.2,
+        "score": 0.62,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -12329,10 +12323,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 15.0,
+          "change_pct": 12.5,
           "direction": "中性",
           "latest_short": 35.1,
-          "base_short": 30.5,
+          "base_short": 31.2,
           "meaningful": true
         }
       },
@@ -12379,29 +12373,29 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "18/100",
         "reasoning": "按成熟价值股的标准看：质量 18/100（ROE 2.8%（巴菲特线 15%）），估值贵。又弱又贵。\n⚠ 利润是正的，但经营现金流只有利润的-338%——赚的钱没真正进账户",
         "quant_score": 18,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 0.47,
-        "is_active": false,
+        "cache_age_hours": 0.2,
+        "score": 2.0,
+        "is_active": true,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": -9.4,
-          "direction": "中性",
+          "change_pct": 76.9,
+          "direction": "做空增加",
           "latest_short": 12.7,
-          "base_short": 14.0,
+          "base_short": 7.2,
           "meaningful": true
         }
       },
@@ -12458,7 +12452,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 14.0,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -12577,7 +12571,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
         "moat": "—",
@@ -12630,10 +12624,10 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "82/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 82/100（营收 4年复合增速 32%），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 82,
         "data_incomplete": 0,
@@ -12789,7 +12783,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
         "moat": "—",
@@ -12842,18 +12836,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "47/100",
         "reasoning": "按成熟价值股的标准看：质量 47/100（ROE 11.1%（巴菲特线 15%）），估值便宜。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的53%——赚的钱没真正进账户",
         "quant_score": 47,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 0.67,
+        "cache_age_hours": 0.2,
+        "score": 0.89,
         "is_active": false,
         "survey": {
           "count_30d": 1,
@@ -12868,10 +12862,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": -3.3,
+          "change_pct": 7.8,
           "direction": "中性",
           "latest_short": 14.2,
-          "base_short": 14.7,
+          "base_short": 13.2,
           "meaningful": true
         }
       },
@@ -12971,7 +12965,7 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "NR",
         "conclusion": "数据不足，暂不评级",
         "moat": "—",
@@ -12981,7 +12975,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13035,7 +13029,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.3,
         "score": 1.16,
         "is_active": false,
         "survey": {
@@ -13147,7 +13141,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "减持",
         "moat": "20/100",
@@ -13157,7 +13151,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 0.04,
         "is_active": false,
         "survey": {
@@ -13226,7 +13220,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 1.08,
         "is_active": false,
         "survey": {
@@ -13295,7 +13289,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.91,
         "is_active": false,
         "survey": {
@@ -13354,7 +13348,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
         "moat": "—",
@@ -13417,7 +13411,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13486,7 +13480,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 14.0,
         "score": 0.17,
         "is_active": false,
         "survey": {
@@ -13545,18 +13539,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "观察",
-        "moat": "—",
+        "moat": "34/100",
         "reasoning": "按困境反转股的标准看：质量 34/100（恢复趋势：ROE 仍在恶化），估值便宜。便宜有便宜的道理，警惕价值陷阱。",
         "quant_score": 34,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 6.0,
-        "score": 1.24,
+        "cache_age_hours": 0.2,
+        "score": 1.79,
         "is_active": false,
         "survey": {
           "count_30d": 1,
@@ -13571,10 +13565,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 14.8,
+          "change_pct": 22.0,
           "direction": "中性",
           "latest_short": 112.5,
-          "base_short": 98.1,
+          "base_short": 92.3,
           "meaningful": true
         }
       },
@@ -13621,17 +13615,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "80/100",
         "reasoning": "按银行的标准看：质量 80/100（ROE 13.1%（巴菲特线 15%）），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 80,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.5,
         "score": 4.05,
         "is_active": true,
         "survey": {
@@ -13731,7 +13725,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 13.9,
         "score": 0.37,
         "is_active": false,
         "survey": {
@@ -13790,18 +13784,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "60/100",
         "reasoning": "按成长科技股的标准看：质量 60/100（营收 9年复合增速 63%），估值便宜。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的-321%——赚的钱没真正进账户",
         "quant_score": 60,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 2.64,
+        "cache_age_hours": 0.2,
+        "score": 2.01,
         "is_active": true,
         "survey": {
           "count_30d": 1,
@@ -13816,10 +13810,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 8.1,
+          "change_pct": 10.2,
           "direction": "中性",
           "latest_short": 9.9,
-          "base_short": 9.2,
+          "base_short": 9.0,
           "meaningful": true
         }
       },
@@ -13866,18 +13860,18 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B+",
         "conclusion": "持有",
-        "moat": "—",
+        "moat": "89/100",
         "reasoning": "按成长科技股的标准看：质量 89/100（营收 10年复合增速 41%），估值数据不足。好公司，价格合理（价格数据不足，先不下买入结论）。",
         "quant_score": 89,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
-        "score": 2.95,
+        "cache_age_hours": 0.2,
+        "score": 3.25,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -13885,10 +13879,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 119.3,
+          "change_pct": 141.9,
           "direction": "做空增加",
           "latest_short": 42.3,
-          "base_short": 19.3,
+          "base_short": 17.5,
           "meaningful": true
         }
       },
@@ -13945,7 +13939,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.6,
+        "cache_age_hours": 14.2,
         "score": 1.07,
         "is_active": false,
         "survey": {
@@ -14014,7 +14008,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.1,
+        "cache_age_hours": 13.7,
         "score": 3.31,
         "is_active": true,
         "survey": {
@@ -14090,7 +14084,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.4,
+        "cache_age_hours": 14.0,
         "score": 2.55,
         "is_active": true,
         "survey": {
@@ -14159,7 +14153,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.1,
         "score": 0.62,
         "is_active": false,
         "survey": {
@@ -14228,7 +14222,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 47.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14297,7 +14291,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 6.36,
         "is_active": true,
         "survey": {
@@ -14381,7 +14375,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B+",
         "conclusion": "持有",
         "moat": "—",
@@ -14434,17 +14428,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "—",
+        "moat": "29/100",
         "reasoning": "按成熟价值股的标准看：质量 29/100（ROE 3.0%（巴菲特线 15%）），估值合理。质量偏弱。",
         "quant_score": 29,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.5,
         "score": 0.66,
         "is_active": false,
         "survey": {
@@ -14513,7 +14507,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.2,
         "score": 0.39,
         "is_active": false,
         "survey": {
@@ -14572,29 +14566,42 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "73/100",
         "reasoning": "按银行的标准看：质量 73/100（ROE 9.2%（巴菲特线 15%）），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 73,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 6.0,
-        "score": 2.0,
+        "cache_age_hours": 0.3,
+        "score": 4.22,
         "is_active": true,
         "survey": {
-          "count_30d": 0,
-          "days_since_latest": null,
-          "events": []
+          "count_30d": 2,
+          "days_since_latest": 6,
+          "events": [
+            {
+              "date": "2026-08-18",
+              "n_inst": 2,
+              "method": "路演活动,实地会议",
+              "is_specific": false
+            },
+            {
+              "date": "2026-08-17",
+              "n_inst": 1,
+              "method": "业绩说明会,实地会议",
+              "is_specific": false
+            }
+          ]
         },
         "short_selling": {
-          "change_pct": 202.5,
+          "change_pct": 190.7,
           "direction": "做空增加",
           "latest_short": 552.4,
-          "base_short": 182.6,
+          "base_short": 190.0,
           "meaningful": true
         }
       },
@@ -14651,7 +14658,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 48.0,
         "score": 3.16,
         "is_active": true,
         "survey": {
@@ -14727,7 +14734,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.1,
         "score": 2.91,
         "is_active": true,
         "survey": {
@@ -14832,17 +14839,17 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-22",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "—",
+        "moat": "27/100",
         "reasoning": "按成熟价值股的标准看：质量 27/100（ROE 0.2%（巴菲特线 15%）），估值数据不足。质量偏弱。",
         "quant_score": 27,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 0.68,
         "is_active": false,
         "survey": {
@@ -14906,7 +14913,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -14965,7 +14972,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
         "moat": "33/100",
@@ -14975,7 +14982,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 3.5,
         "is_active": true,
         "survey": {
@@ -15051,7 +15058,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 48.0,
         "score": 2.82,
         "is_active": true,
         "survey": {
@@ -15100,7 +15107,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
         "moat": "63/100",
@@ -15110,7 +15117,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 3.52,
         "is_active": true,
         "survey": {
@@ -15171,17 +15178,17 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "69/100",
         "reasoning": "按成长科技股的标准看：质量 69/100（营收 10年复合增速 28%），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 69,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 2.1,
         "is_active": true,
         "survey": {
@@ -15263,7 +15270,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 1.38,
         "is_active": false,
         "survey": {
@@ -15312,7 +15319,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 3.79,
         "is_active": true,
         "survey": {
@@ -15378,7 +15385,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "46/100",
@@ -15388,7 +15395,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 1.53,
         "is_active": false,
         "survey": {
@@ -15442,7 +15449,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
         "moat": "32/100",
@@ -15452,11 +15459,11 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 6.0,
-        "score": 4.07,
+        "cache_age_hours": 0.3,
+        "score": 3.94,
         "is_active": true,
         "survey": {
-          "count_30d": 12,
+          "count_30d": 11,
           "days_since_latest": 18,
           "events": [
             {
@@ -15492,10 +15499,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 14.1,
+          "change_pct": 18.9,
           "direction": "中性",
           "latest_short": 549.4,
-          "base_short": 481.3,
+          "base_short": 462.0,
           "meaningful": true
         }
       },
@@ -15552,7 +15559,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 48.0,
         "score": 1.18,
         "is_active": false,
         "survey": {
@@ -15606,7 +15613,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 4.09,
         "is_active": true,
         "survey": {
@@ -15682,7 +15689,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 0.83,
         "is_active": false,
         "survey": {
@@ -15741,7 +15748,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "11/100",
@@ -15751,7 +15758,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.5,
         "score": 0.44,
         "is_active": false,
         "survey": {
@@ -15810,7 +15817,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "50/100",
@@ -15820,7 +15827,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.5,
         "score": 3.65,
         "is_active": true,
         "survey": {
@@ -15902,7 +15909,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 39.4,
+        "cache_age_hours": 48.0,
         "score": 0.4,
         "is_active": false,
         "survey": {
@@ -15961,7 +15968,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "49/100",
@@ -15971,7 +15978,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16040,7 +16047,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 0.35,
         "is_active": false,
         "survey": {
@@ -16089,7 +16096,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "58/100",
@@ -16099,8 +16106,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 6.0,
-        "score": 1.22,
+        "cache_age_hours": 0.3,
+        "score": 0.01,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -16108,10 +16115,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 24.4,
+          "change_pct": 0.2,
           "direction": "中性",
           "latest_short": 6.0,
-          "base_short": 4.8,
+          "base_short": 6.0,
           "meaningful": true
         }
       },
@@ -16168,7 +16175,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.3,
         "score": 0.84,
         "is_active": false,
         "survey": {
@@ -16227,7 +16234,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "C",
         "conclusion": "减持",
         "moat": "57/100",
@@ -16237,7 +16244,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16296,17 +16303,17 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-22",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "—",
+        "moat": "18/100",
         "reasoning": "按困境反转股的标准看：质量 18/100（恢复趋势：ROE 仍在恶化），估值贵。又弱又贵。",
         "quant_score": 18,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.8,
+        "cache_age_hours": 14.4,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -16396,7 +16403,7 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "14/100",
@@ -16406,8 +16413,8 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 6.0,
-        "score": 0.27,
+        "cache_age_hours": 0.3,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -16460,7 +16467,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.2,
+        "cache_age_hours": 13.8,
         "score": 1.5,
         "is_active": false,
         "survey": {
@@ -16536,7 +16543,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.7,
+        "cache_age_hours": 14.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -16595,17 +16602,17 @@
       "is_new": true,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "—",
+        "moat": "69/100",
         "reasoning": "按成熟价值股的标准看：质量 69/100（ROE 14.0%（巴菲特线 15%）），估值便宜。好公司 + 便宜，难得。",
         "quant_score": 69,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.9,
+        "cache_age_hours": 14.4,
         "score": 2.06,
         "is_active": true,
         "survey": {
@@ -16681,7 +16688,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 5.5,
+        "cache_age_hours": 14.0,
         "score": 5.27,
         "is_active": true,
         "survey": {
