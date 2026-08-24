@@ -260,3 +260,41 @@ def test_watchdog_checks_artifact_not_task_status():
     body = open(os.path.join(WF, 'watchdog-svc.yml')).read()
     assert 'snapshot' in body.lower(), "看门狗应检查快照产物"
     assert 'gh workflow run' in body, "看门狗要能补跑"
+
+
+def test_caller_grants_at_least_what_each_callee_declares():
+    """可重用工作流声明的 GITHUB_TOKEN 权限**不能超过调用方**，超了整个 run
+    直接 startup_failure —— 不进任何 job、没有日志、REST API 也读不到原因，
+    actionlint 同样查不出来（它只管语法）。
+
+    2026-08-25 首次实跑就栽在这：digest-svc 声明 contents: write，而编排器
+    用的是仓库默认只读权限。排查花的时间远超写这条测试。
+    """
+    RANK = {'none': 0, 'read': 1, 'write': 2}
+    d, _ = _load(ORCHESTRATOR)
+    caller_default = d.get('permissions')
+    for job, svc in CHAIN:
+        cd, _ = _load(svc)
+        for jname, cjob in (cd.get('jobs') or {}).items():
+            need = cjob.get('permissions') or {}
+            if not need:
+                continue
+            granted = d['jobs'][job].get('permissions') or caller_default or {}
+            for scope, level in need.items():
+                have = (granted or {}).get(scope, 'none')
+                assert RANK.get(str(have), 0) >= RANK.get(str(level), 0), (
+                    f"{svc}:{jname} 需要 {scope}: {level}，但编排器的 {job} 只给了 "
+                    f"{scope}: {have} —— 整个 run 会 startup_failure，且查不出原因")
+
+
+def test_no_stale_write_permissions_left_over():
+    """桥接删掉后，radar/market 的 `actions: write` 就是遗留物。
+    权限只该在真正用得到的那一棒上 —— 多给一分，调用方就得跟着多放开一分。"""
+    for _job, svc in CHAIN:
+        if svc == 'digest-svc.yml':
+            continue          # 它要 commit 快照，确实需要 contents: write
+        cd, _ = _load(svc)
+        for jname, cjob in (cd.get('jobs') or {}).items():
+            perms = cjob.get('permissions') or {}
+            assert 'write' not in str(perms.values()), \
+                f"{svc}:{jname} 还留着写权限 {perms} —— 桥接已删，用不到了"

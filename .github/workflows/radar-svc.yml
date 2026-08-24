@@ -40,9 +40,6 @@ jobs:
     # workflow_call 下 github.event_name 读到的是**调用方**的事件（实测），
     # 原来那个 if 恒真，留着只会误导。
     timeout-minutes: 90
-    permissions:
-      contents: read
-      actions: write        # US-150 桥接：需要 dispatch market-svc
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PYTHONUNBUFFERED: "1"

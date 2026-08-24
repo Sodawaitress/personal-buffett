@@ -52,9 +52,6 @@ on:
 jobs:
   market:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write        # US-169：桥接下游需要
     # US-170：失败传播语义搬到 pipeline.yml 的 `if: ${{ !cancelled() }}`——
     # workflow_call 下 github.event_name 读到的是**调用方**的事件（实测），
     # 原来那个 if 恒真，留着只会误导。
