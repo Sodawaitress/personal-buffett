@@ -57,6 +57,36 @@ def _get_all_watchlist_rows() -> list:
     return out
 
 
+PICKS_PATH = "output/picks_open.json"
+
+
+def _load_open_picks() -> list:
+    """读 Routine 写的推荐台账（本地文件，随仓库走）。缺失/损坏一律返回 []。"""
+    import os
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "output", "picks_open.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _pick_reversals(stocks: list) -> list:
+    """算出已推荐股票里信号反转的那些。任何异常都返回 [] —— 这是附加信息，
+    不能让它把快照构建搞挂（快照没了，妈妈那封信就没了）。"""
+    try:
+        from scripts.pick_reversal import detect_reversals
+        picks = _load_open_picks()
+        if not picks:
+            return []
+        return detect_reversals(picks, stocks)
+    except Exception as e:
+        logger.warning("[daily_digest] pick_reversals 计算失败: %s", e)
+        return []
+
+
 def _build_snapshot() -> dict:
     """构建全平台自选股完整快照（所有用户去重合并）。"""
     from radar_app.data.analysis import get_latest_analysis
@@ -214,6 +244,12 @@ def _build_snapshot() -> dict:
         "stocks_with_fresh_price": len(fresh_prices),
         "stocks_total": len(stocks),
         "price_signature": price_signature,
+        # US-166：已推荐股票的信号反转。**在代码里算好塞进快照**，
+        # 而不是写在 CLAUDE_ROUTINE 里让 Routine 每天记得回头查 ——
+        # 本仓所有沉默失败都证明「靠自觉」不成立。
+        # 事故：8/19 推荐小商品城「空头退场，最干净的信号组合」，
+        # 8/22 融券翻转成 +118%，中间没有任何一封信提醒过。
+        "pick_reversals": _pick_reversals(stocks),
         "stocks": stocks,
     }
 
