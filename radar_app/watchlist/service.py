@@ -51,6 +51,16 @@ def build_watchlist_context(user_id):
     stocks.sort(key=lambda s: s.get("is_poor", False))
 
     markets = sorted({s["market"] for s in stocks if s.get("market")})
+
+    # US-168：等级按钮由**用户自己实际持有的等级**生成，不再写死一串。
+    # 写死的后果是两头出错：A+ 是幽灵按钮（生产 247 只里一只都没有），
+    # 而 C+（14 只）和 NR（没分析过的）根本筛不出来。
+    # 跟 wl_markets 同一个模式 —— 按钮只会出现在筛得出东西的时候。
+    from radar_app.watchlist.presenter import GRADE_UNRATED, grade_rank
+    grades = {(s.get("grade") or "").strip().upper() or GRADE_UNRATED
+              for s in stocks}
+    wl_grades = sorted(grades - {"—"},
+                       key=lambda g: (grade_rank(g), g))
     return {
         "stocks": stocks,
         "holding": [s for s in stocks if s["status"] == "holding"],
@@ -59,6 +69,7 @@ def build_watchlist_context(user_id):
         "has_cn_stocks": any(s.get("market") == "cn" for s in stocks),
         "freshest_analysis_date": freshest,
         "wl_markets": markets,
+        "wl_grades": wl_grades,
         "notifications": get_active_notifications(user_id),
         "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),
         "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),

@@ -14,6 +14,7 @@ from radar_app.data.jobs import create_job, update_job
 from radar_app.data.users import get_push_settings
 from radar_app.shared.auth import login_required
 from radar_app.shared.runtime import CN_TZ
+from radar_app.watchlist.presenter import GRADE_UNRATED
 from radar_app.shared.startup import ensure_db_ready
 from radar_app.watchlist.service import (
     add_stock_and_start_analysis,
@@ -209,14 +210,24 @@ def register_watchlist_routes(app):
         market = request.args.get('market')
         grade  = request.args.get('grade')
 
+        # US-168：原来这里是
+        #     LEFT JOIN (SELECT code, grade, MAX(id) AS id
+        #                FROM analysis_results GROUP BY code) a
+        # grade 既不在 GROUP BY 里也没被聚合。SQLite 容忍（随便挑一行，
+        # 还不保证是 MAX(id) 那行），**Postgres 直接报错**：
+        #     column "analysis_results.grade" must appear in the GROUP BY clause
+        # 而这个 LEFT JOIN 是无条件拼进来的 —— 所以生产上**每一次筛选**
+        # （包括市场筛选）都是 500。前端 fetch 没有错误处理，异常一抛就静默，
+        # 按钮点了跟没点一样。本地 SQLite 测不出来，是 audit-svc 在生产上探到的。
+        #
+        # 改成按主键关联最新一行：两种数据库行为一致，且真的取到 MAX(id)。
         query = """
             SELECT w.stock_code
             FROM user_watchlist w
             JOIN stocks s ON s.code = w.stock_code
-            LEFT JOIN (
-                SELECT code, grade, MAX(id) AS id
-                FROM analysis_results GROUP BY code
-            ) a ON a.code = w.stock_code
+            LEFT JOIN analysis_results a
+              ON a.id = (SELECT MAX(r.id) FROM analysis_results r
+                         WHERE r.code = w.stock_code)
             WHERE 1=1
               AND w.user_id  = :user_id
               AND w.removed_at IS NULL
@@ -226,12 +237,21 @@ def register_watchlist_routes(app):
             query += " AND s.market = :market"
             params["market"] = market
         if grade:
-            query += " AND UPPER(COALESCE(a.grade,'')) = :grade"
-            params["grade"] = grade.upper()
+            if grade.upper() == GRADE_UNRATED:
+                # 「NR」= 还没分析过，条件是空/NULL，不是等于字面量 'NR'
+                query += " AND COALESCE(a.grade,'') = ''"
+            else:
+                query += " AND UPPER(COALESCE(a.grade,'')) = :grade"
+                params["grade"] = grade.upper()
 
         from radar_app.data.core import get_conn
-        with get_conn() as c:
-            rows = list(c.execute(query, params))
+        try:
+            with get_conn() as c:
+                rows = list(c.execute(query, params))
+        except Exception as e:
+            # 静默 500 正是这个 bug 藏了这么久的原因
+            app.logger.exception("watchlist filter failed")
+            return jsonify({"error": str(e)[:200], "codes": []}), 500
         return jsonify({"codes": [r["stock_code"] for r in rows]})
 
     @app.route('/api/precursor-scan', methods=['POST'])

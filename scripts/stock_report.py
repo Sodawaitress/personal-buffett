@@ -3,13 +3,8 @@
 import os
 import db as _db
 
-_GRADE_ORDER = ["A+", "A", "B+", "B", "B-", "C+", "C", "D", "D-"]
-
-def _grade_rank(g):
-    try:
-        return _GRADE_ORDER.index(g)
-    except ValueError:
-        return 99
+# US-168：等级顺序全站只有一份，见 radar_app/watchlist/presenter.py
+from radar_app.watchlist.presenter import grade_rank as _grade_rank
 
 def _stock_name(code):
     s = _db.get_stock(code) or {}

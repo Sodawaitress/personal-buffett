@@ -6764,3 +6764,118 @@ CLAUDE.md 有条强制规矩：「遇到新需求或新问题时，**必须先�
   写出来只会被当成精确的东西信
 - 不回补历史价格来提高判定率：生产 `stock_prices` 每只约 100 行够用，
   本地稀疏是本地库的问题，不值得为它改设计
+
+---
+
+## US-168 · 「这些筛选真的有用吗」—— 生产上一个都没用
+
+> **实现状态（2026-08-25）**：✅ 已实现。
+
+### 用户的问题
+
+看着自选页那排排序和筛选按钮：「你看怎么样做我们这个排序不乱真的有用，
+这些筛选，我们这次来理理所有的这个排序规则」。
+
+查下来第一条就是：**筛选在生产上全是 500。**
+
+### RC1：一句裸列 GROUP BY，本地绿灯、生产爆炸
+
+```sql
+LEFT JOIN (SELECT code, grade, MAX(id) AS id
+           FROM analysis_results GROUP BY code) a
+```
+
+`grade` 既不在 `GROUP BY` 里也没被聚合。SQLite 容忍（随便挑一行，
+**还不保证是 `MAX(id)` 那行**），Postgres 直接报错：
+
+```
+column "analysis_results.grade" must appear in the GROUP BY clause
+or be used in an aggregate function
+```
+
+而这个 `LEFT JOIN` 是**无条件**拼进基础 query 的 —— 所以市场筛选跟着一起死。
+前端 `await (await fetch(...)).json()` 没有 try/catch，异常一抛函数就断在
+半路：**按钮点了毫无反应，没有报错、没有日志、没人知道坏了。**
+
+本地怎么测都是绿的。是 `audit-svc` 在生产上探到的 —— 又一次印证本会话的
+硬规矩：**数据结论必须跑在生产，别拿本地 SQLite 替 Neon 下判断**
+（本会话已因此误判过 5 个数据源为「陈旧」）。
+
+改成按主键关联最新一行，两种数据库行为一致，且真的取到 `MAX(id)`：
+
+```sql
+LEFT JOIN analysis_results a
+  ON a.id = (SELECT MAX(r.id) FROM analysis_results r WHERE r.code = w.stock_code)
+```
+
+### RC2：三套等级词汇表
+
+| 位置 | 词汇表 |
+|---|---|
+| `watchlist.html` 筛选按钮 | `A+ A B+ B B- C D` ← 有 A+、**缺 C+** |
+| `presenter.GRADE_ORDER` | `A B+ B B- C+ C D` ← **缺 A+** |
+| `stock_report._GRADE_ORDER` | `A+ A B+ B B- C+ C D D-` ← 第三套 |
+
+`A+` 有按钮但 `GRADE_ORDER` 不认识 → `grade_sort=99` → **真出现 A+ 时，
+「按等级排序」会把它排到最底。** 比幽灵按钮更糟。
+
+生产 247 只实测分布：`C 61 · B- 54 · D 38 · B 30 · A 27 · B+ 20 · C+ 14 · NR 3`
+—— **一只 A+ 都没有**，那个按钮从来没筛出过任何东西；而 C+ 的 14 只
+和没分析过的 NR 根本没有入口。
+
+现在全站只有一份 `GRADE_ORDER`，`stock_report` 直接 import。
+
+### RC3：按钮写死
+
+写死的后果必然两头出错 —— 多出幽灵、漏掉真实。改成**由用户自己实际
+持有的等级生成**（跟 `wl_markets` 同一个模式）：按钮只在筛得出东西时出现。
+
+### RC4：等级筛选被市场筛选连坐
+
+整条筛选栏包在 `{% if wl_markets | length > 1 %}` 里。
+**只持有 A 股的用户（妈妈就是）从来没见过等级按钮。**
+等级筛选跟「有没有多个市场」毫无关系。两组现在各自独立出现。
+
+### RC5：筛选和搜索互相覆盖
+
+两者各自直接写 `el.style.display`，谁后跑谁覆盖谁：先按 A 级筛、再搜个
+名字，筛选就没了；反过来一样。现在各自只维护自己的状态，
+`applyVisibility()` 取交集 —— 可见性只有这一个出口。
+
+### RC6：涨跌幅排序把缺价当 0
+
+`data-change="{{ s.change_pct or 0 }}"` —— 拿不到价的股票被写成 0%，
+排序时夹在真实的 +2% 和 −3% 中间，**看起来像「今天没动」**。
+现在缺价渲染成空串，排序时沉底。
+
+### Scope
+
+- `radar_app/watchlist/routes.py`：查询改主键关联；筛选失败返回 500 + 错误
+  文本，不再静默
+- `radar_app/watchlist/presenter.py`：唯一的 `GRADE_ORDER` + `grade_rank()`
+  + `GRADE_UNRATED`
+- `scripts/stock_report.py`：删掉自己那套，import 共用的
+- `radar_app/watchlist/service.py`：`wl_grades` 由用户数据生成
+- `templates/watchlist.html`：按钮改数据驱动；等级组脱离市场连坐；
+  `applyVisibility()` 单一出口；涨跌幅排序缺价沉底；fetch 加 try/catch
+- `scripts/audit_data_freshness.py`：常驻探针 —— 等级真实分布 +
+  筛选查询在生产实跑
+
+### AC
+- [x] `grade=C+`、`grade=NR` 筛得出来（以前不可能）
+- [x] `A+` 不再出现在按钮里（生产 0 只）
+- [x] `A+` 真出现时排最前，不是最底
+- [x] 只有 A 股的用户也能看到等级筛选
+- [x] 先筛后搜、先搜后筛，两者叠加而不是互相覆盖
+- [x] 清筛选不会把搜索一起清掉
+- [x] 缺价的股票排涨跌幅时沉底，不冒充 0%
+- [x] 筛选接口挂了会说出来（前端 console + 按钮文案）
+- [x] 全站只剩一份等级词汇表（有测试断言另外两份已删）
+- [x] audit-svc 常驻探针：筛选查询在生产实跑
+
+### 不做
+- **不加行业分区**：用户问过「是不是不同行业也该有不同的分区」。分区会把
+  一张表切碎成十几块，每块两三只，反而更难比。行业更适合做成**第三组
+  筛选按钮**（和市场、等级并列），但那是独立一条，等这轮修完再谈
+- 不把排序改成服务端：当前规模（单用户几十到两百只）前端排序足够，
+  服务端排序要引入分页，代价远大于收益

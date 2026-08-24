@@ -18,7 +18,23 @@ _COMPANY_TYPE_LABEL = {
     "other":           "其他",
 }
 
-GRADE_ORDER = {"A": 1, "B+": 2, "B": 3, "B-": 4, "C+": 5, "C": 6, "D": 7}
+# 全站唯一的等级顺序（US-168）。此前有三套：
+#   watchlist.html 筛选按钮  ['A+','A','B+','B','B-','C','D']   ← 有 A+、缺 C+
+#   这里的 GRADE_ORDER       {A,B+,B,B-,C+,C,D}                 ← 缺 A+
+#   stock_report._GRADE_ORDER [A+,A,B+,B,B-,C+,C,D,D-]          ← 第三套
+# 后果：A+ 有按钮但这里不认识 → grade_sort=99 → 真出了 A+ 会被排到最底。
+# 生产 247 只实测分布：C 61 · B- 54 · D 38 · B 30 · A 27 · B+ 20 · C+ 14 · NR 3
+# （一只 A+ 都没有 —— 那个按钮从来没筛出过东西。）
+GRADE_ORDER = {"A+": 0, "A": 1, "B+": 2, "B": 3, "B-": 4,
+               "C+": 5, "C": 6, "D": 7, "D-": 8}
+
+# 没分析过的股票（grade 为空）统一叫 NR，排在所有等级之后
+GRADE_UNRATED = "NR"
+
+
+def grade_rank(g):
+    """等级 → 序号。未知等级排最后，绝不排前面。"""
+    return GRADE_ORDER.get((g or "").strip().upper(), 99)
 CONCLUSION_ORDER = {"买入": 1, "持有": 2, "观察": 3, "减持": 4, "卖出": 5}
 
 
@@ -39,7 +55,7 @@ def present_watchlist_stock(row, snapshot, avg_sentiment=None):
         "price": snapshot["price"].get("price"),
         "change_pct": snapshot["price"].get("change_pct"),
         "grade": grade or "—",
-        "grade_sort": GRADE_ORDER.get(grade, 99),
+        "grade_sort": grade_rank(grade),
         "is_poor": grade in ("D", "D-"),  # 差评沉底（US-125）
         "conclusion": conclusion,
         "conclusion_sort": CONCLUSION_ORDER.get(conclusion, 99),

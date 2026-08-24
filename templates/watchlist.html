@@ -79,16 +79,26 @@
            会出现「筛了 A股 却排出港美股」。 #}
         <button class="wl-sort-pill"        data-sort="score"      onclick="setSortPill(this,'score')">🏆 {{ t.wl_sort_score }}</button>
       </div>
-      {% if wl_markets | length > 1 %}
+      {# US-168：等级筛选原本被包在 {% if wl_markets|length > 1 %} 里 ——
+         只持有 A股 的用户（大多数）根本看不到等级按钮，等级筛选跟「有没有
+         多个市场」毫无关系，是被市场筛选连坐了。现在两组各自独立出现。
+         按钮也不再写死，由 wl_grades / wl_markets 从用户自己的股票生成。 #}
+      {% if wl_markets | length > 1 or wl_grades | length > 1 %}
       <div class="wl-sf-group" id="wl-filter-bar">
         <span class="wl-sort-label">{{ t.wl_filter_label }}</span>
+        {% if wl_markets | length > 1 %}
         {% for m in wl_markets %}
         <button class="wl-filter-chip" data-key="market" data-val="{{ m }}" onclick="applyWlFilter('market','{{ m }}',this)">{{ m | upper }}</button>
         {% endfor %}
+        {% endif %}
+        {% if wl_markets | length > 1 and wl_grades | length > 1 %}
         <span class="wl-filter-sep">|</span>
-        {% for g in ['A+','A','B+','B','B-','C','D'] %}
+        {% endif %}
+        {% if wl_grades | length > 1 %}
+        {% for g in wl_grades %}
         <button class="wl-filter-chip" data-key="grade" data-val="{{ g }}" onclick="applyWlFilter('grade','{{ g }}',this)">{{ g }}</button>
         {% endfor %}
+        {% endif %}
         <button class="wl-filter-clear hidden" id="wl-filter-clear" onclick="clearWlFilters()">✕ {{ t.wl_filter_clear }}</button>
       </div>
       {% endif %}
@@ -104,7 +114,7 @@
        data-name="{{ s.name }}"
        data-grade-sort="{{ s.grade_sort }}"
        data-conclusion-sort="{{ s.conclusion_sort }}"
-       data-change="{{ s.change_pct or 0 }}"
+       data-change="{{ s.change_pct if s.change_pct is not none else '' }}"
        data-date="{{ s.analysis_date or '' }}"
        data-score="{{ s.quant_score if s.quant_score is not none else -1 }}"
        data-rank="{{ s.rank or 0 }}"
@@ -301,7 +311,7 @@
             data-name="{{ s.name }}"
             data-grade-sort="{{ s.grade_sort }}"
             data-conclusion-sort="{{ s.conclusion_sort }}"
-            data-change="{{ s.change_pct or 0 }}"
+            data-change="{{ s.change_pct if s.change_pct is not none else '' }}"
             data-date="{{ s.analysis_date or '' }}"
             data-score="{{ s.quant_score if s.quant_score is not none else -1 }}"
             data-rank="{{ s.rank or 0 }}"
@@ -625,28 +635,75 @@ async function applyWlFilter(key, val, btn) {
   if (clear) clear.classList.toggle('hidden', Object.keys(_wlFilters).length === 0);
 
   if (Object.keys(_wlFilters).length === 0) {
-    document.querySelectorAll('.holding-card, .wl-list-row').forEach(el => el.style.display = '');
+    _wlAllow = null;
+    applyVisibility();
     return;
   }
   const qs = new URLSearchParams(_wlFilters).toString();
-  const { codes } = await (await fetch('/api/watchlist/filter?' + qs)).json();
-  const allow = new Set(codes);
-  document.querySelectorAll('.holding-card').forEach(el => { el.style.display = allow.has(el.dataset.code) ? '' : 'none'; });
-  document.querySelectorAll('.wl-list-row').forEach(el => { el.style.display = allow.has(el.dataset.code) ? '' : 'none'; });
+  try {
+    const res = await fetch('/api/watchlist/filter?' + qs);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    _wlAllow = new Set(data.codes || []);
+  } catch (err) {
+    // US-168：以前这里没有 try/catch。生产上这个接口一直 500（GROUP BY
+    // 在 Postgres 报错），异常一抛函数就死在半路，按钮点了毫无反应，
+    // 谁也不知道坏了。现在坏了要说出来。
+    console.error('筛选失败', err);
+    _wlAllow = null;
+    const clr = document.getElementById('wl-filter-clear');
+    if (clr) clr.textContent = '筛选暂时不可用 ✕';
+  }
+  applyVisibility();
+}
+
+// ── 可见性只有这一个出口 ───────────────────────────────
+// US-168：筛选和搜索原本各自直接写 el.style.display，谁后跑谁覆盖谁 ——
+// 先按 A 级筛、再搜个名字，筛选就没了；反过来也一样。
+// 现在两者各自只维护自己的状态，显示与否由这里统一取交集。
+let _wlAllow = null;      // null = 没有筛选；Set = 允许的 code
+let _wlSearch = '';
+
+function _matchSearch(el) {
+  if (!_wlSearch) return true;
+  return (el.dataset.name || '').toLowerCase().includes(_wlSearch)
+      || (el.dataset.code || '').toLowerCase().includes(_wlSearch);
+}
+
+function applyVisibility() {
+  let visibleRows = 0;
+  document.querySelectorAll('.holding-card, .wl-list-row').forEach(el => {
+    const ok = (_wlAllow === null || _wlAllow.has(el.dataset.code)) && _matchSearch(el);
+    el.style.display = ok ? '' : 'none';
+    if (ok && el.classList.contains('wl-list-row')) visibleRows++;
+  });
+  // 「没有匹配」只在真的筛过/搜过的时候说；本来就空的自选表不该显示它
+  const active = _wlSearch || _wlAllow !== null;
+  const emptyEl = document.getElementById('wl-list-empty');
+  if (emptyEl) emptyEl.style.display = (active && visibleRows === 0) ? '' : 'none';
 }
 
 function clearWlFilters() {
   _wlFilters = {};
+  _wlAllow = null;
   document.querySelectorAll('.wl-filter-chip').forEach(b => b.classList.remove('active'));
   document.getElementById('wl-filter-clear')?.classList.add('hidden');
-  document.querySelectorAll('.holding-card, .wl-list-row').forEach(el => el.style.display = '');
+  applyVisibility();   // 清筛选不该把搜索也一起清掉
 }
 
 function sortCards(by) {
   const cmp = (a, b) => {
     if (by === 'grade')      return (+(a.dataset.gradeSort||99))      - (+(b.dataset.gradeSort||99));
     if (by === 'conclusion') return (+(a.dataset.conclusionSort||99)) - (+(b.dataset.conclusionSort||99));
-    if (by === 'change')     return (+(b.dataset.change||0))          - (+(a.dataset.change||0));
+    // US-168：原来是 +(dataset.change||0) —— 拿不到价的股票被当成 0%，
+    // 夹在真实的 +2% 和 -3% 中间，看起来像「今天没动」。缺价应该沉底。
+    if (by === 'change') {
+      const ca = a.dataset.change, cb = b.dataset.change;
+      const na = ca === '' || ca == null, nb = cb === '' || cb == null;
+      if (na !== nb) return na ? 1 : -1;
+      if (na && nb) return 0;
+      return (+cb) - (+ca);
+    }
     if (by === 'date')       return (b.dataset.date||'').localeCompare(a.dataset.date||'');
     // US-159：质量分降序。无分(-1)沉底，同分按名次稳定
     if (by === 'score') {
@@ -679,21 +736,10 @@ function setSortPill(btn, by) {
 
 // ── 搜索过滤 ─────────────────────────────────────────
 function filterBySearch(q) {
-  const norm = q.trim().toLowerCase();
+  _wlSearch = q.trim().toLowerCase();
   const clear = document.getElementById('wl-search-clear');
-  if (clear) clear.style.display = norm ? '' : 'none';
-  let visibleRows = 0;
-  document.querySelectorAll('.holding-card').forEach(card => {
-    const match = !norm || (card.dataset.name||'').toLowerCase().includes(norm) || (card.dataset.code||'').toLowerCase().includes(norm);
-    card.style.display = match ? '' : 'none';
-  });
-  document.querySelectorAll('.wl-list-row').forEach(row => {
-    const match = !norm || (row.dataset.name||'').toLowerCase().includes(norm) || (row.dataset.code||'').toLowerCase().includes(norm);
-    row.style.display = match ? '' : 'none';
-    if (match) visibleRows++;
-  });
-  const emptyEl = document.getElementById('wl-list-empty');
-  if (emptyEl) emptyEl.style.display = (norm && visibleRows === 0) ? '' : 'none';
+  if (clear) clear.style.display = _wlSearch ? '' : 'none';
+  applyVisibility();
 }
 function clearSearch() {
   const inp = document.getElementById('wl-search');

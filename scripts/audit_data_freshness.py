@@ -399,12 +399,23 @@ def audit_watchlist_filter(conn, existing):
     except Exception as e:
         out["grades_error"] = str(e)[:200]
 
-    # 现役子查询能不能跑
+    # 现役筛选查询能不能在生产真的跑（US-168 修复后的形状）。
+    # 旧形状 SELECT code, grade, MAX(id) ... GROUP BY code 在 Postgres 直接报
+    # GroupingError，而本地 SQLite 一路绿灯 —— 这条探针就是为了不再重演。
     try:
-        _rows(conn, "SELECT code, grade, MAX(id) AS id FROM analysis_results GROUP BY code")
-        out["legacy_groupby"] = "OK"
+        _rows(conn, """
+            SELECT w.stock_code FROM user_watchlist w
+            JOIN stocks s ON s.code = w.stock_code
+            LEFT JOIN analysis_results a
+              ON a.id = (SELECT MAX(r.id) FROM analysis_results r
+                         WHERE r.code = w.stock_code)
+            WHERE w.removed_at IS NULL
+              AND UPPER(COALESCE(a.grade,'')) = :g
+            LIMIT 5
+        """, g="A")
+        out["filter_query"] = "OK"
     except Exception as e:
-        out["legacy_groupby"] = "FAILS: " + str(e).split("\n")[0][:160]
+        out["filter_query"] = "FAILS: " + str(e).split("\n")[0][:160]
     return out
 
 
@@ -543,7 +554,9 @@ def main():
             print(f"    {g:4} {n:4} 只")
         if wl_filter.get("grades_error"):
             print(f"    等级分布查询失败: {wl_filter['grades_error']}")
-        print(f"  现役 GROUP BY 子查询: {wl_filter.get('legacy_groupby')}")
+        print(f"  筛选查询实跑: {wl_filter.get('filter_query')}")
+        if str(wl_filter.get("filter_query", "")).startswith("FAILS"):
+            print(f"  ⚠️  自选页所有筛选都是 500（前端静默失败，按钮点了没反应）")
 
     bad = [t for t in tables if t["status"] in ("EMPTY", "STALE", "ERROR", "MISSING")]
     print(f"\n共 {len(tables)} 张表，{len(bad)} 张需要关注\n")
