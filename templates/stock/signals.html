@@ -73,6 +73,30 @@
           </div>
           {% endfor %}
         </div>
+        {# US-167：调研之后发生了什么。用户原话：「机构接连两个月调研的红柱子，
+           但是它的股价还是在跌，说明调研到最后并不值得机构买」——
+           调研是注意力信号不是方向信号，光看柱子高会读成无条件利好。 #}
+        {% if survey_followthrough and survey_followthrough.get('headline') %}
+        {% set ft = survey_followthrough %}
+        <div class="svft svft-{{ ft.get('direction') or 'unknown' }}">
+          <div class="svft-head">{{ t.svft_title }}</div>
+          <div class="svft-line">{{ ft.headline }}</div>
+          {% if ft.events %}
+          <div class="svft-rows">
+            {% for e in ft.events[:4] %}
+            <div class="svft-row">
+              <span class="svft-date mono">{{ e.date[5:] }}</span>
+              <span class="svft-n">{{ e.n_inst }}{{ t.sigctx_n_inst }}{% if e.is_specific %} · {{ t.svft_specific }}{% endif %}</span>
+              <span class="svft-out svft-out-{{ e.outcome or 'pending' }}">{{ e.label }}{% if e.pct is not none %} {{ '%+.1f'|format(e.pct) }}%{% endif %}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if ft.get('confidence') == 'low' %}
+          <div class="svft-caveat">{{ t.svft_low_conf }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
         <div class="sigctx-evidence"><span class="sigctx-src">{{ t.sigctx_source_prefix }}{{ sv.get('source', '') }}</span></div>
         {% if sv.get('_kcard') %}<button class="kcard-btn" data-slug="survey_activity" data-params="{{ sv._kcard | tojson }}" onclick="showKCard(this.dataset.slug, JSON.parse(this.dataset.params), this)">{{ t.kcard_learn_more }}</button>{% endif %}
       </div>

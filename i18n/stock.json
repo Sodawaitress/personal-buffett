@@ -1434,5 +1434,17 @@
   "insider_caveat_label": {
     "en": "Read with care",
     "zh": "怎么看这条"
+  },
+  "svft_title": {
+    "en": "What happened after",
+    "zh": "调研之后发生了什么"
+  },
+  "svft_specific": {
+    "en": "targeted",
+    "zh": "专项"
+  },
+  "svft_low_conf": {
+    "en": "Few samples — treat as a hint, not a conclusion.",
+    "zh": "样本少，只当线索，不当结论"
   }
 }

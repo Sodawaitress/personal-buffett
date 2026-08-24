@@ -47,11 +47,19 @@ def _get_fundamentals_with_age(code: str) -> tuple[dict, float]:
 # ── 信号定义与方向 ────────────────────────────────────────────────────
 #
 # direction: 'bull' = 看多信号, 'bear' = 看空信号
+#            'attention' = **注意力信号，本身没方向**（US-167）
 # weight: 信号强度权重
+#
+# US-167：调研原本写死成 bull。用户妈妈指出「机构接连两个月调研的红柱子，
+# 但股价还是在跌 …… 调研到最后并不值得机构买，也不一定」——她是对的：
+# 机构去看了公司，可能看完买，也可能看完不买、甚至卖。「有人在看」是
+# 注意力，不是方向。方向由 _survey_direction() 从**调研之后的走势**推导；
+# 推不出来就保持 attention，_calc_resonance 只数 bull/bear，attention 自然
+# 不参与共振，不会再制造「看空在撤 + 机构在建仓」这种自相矛盾的展示。
 
 _SIGNAL_DEFS = {
-    "survey_visit":      {"label": "机构专程调研",  "direction": "bull", "weight": 2},
-    "survey_active":     {"label": "机构调研活跃",  "direction": "bull", "weight": 1},
+    "survey_visit":      {"label": "机构专程调研",  "direction": "attention", "weight": 2},
+    "survey_active":     {"label": "机构调研活跃",  "direction": "attention", "weight": 1},
     "participation_spike": {"label": "机构参与度突增", "direction": "bull", "weight": 2},
     "main_flow_in":      {"label": "主力持续流入",  "direction": "bull", "weight": 2},
     "inst_buying":       {"label": "机构持续增持",  "direction": "bull", "weight": 1},
@@ -111,6 +119,31 @@ def _parse_precursor_cache(code: str) -> dict:
     return rec
 
 
+def _survey_direction(code: str, sv: dict) -> tuple[str | None, str]:
+    """US-167：调研信号的方向 —— 看完之后股价怎么走。
+
+    返回 (direction, detail_note)。direction 为 None 表示看不出来，
+    调用方保持 _SIGNAL_DEFS 里的 'attention'（不参与多空共振）。
+
+    只有**专项调研**且样本 ≥2 才给方向（本地回测：专项 72% / 普通 50%，
+    普通调研跟抛硬币没区别）；判定逻辑全在 scripts/survey_followthrough.py，
+    和详情页那块「调研之后发生了什么」用的是同一套，页面和榜单不会打架。
+    """
+    try:
+        from scripts.survey_followthrough import build, db_price_lookup
+        events = (sv.get("events") or [])[:8]   # 只查最近 8 次，控制扫描时的查询量
+        if not events:
+            return None, ""
+        ft = build(events, db_price_lookup(code))
+        d = ft.get("direction")
+        if d not in ("bull", "bear"):
+            return None, ""
+        note = ("（调研后多数走强）" if d == "bull" else "（调研后多数走弱）")
+        return d, note
+    except Exception:
+        return None, ""
+
+
 def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
                     signals_age_h: float = 0) -> list[dict]:
     """
@@ -119,12 +152,13 @@ def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
     """
     found = []
 
-    def add(key, detail=""):
+    def add(key, detail="", direction=None):
         meta = _SIGNAL_DEFS.get(key, {})
         found.append({
             "key":       key,
             "label":     meta.get("label", key),
-            "direction": meta.get("direction", "neutral"),
+            # direction 可被调用方覆盖：调研类信号的方向是推导出来的，不是查表的
+            "direction": direction or meta.get("direction", "neutral"),
             "weight":    meta.get("weight", 1),
             "detail":    detail,
         })
@@ -136,16 +170,22 @@ def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
         events = [e for e in (sv.get("events") or [])
                   if str(e.get("date", ""))[:10] >= cutoff_30]
         if events:
+            # 方向从「历次调研之后股价怎么走」推导（用全部历史事件，不只 30 天内）
+            sv_dir, sv_note = _survey_direction(code, sv)
             specific = [e for e in events if e.get("is_specific")]
             if specific:
                 latest = specific[0]
-                add("survey_visit", f"{latest.get('n_inst','')}家机构专项调研 · {latest.get('date','')[:10]}")
+                add("survey_visit",
+                    f"{latest.get('n_inst','')}家机构专项调研 · {latest.get('date','')[:10]}{sv_note}",
+                    direction=sv_dir)
             else:
                 latest = events[0]
                 # survey_active 要求至少 3 家机构，1-2 家视为例行拜访
                 n = int(latest.get("n_inst") or 0)
                 if n >= 3:
-                    add("survey_active", f"{n}家机构调研 · {latest.get('date','')[:10]}")
+                    add("survey_active",
+                        f"{n}家机构调研 · {latest.get('date','')[:10]}{sv_note}",
+                        direction=sv_dir)
 
     # ── 2. 机构参与度 ─────────────────────────────────────────────
     pa = precursor.get("participation", {})

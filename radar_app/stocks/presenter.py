@@ -371,6 +371,24 @@ def _build_divergence_card(news_dir: str, inst_dir: str, divergence: dict) -> di
     }
 
 
+def _build_survey_followthrough(code: str, precursor: dict) -> dict:
+    """US-167：调研之后发生了什么。
+
+    用户原话：「机构接连两个月调研的红柱子，但是它的股价还是在跌，说明
+    调研到最后并不值得机构买」——她说对了：调研是**注意力**信号，不是
+    方向信号，方向要从后续走势里推导，不能写死成 bull。
+    """
+    try:
+        from scripts.survey_followthrough import build, db_price_lookup
+
+        events = ((precursor or {}).get("survey") or {}).get("events") or []
+        if not events:
+            return {}
+        return build(events, db_price_lookup(code))
+    except Exception:
+        return {}
+
+
 def _build_survey_chart(precursor: dict) -> list:
     """机构调研近 6 个月按月聚合，供交互式柱状图（US-119）。
     返回 [{month:'2026-07', label:'7月', count:家数, visits:次数, methods:[...]}]，无数据返回 []。"""
@@ -643,6 +661,7 @@ def present_stock_page(bundle):
     precursor = get_precursor_cache(bundle["code"]) if market == "cn" else {}
     signal_contexts = _build_signal_contexts(precursor, signals, price_change) if market == "cn" else {}
     survey_chart = _build_survey_chart(precursor) if market == "cn" else []
+    survey_followthrough = _build_survey_followthrough(bundle["code"], precursor) if market == "cn" else {}
     prophet_series = _build_prophet_series(bundle["code"]) if market == "cn" else {}
     news_labeled = _label_news(bundle["news"], inst_dir)
 
@@ -740,6 +759,7 @@ def present_stock_page(bundle):
         # US-119 层1 结论（与首页一致）
         "signal_conclusion": signal_conclusion,
         "survey_chart": survey_chart,
+        "survey_followthrough": survey_followthrough,
         # US-75 预言家线
         "prophet_series": prophet_series,
         # US-92 extras
