@@ -370,6 +370,36 @@ def audit_survey_followthrough(conn, existing):
     }
 
 
+def audit_industry_gap_detail(conn, existing):
+    """US-169：自选里没有行业映射的 A股 到底是些什么。
+
+    覆盖率 60% 这个数字本身没法指导决策 —— 缺的若都是 ETF，那不是缺陷；
+    若都是正常个股，就是上游 refresh 没跑全。看样本再决定。
+    """
+    if "stock_industry_map" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT s.code, s.name, COALESCE(s.asset_type,'') AS at
+        FROM stocks s
+        WHERE s.market = 'cn'
+          AND s.code IN (SELECT DISTINCT stock_code FROM user_watchlist
+                         WHERE removed_at IS NULL)
+          AND s.code NOT IN (SELECT code FROM stock_industry_map)
+        ORDER BY s.code LIMIT 25
+    """)
+    by_type = _rows(conn, """
+        SELECT COALESCE(s.asset_type,'(空)') AS at, COUNT(*) AS n
+        FROM stocks s
+        WHERE s.market = 'cn'
+          AND s.code IN (SELECT DISTINCT stock_code FROM user_watchlist
+                         WHERE removed_at IS NULL)
+          AND s.code NOT IN (SELECT code FROM stock_industry_map)
+        GROUP BY 1 ORDER BY 2 DESC
+    """)
+    return {"sample": [(r["code"], r["name"], r["at"]) for r in rows],
+            "by_asset_type": {r["at"]: r["n"] for r in by_type}}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -440,11 +470,12 @@ def main():
         users = audit_users(conn, existing)
         survey_ft = audit_survey_followthrough(conn, existing)
         wl_filter = audit_watchlist_filter(conn, existing)
+        ind_gap = audit_industry_gap_detail(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "industry_gap": ind_gap,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -547,6 +578,12 @@ def main():
         print(f"  其中 {survey_ft['stocks_with_direction']} 只推得出方向（≥2 次专项调研的后续）")
         if survey_ft["decided_rate_pct"] < 30:
             print(f"  ⚠️  判定率偏低 —— 详情页那块「调研之后发生了什么」大面积说不出话")
+
+    if ind_gap:
+        print(f"\n── 自选里缺行业映射的 A股 是些什么（US-169）──")
+        print(f"  按 asset_type: {ind_gap.get('by_asset_type')}")
+        for code, name, at in ind_gap.get("sample", [])[:25]:
+            print(f"    {code:10} {str(name)[:16]:18} {at}")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
