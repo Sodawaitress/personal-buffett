@@ -6879,3 +6879,98 @@ LEFT JOIN analysis_results a
   筛选按钮**（和市场、等级并列），但那是独立一条，等这轮修完再谈
 - 不把排序改成服务端：当前规模（单用户几十到两百只）前端排序足够，
   服务端排序要引入分页，代价远大于收益
+
+---
+
+## US-169 · 流水线第 5 层静默断链：桥接修好了一层，在下一层原样复制了同一个 bug
+
+> **实现状态（2026-08-25）**：✅ 已实现。
+
+### 怎么发现的
+
+用户要做「行业筛选按钮」。动手前先查数据能不能撑起这个功能：
+
+```
+自选股行业映射覆盖率
+  cn  126/209 (60%)
+  hk 0/8 · us 0/26 · nz 0/3 · au 0/1
+```
+
+缺的 83 只不是 ETF，是 `{'股票': 62, '(空)': 20}` —— 300750 宁德时代、
+300760 迈瑞医疗、300661 圣邦股份这种正经个股。US-158 的设计里写着
+「每天 12 个板块、约 8 天覆盖完」，那就查收敛速度：
+
+```
+东财已映射 263 只 · 按日新增：
+    2026-08-22  263 只      ← 只有上线当天。之后三天，一条都没有。
+```
+
+**不是慢，是停了。**
+
+### 根因不在 US-158，在流水线
+
+东财映射搭的是 `cron.yml` 的 light job。查 GHA 运行历史：
+
+| workflow | 最近一次 | 触发方式 |
+|---|---|---|
+| fetch-svc | 08-24 | `schedule` ✅ 唯一的 cron 锚点 |
+| analyze-svc | 08-24 | `workflow_run` ✅ |
+| radar-svc | 08-24 | `workflow_run` ✅ |
+| **market-svc** | 08-24 | **`workflow_dispatch`**（桥接来的） |
+| **cron.yml** | 08-22 | **`workflow_dispatch`**（人手动点的）；自动最后一次是 **08-18** |
+| digest-svc | 08-22 | `workflow_run`（那次是人触发 cron 才连上的） |
+
+GitHub 的防递归规则：
+
+> When you use the repository's `GITHUB_TOKEN` to perform tasks, events
+> triggered by the `GITHUB_TOKEN` **will not create a new workflow run**.
+
+US-150 的 `radar → market` 桥接用的正是 `GITHUB_TOKEN`。所以 market-svc
+被成功 dispatch 起来、也跑成功了，但它跑完**不发 `workflow_run` 事件**，
+`cron.yml` 永远等不到。
+
+**桥接修好了第 4 层，却在第 5 层制造了一模一样的静默断链。**
+
+对照实验就写在运行历史里，不用推理：
+
+- 08-24 桥接（GITHUB_TOKEN）触发的 market → 之后 cron **没跑**
+- 08-22 人手动 dispatch 的 cron → 之后 digest **正常 workflow_run**
+
+同一个 workflow，触发者不同，下游一个断一个通。
+
+### 为什么原来的测试全绿
+
+US-150 留了三条结构守卫：链序、嵌套深度、cron 锚点唯一。**全绿。**
+
+因为它们查的是「**线接得对不对**」—— 而线确实接对了，`cron.yml` 的
+`workflow_run` 明明白白写着 `market-svc (US-138)`，名字都能对上。
+没有一条在查「**这个事件到底发不发得出来**」。
+
+这是本仓招牌失败模式在测试层的翻版：**跑了、绿了、什么也没保证。**
+
+### Scope
+
+- SEG2 全段改成显式 dispatch 桥接，链上不再有任何 `workflow_run`：
+  `market-svc → cron.yml → digest-svc`，各自末尾 `gh workflow run` +
+  `permissions: actions: write`
+- `digest-svc` 的 `workflow_run` 一并去掉 —— 留着的话，人手动跑 cron 时
+  digest 会双跑（US-150 已经栽过一次「双跑 digest」，还发过一封假警报）
+- 新守卫 `test_nothing_listens_via_workflow_run_to_a_bridge_dispatched_workflow`：
+  只要某个 workflow 是被桥接 dispatch 起来的，任何监听它的 `workflow_run`
+  都判红。**已实测**把 `cron.yml` 还原成出事时的接法，这条会失败
+- 新守卫 `test_every_chain_workflow_can_actually_be_reached`：链上每个
+  workflow 都必须有某种自动到达方式（cron / workflow_run / 上游桥接）
+
+### AC
+- [x] SEG2 三个 workflow 都由上游显式 dispatch
+- [x] 链上不再有任何 `workflow_run`（SEG2 段内）
+- [x] 每个桥接方都有 `actions: write`，否则 `gh workflow run` 会 403
+- [x] digest 不会因为人手动跑 cron 而双跑
+- [x] 守卫经过反向验证：还原旧接法会红（不是安慰剂）
+- [ ] 端到端实跑一轮，确认 cron 与 digest 被自动触发 —— **待明日链条自然跑完验证**
+
+### 不做
+- **不改回 `schedule`**：多一个 cron 就多一条并行链，US-150 的双跑就是这么
+  来的。锚点只保留 fetch-svc 一个
+- 不换 PAT 绕开 `GITHUB_TOKEN` 限制：PAT 要人管理、会过期，而显式 dispatch
+  是同一个仓库里已经在用、已经验证过的模式（radar→market）
