@@ -22,21 +22,23 @@ name: radar-svc (US-121)
 #
 # 失败传播：只挡 cancelled，failure 仍放行下游 —— 各服务本就设计成互相独立
 # （analyze 挂了也该把已有报告推出去），一环挂掉不该让全天归零。
+# US-170：改为**可重用工作流**（workflow_call），由 pipeline.yml 顺序编排。
+# 不再用 workflow_run —— 那是「事件通知」原语，带两道防递归闸（最多三层、
+# GITHUB_TOKEN 触发的运行不发事件），这两道闸的存在意义恰恰就是阻止
+# 用 workflow 链成流水线。US-150 撞上第一道，US-169 撞上第二道。
+# workflow_call 是「函数调用」原语：10 层上限、无 token 规则，
+# 整条链是一次 run（实测 github.run_id 与调用方相同）。
+# 保留 workflow_dispatch，单独手动补跑照旧。
 on:
-  workflow_run:
-    workflows: ["push-svc (US-121)"]
-    types: [completed]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   radar:
     runs-on: ubuntu-latest
-    # US-150：链式触发时只挡掉「被取消」的上游。上游 failure 仍放行 ——
-    # 各服务本就设计成互相独立（analyze 挂了也该把已有报告推出去），
-    # 一环挂掉不该让全天归零。
-    if: >-
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion != 'cancelled'
+    # US-170：失败传播语义搬到 pipeline.yml 的 `if: ${{ !cancelled() }}`——
+    # workflow_call 下 github.event_name 读到的是**调用方**的事件（实测），
+    # 原来那个 if 恒真，留着只会误导。
     timeout-minutes: 90
     permissions:
       contents: read
@@ -67,21 +69,3 @@ jobs:
           fi
 
       # ── US-150 链段桥接（2026-08-22 实测踩坑后补）────────────────────
-      # GitHub 硬限制：workflow_run 最多串三层。
-      #   "You can't use workflow_run to chain together more than three levels
-      #    of workflows ... workflows E and F will not be run."
-      # 我们的链 fetch → analyze(1) → push(2) → radar(3) → market(4) 正好超限，
-      # 08-21 实测 market/DailyCron/digest 三个全没触发（靠 watchdog 补跑才没断供）。
-      #
-      # 所以在第 3 层末尾**显式改用 dispatch 跨段** —— workflow_dispatch 会重置
-      # 嵌套计数，于是 market(dispatch) → DailyCron(1) → digest(2) 又在限内。
-      # 这个手法 watchdog 已在生产验证过（它就是用 gh workflow run 补跑 digest 的）。
-      #
-      # if: always() —— radar 挂了也要放行下游，与本链其余部分的失败传播策略一致。
-      - name: Bridge to market-svc (resets workflow_run nesting depth)
-        if: always()
-        run: |
-          gh workflow run market-svc.yml --repo "${{ github.repository }}"
-          echo "已 dispatch market-svc（跨段桥接，绕开三层嵌套上限）"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

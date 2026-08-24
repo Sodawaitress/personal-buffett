@@ -6974,3 +6974,117 @@ US-150 留了三条结构守卫：链序、嵌套深度、cron 锚点唯一。**
   来的。锚点只保留 fetch-svc 一个
 - 不换 PAT 绕开 `GITHUB_TOKEN` 限制：PAT 要人管理、会过期，而显式 dispatch
   是同一个仓库里已经在用、已经验证过的模式（radar→market）
+
+---
+
+## US-170 · 用对原语：`workflow_run` 换成 `workflow_call`
+
+> **实现状态（2026-08-25）**：✅ 已实现。
+
+### 用户的问题
+
+「怎么会发生这种错误，是设计不合理吗」——问的是 US-169。答案是：**是**，
+而且是有名字的那种不合理。
+
+### 两次翻车是耦合，不是巧合
+
+七个服务原本用 `workflow_run` 首尾相接。那是 GitHub 的**事件通知**原语，
+上面装了两道防递归闸，而这两道闸的存在意义**恰恰就是阻止**用 workflow
+链成流水线：
+
+| 闸 | 规则 | 谁撞上 |
+|---|---|---|
+| ① | `workflow_run` 最多串三层 | **US-150**：market 在第 4 层，静默不跑 |
+| ② | `GITHUB_TOKEN` 触发的运行，跑完不发 `workflow_run` 事件 | **US-169**：① 的修法（GITHUB_TOKEN dispatch 桥接）正好触发 ②，断链原样搬到第 5 层 |
+
+**绕开 ① 只能改用 dispatch，而改用 dispatch 就必然撞上 ②。**
+逃出一个正好掉进另一个 —— 每修一次就在下一层遇到同类问题，说明的不是
+修得不够仔细，是在跟工具较劲。
+
+### 更要命的：安全网把问题盖住了
+
+`watchdog-svc` 只查一件事：「今天的 snapshot 在不在？不在就补跑 digest」。
+
+链条从 08-19 就断在中段，但看门狗每天忠实地把**最后一棒**补上，snapshot
+天天都在。于是外部可见的产物一直正常，被切断的中间环节（东财行业映射、
+precursor 扫描）静静地什么也没干，三天没人发现。
+
+**兜底逻辑只兜最终产物，就会把中间失败变成永久盲区。它越可靠，问题越难
+被发现。** 这一层比 `workflow_run` 的坑更值得记。
+
+### 为什么当时的测试全绿
+
+US-150 留了三条守卫：链序、嵌套深度、cron 锚点唯一。**全通过。**
+因为它们查的是「线接得对不对」—— 线确实接对了，`cron.yml` 里明明白白写着
+`workflow_run: ["market-svc (US-138)"]`，名字一个字不差。
+**没有一条在问「这个事件到底发不发得出来」。**
+
+真正找出问题的不是任何测试，是去翻生产的运行历史，看每个 workflow
+上一次**自动**跑是什么时候。
+
+### 实测：文档没写的部分
+
+改造前先用临时探针量了一轮（官方文档未载明，用完即删）：
+
+| 探针 | 实测值 |
+|---|---|
+| `github.event_name`（被调用方内） | **调用方的事件**，不是 `workflow_call` |
+| `github.workflow` | **调用方的名字** |
+| `github.run_id` | **与调用方相同** → 整条链是一次 run |
+| `secrets: inherit` | 生效 |
+| `needs.<job>.result` | 可读 |
+
+第一条是陷阱，直接决定了设计：`cron.yml` 的重型 monolith 作业靠
+`if: github.event_name == 'workflow_dispatch'` 保持手动专用 ——
+**留在链上的话，编排器一被手动触发就会把全量重跑一起带起来。**
+所以必须先把它拆出链条，这不是整理癖。
+
+官方文档确认的硬数字：`workflow_call` 可嵌套 **10 层**、单文件可调
+**50 个**（我们只需要 1 层）。
+
+### Scope
+
+- 新 `pipeline.yml`：唯一编排入口，`workflow_call` 顺序调用七棒，
+  `concurrency` 串行化，唯一的 cron 锚点
+- 新 `precursor-svc.yml`：从 `cron.yml` 拆出的每日前兆扫描（东财行业映射
+  搭的就是这趟车）
+- `cron.yml`：只剩退役 monolith 的手动回滚入口，**退出链条**
+- 六个服务加 `workflow_call`、删 `workflow_run`、删桥接步骤、
+  删失效的 `if: github.event_name != 'workflow_run'`
+- `push-svc`：`SKIP_PUSH` 改用 `inputs` 上下文（被调用时
+  `github.event.inputs` 指向**调用方**的输入）
+- 失败传播：`if: ${{ !cancelled() }}` 精确复刻原语义 ——
+  上游 failure 仍放行，只有被取消才中断
+
+### 推送安全（单列，因为踩点很隐蔽）
+
+`scripts/svc_push.py` 用 `bool(os.environ.get("SKIP_PUSH"))` ——
+**任何非空串都为真，`'0'` 也为真**。所以：
+
+- `SKIP_PUSH` 必须产出**空串**，不能是 `'0'`
+- 编排器**绝不能**传 `skip_push` 参数，传任何值都会静默停掉妈妈的信
+
+有专门的测试钉住这三件事，并断言 `svc_push.py` 的判据没变。
+
+### AC
+- [x] 编排器按序调用七棒，`needs` 串成一条
+- [x] 失败传播是 `!cancelled()` 而非 `always()`
+- [x] 每一棒都 `secrets: inherit`（可重用工作流拿不到调用方 env）
+- [x] 链上无 `workflow_run`、无 `gh workflow run` 桥接
+- [x] 每个服务仍可单独 `workflow_dispatch` 补跑一棒
+- [x] 只有编排器排 cron，且只有一条
+- [x] 没有别的 workflow 也在 `uses:` 链上的服务
+- [x] 链上没有任何 `github.event_name` 判断（被调用时语义会反转）
+- [x] 退役 monolith 不可被调用、不排班
+- [x] 编排器不传 `skip_push`；`SKIP_PUSH` 只在显式 `'1'` 时干跑
+- [x] **五个反向案例逐一验证守卫会红**（改回 workflow_run / 传 skip_push:'0'
+      / 写成 always() / 服务自己加 cron / monolith 回到链上）
+- [ ] 端到端实跑一整轮 —— 待验证
+
+### 不做
+- **不换 PAT**：PAT 能让 `workflow_run` 发事件，但要人管理、会过期，
+  且仍受三层上限约束。严格劣于 `workflow_call`
+- **不把七个服务合并成一个 workflow 的七个 job**：那样就没法单独重跑某一棒。
+  `workflow_call` 两头都要
+- 不动 `watchdog-svc`：它仍然有用（兜最后一棒）。但要记住它的盲区 ——
+  中间环节断了它看不见

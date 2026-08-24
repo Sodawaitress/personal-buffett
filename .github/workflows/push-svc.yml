@@ -22,10 +22,20 @@ name: push-svc (US-121)
 #
 # 失败传播：只挡 cancelled，failure 仍放行下游 —— 各服务本就设计成互相独立
 # （analyze 挂了也该把已有报告推出去），一环挂掉不该让全天归零。
+# US-170：改为**可重用工作流**（workflow_call），由 pipeline.yml 顺序编排。
+# 不再用 workflow_run —— 那是「事件通知」原语，带两道防递归闸（最多三层、
+# GITHUB_TOKEN 触发的运行不发事件），这两道闸的存在意义恰恰就是阻止
+# 用 workflow 链成流水线。US-150 撞上第一道，US-169 撞上第二道。
+# workflow_call 是「函数调用」原语：10 层上限、无 token 规则，
+# 整条链是一次 run（实测 github.run_id 与调用方相同）。
+# 保留 workflow_dispatch，单独手动补跑照旧。
 on:
-  workflow_run:
-    workflows: ["analyze-svc (US-121)"]
-    types: [completed]
+  workflow_call:
+    inputs:
+      skip_push:
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       skip_push:
@@ -36,12 +46,9 @@ on:
 jobs:
   push:
     runs-on: ubuntu-latest
-    # US-150：链式触发时只挡掉「被取消」的上游。上游 failure 仍放行 ——
-    # 各服务本就设计成互相独立（analyze 挂了也该把已有报告推出去），
-    # 一环挂掉不该让全天归零。
-    if: >-
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion != 'cancelled'
+    # US-170：失败传播语义搬到 pipeline.yml 的 `if: ${{ !cancelled() }}`——
+    # workflow_call 下 github.event_name 读到的是**调用方**的事件（实测），
+    # 原来那个 if 恒真，留着只会误导。
     timeout-minutes: 20
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -51,7 +58,12 @@ jobs:
       PYTHONUNBUFFERED: "1"
       # 定时触发 inputs 为空 → 真推送；手动触发默认 skip_push=1 干跑。
       # 不能写 `inputs.skip_push || '1'`：那样定时那一路会永远落到 '1'，排了班也不推。
-      SKIP_PUSH: ${{ github.event.inputs.skip_push == '1' && '1' || '' }}
+      # US-170：改用 `inputs` 上下文 —— workflow_call 与 workflow_dispatch 都填充它，
+      # 而 github.event.inputs 在被调用时指向**调用方**的事件输入。
+      # 判据仍是「只有显式 '1' 才干跑」：scripts/svc_push.py 用的是
+      # bool(os.environ.get('SKIP_PUSH'))，**任何非空串都为真，'0' 也为真**，
+      # 所以这里必须产出空串而不是 '0'，否则妈妈的信会静默停掉。
+      SKIP_PUSH: ${{ inputs.skip_push == '1' && '1' || '' }}
       # US-162：日报候选股票要覆盖的账号（除 admin 之外）。
       # 2 = QQ 账号（妈妈的实际自选股 198 只）。admin(id=4) 只有 33 只，
       # 不加这个的话她那 198 只从来不会进「今天有变化的」推送。

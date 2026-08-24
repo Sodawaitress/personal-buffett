@@ -1,0 +1,92 @@
+name: pipeline (US-170)
+
+# 每日流水线的**唯一编排入口**。
+#
+# ## 为什么是这个形状
+#
+# 七个服务原本用 `workflow_run` 首尾相接。那是「事件通知」原语，GitHub 在
+# 它上面装了两道防递归闸，而这两道闸的存在意义恰恰就是阻止用 workflow 链成
+# 流水线：
+#
+#   ① 最多串三层 —— US-150 撞上：market 在第 4 层，静默不跑
+#   ② GITHUB_TOKEN 触发的运行，跑完不发 workflow_run 事件
+#      —— US-169 撞上：① 的修法（用 GITHUB_TOKEN dispatch 桥接）
+#         正好触发 ②，断链原样搬到第 5 层，从 08-19 起 SEG2 一次没自动跑过
+#
+# 两次翻车不是巧合，是**耦合**：绕开 ① 只能改用 dispatch，而改用 dispatch
+# 就必然撞上 ②。逃出一个正好掉进另一个 —— 这是在跟工具较劲的信号。
+#
+# `workflow_call` 是「函数调用」原语，才是要的东西：
+#   · 10 层嵌套上限、单文件可调 50 个（官方文档），我们只需要 1 层
+#   · 没有 token 规则
+#   · 整条链是**一次 run**（实测 github.run_id 与调用方相同）——
+#     断在哪一棒，运行图上一眼看见，不用去七个 workflow 的历史里对时间
+#
+# ## 失败传播
+#
+# `if: ${{ !cancelled() }}` 精确复刻原语义：上游 **failure 仍放行**
+# （各服务本就互相独立，analyze 挂了也该把已有报告推出去），
+# 只有**被取消**才中断整条链。
+#
+# ## 手动补跑
+#
+# 七个服务都保留了 workflow_dispatch，可以单独重跑某一棒，不必跑全链。
+
+on:
+  schedule:
+    # 07:00 UTC = 15:00 CST（A股收盘）。US-170：全仓**唯一**的 cron。
+    # 多一个 cron 就多一条并行链 —— US-150 的「双跑 digest」就是这么来的。
+    - cron: '0 7 * * 1-5'
+  workflow_dispatch:
+
+# 一次只跑一条全链。手动触发撞上定时触发时排队，不并行、不互相取消。
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    uses: ./.github/workflows/fetch-svc.yml
+    secrets: inherit
+
+  analyze:
+    needs: fetch
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/analyze-svc.yml
+    secrets: inherit
+
+  push:
+    needs: analyze
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/push-svc.yml
+    secrets: inherit
+    # skip_push 留空 = 真推送。**不能传 '0'** ——
+    # scripts/svc_push.py 用 bool(os.environ.get('SKIP_PUSH'))，
+    # 任何非空串都为真，'0' 也为真，传了就等于把妈妈的信静默停掉。
+
+  radar:
+    needs: push
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/radar-svc.yml
+    secrets: inherit
+
+  market:
+    needs: radar
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/market-svc.yml
+    secrets: inherit
+
+  # 前兆扫描要等 Fly 上真跑完（约 75 分钟）才结束，好让 digest 取到完整快照。
+  # 东财行业映射（capture_daily_em / refresh_map_em）搭的就是这一趟车 ——
+  # US-169 断链期间它三天一条新映射都没有，行业覆盖率卡在 60%。
+  precursor:
+    needs: market
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/precursor-svc.yml
+    secrets: inherit
+
+  digest:
+    needs: precursor
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/digest-svc.yml
+    secrets: inherit

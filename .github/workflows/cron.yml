@@ -13,10 +13,12 @@ name: Daily Cron
 # 本 workflow 的 light job 会阻塞到 Fly 上的 precursor 扫描真跑完（约 75 分钟），
 # 所以它天然是"东财消费者"的最后一棒，digest 挂在它后面才拿得到完整的
 # precursor 数据。
-# US-169：原来这里是 workflow_run on market-svc。但 market-svc 是被
-# radar-svc 用 GITHUB_TOKEN dispatch 起来的，而 GITHUB_TOKEN 触发的事件
-# 不会再创建新的 workflow run —— 所以这个 workflow_run 从 08-19 起就没有
-# 生效过一次（08-22 那次是人手动 dispatch 的）。改成由 market-svc 显式桥接。
+# US-170：本文件已**退出日常链条**。它现在只剩一件事 —— 退役 monolith 的
+# 全量回滚入口，永远只手动触发。每日前兆扫描已拆到 precursor-svc.yml。
+#
+# 历史：US-169 之前这里写着 workflow_run on market-svc，但 market-svc 是被
+# 上游用 GITHUB_TOKEN dispatch 起来的，而 GITHUB_TOKEN 触发的事件不会再
+# 创建新的 workflow run —— 那条线从 08-19 起一次都没生效过。
 on:
   workflow_dispatch:
 
@@ -68,74 +70,3 @@ jobs:
 
   # precursor scan 触发 Fly（悉尼，能连东财；GHA 美国 runner 不行）
   # digest 已交给 digest-svc（US-138），此处不再触发，避免双跑
-  light:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write        # US-169：桥接下游需要
-    # US-150：链式触发时只挡掉「被取消」的上游。上游 failure 仍放行 ——
-    # 各服务本就设计成互相独立（analyze 挂了也该把已有报告推出去），
-    # 一环挂掉不该让全天归零。
-    if: >-
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion != 'cancelled'
-    # US-150：本 job 现在一直等到 Fly 上的扫描真跑完才结束，
-    # 好让 digest-svc 挂在它后面，而不是靠 cron 猜时间。
-    timeout-minutes: 100
-    env:
-      APP_URL: ${{ secrets.FLY_APP_URL || 'https://personal-buffett.fly.dev' }}
-    steps:
-      - name: Trigger precursor scan
-        id: trigger
-        run: |
-          HTTP=$(curl -s -o /tmp/scan.json -w "%{http_code}" \
-            -X POST "${APP_URL}/api/trigger-scan" \
-            -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
-          echo "scan → HTTP $HTTP"; cat /tmp/scan.json
-          [ "$HTTP" = "202" ] || [ "$HTTP" = "200" ]
-          JOB_ID=$(python3 -c "import json;print(json.load(open('/tmp/scan.json')).get('job_id') or '')")
-          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
-          echo "扫描 job_id = $JOB_ID"
-
-      # trigger-scan 立刻返回 202，真正的扫描在 Fly 后台跑 75+ 分钟。
-      # 实测证据（08-14 快照）：precursor 的 cache_age_hours 从 1.3h 连续分布到 0.0h
-      # —— 说明 digest 取快照时扫描还在写，妈妈那封信的机构层读到的是扫了一半的数据。
-      - name: Wait for scan to finish
-        if: steps.trigger.outputs.job_id != ''
-        run: |
-          JOB_ID="${{ steps.trigger.outputs.job_id }}"
-          DEADLINE=$(( $(date +%s) + 90*60 ))
-          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
-            sleep 60
-            BODY=$(curl -s "${APP_URL}/api/scan-status/${JOB_ID}" \
-              -H "Authorization: Bearer ${{ secrets.SCAN_TOKEN }}")
-            STATUS=$(python3 -c "import json,sys;print(json.loads(sys.argv[1]).get('status',''))" "$BODY" 2>/dev/null || echo "")
-            echo "[$(date -u +%H:%M:%SZ)] scan status = ${STATUS:-<unreachable>}"
-            case "$STATUS" in
-              done)   echo "✅ 扫描完成，下游可以安全取快照"; exit 0 ;;
-              failed) echo "⚠️ 扫描报错，仍放行下游（旧 precursor 缓存好过没有）"; exit 0 ;;
-            esac
-          done
-          echo "⚠️ 等满 90 分钟仍未结束，放行下游（行为与改动前一致，不更差）"
-
-      # 拿不到 job_id（镜像还没部署 /api/scan-status）时的退路：按实测时长盲等
-      - name: Fallback blind wait
-        if: steps.trigger.outputs.job_id == ''
-        run: |
-          echo "未拿到 job_id，退回盲等 80 分钟（实测扫描 ~75 分钟）"
-          sleep $(( 80*60 ))
-
-      # US-169：GITHUB_TOKEN 触发的事件**不会再创建新的 workflow run**
-      # （GitHub 明文规则，防递归）。US-150 的 radar→market 桥接用的正是
-      # GITHUB_TOKEN，所以 market 跑完不发 workflow_run 事件，digest-svc.yml 永远
-      # 等不到 —— 桥接修好了第 4 层，却在下一层制造了一模一样的静默断链。
-      # 实测：08-24 radar ✅ → market ✅(dispatch) → cron ❌ 从未触发；
-      # 而 08-22 人手动 dispatch cron 之后 digest 立刻正常 workflow_run。
-      # 所以 SEG2 内部一律改成显式 dispatch，不再依赖 workflow_run。
-      - name: Bridge to digest-svc.yml (GITHUB_TOKEN 触发不会发 workflow_run 事件)
-        if: always()
-        run: |
-          gh workflow run digest-svc.yml --repo "${{ github.repository }}"
-          echo "已 dispatch digest-svc.yml（显式桥接）"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

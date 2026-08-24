@@ -5,10 +5,20 @@ name: fetch-svc (US-121)
 # US-121 第3步（2026-07-12）：并行双跑观察——加 schedule 但旧 monolith(cron.yml 08:00 UTC)
 # 仍当家、照常推妈妈。本服务只写 DB 不推送，先自证稳定一周再考虑切换。
 
+# US-170：改为**可重用工作流**（workflow_call），由 pipeline.yml 顺序编排。
+# 不再用 workflow_run —— 那是「事件通知」原语，带两道防递归闸（最多三层、
+# GITHUB_TOKEN 触发的运行不发事件），这两道闸的存在意义恰恰就是阻止
+# 用 workflow 链成流水线。US-150 撞上第一道，US-169 撞上第二道。
+# workflow_call 是「函数调用」原语：10 层上限、无 token 规则，
+# 整条链是一次 run（实测 github.run_id 与调用方相同）。
+# 保留 workflow_dispatch，单独手动补跑照旧。
 on:
-  schedule:
-    # 07:00 UTC = 15:00 CST（A股收盘），早于旧 monolith(08:00 UTC) 1h，错峰不与其抢东财
-    - cron: '0 7 * * 1-5'
+  workflow_call:
+    inputs:
+      budget_min:
+        required: false
+        type: string
+        default: '40'
   workflow_dispatch:
     inputs:
       budget_min:

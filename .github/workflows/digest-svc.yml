@@ -11,19 +11,24 @@ name: digest-svc (US-121)
 # US-169：改由 Daily Cron 的 light job 显式 dispatch（同 SEG2 其余部分）。
 # 保留 workflow_run 会导致人手动跑 cron 时 digest 双跑 —— US-150 已经栽过
 # 一次「双跑 digest」，不再重演。
+# US-170：改为**可重用工作流**（workflow_call），由 pipeline.yml 顺序编排。
+# 不再用 workflow_run —— 那是「事件通知」原语，带两道防递归闸（最多三层、
+# GITHUB_TOKEN 触发的运行不发事件），这两道闸的存在意义恰恰就是阻止
+# 用 workflow 链成流水线。US-150 撞上第一道，US-169 撞上第二道。
+# workflow_call 是「函数调用」原语：10 层上限、无 token 规则，
+# 整条链是一次 run（实测 github.run_id 与调用方相同）。
+# 保留 workflow_dispatch，单独手动补跑照旧。
 on:
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   digest:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # workflow_run 对 Daily Cron 的任何一次运行都会触发。只挡掉被取消的；
-    # 扫描失败也放行——用旧 precursor 缓存出快照，好过没有快照
-    # （没快照 = 妈妈收到「今日无分析」）。
-    if: >-
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion != 'cancelled'
+    # US-170：失败传播语义搬到 pipeline.yml 的 `if: ${{ !cancelled() }}`——
+    # workflow_call 下 github.event_name 读到的是**调用方**的事件（实测），
+    # 原来那个 if 恒真，留着只会误导。
     # 快照要 commit 回本仓（snapshots/daily_snapshot.json）。GHA 默认 token 只读 →
     # 403 "Resource not accessible by integration"（US-140：US-138 把 digest 从
     # Fly 挪到 GHA 时丢了 Fly secret 里那个有写权限的 PAT，快照因此冻结）。
