@@ -435,16 +435,16 @@ def audit_scan_jobs(conn, existing):
     routes.py 会把「板块列表拉不到」「全部板块失败」写进 job.error，
     所以停滞的原因应该就在这里 —— 不用猜。
     """
-    if "jobs" not in existing:
+    if "pipeline_jobs" not in existing:
         return {}
     try:
         rows = _rows(conn, """
-            SELECT id, job_type, status, created_at, error
-            FROM jobs WHERE job_type LIKE '%scan%'
-            ORDER BY id DESC LIMIT 8
+            SELECT id, job_type, status, started_at, error
+            FROM pipeline_jobs WHERE job_type LIKE '%scan%'
+            ORDER BY id DESC LIMIT 10
         """)
         return {"recent": [(r["id"], r["job_type"], r["status"],
-                            str(r["created_at"])[:16], (r["error"] or "")[:220])
+                            str(r["started_at"])[:16], (r["error"] or "")[:240])
                            for r in rows]}
     except Exception as e:
         return {"error": f"{type(e).__name__}: {str(e)[:140]}"}
