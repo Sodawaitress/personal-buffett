@@ -320,6 +320,56 @@ def audit_fundamentals(conn, existing):
     return {"total": total, "all_key_fields_null": allnull, "probed": probes}
 
 
+def audit_survey_followthrough(conn, existing):
+    """US-167：调研后续到底判得出来多少 —— 也就是 stock_prices 够不够密。
+
+    调研信号的方向靠「调研之后 20 天股价怎么走」推导，而这要求当时前后
+    都有价格行。本地库每只只有约 21 行，绝大多数事件只能标 pending；
+    生产每只约 100 行。**这一节存在的意义就是：别再拿本地密度替生产下结论**
+    （本会话已经因此误判过 5 个数据源为「陈旧」）。
+
+    decided_rate 太低 = 页面上那块「调研之后发生了什么」大面积说不出话。
+    """
+    if "stock_prices" not in existing or "stock_precursor_cache" not in existing:
+        return {}
+    from scripts.survey_followthrough import build, db_price_lookup
+
+    rows = _rows(conn, "SELECT DISTINCT code FROM stock_precursor_cache LIMIT 60")
+    price_rows = _scalar(conn, "SELECT COUNT(*) AS v FROM stock_prices") or 0
+    price_codes = _scalar(conn, "SELECT COUNT(DISTINCT code) AS v FROM stock_prices") or 0
+
+    checked = decided = pending = directional = 0
+    for r in rows:
+        code = r["code"]
+        try:
+            from radar_app.data.market import get_precursor_cache
+            sv = (get_precursor_cache(code) or {}).get("survey") or {}
+            events = (sv.get("events") or [])[:8]
+            if not events:
+                continue
+            ft = build(events, db_price_lookup(code))
+            sm = ft.get("summary") or {}
+            checked += 1
+            pending += sm.get("pending", 0)
+            decided += sm.get("up", 0) + sm.get("down", 0) + sm.get("flat", 0)
+            if ft.get("direction") in ("bull", "bear"):
+                directional += 1
+        except Exception:
+            continue
+
+    total_ev = decided + pending
+    return {
+        "price_rows": price_rows,
+        "price_codes": price_codes,
+        "rows_per_code": round(price_rows / price_codes, 1) if price_codes else 0,
+        "stocks_with_surveys": checked,
+        "events_decided": decided,
+        "events_pending": pending,
+        "decided_rate_pct": round(decided * 100 / total_ev, 1) if total_ev else 0,
+        "stocks_with_direction": directional,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
@@ -339,10 +389,12 @@ def main():
         industry_gaps = audit_industry_gaps(conn, existing)
         industry_cov = audit_industry_coverage(conn, existing)
         users = audit_users(conn, existing)
+        survey_ft = audit_survey_followthrough(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
+               "survey_followthrough": survey_ft,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -433,6 +485,18 @@ def main():
     if fundamentals:
         print(f"\n── stock_fundamentals 空壳率 ──")
         print(f"  {fundamentals}")
+
+    if survey_ft:
+        print(f"\n── US-167 调研后续判定率（stock_prices 够不够密）──")
+        print(f"  价格行 {survey_ft['price_rows']} / {survey_ft['price_codes']} 只 "
+              f"= 每只约 {survey_ft['rows_per_code']} 行")
+        print(f"  抽查 {survey_ft['stocks_with_surveys']} 只有调研数据的股票："
+              f"已判定 {survey_ft['events_decided']} 个事件 · "
+              f"待定 {survey_ft['events_pending']} 个 · "
+              f"判定率 {survey_ft['decided_rate_pct']}%")
+        print(f"  其中 {survey_ft['stocks_with_direction']} 只推得出方向（≥2 次专项调研的后续）")
+        if survey_ft["decided_rate_pct"] < 30:
+            print(f"  ⚠️  判定率偏低 —— 详情页那块「调研之后发生了什么」大面积说不出话")
 
     bad = [t for t in tables if t["status"] in ("EMPTY", "STALE", "ERROR", "MISSING")]
     print(f"\n共 {len(tables)} 张表，{len(bad)} 张需要关注\n")
