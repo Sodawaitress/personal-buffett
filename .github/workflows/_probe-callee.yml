@@ -1,0 +1,34 @@
+name: _probe-callee (临时，用完删)
+on:
+  workflow_call:
+    inputs:
+      note:
+        required: false
+        type: string
+        default: 'from-call'
+  workflow_dispatch:
+    inputs:
+      note:
+        required: false
+        default: 'from-dispatch'
+
+jobs:
+  show:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dump contexts
+        run: |
+          echo "PROBE event_name = ${{ github.event_name }}"
+          echo "PROBE workflow    = ${{ github.workflow }}"
+          echo "PROBE job         = ${{ github.job }}"
+          echo "PROBE run_id      = ${{ github.run_id }}"
+          echo "PROBE input.note  = ${{ inputs.note }}"
+          echo "PROBE ref         = ${{ github.ref }}"
+      - name: Can I see a secret?
+        run: |
+          if [ -n "${{ secrets.SCAN_TOKEN }}" ]; then
+            echo "PROBE secret      = VISIBLE"
+          else
+            echo "PROBE secret      = MISSING"
+          fi
