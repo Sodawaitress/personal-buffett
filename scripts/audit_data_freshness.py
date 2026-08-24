@@ -428,6 +428,28 @@ def audit_em_convergence(conn, existing):
     return out
 
 
+def audit_scan_jobs(conn, existing):
+    """最近的 trigger-scan 任务状态和错误原文。
+
+    US-158 的东财映射搭 trigger-scan 的车跑，8/22 之后一条新映射都没有。
+    routes.py 会把「板块列表拉不到」「全部板块失败」写进 job.error，
+    所以停滞的原因应该就在这里 —— 不用猜。
+    """
+    if "jobs" not in existing:
+        return {}
+    try:
+        rows = _rows(conn, """
+            SELECT id, job_type, status, created_at, error
+            FROM jobs WHERE job_type LIKE '%scan%'
+            ORDER BY id DESC LIMIT 8
+        """)
+        return {"recent": [(r["id"], r["job_type"], r["status"],
+                            str(r["created_at"])[:16], (r["error"] or "")[:220])
+                           for r in rows]}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {str(e)[:140]}"}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -500,11 +522,12 @@ def main():
         wl_filter = audit_watchlist_filter(conn, existing)
         ind_gap = audit_industry_gap_detail(conn, existing)
         em_conv = audit_em_convergence(conn, existing)
+        scan_jobs = audit_scan_jobs(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "industry_gap": ind_gap, "em_convergence": em_conv,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -620,6 +643,14 @@ def main():
         for d, n in em_conv.get("em_by_day", []):
             print(f"    {d}  {n} 只")
         if em_conv.get("error"): print(f"    {em_conv['error']}")
+
+    if scan_jobs:
+        print(f"\n── 最近的 scan 任务（东财映射搭的就是这趟车）──")
+        for row in scan_jobs.get("recent", []):
+            jid, jt, st, ca, err = row
+            print(f"  #{jid} {jt} {st:8} {ca}")
+            if err: print(f"      ⚠️  {err}")
+        if scan_jobs.get("error"): print(f"  {scan_jobs['error']}")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
