@@ -400,6 +400,35 @@ def audit_industry_gap_detail(conn, existing):
             "by_asset_type": {r["at"]: r["n"] for r in by_type}}
 
 
+def audit_em_convergence(conn, existing):
+    """US-158 东财映射的实际收敛速度 —— 决定行业筛选多久才真的可用。
+
+    设计是每天 12 个板块、约 8 天覆盖 100 个板块。但 502 是按 IP 限流的，
+    实际能刷成几个板块要看当天运气。这里报「已刷板块数 / 每天新增」，
+    算得出真实 ETA，而不是拿设计值当承诺。
+    """
+    if "industry_daily" not in existing or "stock_industry_map" not in existing:
+        return {}
+    out = {}
+    try:
+        rows = _rows(conn, """
+            SELECT substr(updated_at,1,10) AS d, COUNT(*) AS n
+            FROM stock_industry_map WHERE source='em'
+            GROUP BY 1 ORDER BY 1 DESC LIMIT 8
+        """)
+        out["em_by_day"] = [(r["d"], r["n"]) for r in rows]
+    except Exception as e:
+        out["em_by_day_error"] = str(e)[:120]
+    try:
+        out["em_sectors"] = _scalar(conn,
+            "SELECT COUNT(DISTINCT industry) AS v FROM stock_industry_map WHERE source='em'") or 0
+        out["em_total"] = _scalar(conn,
+            "SELECT COUNT(*) AS v FROM stock_industry_map WHERE source='em'") or 0
+    except Exception as e:
+        out["sector_error"] = str(e)[:120]
+    return out
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -471,11 +500,12 @@ def main():
         survey_ft = audit_survey_followthrough(conn, existing)
         wl_filter = audit_watchlist_filter(conn, existing)
         ind_gap = audit_industry_gap_detail(conn, existing)
+        em_conv = audit_em_convergence(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "industry_gap": ind_gap,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "industry_gap": ind_gap, "em_convergence": em_conv,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -584,6 +614,13 @@ def main():
         print(f"  按 asset_type: {ind_gap.get('by_asset_type')}")
         for code, name, at in ind_gap.get("sample", [])[:25]:
             print(f"    {code:10} {str(name)[:16]:18} {at}")
+
+    if em_conv:
+        print(f"\n── 东财行业映射收敛进度（US-158）──")
+        print(f"  已覆盖板块 {em_conv.get('em_sectors')} 个 · 映射 {em_conv.get('em_total')} 只")
+        for d, n in em_conv.get("em_by_day", []):
+            print(f"    {d}  +{n}")
+        if em_conv.get("em_by_day_error"): print(f"    {em_conv['em_by_day_error']}")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
