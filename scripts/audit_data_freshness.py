@@ -370,6 +370,44 @@ def audit_survey_followthrough(conn, existing):
     }
 
 
+def audit_watchlist_filter(conn, existing):
+    """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
+
+    /api/watchlist/filter 里的子查询是
+        SELECT code, grade, MAX(id) FROM analysis_results GROUP BY code
+    `grade` 既不在 GROUP BY 里也没被聚合。SQLite 容忍（随便挑一行），
+    **Postgres 直接报错**。本地测不出来 —— 所以这条探针必须跑在生产上。
+    """
+    if "analysis_results" not in existing:
+        return {}
+    out = {}
+
+    # 真实等级分布：前端按钮写死的那串是不是真的对得上
+    try:
+        rows = _rows(conn, """
+            SELECT UPPER(COALESCE(a.grade,'NR')) AS g, COUNT(*) AS n FROM (
+                SELECT DISTINCT ON (code) code, grade FROM analysis_results
+                ORDER BY code, id DESC
+            ) a GROUP BY 1 ORDER BY 2 DESC
+        """) if not DATABASE_URL.startswith("sqlite") else _rows(conn, """
+            SELECT UPPER(COALESCE(grade,'NR')) AS g, COUNT(*) AS n FROM (
+                SELECT code, grade FROM analysis_results
+                WHERE id IN (SELECT MAX(id) FROM analysis_results GROUP BY code)
+            ) GROUP BY 1 ORDER BY 2 DESC
+        """)
+        out["grades"] = {r["g"]: r["n"] for r in rows}
+    except Exception as e:
+        out["grades_error"] = str(e)[:200]
+
+    # 现役子查询能不能跑
+    try:
+        _rows(conn, "SELECT code, grade, MAX(id) AS id FROM analysis_results GROUP BY code")
+        out["legacy_groupby"] = "OK"
+    except Exception as e:
+        out["legacy_groupby"] = "FAILS: " + str(e).split("\n")[0][:160]
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
@@ -390,11 +428,12 @@ def main():
         industry_cov = audit_industry_coverage(conn, existing)
         users = audit_users(conn, existing)
         survey_ft = audit_survey_followthrough(conn, existing)
+        wl_filter = audit_watchlist_filter(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -497,6 +536,14 @@ def main():
         print(f"  其中 {survey_ft['stocks_with_direction']} 只推得出方向（≥2 次专项调研的后续）")
         if survey_ft["decided_rate_pct"] < 30:
             print(f"  ⚠️  判定率偏低 —— 详情页那块「调研之后发生了什么」大面积说不出话")
+
+    if wl_filter:
+        print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
+        for g, n in (wl_filter.get("grades") or {}).items():
+            print(f"    {g:4} {n:4} 只")
+        if wl_filter.get("grades_error"):
+            print(f"    等级分布查询失败: {wl_filter['grades_error']}")
+        print(f"  现役 GROUP BY 子查询: {wl_filter.get('legacy_groupby')}")
 
     bad = [t for t in tables if t["status"] in ("EMPTY", "STALE", "ERROR", "MISSING")]
     print(f"\n共 {len(tables)} 张表，{len(bad)} 张需要关注\n")
