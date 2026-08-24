@@ -39,6 +39,9 @@ on:
 jobs:
   market:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write        # US-169：桥接下游需要
     # US-150：链式触发时只挡掉「被取消」的上游。上游 failure 仍放行 ——
     # 各服务本就设计成互相独立（analyze 挂了也该把已有报告推出去），
     # 一环挂掉不该让全天归零。
@@ -74,3 +77,18 @@ jobs:
           else
             echo "无可用 Server酱 key，跳过微信告警"
           fi
+
+      # US-169：GITHUB_TOKEN 触发的事件**不会再创建新的 workflow run**
+      # （GitHub 明文规则，防递归）。US-150 的 radar→market 桥接用的正是
+      # GITHUB_TOKEN，所以 market 跑完不发 workflow_run 事件，cron.yml 永远
+      # 等不到 —— 桥接修好了第 4 层，却在下一层制造了一模一样的静默断链。
+      # 实测：08-24 radar ✅ → market ✅(dispatch) → cron ❌ 从未触发；
+      # 而 08-22 人手动 dispatch cron 之后 digest 立刻正常 workflow_run。
+      # 所以 SEG2 内部一律改成显式 dispatch，不再依赖 workflow_run。
+      - name: Bridge to cron.yml (GITHUB_TOKEN 触发不会发 workflow_run 事件)
+        if: always()
+        run: |
+          gh workflow run cron.yml --repo "${{ github.repository }}"
+          echo "已 dispatch cron.yml（显式桥接）"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

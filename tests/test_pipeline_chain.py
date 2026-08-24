@@ -39,10 +39,34 @@ SEG1 = [
     ('push-svc.yml',    'analyze-svc (US-121)'),  # 第 2 层
     ('radar-svc.yml',   'push-svc (US-121)'),     # 第 3 层 ← 上限
 ]
+# US-169（2026-08-25）：SEG2 内部原本还用 workflow_run 串，实测**一次都没生效**。
+# 原因是 GitHub 的防递归规则：
+#   "When you use the repository's GITHUB_TOKEN to perform tasks, events
+#    triggered by the GITHUB_TOKEN will not create a new workflow run."
+# radar→market 的桥接用的正是 GITHUB_TOKEN，所以 market 跑完不发 workflow_run
+# 事件，cron 永远等不到。US-150 的桥接修好了第 4 层，却在第 5 层制造了
+# 一模一样的静默断链。
+#
+# 实测证据（GHA 运行历史）：
+#   08-24  radar ✅ → market ✅(dispatch) → cron ❌ 从未触发
+#   08-22  人手动 dispatch cron → digest ✅ workflow_run 正常
+#   → 人触发会发事件，GITHUB_TOKEN 触发不会。
+#
+# 后果：东财行业映射搭的是 cron 的 light job，8/22 之后一条新映射都没有，
+# 自选股行业覆盖率永久卡在 60%。
+#
+# 所以 SEG2 全段改成显式 dispatch 桥接，链上不再有任何 workflow_run。
 SEG2 = [
-    ('market-svc.yml',  None),                    # 由 radar 桥接 dispatch
-    ('cron.yml',        'market-svc (US-138)'),   # 第 1 层
-    ('digest-svc.yml',  'Daily Cron'),            # 第 2 层
+    ('market-svc.yml',  None),   # 由 radar 桥接 dispatch
+    ('cron.yml',        None),   # 由 market 桥接 dispatch
+    ('digest-svc.yml',  None),   # 由 cron 的 light job 桥接 dispatch
+]
+
+# 每一跳桥接：(上游文件, 下游文件名)
+BRIDGES = [
+    ('radar-svc.yml',  'market-svc.yml'),
+    ('market-svc.yml', 'cron.yml'),
+    ('cron.yml',       'digest-svc.yml'),
 ]
 CHAIN = SEG1 + SEG2
 
@@ -75,23 +99,89 @@ def test_no_segment_exceeds_github_nesting_limit():
         )
 
 
-def test_bridge_exists_between_segments():
-    """两段之间必须有显式桥接，否则 SEG2 永远不会启动。"""
-    body = open(os.path.join(WF, 'radar-svc.yml')).read()
-    assert 'gh workflow run market-svc.yml' in body, \
-        "radar-svc 末尾必须 dispatch market-svc（跨段桥接）"
-    assert 'if: always()' in body, "桥接要 always()，radar 挂了也放行下游"
-    d, _ = _load('radar-svc.yml')
-    perms = d['jobs']['radar'].get('permissions') or {}
-    assert perms.get('actions') == 'write', "桥接需要 actions: write 权限"
+def test_every_bridge_exists():
+    """每一跳桥接都必须显式存在，否则下游永远不会启动。"""
+    for up, down in BRIDGES:
+        body = open(os.path.join(WF, up)).read()
+        assert f'gh workflow run {down}' in body, \
+            f"{up} 末尾必须 dispatch {down}"
+        assert 'if: always()' in body, f"{up} 的桥接要 always()，上游挂了也放行下游"
 
 
-def test_segment2_entry_is_dispatch_only():
-    """market-svc 必须靠 dispatch 进来。改回 workflow_run 会再次静默断链。"""
-    _, on = _load('market-svc.yml')
-    assert 'workflow_dispatch' in on
-    assert 'workflow_run' not in on, \
-        "market-svc 不能用 workflow_run —— 它在链上是第 4 层，会静默不跑"
+def test_every_bridging_workflow_has_actions_write():
+    """少了 actions: write，`gh workflow run` 会 403 —— 而且是在
+    「Alert on failure」之后的步骤里，告警都不一定发得出来。"""
+    for up, _down in BRIDGES:
+        d, _ = _load(up)
+        ok = any((j.get('permissions') or {}).get('actions') == 'write'
+                 for j in d['jobs'].values())
+        assert ok, f"{up} 需要某个 job 带 actions: write 才能桥接"
+
+
+def _workflow_names():
+    """文件名 → workflow 的 name: 字段（workflow_run 引用的是 name，不是文件名）。"""
+    out = {}
+    for fn in os.listdir(WF):
+        if fn.endswith(('.yml', '.yaml')):
+            try:
+                d, _ = _load(fn)
+                if isinstance(d, dict) and d.get('name'):
+                    out[fn] = d['name']
+            except Exception:
+                pass
+    return out
+
+
+def test_nothing_listens_via_workflow_run_to_a_bridge_dispatched_workflow():
+    """本条守的就是 US-169 那次静默断链，而且是**唯一**抓得到它的形式。
+
+    GitHub 防递归规则：GITHUB_TOKEN 发起的 dispatch，被触发的 workflow
+    跑完**不会**再发出 workflow_run 事件。所以只要 X 是被桥接 dispatch
+    起来的，任何 `workflow_run: workflows: [X 的 name]` 都等于没接线。
+
+    US-150 的桥接修好了第 4 层（radar→market），但 cron.yml 仍然写着
+    workflow_run on "market-svc (US-138)" —— 于是断链原样搬到了第 5 层，
+    从 08-19 起 SEG2 一次都没自动跑过。当时的三条测试（链序、嵌套深度、
+    cron 锚点唯一）全绿。
+
+    实测证据：
+      08-24  radar ✅ → market ✅(dispatch) → cron ❌ 从未触发
+      08-22  人手动 dispatch cron → digest ✅ workflow_run 正常
+    """
+    names = _workflow_names()
+    dispatched = {names[down] for _up, down in BRIDGES if down in names}
+    for fname, wf_name in names.items():
+        _, on = _load(fname)
+        wr = on.get('workflow_run') or {}
+        for up_name in (wr.get('workflows') or []):
+            assert up_name not in dispatched, (
+                f"{fname} 用 workflow_run 监听 '{up_name}'，但 '{up_name}' 是被"
+                f" GITHUB_TOKEN 桥接 dispatch 起来的 —— 它跑完不会发 workflow_run"
+                f" 事件，{fname} 永远等不到。改成让上游显式 dispatch 它。")
+
+
+def test_segment2_is_dispatch_only():
+    """SEG2 全段靠 dispatch 串。任何一环改回 workflow_run 都会静默断链。"""
+    for fname, _ in SEG2:
+        _, on = _load(fname)
+        assert 'workflow_dispatch' in on, f"{fname} 必须能被 dispatch"
+
+
+def test_every_chain_workflow_can_actually_be_reached():
+    """最朴素也最该有的一条：链上每个 workflow 都必须有**某种**自动到达的
+    方式 —— cron 锚点、workflow_run、或上游的桥接 dispatch。
+
+    US-169 的 market-svc 三样都没有（只有 workflow_dispatch，schedule 在
+    US-150 里被删了，workflow_run 因深度上限不能加，桥接当时还没接到它
+    下游）。测试全绿，链条却断着。
+    """
+    bridged = {down for _up, down in BRIDGES}
+    for fname, upstream in CHAIN:
+        _, on = _load(fname)
+        reachable = ('schedule' in on) or ('workflow_run' in on) or (fname in bridged)
+        assert reachable, (
+            f"{fname} 没有任何自动触发方式：没有 cron 锚点、没有 workflow_run、"
+            f"也没有上游桥接 dispatch 它 —— 它只会在有人手动点的时候跑")
 
 
 def test_only_fetch_has_a_cron_anchor():
