@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "code": "002415",
+    "name": "海康威视",
+    "date": "2026-08-25",
+    "advice": "已持仓可继续持有；未持仓可等回调至¥34.00附近分批建仓，止损¥32.00。空头认输 + 中期派现催化。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 67,
+      "short_change_pct": -79.4,
+      "survey_count_30d": 2,
+      "price": 34.75
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-08-25",
+    "advice": "适合组合防御底仓；今日-1%是加仓机会，¥33附近分批，止损¥31。机构5次特定对象调研，中报双位数增长。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 16.9,
+      "survey_count_30d": 6,
+      "price": 33.56
+    }
+  },
+  {
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-08-25",
+    "advice": "不追高；若回调到¥230以下再考虑，未持仓者观望。已持仓可继续持有但注意兑现节奏。估值透支预期。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 90,
+      "short_change_pct": -29.5,
+      "survey_count_30d": 3,
+      "price": 257.1
+    }
+  },
+  {
+    "code": "002130",
+    "name": "沃尔核材",
+    "date": "2026-08-25",
+    "advice": "今日+7.44%已反应IPO情绪，未持仓不追；等分拆细节落地，回调到¥15.50附近再考虑。已持仓可小额减持锁定。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 74,
+      "short_change_pct": 5.4,
+      "survey_count_30d": 0,
+      "price": 17.05
+    }
+  },
+  {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-08-25",
+    "advice": "适合防御底仓；¥11.5分批建仓，止损¥10.80。派现在9月中前后到账，可以吃股息。融券异常属对冲不必吓到。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 73,
+      "short_change_pct": 190.7,
+      "survey_count_30d": 2,
+      "price": 11.59
+    }
+  }
+]
