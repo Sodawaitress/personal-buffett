@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-08-25T02:32:20.147980Z",
+  "generated_at": "2026-08-25T10:16:13.823695Z",
   "scope": "all_users",
-  "price_snapshot_at": "2026-08-25T02:32:20.148001Z",
+  "price_snapshot_at": "2026-08-25T10:16:13.823714Z",
   "stocks_with_fresh_price": 238,
   "stocks_total": 239,
-  "price_signature": "0cf719835af7557284dd7a83fe1be53b",
+  "price_signature": "86e92330f3e9d07606aaa6b1ac0c121d",
   "pick_reversals": [],
   "stocks": [
     {
@@ -30,7 +30,7 @@
       "price": {
         "current": 310.34,
         "change_pct": 0.32,
-        "fetched_at": "2026-08-24 22:35:01"
+        "fetched_at": "2026-08-25 07:50:02"
       },
       "news": [
         {
@@ -83,7 +83,7 @@
       "price": {
         "current": 87.03,
         "change_pct": 7.4,
-        "fetched_at": "2026-08-24 22:35:04"
+        "fetched_at": "2026-08-25 07:50:04"
       },
       "news": [
         {
@@ -136,7 +136,7 @@
       "price": {
         "current": 537.84,
         "change_pct": 0.77,
-        "fetched_at": "2026-08-24 22:35:05"
+        "fetched_at": "2026-08-25 07:50:05"
       },
       "news": [
         {
@@ -189,7 +189,7 @@
       "price": {
         "current": 208.48,
         "change_pct": -2.91,
-        "fetched_at": "2026-08-24 22:35:02"
+        "fetched_at": "2026-08-25 07:50:03"
       },
       "news": [
         {
@@ -242,7 +242,7 @@
       "price": {
         "current": 122.78,
         "change_pct": 1.41,
-        "fetched_at": "2026-08-24 22:35:03"
+        "fetched_at": "2026-08-25 07:50:03"
       },
       "news": [
         {
@@ -295,7 +295,7 @@
       "price": {
         "current": 146.84,
         "change_pct": 0.49,
-        "fetched_at": "2026-08-24 22:35:23"
+        "fetched_at": "2026-08-25 07:50:19"
       },
       "news": [
         {
@@ -345,7 +345,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 1.04,
         "is_active": false,
         "survey": {
@@ -362,9 +362,9 @@
         }
       },
       "price": {
-        "current": 18.61,
-        "change_pct": -1.01,
-        "fetched_at": "2026-08-24 23:03:58"
+        "current": 18.95,
+        "change_pct": 1.83,
+        "fetched_at": "2026-08-25 07:49:35"
       },
       "news": [
         {
@@ -414,7 +414,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 2.64,
         "is_active": true,
         "survey": {
@@ -450,11 +450,16 @@
         }
       },
       "price": {
-        "current": 111.5,
-        "change_pct": -1.4,
-        "fetched_at": "2026-08-24 22:33:35"
+        "current": 109.59,
+        "change_pct": -1.71,
+        "fetched_at": "2026-08-25 08:27:35"
       },
       "news": [
+        {
+          "title": "营收净利润双双回落，西典新能“单品类+大客户”双依赖困局待解",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "利润由盈转亏，还要3年干到40亿，上纬新材的机器人野心靠谱吗？",
           "sentiment": 0.0,
@@ -472,11 +477,6 @@
         },
         {
           "title": "阳光电源回应FCC政策影响：主要限制新产品认证 已获认证产品销售不受波及",
-          "sentiment": 0.0,
-          "date": "2026-08-08"
-        },
-        {
-          "title": "大幅溢价45%！A股存储巨头定增37亿元 多家上市公司认购",
           "sentiment": 0.0,
           "date": "2026-08-08"
         }
@@ -502,7 +502,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 2.21,
         "is_active": true,
         "survey": {
@@ -519,9 +519,9 @@
         }
       },
       "price": {
-        "current": 8.77,
-        "change_pct": 0.69,
-        "fetched_at": "2026-08-24 22:32:51"
+        "current": 8.84,
+        "change_pct": 0.8,
+        "fetched_at": "2026-08-25 08:05:11"
       },
       "news": [
         {
@@ -571,7 +571,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 1.54,
         "is_active": false,
         "survey": {
@@ -595,9 +595,9 @@
         }
       },
       "price": {
-        "current": 19.55,
-        "change_pct": 1.4,
-        "fetched_at": "2026-08-24 22:33:54"
+        "current": 19.58,
+        "change_pct": 0.15,
+        "fetched_at": "2026-08-25 07:48:21"
       },
       "news": [
         {
@@ -647,7 +647,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 2.15,
         "is_active": true,
         "survey": {
@@ -664,9 +664,9 @@
         }
       },
       "price": {
-        "current": 37.95,
-        "change_pct": 2.04,
-        "fetched_at": "2026-08-24 23:10:36"
+        "current": 37.9,
+        "change_pct": -0.13,
+        "fetched_at": "2026-08-25 07:49:43"
       },
       "news": [
         {
@@ -716,7 +716,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 8.7,
         "score": 1.52,
         "is_active": false,
         "survey": {
@@ -733,11 +733,26 @@
         }
       },
       "price": {
-        "current": 155.84,
-        "change_pct": -4.31,
-        "fetched_at": "2026-08-24 22:33:40"
+        "current": 161.0,
+        "change_pct": 3.31,
+        "fetched_at": "2026-08-25 08:30:05"
       },
       "news": [
+        {
+          "title": "药明康德DEL平台遭遇网络安全事件 公司称已启动应急响应、未发现资料外泄",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "药明康德：DEL平台遭遇网络安全事件，目前公司运营一切正常",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "药明康德：DEL平台遭遇网络安全事件 目前公司运营一切正常",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "8月19日11只股盘后交易额超千万元",
           "sentiment": 0.0,
@@ -746,21 +761,6 @@
         {
           "title": "6只个股大宗交易超5000万元",
           "sentiment": null,
-          "date": "2026-08-17"
-        },
-        {
-          "title": "主力动向：8月17日特大单净流入512.03亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-17"
-        },
-        {
-          "title": "收盘价创历史新高股一览",
-          "sentiment": 1.0,
-          "date": "2026-08-17"
-        },
-        {
-          "title": "药明康德A股股价创历史新高",
-          "sentiment": 1.0,
           "date": "2026-08-17"
         }
       ]
@@ -785,7 +785,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -809,9 +809,9 @@
         }
       },
       "price": {
-        "current": 85.99,
-        "change_pct": 2.0,
-        "fetched_at": "2026-08-24 22:52:29"
+        "current": 86.69,
+        "change_pct": 0.81,
+        "fetched_at": "2026-08-25 07:49:21"
       },
       "news": [
         {
@@ -861,7 +861,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -878,9 +878,9 @@
         }
       },
       "price": {
-        "current": 17.42,
-        "change_pct": 2.41,
-        "fetched_at": "2026-08-24 23:07:17"
+        "current": 17.07,
+        "change_pct": -2.01,
+        "fetched_at": "2026-08-25 07:49:39"
       },
       "news": [
         {
@@ -930,7 +930,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 1.57,
         "is_active": false,
         "survey": {
@@ -954,9 +954,9 @@
         }
       },
       "price": {
-        "current": 115.43,
-        "change_pct": -2.59,
-        "fetched_at": "2026-08-24 22:48:51"
+        "current": 122.1,
+        "change_pct": 5.78,
+        "fetched_at": "2026-08-25 07:49:16"
       },
       "news": [
         {
@@ -1006,7 +1006,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1023,9 +1023,9 @@
         }
       },
       "price": {
-        "current": 28.59,
-        "change_pct": -2.79,
-        "fetched_at": "2026-08-24 22:33:06"
+        "current": 29.48,
+        "change_pct": 3.11,
+        "fetched_at": "2026-08-25 08:12:51"
       },
       "news": [
         {
@@ -1075,7 +1075,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 1.37,
         "is_active": false,
         "survey": {
@@ -1092,9 +1092,9 @@
         }
       },
       "price": {
-        "current": 14.9,
-        "change_pct": -7.45,
-        "fetched_at": "2026-08-24 22:34:08"
+        "current": 14.42,
+        "change_pct": -3.22,
+        "fetched_at": "2026-08-25 07:48:32"
       },
       "news": [
         {
@@ -1144,7 +1144,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 0.72,
         "is_active": false,
         "survey": {
@@ -1168,9 +1168,9 @@
         }
       },
       "price": {
-        "current": 387.89,
-        "change_pct": -0.83,
-        "fetched_at": "2026-08-24 22:33:47"
+        "current": 376.73,
+        "change_pct": -2.88,
+        "fetched_at": "2026-08-25 07:48:16"
       },
       "news": [
         {
@@ -1220,7 +1220,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 8.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1237,9 +1237,9 @@
         }
       },
       "price": {
-        "current": 54.66,
-        "change_pct": 1.67,
-        "fetched_at": "2026-08-24 22:34:30"
+        "current": 58.8,
+        "change_pct": 7.57,
+        "fetched_at": "2026-08-25 07:48:49"
       },
       "news": [
         {
@@ -1289,7 +1289,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 8.9,
         "score": 1.87,
         "is_active": false,
         "survey": {
@@ -1306,11 +1306,21 @@
         }
       },
       "price": {
-        "current": 56.49,
-        "change_pct": -0.48,
-        "fetched_at": "2026-08-24 22:33:07"
+        "current": 57.67,
+        "change_pct": 2.09,
+        "fetched_at": "2026-08-25 08:13:24"
       },
       "news": [
+        {
+          "title": "博泰车联拟砸8亿入主海鸥住工，三锋控股参股平台斥资2亿举牌，曹德旺之子曹晖隐身其后",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "77股今日获机构买入评级",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "福耀玻璃2026年半年报：净利润下滑17.37%，汇兑损益拖累利润表现",
           "sentiment": -1.0,
@@ -1325,16 +1335,6 @@
           "title": "机构风向标 | 福耀玻璃6006602026年二季度已披露持股减少机构超20家",
           "sentiment": 0.0,
           "date": "2026-08-19"
-        },
-        {
-          "title": "福耀玻璃上半年净利39.7亿元，同比下降17.37%",
-          "sentiment": -1.0,
-          "date": "2026-08-18"
-        },
-        {
-          "title": "福耀玻璃：2026年上半年净利润39.7亿元 拟10派10元",
-          "sentiment": 0.0,
-          "date": "2026-08-18"
         }
       ]
     },
@@ -1358,7 +1358,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.8,
         "score": 3.67,
         "is_active": true,
         "survey": {
@@ -1394,9 +1394,9 @@
         }
       },
       "price": {
-        "current": 13.38,
-        "change_pct": 1.13,
-        "fetched_at": "2026-08-24 22:49:58"
+        "current": 13.46,
+        "change_pct": 0.6,
+        "fetched_at": "2026-08-25 07:49:18"
       },
       "news": [
         {
@@ -1446,7 +1446,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 9.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1463,9 +1463,9 @@
         }
       },
       "price": {
-        "current": 53.93,
-        "change_pct": -2.97,
-        "fetched_at": "2026-08-24 22:34:29"
+        "current": 52.39,
+        "change_pct": -2.86,
+        "fetched_at": "2026-08-25 07:48:48"
       },
       "news": [
         {
@@ -1515,7 +1515,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.6,
+        "cache_age_hours": 25.4,
         "score": 3.63,
         "is_active": true,
         "survey": {
@@ -1545,9 +1545,9 @@
         }
       },
       "price": {
-        "current": 191.83,
-        "change_pct": -4.35,
-        "fetched_at": "2026-08-24 23:13:47"
+        "current": 194.42,
+        "change_pct": 1.35,
+        "fetched_at": "2026-08-25 07:49:46"
       },
       "news": [
         {
@@ -1597,7 +1597,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 0.83,
         "is_active": false,
         "survey": {
@@ -1621,11 +1621,16 @@
         }
       },
       "price": {
-        "current": 38.93,
-        "change_pct": -0.66,
-        "fetched_at": "2026-08-24 22:32:30"
+        "current": 39.35,
+        "change_pct": 1.08,
+        "fetched_at": "2026-08-25 07:53:55"
       },
       "news": [
+        {
+          "title": "科大讯飞刘庆峰披露具身业务进展：聆动机器人将谋求独立上市",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "科大讯飞2026半年报：研发投入超30亿元营收仅微增6.5%，扣非净亏6.37亿",
           "sentiment": 0.0,
@@ -1645,11 +1650,6 @@
           "title": "机构风向标 | 科大讯飞0022302026年二季度已披露持股减少机构超50家",
           "sentiment": 0.0,
           "date": "2026-08-21"
-        },
-        {
-          "title": "科大讯飞上半年实现营收116.23亿元,同比增长6.52%",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
         }
       ]
     },
@@ -1673,7 +1673,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 3.5,
         "is_active": true,
         "survey": {
@@ -1721,9 +1721,9 @@
         }
       },
       "price": {
-        "current": 245.0,
-        "change_pct": -3.44,
-        "fetched_at": "2026-08-24 22:55:01"
+        "current": 244.99,
+        "change_pct": 0.0,
+        "fetched_at": "2026-08-25 07:49:24"
       },
       "news": [
         {
@@ -1773,7 +1773,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.69,
         "is_active": false,
         "survey": {
@@ -1797,35 +1797,35 @@
         }
       },
       "price": {
-        "current": 48.1,
-        "change_pct": -0.64,
-        "fetched_at": "2026-08-24 22:32:36"
+        "current": 52.1,
+        "change_pct": 8.32,
+        "fetched_at": "2026-08-25 07:56:55"
       },
       "news": [
         {
-          "title": "26股今日获机构买入评级",
-          "sentiment": 0.0,
-          "date": "2026-08-12"
+          "title": "基金最新调研股名单出炉，涉及12个行业",
+          "sentiment": null,
+          "date": "2026-08-25"
         },
         {
-          "title": "一次性手套生产商股价齐涨！油价上涨抬高生产成本，缘何半年利润还能翻倍涨",
+          "title": "英科医疗300677.SZ)：2026年中报净利润为8.37亿元",
           "sentiment": null,
-          "date": "2026-07-29"
+          "date": "2026-08-25"
         },
         {
-          "title": "916只股短线走稳 站上五日均线",
+          "title": "英科医疗：2026年上半年净利润同比增长17.86% 拟10派1元",
           "sentiment": null,
-          "date": "2026-07-29"
+          "date": "2026-08-25"
         },
         {
-          "title": "中红医疗净利最高预增35倍 健康防护手套行业回暖 | 财报解读",
+          "title": "英科医疗：目前客户下单意愿强烈",
           "sentiment": null,
-          "date": "2026-07-29"
+          "date": "2026-08-25"
         },
         {
-          "title": "医药生物行业资金流出榜：九安医疗等6股净流出资金超亿元",
+          "title": "英科医疗：目前客户下单意愿强烈",
           "sentiment": null,
-          "date": "2026-07-22"
+          "date": "2026-08-25"
         }
       ]
     },
@@ -1849,7 +1849,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.6,
         "score": 1.48,
         "is_active": false,
         "survey": {
@@ -1866,11 +1866,16 @@
         }
       },
       "price": {
-        "current": 55.63,
-        "change_pct": -3.17,
-        "fetched_at": "2026-08-24 22:32:58"
+        "current": 55.14,
+        "change_pct": -0.88,
+        "fetched_at": "2026-08-25 08:08:44"
       },
       "news": [
+        {
+          "title": "硬科技投向标|工信部：加快智能芯片等关键核心技术攻关 长存控股科创板IPO申请获受理",
+          "sentiment": null,
+          "date": "2026-08-22"
+        },
         {
           "title": "机械设备行业资金流出榜：华工科技、绿的谐波等净流出资金居前",
           "sentiment": 0.0,
@@ -1888,11 +1893,6 @@
         },
         {
           "title": "66只科创板活跃股获主力资金净流入",
-          "sentiment": 0.0,
-          "date": "2026-08-10"
-        },
-        {
-          "title": "A股午后回暖：沪指涨幅扩大，大消费走强，超4000股收涨",
           "sentiment": 0.0,
           "date": "2026-08-10"
         }
@@ -1918,7 +1918,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.6,
         "score": 2.1,
         "is_active": true,
         "survey": {
@@ -1948,9 +1948,9 @@
         }
       },
       "price": {
-        "current": 43.41,
-        "change_pct": -0.44,
-        "fetched_at": "2026-08-24 22:33:37"
+        "current": 43.5,
+        "change_pct": 0.21,
+        "fetched_at": "2026-08-25 08:28:37"
       },
       "news": [
         {
@@ -2000,7 +2000,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2017,11 +2017,16 @@
         }
       },
       "price": {
-        "current": 13.79,
-        "change_pct": -0.22,
-        "fetched_at": "2026-08-24 22:33:05"
+        "current": 14.06,
+        "change_pct": 1.96,
+        "fetched_at": "2026-08-25 08:12:19"
       },
       "news": [
+        {
+          "title": "传媒行业8月21日资金流向日报",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
         {
           "title": "天游软件“二次创业”：以AI焕新《街头篮球》生态",
           "sentiment": null,
@@ -2034,11 +2039,6 @@
         },
         {
           "title": "12.13亿元主力资金今日撤离传媒板块",
-          "sentiment": null,
-          "date": "2026-08-17"
-        },
-        {
-          "title": "网络游戏概念下跌0.43%，主力资金净流出45股",
           "sentiment": null,
           "date": "2026-08-17"
         },
@@ -2069,7 +2069,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2086,9 +2086,9 @@
         }
       },
       "price": {
-        "current": 9.29,
-        "change_pct": -1.06,
-        "fetched_at": "2026-08-24 22:42:50"
+        "current": 9.39,
+        "change_pct": 1.08,
+        "fetched_at": "2026-08-25 07:49:09"
       },
       "news": [
         {
@@ -2138,7 +2138,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.89,
         "is_active": false,
         "survey": {
@@ -2155,9 +2155,9 @@
         }
       },
       "price": {
-        "current": 27.04,
-        "change_pct": -5.09,
-        "fetched_at": "2026-08-24 23:09:13"
+        "current": 27.7,
+        "change_pct": 2.44,
+        "fetched_at": "2026-08-25 07:49:41"
       },
       "news": [
         {
@@ -2207,7 +2207,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.8,
         "score": 0.09,
         "is_active": false,
         "survey": {
@@ -2224,35 +2224,35 @@
         }
       },
       "price": {
-        "current": 379.19,
-        "change_pct": 4.29,
-        "fetched_at": "2026-08-24 22:32:41"
+        "current": 394.5,
+        "change_pct": 4.04,
+        "fetched_at": "2026-08-25 07:59:25"
       },
       "news": [
         {
-          "title": "红利质量（931468.CSI）成分股长飞光纤（601869.SH）8月20日进行股权登记",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
+          "title": "74只股中线走稳 站上半年线",
+          "sentiment": null,
+          "date": "2026-08-24"
         },
         {
-          "title": "业绩展望丨长飞光纤光缆周五揭晓中期业绩：H1净利预增超7倍，AI算力驱动需求爆发",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
+          "title": "长飞光纤601869.SH)：2026年中报净利润为29.25亿元、同比较去年同期上涨888.88%",
+          "sentiment": null,
+          "date": "2026-08-22"
         },
         {
-          "title": "通信行业今日净流入资金54.27亿元，中际旭创等16股净流入资金超亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-17"
+          "title": "长飞光纤披露2026年半年报 归母净利润同比增长888.88%",
+          "sentiment": null,
+          "date": "2026-08-21"
         },
         {
-          "title": "每股现金红利0.295元！攻守兼备的红利质量指数（931468.CSI）成分股长飞光纤，发布2025年年度A股权益分派实施公告",
-          "sentiment": 0.0,
-          "date": "2026-08-17"
+          "title": "长飞光纤拟每10股派发现金红利10.6元",
+          "sentiment": null,
+          "date": "2026-08-21"
         },
         {
-          "title": "长飞光纤601869龙虎榜数据08-06",
-          "sentiment": 0.0,
-          "date": "2026-08-06"
+          "title": "长飞光纤：上半年净利润同比增长888.88% 拟10派10.6元",
+          "sentiment": null,
+          "date": "2026-08-21"
         }
       ]
     },
@@ -2276,7 +2276,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2293,9 +2293,9 @@
         }
       },
       "price": {
-        "current": 60.43,
-        "change_pct": -2.81,
-        "fetched_at": "2026-08-24 22:44:56"
+        "current": 64.6,
+        "change_pct": 6.9,
+        "fetched_at": "2026-08-25 07:49:12"
       },
       "news": [
         {
@@ -2345,7 +2345,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 4.47,
         "is_active": true,
         "survey": {
@@ -2381,9 +2381,9 @@
         }
       },
       "price": {
-        "current": 249.5,
-        "change_pct": -8.63,
-        "fetched_at": "2026-08-24 23:13:11"
+        "current": 257.1,
+        "change_pct": 3.05,
+        "fetched_at": "2026-08-25 07:49:46"
       },
       "news": [
         {
@@ -2433,7 +2433,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 3.49,
         "is_active": true,
         "survey": {
@@ -2469,11 +2469,26 @@
         }
       },
       "price": {
-        "current": 11.4,
-        "change_pct": -0.09,
-        "fetched_at": "2026-08-24 22:33:08"
+        "current": 11.41,
+        "change_pct": 0.09,
+        "fetched_at": "2026-08-25 08:13:52"
       },
       "news": [
+        {
+          "title": "50股二季度获社保基金扎堆持有",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "食品饮料行业8月24日资金流向日报",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "29股股东户数连降 筹码持续集中",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "燕京啤酒000729.SZ)2026年中报净利润为13.99亿元、较去年同期上涨26.86%",
           "sentiment": 0.0,
@@ -2483,21 +2498,6 @@
           "title": "燕京啤酒000729.SZ)：2026年中报净利润为13.99亿元、同比较去年同期上涨26.86%",
           "sentiment": 0.0,
           "date": "2026-08-21"
-        },
-        {
-          "title": "社保基金二季度重仓股揭秘：新进44股 增持44股",
-          "sentiment": 1.0,
-          "date": "2026-08-21"
-        },
-        {
-          "title": "燕京啤酒上半年归母净利润增26.9%至14.0亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-21"
-        },
-        {
-          "title": "燕京啤酒：上半年净利润同比增长26.86% 拟10派1元",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
         }
       ]
     },
@@ -2521,7 +2521,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2538,9 +2538,9 @@
         }
       },
       "price": {
-        "current": 24.66,
-        "change_pct": -1.71,
-        "fetched_at": "2026-08-24 22:50:36"
+        "current": 25.23,
+        "change_pct": 2.31,
+        "fetched_at": "2026-08-25 07:49:19"
       },
       "news": [
         {
@@ -2590,7 +2590,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.7,
         "score": 1.57,
         "is_active": false,
         "survey": {
@@ -2607,9 +2607,9 @@
         }
       },
       "price": {
-        "current": 96.78,
-        "change_pct": -1.24,
-        "fetched_at": "2026-08-24 22:34:06"
+        "current": 99.2,
+        "change_pct": 2.5,
+        "fetched_at": "2026-08-25 07:48:31"
       },
       "news": [
         {
@@ -2659,7 +2659,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 3.5,
         "is_active": true,
         "survey": {
@@ -2695,9 +2695,9 @@
         }
       },
       "price": {
-        "current": 870.22,
-        "change_pct": -7.72,
-        "fetched_at": "2026-08-24 22:34:05"
+        "current": 846.0,
+        "change_pct": -2.78,
+        "fetched_at": "2026-08-25 07:48:30"
       },
       "news": [
         {
@@ -2747,7 +2747,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.7,
         "score": 0.03,
         "is_active": false,
         "survey": {
@@ -2764,9 +2764,9 @@
         }
       },
       "price": {
-        "current": 19.83,
-        "change_pct": -7.21,
-        "fetched_at": "2026-08-24 22:51:13"
+        "current": 20.81,
+        "change_pct": 4.94,
+        "fetched_at": "2026-08-25 07:49:19"
       },
       "news": [
         {
@@ -2816,7 +2816,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 1.49,
         "is_active": false,
         "survey": {
@@ -2833,9 +2833,9 @@
         }
       },
       "price": {
-        "current": 7.23,
-        "change_pct": -1.36,
-        "fetched_at": "2026-08-24 22:32:55"
+        "current": 7.26,
+        "change_pct": 0.41,
+        "fetched_at": "2026-08-25 08:07:10"
       },
       "news": [
         {
@@ -2885,7 +2885,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 2.18,
         "is_active": true,
         "survey": {
@@ -2902,9 +2902,9 @@
         }
       },
       "price": {
-        "current": 33.8,
-        "change_pct": 0.36,
-        "fetched_at": "2026-08-24 23:12:32"
+        "current": 33.84,
+        "change_pct": 0.12,
+        "fetched_at": "2026-08-25 07:49:45"
       },
       "news": [
         {
@@ -2954,7 +2954,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2971,9 +2971,9 @@
         }
       },
       "price": {
-        "current": 8.05,
-        "change_pct": 0.0,
-        "fetched_at": "2026-08-24 22:32:46"
+        "current": 8.12,
+        "change_pct": 0.87,
+        "fetched_at": "2026-08-25 08:02:31"
       },
       "news": [
         {
@@ -3023,7 +3023,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.8,
         "score": 2.19,
         "is_active": true,
         "survey": {
@@ -3040,9 +3040,9 @@
         }
       },
       "price": {
-        "current": 13.23,
-        "change_pct": 1.07,
-        "fetched_at": "2026-08-24 22:33:56"
+        "current": 13.37,
+        "change_pct": 1.06,
+        "fetched_at": "2026-08-25 07:48:22"
       },
       "news": [
         {
@@ -3092,7 +3092,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.6,
         "score": 1.31,
         "is_active": false,
         "survey": {
@@ -3116,9 +3116,9 @@
         }
       },
       "price": {
-        "current": 120.58,
-        "change_pct": -3.38,
-        "fetched_at": "2026-08-24 22:59:19"
+        "current": 120.0,
+        "change_pct": -0.48,
+        "fetched_at": "2026-08-25 07:49:29"
       },
       "news": [
         {
@@ -3168,7 +3168,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -3185,9 +3185,9 @@
         }
       },
       "price": {
-        "current": 13.41,
-        "change_pct": -0.81,
-        "fetched_at": "2026-08-24 23:06:38"
+        "current": 13.21,
+        "change_pct": -1.49,
+        "fetched_at": "2026-08-25 07:49:38"
       },
       "news": [
         {
@@ -3237,7 +3237,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.6,
+        "cache_age_hours": 25.3,
         "score": 1.65,
         "is_active": false,
         "survey": {
@@ -3254,35 +3254,35 @@
         }
       },
       "price": {
-        "current": 70.56,
-        "change_pct": -5.66,
-        "fetched_at": "2026-08-24 22:32:43"
+        "current": 69.18,
+        "change_pct": -1.96,
+        "fetched_at": "2026-08-25 08:01:00"
       },
       "news": [
         {
-          "title": "营业部最青睐个股曝光 9股净买入超亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
-        },
-        {
-          "title": "龙虎榜机构新动向：净买入13股 净卖出20股",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
-        },
-        {
-          "title": "沪股通现身10只个股龙虎榜",
+          "title": "华大智造上半年营收增长18.91% AI需求驱动业务增长",
           "sentiment": null,
-          "date": "2026-08-20"
+          "date": "2026-08-22"
         },
         {
-          "title": "华大智造龙虎榜：营业部净买入9243.65万元",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
+          "title": "华大智造688114.SH)：2026年中报净利润为-1.58亿元",
+          "sentiment": null,
+          "date": "2026-08-22"
         },
         {
-          "title": "8月20日科创板主力资金净流出39.89亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
+          "title": "华大智造：上半年净利润亏损1.58亿元 同比减亏",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
+        {
+          "title": "华大智造：上半年净亏损1.58亿元",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
+        {
+          "title": "华大智造688114龙虎榜数据(08-21",
+          "sentiment": null,
+          "date": "2026-08-21"
         }
       ]
     },
@@ -3306,7 +3306,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.6,
+        "cache_age_hours": 25.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3323,9 +3323,9 @@
         }
       },
       "price": {
-        "current": 8.31,
-        "change_pct": -5.57,
-        "fetched_at": "2026-08-24 23:11:54"
+        "current": 8.57,
+        "change_pct": 3.13,
+        "fetched_at": "2026-08-25 07:49:44"
       },
       "news": [
         {
@@ -3375,7 +3375,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -3405,9 +3405,9 @@
         }
       },
       "price": {
-        "current": 32.69,
-        "change_pct": -0.4,
-        "fetched_at": "2026-08-24 23:09:53"
+        "current": 31.98,
+        "change_pct": -2.17,
+        "fetched_at": "2026-08-25 07:49:42"
       },
       "news": [
         {
@@ -3457,7 +3457,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.7,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -3505,9 +3505,9 @@
         }
       },
       "price": {
-        "current": 42.23,
-        "change_pct": -0.71,
-        "fetched_at": "2026-08-24 23:08:34"
+        "current": 42.13,
+        "change_pct": -0.24,
+        "fetched_at": "2026-08-25 07:49:40"
       },
       "news": [
         {
@@ -3557,7 +3557,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.6,
         "score": 0.14,
         "is_active": false,
         "survey": {
@@ -3574,9 +3574,9 @@
         }
       },
       "price": {
-        "current": 38.05,
-        "change_pct": -5.58,
-        "fetched_at": "2026-08-24 22:42:11"
+        "current": 38.41,
+        "change_pct": 0.95,
+        "fetched_at": "2026-08-25 07:49:09"
       },
       "news": [
         {
@@ -3626,7 +3626,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.79,
         "is_active": false,
         "survey": {
@@ -3643,9 +3643,9 @@
         }
       },
       "price": {
-        "current": 84.2,
-        "change_pct": 0.12,
-        "fetched_at": "2026-08-24 23:07:56"
+        "current": 86.01,
+        "change_pct": 2.15,
+        "fetched_at": "2026-08-25 07:49:39"
       },
       "news": [
         {
@@ -3695,7 +3695,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 1.0,
         "is_active": false,
         "survey": {
@@ -3725,9 +3725,9 @@
         }
       },
       "price": {
-        "current": 12.22,
-        "change_pct": -0.97,
-        "fetched_at": "2026-08-24 22:34:04"
+        "current": 11.96,
+        "change_pct": -2.13,
+        "fetched_at": "2026-08-25 07:48:29"
       },
       "news": [
         {
@@ -3777,7 +3777,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3794,9 +3794,9 @@
         }
       },
       "price": {
-        "current": 56.99,
-        "change_pct": -1.76,
-        "fetched_at": "2026-08-24 22:34:03"
+        "current": 56.65,
+        "change_pct": -0.6,
+        "fetched_at": "2026-08-25 07:48:29"
       },
       "news": [
         {
@@ -3846,7 +3846,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -3863,11 +3863,26 @@
         }
       },
       "price": {
-        "current": 3.89,
-        "change_pct": 9.89,
-        "fetched_at": "2026-08-24 22:32:31"
+        "current": 3.87,
+        "change_pct": -0.51,
+        "fetched_at": "2026-08-25 07:54:24"
       },
       "news": [
+        {
+          "title": "焦炭概念强势拉升，行业盈利拐点有望到来？丨异动情报",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "8.57亿元资金今日流入煤炭股",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "涨停股复盘：14股封单超亿元",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "焦炭概念盘中走弱，行业盈利或已实质性筑底、拐点渐近|异动情报",
           "sentiment": 0.0,
@@ -3876,21 +3891,6 @@
         {
           "title": "营业部最青睐个股曝光 5股净买入超亿元",
           "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "煤炭行业今日净流入资金11.84亿元，大有能源等6股净流入资金超5000万元",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "美锦能源000723龙虎榜数据08-19)",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "今日143只个股突破五日均线",
-          "sentiment": null,
           "date": "2026-08-19"
         }
       ]
@@ -3915,7 +3915,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 2.12,
         "is_active": true,
         "survey": {
@@ -3932,9 +3932,9 @@
         }
       },
       "price": {
-        "current": 9.68,
-        "change_pct": 1.04,
-        "fetched_at": "2026-08-24 22:34:02"
+        "current": 9.79,
+        "change_pct": 1.14,
+        "fetched_at": "2026-08-25 07:48:28"
       },
       "news": [
         {
@@ -3984,7 +3984,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.7,
         "score": 1.88,
         "is_active": false,
         "survey": {
@@ -4008,9 +4008,9 @@
         }
       },
       "price": {
-        "current": 89.26,
-        "change_pct": -5.42,
-        "fetched_at": "2026-08-24 22:53:05"
+        "current": 91.1,
+        "change_pct": 2.06,
+        "fetched_at": "2026-08-25 07:49:22"
       },
       "news": [
         {
@@ -4060,7 +4060,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 1.0,
         "is_active": false,
         "survey": {
@@ -4090,9 +4090,9 @@
         }
       },
       "price": {
-        "current": 64.05,
-        "change_pct": -2.7,
-        "fetched_at": "2026-08-24 22:59:57"
+        "current": 63.39,
+        "change_pct": -1.03,
+        "fetched_at": "2026-08-25 07:49:30"
       },
       "news": [
         {
@@ -4142,7 +4142,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.66,
         "is_active": false,
         "survey": {
@@ -4166,11 +4166,21 @@
         }
       },
       "price": {
-        "current": 24.78,
-        "change_pct": -0.92,
-        "fetched_at": "2026-08-24 22:32:39"
+        "current": 25.4,
+        "change_pct": 2.5,
+        "fetched_at": "2026-08-25 07:58:25"
       },
       "news": [
+        {
+          "title": "粮食概念涨1.01%，主力资金净流入这些股",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "6.59亿元资金今日流出农林牧渔股",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
         {
           "title": "创业板最新筹码集中股名单（附股）",
           "sentiment": 0.0,
@@ -4185,16 +4195,6 @@
           "title": "金龙鱼上半年营业收入同比增长6.20%",
           "sentiment": 0.0,
           "date": "2026-08-17"
-        },
-        {
-          "title": "农林牧渔行业今日跌1.56%，主力资金净流出4.20亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-14"
-        },
-        {
-          "title": "经营现金流下跌93%！金龙鱼账面利润大增，全靠一次性收益托举？",
-          "sentiment": 0.0,
-          "date": "2026-08-13"
         }
       ]
     },
@@ -4218,7 +4218,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.7,
         "score": 1.9,
         "is_active": false,
         "survey": {
@@ -4235,9 +4235,9 @@
         }
       },
       "price": {
-        "current": 63.24,
-        "change_pct": -2.53,
-        "fetched_at": "2026-08-24 22:32:35"
+        "current": 61.61,
+        "change_pct": -2.58,
+        "fetched_at": "2026-08-25 07:56:24"
       },
       "news": [
         {
@@ -4287,7 +4287,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.9,
         "score": 0.08,
         "is_active": false,
         "survey": {
@@ -4304,9 +4304,9 @@
         }
       },
       "price": {
-        "current": 6.45,
-        "change_pct": -1.23,
-        "fetched_at": "2026-08-24 22:53:43"
+        "current": 6.5,
+        "change_pct": 0.78,
+        "fetched_at": "2026-08-25 07:49:23"
       },
       "news": [
         {
@@ -4356,7 +4356,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4373,11 +4373,21 @@
         }
       },
       "price": {
-        "current": 4.86,
-        "change_pct": 0.62,
-        "fetched_at": "2026-08-24 22:32:34"
+        "current": 4.8,
+        "change_pct": -1.23,
+        "fetched_at": "2026-08-25 07:55:53"
       },
       "news": [
+        {
+          "title": "金属铅概念涨1.00%，主力资金净流入23股",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "金属锌概念涨0.96%，主力资金净流入这些股",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "金属锌概念涨2.93%，主力资金净流入这些股",
           "sentiment": 0.0,
@@ -4392,16 +4402,6 @@
           "title": "环保行业资金流入榜：惠城环保、武汉天源等净流入资金居前",
           "sentiment": null,
           "date": "2026-07-24"
-        },
-        {
-          "title": "2.85亿元资金今日流入环保股",
-          "sentiment": null,
-          "date": "2026-07-23"
-        },
-        {
-          "title": "金属铅概念上涨2.54%，7股主力资金净流入超亿元",
-          "sentiment": null,
-          "date": "2026-07-22"
         }
       ]
     },
@@ -4425,7 +4425,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 3.96,
         "is_active": true,
         "survey": {
@@ -4461,9 +4461,9 @@
         }
       },
       "price": {
-        "current": 10.25,
-        "change_pct": 0.59,
-        "fetched_at": "2026-08-24 22:34:01"
+        "current": 10.34,
+        "change_pct": 0.88,
+        "fetched_at": "2026-08-25 07:48:27"
       },
       "news": [
         {
@@ -4513,7 +4513,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4530,9 +4530,9 @@
         }
       },
       "price": {
-        "current": 17.62,
-        "change_pct": -1.01,
-        "fetched_at": "2026-08-24 22:32:45"
+        "current": 17.71,
+        "change_pct": 0.51,
+        "fetched_at": "2026-08-25 08:02:01"
       },
       "news": [
         {
@@ -4582,7 +4582,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 0.73,
         "is_active": false,
         "survey": {
@@ -4599,9 +4599,9 @@
         }
       },
       "price": {
-        "current": 4.18,
-        "change_pct": 1.21,
-        "fetched_at": "2026-08-24 22:32:38"
+        "current": 4.36,
+        "change_pct": 4.31,
+        "fetched_at": "2026-08-25 07:57:56"
       },
       "news": [
         {
@@ -4651,7 +4651,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 0.61,
         "is_active": false,
         "survey": {
@@ -4668,9 +4668,9 @@
         }
       },
       "price": {
-        "current": 73.8,
-        "change_pct": -6.07,
-        "fetched_at": "2026-08-24 22:47:33"
+        "current": 74.05,
+        "change_pct": 0.34,
+        "fetched_at": "2026-08-25 07:49:15"
       },
       "news": [
         {
@@ -4720,7 +4720,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4737,9 +4737,9 @@
         }
       },
       "price": {
-        "current": 9.76,
-        "change_pct": 0.21,
-        "fetched_at": "2026-08-24 22:33:59"
+        "current": 9.89,
+        "change_pct": 1.33,
+        "fetched_at": "2026-08-25 07:48:25"
       },
       "news": [
         {
@@ -4789,7 +4789,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 8.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4806,35 +4806,35 @@
         }
       },
       "price": {
-        "current": 19.3,
-        "change_pct": -7.39,
-        "fetched_at": "2026-08-24 22:32:28"
+        "current": 20.33,
+        "change_pct": 5.34,
+        "fetched_at": "2026-08-25 07:52:35"
       },
       "news": [
         {
-          "title": "商贸零售行业7月29日资金流向日报",
+          "title": "宁波中百2026年半年报：黄金业务收缩，营收利润双降",
           "sentiment": null,
-          "date": "2026-07-29"
+          "date": "2026-08-25"
         },
         {
-          "title": "黄金概念上涨1.86%，12股主力资金净流入超亿元",
+          "title": "宁波中百600857.SH)2026年中报净利润为1157.55万元、较去年同期下降34.36%",
           "sentiment": null,
-          "date": "2026-07-22"
+          "date": "2026-08-25"
         },
         {
-          "title": "短线防风险 29只个股短期均线现死叉",
+          "title": "机构风向标 | 宁波中百6008572026年二季度已披露持仓机构仅2家",
           "sentiment": null,
-          "date": "2026-07-20"
+          "date": "2026-08-25"
         },
         {
-          "title": "短线防风险 18只个股短期均线现死叉",
+          "title": "宁波中百上半年归母净利润1158万元，同比降34.4%",
           "sentiment": null,
-          "date": "2026-07-20"
+          "date": "2026-08-24"
         },
         {
-          "title": "宁波中百7月17日龙虎榜数据",
+          "title": "12.11亿主力资金净流入，黄金概念涨1.17%",
           "sentiment": null,
-          "date": "2026-07-17"
+          "date": "2026-08-24"
         }
       ]
     },
@@ -4858,7 +4858,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.53,
         "is_active": false,
         "survey": {
@@ -4875,9 +4875,9 @@
         }
       },
       "price": {
-        "current": 6.1,
-        "change_pct": -2.4,
-        "fetched_at": "2026-08-24 22:33:52"
+        "current": 6.32,
+        "change_pct": 3.61,
+        "fetched_at": "2026-08-25 07:48:19"
       },
       "news": [
         {
@@ -4927,7 +4927,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 1.17,
         "is_active": false,
         "survey": {
@@ -4944,9 +4944,9 @@
         }
       },
       "price": {
-        "current": 5.4,
-        "change_pct": -5.1,
-        "fetched_at": "2026-08-24 23:11:13"
+        "current": 5.52,
+        "change_pct": 2.22,
+        "fetched_at": "2026-08-25 07:49:43"
       },
       "news": [
         {
@@ -4996,7 +4996,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 3.38,
         "is_active": true,
         "survey": {
@@ -5038,11 +5038,16 @@
         }
       },
       "price": {
-        "current": 90.66,
-        "change_pct": 0.21,
-        "fetched_at": "2026-08-24 22:32:59"
+        "current": 91.36,
+        "change_pct": 0.77,
+        "fetched_at": "2026-08-25 08:09:14"
       },
       "news": [
+        {
+          "title": "成都车展：价格战退潮了吗",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "宁德时代专门给碳中和开了场发布会，图什么？",
           "sentiment": null,
@@ -5062,11 +5067,6 @@
           "title": "上半年亏损28.90亿，数亿“奖金”没送出去，储能新业务能为天合光能扛起大梁吗？",
           "sentiment": -1.0,
           "date": "2026-08-10"
-        },
-        {
-          "title": "故障率检出高逾20倍：中创新航“老三”不保",
-          "sentiment": 0.0,
-          "date": "2026-08-07"
         }
       ]
     },
@@ -5090,7 +5090,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.9,
         "score": 2.72,
         "is_active": true,
         "survey": {
@@ -5107,9 +5107,9 @@
         }
       },
       "price": {
-        "current": 4.42,
-        "change_pct": 0.68,
-        "fetched_at": "2026-08-24 22:44:14"
+        "current": 4.47,
+        "change_pct": 1.13,
+        "fetched_at": "2026-08-25 07:49:11"
       },
       "news": [
         {
@@ -5159,7 +5159,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 0.09,
         "is_active": false,
         "survey": {
@@ -5176,9 +5176,9 @@
         }
       },
       "price": {
-        "current": 22.17,
-        "change_pct": -2.16,
-        "fetched_at": "2026-08-24 23:01:12"
+        "current": 22.44,
+        "change_pct": 1.22,
+        "fetched_at": "2026-08-25 07:49:32"
       },
       "news": [
         {
@@ -5228,7 +5228,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5245,9 +5245,9 @@
         }
       },
       "price": {
-        "current": 102.9,
-        "change_pct": 4.71,
-        "fetched_at": "2026-08-24 22:46:14"
+        "current": 99.34,
+        "change_pct": -3.46,
+        "fetched_at": "2026-08-25 07:49:13"
       },
       "news": [
         {
@@ -5297,7 +5297,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -5314,9 +5314,9 @@
         }
       },
       "price": {
-        "current": 29.47,
-        "change_pct": -2.48,
-        "fetched_at": "2026-08-24 22:32:49"
+        "current": 29.41,
+        "change_pct": -0.2,
+        "fetched_at": "2026-08-25 08:04:06"
       },
       "news": [
         {
@@ -5366,7 +5366,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 3.37,
         "is_active": true,
         "survey": {
@@ -5414,9 +5414,9 @@
         }
       },
       "price": {
-        "current": 73.62,
-        "change_pct": -0.3,
-        "fetched_at": "2026-08-24 22:32:43"
+        "current": 72.19,
+        "change_pct": -1.94,
+        "fetched_at": "2026-08-25 08:00:26"
       },
       "news": [
         {
@@ -5466,7 +5466,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 1.64,
         "is_active": false,
         "survey": {
@@ -5483,35 +5483,35 @@
         }
       },
       "price": {
-        "current": 43.12,
-        "change_pct": 3.73,
-        "fetched_at": "2026-08-24 22:32:53"
+        "current": 45.8,
+        "change_pct": 6.22,
+        "fetched_at": "2026-08-25 08:06:10"
       },
       "news": [
         {
-          "title": "研发占比跌破2%，签字保代IPO成功经验为零：格兰达带着“对赌期约”冲刺北交所",
+          "title": "创业板两融余额减少26.81亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "飞荣达300602.SZ)：2026年中报净利润为2.53亿元",
+          "sentiment": null,
+          "date": "2026-08-22"
+        },
+        {
+          "title": "机构风向标 | 飞荣达3006022026年二季度已披露前十大机构累计持仓占比6.33%",
+          "sentiment": null,
+          "date": "2026-08-22"
+        },
+        {
+          "title": "飞荣达：2026年上半年净利润2.53亿元 同比增长52.09%",
           "sentiment": null,
           "date": "2026-08-21"
         },
         {
-          "title": "13只创业板股最新股东户数降逾5%",
+          "title": "飞荣达：上半年归母净利润2.53亿元，同比上升52.1%",
           "sentiment": null,
-          "date": "2026-08-20"
-        },
-        {
-          "title": "92只创业板股最新筹码趋向集中",
-          "sentiment": null,
-          "date": "2026-08-17"
-        },
-        {
-          "title": "17股最新股东户数降逾5%",
-          "sentiment": null,
-          "date": "2026-08-14"
-        },
-        {
-          "title": "【盘中播报】62只个股突破半年线",
-          "sentiment": null,
-          "date": "2026-08-14"
+          "date": "2026-08-21"
         }
       ]
     },
@@ -5535,7 +5535,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.52,
         "is_active": false,
         "survey": {
@@ -5559,9 +5559,9 @@
         }
       },
       "price": {
-        "current": 111.13,
-        "change_pct": -4.69,
-        "fetched_at": "2026-08-24 22:33:51"
+        "current": 114.86,
+        "change_pct": 3.36,
+        "fetched_at": "2026-08-25 07:48:19"
       },
       "news": [
         {
@@ -5611,7 +5611,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.7,
+        "cache_age_hours": 25.4,
         "score": 3.5,
         "is_active": true,
         "survey": {
@@ -5635,9 +5635,9 @@
         }
       },
       "price": {
-        "current": 147.54,
-        "change_pct": -4.07,
-        "fetched_at": "2026-08-24 22:32:33"
+        "current": 147.55,
+        "change_pct": 0.01,
+        "fetched_at": "2026-08-25 07:55:24"
       },
       "news": [
         {
@@ -5687,7 +5687,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 1.93,
         "is_active": false,
         "survey": {
@@ -5711,11 +5711,21 @@
         }
       },
       "price": {
-        "current": 95.37,
-        "change_pct": -5.46,
-        "fetched_at": "2026-08-24 22:32:50"
+        "current": 94.23,
+        "change_pct": -1.2,
+        "fetched_at": "2026-08-25 08:04:39"
       },
       "news": [
+        {
+          "title": "22股受融资客青睐，净买入超亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "两融余额四连降 51股仍获杠杆资金大幅加仓",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
         {
           "title": "氟化工概念下跌0.55%，主力资金净流出45股",
           "sentiment": 0.0,
@@ -5730,16 +5740,6 @@
           "title": "8月18日3677只股发生盘后交易，12只股盘后交易额超千万元",
           "sentiment": 0.0,
           "date": "2026-08-18"
-        },
-        {
-          "title": "稀有金属全线走强！稀有金属ETF易方达（561050）涨2.15%，稀土、钨、锗等战略小金属联袂上攻",
-          "sentiment": 0.0,
-          "date": "2026-08-14"
-        },
-        {
-          "title": "有色金属行业资金流出榜：紫金矿业、云南锗业等净流出资金居前",
-          "sentiment": 0.0,
-          "date": "2026-08-13"
         }
       ]
     },
@@ -5763,7 +5763,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5780,9 +5780,9 @@
         }
       },
       "price": {
-        "current": 7.95,
-        "change_pct": -3.64,
-        "fetched_at": "2026-08-24 22:46:53"
+        "current": 7.94,
+        "change_pct": -0.13,
+        "fetched_at": "2026-08-25 07:49:14"
       },
       "news": [
         {
@@ -5832,7 +5832,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 4.82,
         "is_active": true,
         "survey": {
@@ -5862,9 +5862,9 @@
         }
       },
       "price": {
-        "current": 47.42,
-        "change_pct": -1.27,
-        "fetched_at": "2026-08-24 22:45:35"
+        "current": 48.06,
+        "change_pct": 1.35,
+        "fetched_at": "2026-08-25 07:49:13"
       },
       "news": [
         {
@@ -5914,7 +5914,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.76,
         "is_active": false,
         "survey": {
@@ -5931,9 +5931,9 @@
         }
       },
       "price": {
-        "current": 27.15,
-        "change_pct": -3.38,
-        "fetched_at": "2026-08-24 22:33:50"
+        "current": 27.28,
+        "change_pct": 0.48,
+        "fetched_at": "2026-08-25 07:48:18"
       },
       "news": [
         {
@@ -5983,7 +5983,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 3.88,
         "is_active": true,
         "survey": {
@@ -6007,11 +6007,16 @@
         }
       },
       "price": {
-        "current": 14.67,
-        "change_pct": 1.66,
-        "fetched_at": "2026-08-24 22:32:29"
+        "current": 14.04,
+        "change_pct": -4.29,
+        "fetched_at": "2026-08-25 07:53:22"
       },
       "news": [
+        {
+          "title": "年内定增募资排行榜：6家公司募资超百亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
         {
           "title": "筹码连续集中股名单（附股）",
           "sentiment": null,
@@ -6029,11 +6034,6 @@
         },
         {
           "title": "佛塑科技：深化三大核心举措 打造高分子功能薄膜与复合材料产业领军企业",
-          "sentiment": null,
-          "date": "2026-08-03"
-        },
-        {
-          "title": "佛塑科技：加速推进金力新能源整合",
           "sentiment": null,
           "date": "2026-08-03"
         }
@@ -6059,7 +6059,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 3.83,
         "is_active": true,
         "survey": {
@@ -6083,35 +6083,35 @@
         }
       },
       "price": {
-        "current": 55.63,
-        "change_pct": 2.79,
-        "fetched_at": "2026-08-24 22:32:32"
+        "current": 53.05,
+        "change_pct": -4.64,
+        "fetched_at": "2026-08-25 07:54:54"
       },
       "news": [
+        {
+          "title": "精选 | 夜盘盘前要闻汇总 8月24日 周一",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "赣锋锂业：与LAR签署PPGS锂盐湖项目整合关键协议",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "有色金属行业8月24日资金流向日报",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "金价，直线大涨！002716，午后封死涨停板！网友感叹：“你是这条街最靓的仔！”",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
         {
           "title": "有色金属行业资金流入榜：紫金矿业等13股净流入资金超亿元",
           "sentiment": 0.0,
           "date": "2026-08-20"
-        },
-        {
-          "title": "赣锋锂业002460.SZ)：赣锋锂电参投基金正式签约，原合伙人陈洪新退出",
-          "sentiment": -1.0,
-          "date": "2026-08-18"
-        },
-        {
-          "title": "锂资源板块迎来业绩集体修复 融捷股份上半年净利润同比增长逾10倍|财报解读",
-          "sentiment": 0.0,
-          "date": "2026-08-17"
-        },
-        {
-          "title": "藏格矿业净利翻倍：铜业贡献近八成利润，锂产能三年拟扩产近四倍",
-          "sentiment": 0.0,
-          "date": "2026-08-11"
-        },
-        {
-          "title": "70.77亿元资金今日流入有色金属股",
-          "sentiment": 0.0,
-          "date": "2026-08-07"
         }
       ]
     },
@@ -6138,7 +6138,7 @@
       "price": {
         "current": 18.75,
         "change_pct": -4.04,
-        "fetched_at": "2026-08-24 22:35:20"
+        "fetched_at": "2026-08-25 07:50:17"
       },
       "news": [
         {
@@ -6191,7 +6191,7 @@
       "price": {
         "current": 1493.12,
         "change_pct": -6.45,
-        "fetched_at": "2026-08-24 22:35:15"
+        "fetched_at": "2026-08-25 07:50:13"
       },
       "news": [
         {
@@ -6244,7 +6244,7 @@
       "price": {
         "current": 107.63,
         "change_pct": -13.77,
-        "fetched_at": "2026-08-24 22:35:08"
+        "fetched_at": "2026-08-25 07:50:07"
       },
       "news": [
         {
@@ -6297,7 +6297,7 @@
       "price": {
         "current": 135.0,
         "change_pct": -1.44,
-        "fetched_at": "2026-08-24 22:34:58"
+        "fetched_at": "2026-08-25 07:50:00"
       },
       "news": [
         {
@@ -6350,7 +6350,7 @@
       "price": {
         "current": 68.28,
         "change_pct": -5.91,
-        "fetched_at": "2026-08-24 22:35:06"
+        "fetched_at": "2026-08-25 07:50:06"
       },
       "news": [
         {
@@ -6400,7 +6400,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6417,11 +6417,16 @@
         }
       },
       "price": {
-        "current": 11.72,
-        "change_pct": 1.56,
-        "fetched_at": "2026-08-24 22:32:52"
+        "current": 11.55,
+        "change_pct": -1.45,
+        "fetched_at": "2026-08-25 08:05:41"
       },
       "news": [
+        {
+          "title": "中车财务公司上半年实现营收4.25亿元 净利6035.38万元",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
         {
           "title": "2.07亿元资金今日流入综合股",
           "sentiment": 0.0,
@@ -6441,11 +6446,6 @@
           "title": "时代新材600458.SH)：2026年中报净利润为3.46亿元、同比较去年同期上涨14.08%",
           "sentiment": 0.0,
           "date": "2026-08-20"
-        },
-        {
-          "title": "综合行业今日跌1.63%，主力资金净流出9586.99万元",
-          "sentiment": 0.0,
-          "date": "2026-08-18"
         }
       ]
     },
@@ -6469,7 +6469,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 1.61,
         "is_active": false,
         "survey": {
@@ -6493,35 +6493,35 @@
         }
       },
       "price": {
-        "current": 23.73,
-        "change_pct": -0.67,
-        "fetched_at": "2026-08-24 22:32:37"
+        "current": 24.5,
+        "change_pct": 3.24,
+        "fetched_at": "2026-08-25 07:57:26"
       },
       "news": [
         {
-          "title": "肇民科技301000.SZ)：向泰国孙公司增资至5.4亿泰铢，原注册资本9725万泰铢",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "肇民科技：拟向泰国孙公司增资至5.4亿泰铢",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "肇民科技2026年限制性股票激励计划：拟授予82万股涉及87人，授予价格13.1元/股",
-          "sentiment": 0.0,
-          "date": "2026-08-05"
-        },
-        {
-          "title": "短线防风险 520只个股短期均线现死叉",
+          "title": "肇民科技301000.SZ)2026年中报净利润为6081.42万元、较去年同期下降14.21%",
           "sentiment": null,
-          "date": "2026-07-10"
+          "date": "2026-08-25"
         },
         {
-          "title": "【调研快报】肇民科技接待线上参与肇民科技301000可转债发行网上路演的全体投资者调研",
+          "title": "机构风向标 | 肇民科技3010002026年二季度已披露持仓机构仅8家",
           "sentiment": null,
-          "date": "2026-07-08"
+          "date": "2026-08-25"
+        },
+        {
+          "title": "肇民科技：2026年半年度净利润6081.42万元 同比下降14.21%",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "肇民科技：上半年净利润6081.42万元 同比下降14.21%",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "肇民科技上半年归母净利润6081万元，同比下降14.2%",
+          "sentiment": null,
+          "date": "2026-08-24"
         }
       ]
     },
@@ -6548,7 +6548,7 @@
       "price": {
         "current": 1.28,
         "change_pct": -5.19,
-        "fetched_at": "2026-08-24 22:35:11"
+        "fetched_at": "2026-08-25 07:50:10"
       },
       "news": [
         {
@@ -6601,7 +6601,7 @@
       "price": {
         "current": 188.15,
         "change_pct": -0.27,
-        "fetched_at": "2026-08-24 22:35:10"
+        "fetched_at": "2026-08-25 07:50:09"
       },
       "news": [
         {
@@ -6654,7 +6654,7 @@
       "price": {
         "current": 16.37,
         "change_pct": -8.6,
-        "fetched_at": "2026-08-24 22:35:09"
+        "fetched_at": "2026-08-25 07:50:08"
       },
       "news": [
         {
@@ -6707,7 +6707,7 @@
       "price": {
         "current": 229.29,
         "change_pct": -3.27,
-        "fetched_at": "2026-08-24 22:35:12"
+        "fetched_at": "2026-08-25 07:50:10"
       },
       "news": [
         {
@@ -6760,7 +6760,7 @@
       "price": {
         "current": 223.22,
         "change_pct": 1.74,
-        "fetched_at": "2026-08-24 22:35:13"
+        "fetched_at": "2026-08-25 07:50:11"
       },
       "news": [
         {
@@ -6813,7 +6813,7 @@
       "price": {
         "current": 830.17,
         "change_pct": -4.22,
-        "fetched_at": "2026-08-24 22:35:14"
+        "fetched_at": "2026-08-25 07:50:12"
       },
       "news": [
         {
@@ -6866,7 +6866,7 @@
       "price": {
         "current": 87.26,
         "change_pct": -3.12,
-        "fetched_at": "2026-08-24 22:35:07"
+        "fetched_at": "2026-08-25 07:50:06"
       },
       "news": [
         {
@@ -6916,7 +6916,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6933,9 +6933,9 @@
         }
       },
       "price": {
-        "current": 5.03,
-        "change_pct": -2.14,
-        "fetched_at": "2026-08-24 22:48:11"
+        "current": 5.16,
+        "change_pct": 2.58,
+        "fetched_at": "2026-08-25 07:49:16"
       },
       "news": [
         {
@@ -6985,7 +6985,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7002,9 +7002,9 @@
         }
       },
       "price": {
-        "current": 158.68,
-        "change_pct": 2.74,
-        "fetched_at": "2026-08-24 22:34:20"
+        "current": 162.12,
+        "change_pct": 2.17,
+        "fetched_at": "2026-08-25 07:48:42"
       },
       "news": [
         {
@@ -7054,7 +7054,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.7,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7078,9 +7078,9 @@
         }
       },
       "price": {
-        "current": 7.45,
-        "change_pct": -2.49,
-        "fetched_at": "2026-08-24 23:02:29"
+        "current": 7.55,
+        "change_pct": 1.34,
+        "fetched_at": "2026-08-25 07:49:33"
       },
       "news": [
         {
@@ -7130,7 +7130,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.7,
         "score": 0.37,
         "is_active": false,
         "survey": {
@@ -7147,9 +7147,9 @@
         }
       },
       "price": {
-        "current": 15.12,
-        "change_pct": -3.94,
-        "fetched_at": "2026-08-24 22:32:48"
+        "current": 15.62,
+        "change_pct": 3.31,
+        "fetched_at": "2026-08-25 08:03:34"
       },
       "news": [
         {
@@ -7199,7 +7199,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -7216,11 +7216,16 @@
         }
       },
       "price": {
-        "current": 4.97,
-        "change_pct": -2.36,
-        "fetched_at": "2026-08-24 22:32:54"
+        "current": 5.05,
+        "change_pct": 1.61,
+        "fetched_at": "2026-08-25 08:06:40"
       },
       "news": [
+        {
+          "title": "厦门国贸控股集团财务公司上半年实现营收1.16亿元 净利5714.67万元",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
         {
           "title": "厦门信达000701.SZ)2026年中报净利润为4.23亿元，扭亏为盈",
           "sentiment": null,
@@ -7238,11 +7243,6 @@
         },
         {
           "title": "金属铜概念下跌2.95%，24股主力资金净流出超亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-13"
-        },
-        {
-          "title": "厦门信达：完成发行5亿元长期限含权中期票据 票面利率2.78%",
           "sentiment": 0.0,
           "date": "2026-08-13"
         }
@@ -7268,7 +7268,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -7292,9 +7292,9 @@
         }
       },
       "price": {
-        "current": 4.81,
-        "change_pct": -0.21,
-        "fetched_at": "2026-08-24 22:33:45"
+        "current": 4.9,
+        "change_pct": 1.87,
+        "fetched_at": "2026-08-25 07:48:14"
       },
       "news": [
         {
@@ -7344,7 +7344,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 1.66,
         "is_active": false,
         "survey": {
@@ -7361,9 +7361,9 @@
         }
       },
       "price": {
-        "current": 32.53,
-        "change_pct": -2.69,
-        "fetched_at": "2026-08-24 22:55:34"
+        "current": 33.89,
+        "change_pct": 4.18,
+        "fetched_at": "2026-08-25 07:49:25"
       },
       "news": [
         {
@@ -7413,7 +7413,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.8,
         "score": 1.77,
         "is_active": false,
         "survey": {
@@ -7437,9 +7437,9 @@
         }
       },
       "price": {
-        "current": 82.18,
-        "change_pct": -2.29,
-        "fetched_at": "2026-08-24 22:54:22"
+        "current": 83.19,
+        "change_pct": 1.23,
+        "fetched_at": "2026-08-25 07:49:23"
       },
       "news": [
         {
@@ -7489,7 +7489,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 8.9,
         "score": 0.7,
         "is_active": false,
         "survey": {
@@ -7506,9 +7506,9 @@
         }
       },
       "price": {
-        "current": 30.35,
-        "change_pct": -1.75,
-        "fetched_at": "2026-08-24 22:32:42"
+        "current": 30.24,
+        "change_pct": -0.36,
+        "fetched_at": "2026-08-25 07:59:55"
       },
       "news": [
         {
@@ -7558,7 +7558,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 51.9,
+        "cache_age_hours": 59.6,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7582,9 +7582,9 @@
         }
       },
       "price": {
-        "current": 106.0,
-        "change_pct": -13.24,
-        "fetched_at": "2026-08-24 23:03:21"
+        "current": 105.5,
+        "change_pct": -0.47,
+        "fetched_at": "2026-08-25 07:49:34"
       },
       "news": [
         {
@@ -7634,7 +7634,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 8.9,
         "score": 0.58,
         "is_active": false,
         "survey": {
@@ -7651,9 +7651,9 @@
         }
       },
       "price": {
-        "current": 10.56,
-        "change_pct": -1.4,
-        "fetched_at": "2026-08-24 23:05:56"
+        "current": 10.63,
+        "change_pct": 0.66,
+        "fetched_at": "2026-08-25 07:49:37"
       },
       "news": [
         {
@@ -7703,7 +7703,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.9,
         "score": 0.57,
         "is_active": false,
         "survey": {
@@ -7720,9 +7720,9 @@
         }
       },
       "price": {
-        "current": 2.5,
-        "change_pct": 0.81,
-        "fetched_at": "2026-08-24 23:15:06"
+        "current": 2.52,
+        "change_pct": 0.8,
+        "fetched_at": "2026-08-25 07:49:48"
       },
       "news": [
         {
@@ -7772,7 +7772,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 9.0,
         "score": 0.99,
         "is_active": false,
         "survey": {
@@ -7789,11 +7789,16 @@
         }
       },
       "price": {
-        "current": 25.43,
-        "change_pct": -3.05,
-        "fetched_at": "2026-08-24 22:32:44"
+        "current": 25.6,
+        "change_pct": 0.67,
+        "fetched_at": "2026-08-25 08:01:30"
       },
       "news": [
+        {
+          "title": "一周前瞻丨沃什将首次亮相杰克逊霍尔；英伟达、美团财报陆续放榜；PCE、非农年度修订重磅公布",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "电力设备行业资金流出榜：金风科技、宁德时代等净流出资金居前",
           "sentiment": 0.0,
@@ -7813,11 +7818,6 @@
           "title": "实探巴林右旗“绿巨人”：10兆瓦风机何以重构成本模型？",
           "sentiment": 0.0,
           "date": "2026-08-15"
-        },
-        {
-          "title": "8只个股大宗交易超5000万元",
-          "sentiment": null,
-          "date": "2026-08-13"
         }
       ]
     },
@@ -7841,7 +7841,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.41,
         "is_active": false,
         "survey": {
@@ -7858,9 +7858,9 @@
         }
       },
       "price": {
-        "current": 6.64,
-        "change_pct": 0.61,
-        "fetched_at": "2026-08-24 22:33:44"
+        "current": 6.69,
+        "change_pct": 0.75,
+        "fetched_at": "2026-08-25 07:48:13"
       },
       "news": [
         {
@@ -7910,7 +7910,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.27,
         "is_active": false,
         "survey": {
@@ -7927,35 +7927,35 @@
         }
       },
       "price": {
-        "current": 15.87,
-        "change_pct": -2.58,
-        "fetched_at": "2026-08-24 22:33:04"
+        "current": 17.05,
+        "change_pct": 7.44,
+        "fetched_at": "2026-08-25 08:11:46"
       },
       "news": [
         {
-          "title": "沃尔核材002130.SZ)：控股子公司沃尔新能源715万元竞得深圳坪山工业用地",
+          "title": "从临阵换董秘看沃尔核材分拆上海科特IPO的资本大棋局",
           "sentiment": null,
-          "date": "2026-08-05"
+          "date": "2026-08-25"
         },
         {
-          "title": "港股360单递表背后热与冷：数量持续高涨，股价持续分化",
+          "title": "沃尔核材002130.SZ)：2026年中报净利润为5.67亿元",
           "sentiment": null,
-          "date": "2026-08-05"
+          "date": "2026-08-25"
         },
         {
-          "title": "H股股价年内跌去四成，沃尔核材急推1.5亿港元回购方案，一季度业绩承压",
+          "title": "沃尔核材：2026年上半年净利润5.67亿元 同比增长1.54%",
           "sentiment": null,
-          "date": "2026-07-31"
+          "date": "2026-08-25"
         },
         {
-          "title": "沃尔核材：子公司拟不超900万元竞拍深圳坪山区土地使用权",
+          "title": "沃尔核材2026年上半年归母净利润同比增长1.54%",
           "sentiment": null,
-          "date": "2026-07-30"
+          "date": "2026-08-24"
         },
         {
-          "title": "沃尔核材：拟不超1.5亿港元回购H股股份",
+          "title": "沃尔核材：上半年归母净利润同比增1.5%至5.67亿元",
           "sentiment": null,
-          "date": "2026-07-30"
+          "date": "2026-08-24"
         }
       ]
     },
@@ -7979,7 +7979,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.8,
         "score": 0.46,
         "is_active": false,
         "survey": {
@@ -7996,9 +7996,9 @@
         }
       },
       "price": {
-        "current": 6.26,
-        "change_pct": -0.48,
-        "fetched_at": "2026-08-24 22:51:51"
+        "current": 6.4,
+        "change_pct": 2.24,
+        "fetched_at": "2026-08-25 07:49:20"
       },
       "news": [
         {
@@ -8048,7 +8048,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.56,
         "is_active": true,
         "survey": {
@@ -8072,9 +8072,9 @@
         }
       },
       "price": {
-        "current": 3.88,
-        "change_pct": 1.04,
-        "fetched_at": "2026-08-24 22:43:36"
+        "current": 3.96,
+        "change_pct": 2.06,
+        "fetched_at": "2026-08-25 07:49:10"
       },
       "news": [
         {
@@ -8124,7 +8124,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 1.6,
         "is_active": false,
         "survey": {
@@ -8148,9 +8148,9 @@
         }
       },
       "price": {
-        "current": 174.6,
-        "change_pct": -3.33,
-        "fetched_at": "2026-08-24 22:35:27"
+        "current": 175.06,
+        "change_pct": 0.26,
+        "fetched_at": "2026-08-25 07:50:22"
       },
       "news": [
         {
@@ -8200,7 +8200,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.7,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -8230,9 +8230,9 @@
         }
       },
       "price": {
-        "current": 276.67,
-        "change_pct": -4.35,
-        "fetched_at": "2026-08-24 22:34:19"
+        "current": 275.1,
+        "change_pct": -0.57,
+        "fetched_at": "2026-08-25 07:48:41"
       },
       "news": [
         {
@@ -8282,7 +8282,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -8300,8 +8300,8 @@
       },
       "price": {
         "current": 2.14,
-        "change_pct": -1.83,
-        "fetched_at": "2026-08-24 22:49:28"
+        "change_pct": 0.0,
+        "fetched_at": "2026-08-25 07:49:17"
       },
       "news": [
         {
@@ -8351,7 +8351,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.7,
+        "cache_age_hours": 25.4,
         "score": 0.63,
         "is_active": false,
         "survey": {
@@ -8368,9 +8368,9 @@
         }
       },
       "price": {
-        "current": 294.0,
-        "change_pct": -4.31,
-        "fetched_at": "2026-08-24 23:05:17"
+        "current": 289.6,
+        "change_pct": -1.5,
+        "fetched_at": "2026-08-25 07:49:36"
       },
       "news": [
         {
@@ -8420,7 +8420,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 1.65,
         "is_active": false,
         "survey": {
@@ -8437,9 +8437,9 @@
         }
       },
       "price": {
-        "current": 9.65,
-        "change_pct": -1.33,
-        "fetched_at": "2026-08-24 23:14:26"
+        "current": 9.88,
+        "change_pct": 2.38,
+        "fetched_at": "2026-08-25 07:49:47"
       },
       "news": [
         {
@@ -8489,7 +8489,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.53,
         "is_active": false,
         "survey": {
@@ -8506,35 +8506,35 @@
         }
       },
       "price": {
-        "current": 6.8,
-        "change_pct": -1.59,
-        "fetched_at": "2026-08-24 22:32:47"
+        "current": 6.86,
+        "change_pct": 0.88,
+        "fetched_at": "2026-08-25 08:03:04"
       },
       "news": [
         {
-          "title": "跨境支付(CIPS)概念下跌1.82%，主力资金净流出54股",
-          "sentiment": 0.0,
-          "date": "2026-08-07"
+          "title": "东华软件002065.SZ)2026年中报净利润为2.23亿元、较去年同期下降8.66%",
+          "sentiment": null,
+          "date": "2026-08-25"
         },
         {
-          "title": "华为欧拉概念涨6.74%，主力资金净流入这些股",
+          "title": "东华软件：2026年上半年净利润2.23亿元",
           "sentiment": null,
-          "date": "2026-07-31"
+          "date": "2026-08-25"
         },
         {
-          "title": "60.06亿主力资金净流入，智谱AI概念涨7.44%",
+          "title": "机构风向标 | 东华软件0020652026年二季度已披露前十大机构累计持仓占比27.53%",
           "sentiment": null,
-          "date": "2026-07-31"
+          "date": "2026-08-25"
         },
         {
-          "title": "东华软件抛20亿元定增计划加码AI算力",
+          "title": "软件业务大滑坡！东华软件上半年营收、净利双降，公司股价年内累计跌逾25%",
           "sentiment": null,
-          "date": "2026-07-30"
+          "date": "2026-08-24"
         },
         {
-          "title": "跨境支付(CIPS)概念上涨2.09%，7股主力资金净流入超亿元",
+          "title": "东华软件上半年归母净利润2.23亿元，同比降8.7%",
           "sentiment": null,
-          "date": "2026-07-28"
+          "date": "2026-08-24"
         }
       ]
     },
@@ -8558,7 +8558,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 3.06,
         "is_active": true,
         "survey": {
@@ -8606,11 +8606,26 @@
         }
       },
       "price": {
-        "current": 58.3,
-        "change_pct": -1.24,
-        "fetched_at": "2026-08-24 22:33:01"
+        "current": 61.39,
+        "change_pct": 5.3,
+        "fetched_at": "2026-08-25 08:10:14"
       },
       "news": [
+        {
+          "title": "汇川技术业绩快报：上半年净利28.1亿元 同比下降5.35%",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "汇川技术：2026年半年度净利润同比下降5.35%",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "菱电电控上半年归母净利润6470万元，同比增长50.4%",
+          "sentiment": null,
+          "date": "2026-08-21"
+        },
         {
           "title": "116只创业板股最新筹码趋向集中",
           "sentiment": 0.0,
@@ -8620,21 +8635,6 @@
           "title": "42股股东户数连降 筹码持续集中",
           "sentiment": 0.0,
           "date": "2026-08-18"
-        },
-        {
-          "title": "36股股东户数连续下降 （附股）",
-          "sentiment": -1.0,
-          "date": "2026-08-14"
-        },
-        {
-          "title": "金银涨价储能承压，汇川技术最高提价15％，今年已发多个调价函",
-          "sentiment": 0.0,
-          "date": "2026-08-13"
-        },
-        {
-          "title": "最新股东户数揭秘：这19股股东户数连降三期",
-          "sentiment": 0.0,
-          "date": "2026-08-12"
         }
       ]
     },
@@ -8661,7 +8661,7 @@
       "price": {
         "current": 4.32,
         "change_pct": -2.26,
-        "fetched_at": "2026-08-24 22:35:16"
+        "fetched_at": "2026-08-25 07:50:13"
       },
       "news": [
         {
@@ -8714,7 +8714,7 @@
       "price": {
         "current": 39.81,
         "change_pct": -4.94,
-        "fetched_at": "2026-08-24 22:35:17"
+        "fetched_at": "2026-08-25 07:50:14"
       },
       "news": [
         {
@@ -8767,7 +8767,7 @@
       "price": {
         "current": 10.86,
         "change_pct": -4.23,
-        "fetched_at": "2026-08-24 22:35:18"
+        "fetched_at": "2026-08-25 07:50:15"
       },
       "news": [
         {
@@ -8820,7 +8820,7 @@
       "price": {
         "current": 65.4,
         "change_pct": -7.55,
-        "fetched_at": "2026-08-24 22:35:19"
+        "fetched_at": "2026-08-25 07:50:16"
       },
       "news": [
         {
@@ -8873,7 +8873,7 @@
       "price": {
         "current": 29.6,
         "change_pct": -1.53,
-        "fetched_at": "2026-08-24 22:35:21"
+        "fetched_at": "2026-08-25 07:50:17"
       },
       "news": [
         {
@@ -8926,7 +8926,7 @@
       "price": {
         "current": 35.17,
         "change_pct": -5.56,
-        "fetched_at": "2026-08-24 22:35:22"
+        "fetched_at": "2026-08-25 07:50:18"
       },
       "news": [
         {
@@ -8976,7 +8976,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.84,
         "is_active": true,
         "survey": {
@@ -8993,9 +8993,9 @@
         }
       },
       "price": {
-        "current": 116.73,
-        "change_pct": -3.21,
-        "fetched_at": "2026-08-24 22:33:43"
+        "current": 116.93,
+        "change_pct": 0.17,
+        "fetched_at": "2026-08-25 07:48:12"
       },
       "news": [
         {
@@ -9045,7 +9045,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9062,9 +9062,9 @@
         }
       },
       "price": {
-        "current": 14.24,
-        "change_pct": -1.73,
-        "fetched_at": "2026-08-24 22:34:00"
+        "current": 14.53,
+        "change_pct": 2.04,
+        "fetched_at": "2026-08-25 07:48:26"
       },
       "news": [
         {
@@ -9114,7 +9114,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.8,
+        "cache_age_hours": 25.5,
         "score": 0.53,
         "is_active": false,
         "survey": {
@@ -9131,9 +9131,9 @@
         }
       },
       "price": {
-        "current": 357.65,
-        "change_pct": -1.34,
-        "fetched_at": "2026-08-24 22:34:36"
+        "current": 354.0,
+        "change_pct": -1.02,
+        "fetched_at": "2026-08-25 07:48:53"
       },
       "news": [
         {
@@ -9183,7 +9183,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9200,9 +9200,9 @@
         }
       },
       "price": {
-        "current": 32.12,
-        "change_pct": -2.1,
-        "fetched_at": "2026-08-24 23:00:34"
+        "current": 32.24,
+        "change_pct": 0.37,
+        "fetched_at": "2026-08-25 07:49:31"
       },
       "news": [
         {
@@ -9252,7 +9252,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.19,
         "is_active": true,
         "survey": {
@@ -9276,9 +9276,9 @@
         }
       },
       "price": {
-        "current": 44.86,
-        "change_pct": -6.5,
-        "fetched_at": "2026-08-24 22:33:48"
+        "current": 46.42,
+        "change_pct": 3.48,
+        "fetched_at": "2026-08-25 07:48:16"
       },
       "news": [
         {
@@ -9328,7 +9328,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.7,
+        "cache_age_hours": 25.4,
         "score": 4.58,
         "is_active": true,
         "survey": {
@@ -9370,35 +9370,35 @@
         }
       },
       "price": {
-        "current": 116.1,
-        "change_pct": -3.81,
-        "fetched_at": "2026-08-24 22:33:00"
+        "current": 113.97,
+        "change_pct": -1.83,
+        "fetched_at": "2026-08-25 08:09:43"
       },
       "news": [
         {
-          "title": "115只科创板股票跻身百元股阵营",
-          "sentiment": 0.0,
-          "date": "2026-08-18"
+          "title": "科创板股融资融券余额每日变动（8月24日）",
+          "sentiment": null,
+          "date": "2026-08-25"
         },
         {
-          "title": "科创板平均股价52.84元，24股股价超300元",
-          "sentiment": 0.0,
-          "date": "2026-08-13"
+          "title": "杠杆资金净买入居前的科创板股名单",
+          "sentiment": null,
+          "date": "2026-08-25"
         },
         {
-          "title": "科创板平均股价52.63元，107股股价超百元",
-          "sentiment": 0.0,
-          "date": "2026-08-10"
+          "title": "6只科创板股获主力资金逆市净流入超亿元",
+          "sentiment": null,
+          "date": "2026-08-24"
         },
         {
-          "title": "科创板平均股价51.53元，22股股价超300元",
-          "sentiment": 0.0,
-          "date": "2026-08-06"
+          "title": "上半年扭亏为盈，688110：拟用超募资金投向智能芯片",
+          "sentiment": null,
+          "date": "2026-08-23"
         },
         {
-          "title": "存储芯片概念上涨6.17%，51股主力资金净流入超亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-05"
+          "title": "业绩大增！多家A股公司拟大手笔分红",
+          "sentiment": null,
+          "date": "2026-08-22"
         }
       ]
     },
@@ -9422,7 +9422,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 3.38,
         "is_active": true,
         "survey": {
@@ -9452,9 +9452,9 @@
         }
       },
       "price": {
-        "current": 26.99,
-        "change_pct": -7.44,
-        "fetched_at": "2026-08-24 22:34:09"
+        "current": 27.02,
+        "change_pct": 0.11,
+        "fetched_at": "2026-08-25 07:48:33"
       },
       "news": [
         {
@@ -9504,7 +9504,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9521,9 +9521,9 @@
         }
       },
       "price": {
-        "current": 38.92,
-        "change_pct": -1.39,
-        "fetched_at": "2026-08-24 22:34:10"
+        "current": 37.41,
+        "change_pct": -3.88,
+        "fetched_at": "2026-08-25 07:48:34"
       },
       "news": [
         {
@@ -9573,7 +9573,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -9590,9 +9590,9 @@
         }
       },
       "price": {
-        "current": 153.0,
-        "change_pct": -3.23,
-        "fetched_at": "2026-08-24 22:34:12"
+        "current": 153.7,
+        "change_pct": 0.46,
+        "fetched_at": "2026-08-25 07:48:36"
       },
       "news": [
         {
@@ -9642,7 +9642,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 1.5,
         "is_active": false,
         "survey": {
@@ -9666,9 +9666,9 @@
         }
       },
       "price": {
-        "current": 52.5,
-        "change_pct": -2.49,
-        "fetched_at": "2026-08-24 22:34:13"
+        "current": 51.1,
+        "change_pct": -2.67,
+        "fetched_at": "2026-08-25 07:48:36"
       },
       "news": [
         {
@@ -9718,7 +9718,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 2.08,
         "is_active": true,
         "survey": {
@@ -9742,9 +9742,9 @@
         }
       },
       "price": {
-        "current": 6.31,
-        "change_pct": -1.25,
-        "fetched_at": "2026-08-24 22:34:14"
+        "current": 6.38,
+        "change_pct": 1.11,
+        "fetched_at": "2026-08-25 07:48:37"
       },
       "news": [
         {
@@ -9794,7 +9794,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 2.96,
         "is_active": true,
         "survey": {
@@ -9811,9 +9811,9 @@
         }
       },
       "price": {
-        "current": 53.69,
-        "change_pct": -1.12,
-        "fetched_at": "2026-08-24 22:34:15"
+        "current": 50.35,
+        "change_pct": -6.22,
+        "fetched_at": "2026-08-25 07:48:38"
       },
       "news": [
         {
@@ -9863,7 +9863,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 2.59,
         "is_active": true,
         "survey": {
@@ -9880,9 +9880,9 @@
         }
       },
       "price": {
-        "current": 76.85,
-        "change_pct": 5.99,
-        "fetched_at": "2026-08-24 22:34:47"
+        "current": 72.15,
+        "change_pct": -6.12,
+        "fetched_at": "2026-08-25 07:49:02"
       },
       "news": [
         {
@@ -9932,7 +9932,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 1.03,
         "is_active": false,
         "survey": {
@@ -9949,9 +9949,9 @@
         }
       },
       "price": {
-        "current": 34.57,
-        "change_pct": -4.37,
-        "fetched_at": "2026-08-24 22:34:24"
+        "current": 33.88,
+        "change_pct": -2.0,
+        "fetched_at": "2026-08-25 07:48:45"
       },
       "news": [
         {
@@ -10001,7 +10001,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.82,
         "is_active": false,
         "survey": {
@@ -10018,9 +10018,9 @@
         }
       },
       "price": {
-        "current": 14.46,
-        "change_pct": -3.28,
-        "fetched_at": "2026-08-24 22:34:25"
+        "current": 14.67,
+        "change_pct": 1.45,
+        "fetched_at": "2026-08-25 07:48:46"
       },
       "news": [
         {
@@ -10070,7 +10070,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 3.83,
         "is_active": true,
         "survey": {
@@ -10100,9 +10100,9 @@
         }
       },
       "price": {
-        "current": 43.08,
-        "change_pct": -2.95,
-        "fetched_at": "2026-08-24 22:34:35"
+        "current": 42.86,
+        "change_pct": -0.51,
+        "fetched_at": "2026-08-25 07:48:52"
       },
       "news": [
         {
@@ -10152,7 +10152,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 3.41,
         "is_active": true,
         "survey": {
@@ -10176,9 +10176,9 @@
         }
       },
       "price": {
-        "current": 5.28,
-        "change_pct": 1.15,
-        "fetched_at": "2026-08-24 22:34:27"
+        "current": 5.44,
+        "change_pct": 3.03,
+        "fetched_at": "2026-08-25 07:48:46"
       },
       "news": [
         {
@@ -10228,7 +10228,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10245,9 +10245,9 @@
         }
       },
       "price": {
-        "current": 7.16,
-        "change_pct": 0.0,
-        "fetched_at": "2026-08-24 22:34:28"
+        "current": 7.47,
+        "change_pct": 4.33,
+        "fetched_at": "2026-08-25 07:48:47"
       },
       "news": [
         {
@@ -10297,7 +10297,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.9,
         "score": 0.67,
         "is_active": false,
         "survey": {
@@ -10314,9 +10314,9 @@
         }
       },
       "price": {
-        "current": 21.05,
-        "change_pct": -0.57,
-        "fetched_at": "2026-08-24 22:34:37"
+        "current": 20.58,
+        "change_pct": -2.23,
+        "fetched_at": "2026-08-25 07:48:54"
       },
       "news": [
         {
@@ -10366,7 +10366,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10383,9 +10383,9 @@
         }
       },
       "price": {
-        "current": 11.54,
-        "change_pct": -7.38,
-        "fetched_at": "2026-08-24 22:34:38"
+        "current": 11.55,
+        "change_pct": 0.09,
+        "fetched_at": "2026-08-25 07:48:55"
       },
       "news": [
         {
@@ -10435,7 +10435,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10452,9 +10452,9 @@
         }
       },
       "price": {
-        "current": 19.53,
-        "change_pct": -1.46,
-        "fetched_at": "2026-08-24 22:34:39"
+        "current": 19.82,
+        "change_pct": 1.48,
+        "fetched_at": "2026-08-25 07:48:56"
       },
       "news": [
         {
@@ -10504,7 +10504,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 8.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10521,9 +10521,9 @@
         }
       },
       "price": {
-        "current": 41.41,
-        "change_pct": -4.05,
-        "fetched_at": "2026-08-24 22:34:40"
+        "current": 41.59,
+        "change_pct": 0.43,
+        "fetched_at": "2026-08-25 07:48:56"
       },
       "news": [
         {
@@ -10573,7 +10573,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 3.6,
         "is_active": true,
         "survey": {
@@ -10597,9 +10597,9 @@
         }
       },
       "price": {
-        "current": 22.84,
-        "change_pct": 0.48,
-        "fetched_at": "2026-08-24 22:33:49"
+        "current": 22.32,
+        "change_pct": -2.28,
+        "fetched_at": "2026-08-25 07:48:17"
       },
       "news": [
         {
@@ -10649,7 +10649,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 3.78,
         "is_active": true,
         "survey": {
@@ -10673,9 +10673,9 @@
         }
       },
       "price": {
-        "current": 5.59,
-        "change_pct": 0.9,
-        "fetched_at": "2026-08-24 22:34:41"
+        "current": 5.65,
+        "change_pct": 1.07,
+        "fetched_at": "2026-08-25 07:48:57"
       },
       "news": [
         {
@@ -10725,7 +10725,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 2.04,
         "is_active": true,
         "survey": {
@@ -10742,9 +10742,9 @@
         }
       },
       "price": {
-        "current": 19.14,
-        "change_pct": -2.25,
-        "fetched_at": "2026-08-24 22:34:34"
+        "current": 19.04,
+        "change_pct": -0.52,
+        "fetched_at": "2026-08-25 07:48:52"
       },
       "news": [
         {
@@ -10794,7 +10794,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10811,9 +10811,9 @@
         }
       },
       "price": {
-        "current": 35.93,
-        "change_pct": -4.37,
-        "fetched_at": "2026-08-24 22:34:42"
+        "current": 37.7,
+        "change_pct": 4.93,
+        "fetched_at": "2026-08-25 07:48:58"
       },
       "news": [
         {
@@ -10863,7 +10863,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 0.23,
         "is_active": false,
         "survey": {
@@ -10880,9 +10880,9 @@
         }
       },
       "price": {
-        "current": 11.11,
-        "change_pct": -0.18,
-        "fetched_at": "2026-08-24 22:33:42"
+        "current": 10.94,
+        "change_pct": -1.53,
+        "fetched_at": "2026-08-25 07:48:12"
       },
       "news": [
         {
@@ -10932,7 +10932,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.67,
         "is_active": false,
         "survey": {
@@ -10949,35 +10949,35 @@
         }
       },
       "price": {
-        "current": 73.19,
-        "change_pct": -1.07,
-        "fetched_at": "2026-08-24 22:33:09"
+        "current": 72.87,
+        "change_pct": -0.44,
+        "fetched_at": "2026-08-25 08:14:20"
       },
       "news": [
         {
-          "title": "今日25只股长线走稳 站上年线",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "【盘中播报】29只个股突破年线",
+          "title": "万华化学600309.SH)：2026年中报净利润为100.63亿元、同比较去年同期上涨64.35%",
           "sentiment": null,
-          "date": "2026-08-19"
+          "date": "2026-08-25"
         },
         {
-          "title": "短线防风险 18只个股短期均线现死叉",
+          "title": "万华化学2026年半年报：归母净利润同比增长64.35%",
           "sentiment": null,
-          "date": "2026-08-17"
+          "date": "2026-08-24"
         },
         {
-          "title": "36股获融资客大手笔净买入",
-          "sentiment": 0.0,
-          "date": "2026-08-14"
+          "title": "利润增速远超营收 万华化学Q2业绩创五年新高|财报解读",
+          "sentiment": null,
+          "date": "2026-08-24"
         },
         {
-          "title": "基础化工行业资金流出榜：万华化学、宝丰能源等净流出资金居前",
-          "sentiment": 0.0,
-          "date": "2026-08-13"
+          "title": "净利破百亿元还大方分红！万华化学上半年“成绩单”出炉，拟派现逾25亿元",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "600309，上半年净利超百亿元",
+          "sentiment": null,
+          "date": "2026-08-24"
         }
       ]
     },
@@ -11001,7 +11001,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 9.0,
         "score": 1.8,
         "is_active": false,
         "survey": {
@@ -11025,9 +11025,9 @@
         }
       },
       "price": {
-        "current": 12.15,
-        "change_pct": -2.17,
-        "fetched_at": "2026-08-24 22:33:03"
+        "current": 12.17,
+        "change_pct": 0.16,
+        "fetched_at": "2026-08-25 08:11:16"
       },
       "news": [
         {
@@ -11077,7 +11077,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 3.35,
         "is_active": true,
         "survey": {
@@ -11125,9 +11125,9 @@
         }
       },
       "price": {
-        "current": 40.42,
-        "change_pct": 0.62,
-        "fetched_at": "2026-08-24 22:34:33"
+        "current": 39.85,
+        "change_pct": -1.41,
+        "fetched_at": "2026-08-25 07:48:51"
       },
       "news": [
         {
@@ -11177,7 +11177,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.8,
+        "cache_age_hours": 25.5,
         "score": 1.88,
         "is_active": false,
         "survey": {
@@ -11194,9 +11194,9 @@
         }
       },
       "price": {
-        "current": 295.15,
-        "change_pct": -6.11,
-        "fetched_at": "2026-08-24 22:34:07"
+        "current": 301.76,
+        "change_pct": 2.24,
+        "fetched_at": "2026-08-25 07:48:32"
       },
       "news": [
         {
@@ -11246,7 +11246,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.44,
         "is_active": true,
         "survey": {
@@ -11263,9 +11263,9 @@
         }
       },
       "price": {
-        "current": 250.4,
-        "change_pct": 1.5,
-        "fetched_at": "2026-08-24 22:33:53"
+        "current": 235.5,
+        "change_pct": -5.95,
+        "fetched_at": "2026-08-25 07:48:20"
       },
       "news": [
         {
@@ -11315,7 +11315,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -11332,9 +11332,9 @@
         }
       },
       "price": {
-        "current": 4.04,
-        "change_pct": 0.25,
-        "fetched_at": "2026-08-24 22:34:43"
+        "current": 4.12,
+        "change_pct": 1.98,
+        "fetched_at": "2026-08-25 07:48:59"
       },
       "news": [
         {
@@ -11384,7 +11384,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 1.45,
         "is_active": false,
         "survey": {
@@ -11401,9 +11401,9 @@
         }
       },
       "price": {
-        "current": 39.87,
-        "change_pct": -5.16,
-        "fetched_at": "2026-08-24 22:34:44"
+        "current": 39.79,
+        "change_pct": -0.2,
+        "fetched_at": "2026-08-25 07:48:59"
       },
       "news": [
         {
@@ -11453,7 +11453,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 2.49,
         "is_active": true,
         "survey": {
@@ -11483,9 +11483,9 @@
         }
       },
       "price": {
-        "current": 42.99,
-        "change_pct": 1.08,
-        "fetched_at": "2026-08-24 22:34:45"
+        "current": 43.35,
+        "change_pct": 0.84,
+        "fetched_at": "2026-08-25 07:49:00"
       },
       "news": [
         {
@@ -11535,7 +11535,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.82,
         "is_active": false,
         "survey": {
@@ -11552,9 +11552,9 @@
         }
       },
       "price": {
-        "current": 15.37,
-        "change_pct": -2.54,
-        "fetched_at": "2026-08-24 22:34:46"
+        "current": 15.69,
+        "change_pct": 2.08,
+        "fetched_at": "2026-08-25 07:49:01"
       },
       "news": [
         {
@@ -11604,7 +11604,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 8.9,
         "score": 2.29,
         "is_active": true,
         "survey": {
@@ -11628,9 +11628,9 @@
         }
       },
       "price": {
-        "current": 6.08,
-        "change_pct": 0.66,
-        "fetched_at": "2026-08-24 22:33:41"
+        "current": 6.13,
+        "change_pct": 0.82,
+        "fetched_at": "2026-08-25 07:48:11"
       },
       "news": [
         {
@@ -11680,7 +11680,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 3.86,
         "is_active": true,
         "survey": {
@@ -11697,9 +11697,9 @@
         }
       },
       "price": {
-        "current": 5.33,
-        "change_pct": 4.51,
-        "fetched_at": "2026-08-24 22:36:52"
+        "current": 5.36,
+        "change_pct": 0.56,
+        "fetched_at": "2026-08-25 07:49:03"
       },
       "news": [
         {
@@ -11749,7 +11749,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 3.44,
         "is_active": true,
         "survey": {
@@ -11773,9 +11773,9 @@
         }
       },
       "price": {
-        "current": 35.71,
-        "change_pct": -2.72,
-        "fetched_at": "2026-08-24 22:34:32"
+        "current": 35.95,
+        "change_pct": 0.67,
+        "fetched_at": "2026-08-25 07:48:50"
       },
       "news": [
         {
@@ -11825,7 +11825,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -11842,9 +11842,9 @@
         }
       },
       "price": {
-        "current": 6.16,
-        "change_pct": -2.69,
-        "fetched_at": "2026-08-24 22:37:29"
+        "current": 6.33,
+        "change_pct": 2.76,
+        "fetched_at": "2026-08-25 07:49:03"
       },
       "news": [
         {
@@ -11894,7 +11894,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.72,
         "is_active": false,
         "survey": {
@@ -11918,9 +11918,9 @@
         }
       },
       "price": {
-        "current": 11.71,
-        "change_pct": -3.78,
-        "fetched_at": "2026-08-24 22:34:31"
+        "current": 11.96,
+        "change_pct": 2.13,
+        "fetched_at": "2026-08-25 07:48:49"
       },
       "news": [
         {
@@ -11970,7 +11970,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.7,
         "score": 0.09,
         "is_active": false,
         "survey": {
@@ -11987,9 +11987,9 @@
         }
       },
       "price": {
-        "current": 24.96,
-        "change_pct": -2.54,
-        "fetched_at": "2026-08-24 22:38:22"
+        "current": 25.0,
+        "change_pct": 0.16,
+        "fetched_at": "2026-08-25 07:49:04"
       },
       "news": [
         {
@@ -12039,7 +12039,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 1.75,
         "is_active": false,
         "survey": {
@@ -12063,9 +12063,9 @@
         }
       },
       "price": {
-        "current": 30.67,
-        "change_pct": -2.2,
-        "fetched_at": "2026-08-24 22:39:00"
+        "current": 31.23,
+        "change_pct": 1.83,
+        "fetched_at": "2026-08-25 07:49:05"
       },
       "news": [
         {
@@ -12115,7 +12115,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -12145,35 +12145,35 @@
         }
       },
       "price": {
-        "current": 34.15,
-        "change_pct": -0.73,
-        "fetched_at": "2026-08-24 22:33:02"
+        "current": 34.75,
+        "change_pct": 1.76,
+        "fetched_at": "2026-08-25 08:10:46"
       },
       "news": [
+        {
+          "title": "上市公司掀中期分红潮，深市公司拟派现金额超490亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "深市上市公司掀中期分红潮，拟派现超490亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "多家深市龙头大手笔派现 近500亿元现金“红包”在路上",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "拟派现超490亿元！深市上市公司掀中期分红潮",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "百亿私募2026中报调仓 高毅、重阳、睿郡布局揭晓",
           "sentiment": 0.0,
           "date": "2026-08-20"
-        },
-        {
-          "title": "百亿私募二季度调仓路径：睿郡加仓乐鑫科技 三家同步重仓鸿仕达",
-          "sentiment": 0.0,
-          "date": "2026-08-18"
-        },
-        {
-          "title": "每10股派发现金红利5.50元！红利质量（931468.CSI）成分股海康威视，发布2026年半年度权益分派实施公告",
-          "sentiment": null,
-          "date": "2026-08-12"
-        },
-        {
-          "title": "海康威视：2026年半年度每10股派5.5元 现金分红总额50.41亿元",
-          "sentiment": null,
-          "date": "2026-08-11"
-        },
-        {
-          "title": "计算机行业资金流出榜：中科曙光、网宿科技等净流出资金居前",
-          "sentiment": null,
-          "date": "2026-08-10"
         }
       ]
     },
@@ -12197,7 +12197,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 8.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -12214,9 +12214,9 @@
         }
       },
       "price": {
-        "current": 34.62,
-        "change_pct": -2.97,
-        "fetched_at": "2026-08-24 22:39:40"
+        "current": 35.13,
+        "change_pct": 1.47,
+        "fetched_at": "2026-08-25 07:49:06"
       },
       "news": [
         {
@@ -12266,7 +12266,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 0.51,
         "is_active": false,
         "survey": {
@@ -12283,9 +12283,9 @@
         }
       },
       "price": {
-        "current": 73.22,
-        "change_pct": -4.1,
-        "fetched_at": "2026-08-24 22:32:40"
+        "current": 74.11,
+        "change_pct": 1.22,
+        "fetched_at": "2026-08-25 07:58:55"
       },
       "news": [
         {
@@ -12335,7 +12335,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 0.02,
         "is_active": false,
         "survey": {
@@ -12352,9 +12352,9 @@
         }
       },
       "price": {
-        "current": 34.49,
-        "change_pct": -5.35,
-        "fetched_at": "2026-08-24 22:56:12"
+        "current": 35.1,
+        "change_pct": 1.77,
+        "fetched_at": "2026-08-25 07:49:26"
       },
       "news": [
         {
@@ -12404,7 +12404,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -12421,9 +12421,9 @@
         }
       },
       "price": {
-        "current": 59.37,
-        "change_pct": -5.27,
-        "fetched_at": "2026-08-24 22:40:15"
+        "current": 60.67,
+        "change_pct": 2.19,
+        "fetched_at": "2026-08-25 07:49:06"
       },
       "news": [
         {
@@ -12473,7 +12473,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -12497,9 +12497,9 @@
         }
       },
       "price": {
-        "current": 14.05,
-        "change_pct": -3.5,
-        "fetched_at": "2026-08-24 22:40:53"
+        "current": 14.23,
+        "change_pct": 1.28,
+        "fetched_at": "2026-08-25 07:49:07"
       },
       "news": [
         {
@@ -12552,7 +12552,7 @@
       "price": {
         "current": 10.84,
         "change_pct": 0.28,
-        "fetched_at": "2026-08-24 22:34:59"
+        "fetched_at": "2026-08-25 07:50:00"
       },
       "news": [
         {
@@ -12603,9 +12603,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 250.8,
-        "change_pct": 7.82,
-        "fetched_at": "2026-08-24 22:34:52"
+        "current": 247.8,
+        "change_pct": -1.2,
+        "fetched_at": "2026-08-25 07:49:55"
       },
       "news": [
         {
@@ -12656,9 +12656,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 24.98,
-        "change_pct": 0.16,
-        "fetched_at": "2026-08-24 22:34:53"
+        "current": 25.04,
+        "change_pct": 0.24,
+        "fetched_at": "2026-08-25 07:49:56"
       },
       "news": [
         {
@@ -12709,9 +12709,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 81.4,
+        "current": 81.1,
         "change_pct": -0.37,
-        "fetched_at": "2026-08-24 22:34:54"
+        "fetched_at": "2026-08-25 07:49:56"
       },
       "news": [
         {
@@ -12762,9 +12762,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 4.64,
-        "change_pct": -2.52,
-        "fetched_at": "2026-08-24 22:34:55"
+        "current": 4.55,
+        "change_pct": -1.94,
+        "fetched_at": "2026-08-25 07:49:57"
       },
       "news": [
         {
@@ -12815,9 +12815,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 0.73,
-        "change_pct": -1.35,
-        "fetched_at": "2026-08-24 22:34:56"
+        "current": 0.74,
+        "change_pct": 1.37,
+        "fetched_at": "2026-08-25 07:49:58"
       },
       "news": [
         {
@@ -12867,7 +12867,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 0.7,
         "is_active": false,
         "survey": {
@@ -12891,9 +12891,9 @@
         }
       },
       "price": {
-        "current": 60.99,
-        "change_pct": -2.65,
-        "fetched_at": "2026-08-24 22:57:28"
+        "current": 61.46,
+        "change_pct": 0.77,
+        "fetched_at": "2026-08-25 07:49:27"
       },
       "news": [
         {
@@ -12946,7 +12946,7 @@
       "price": {
         "current": 24.36,
         "change_pct": -0.08,
-        "fetched_at": "2026-08-24 22:35:00"
+        "fetched_at": "2026-08-25 07:50:01"
       },
       "news": [
         {
@@ -12996,7 +12996,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13013,9 +13013,9 @@
         }
       },
       "price": {
-        "current": 1.1964,
-        "change_pct": 0.23,
-        "fetched_at": "2026-08-24 08:04:57"
+        "current": 1.1675,
+        "change_pct": -2.42,
+        "fetched_at": "2026-08-25 07:51:06"
       },
       "news": [
         {
@@ -13050,7 +13050,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -13067,9 +13067,9 @@
         }
       },
       "price": {
-        "current": 14.64,
-        "change_pct": -1.08,
-        "fetched_at": "2026-08-24 22:41:30"
+        "current": 15.29,
+        "change_pct": 4.44,
+        "fetched_at": "2026-08-25 07:49:08"
       },
       "news": [
         {
@@ -13120,9 +13120,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 155.0,
-        "change_pct": 4.03,
-        "fetched_at": "2026-08-24 22:34:57"
+        "current": 155.7,
+        "change_pct": 0.45,
+        "fetched_at": "2026-08-25 07:49:59"
       },
       "news": [
         {
@@ -13172,7 +13172,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13189,9 +13189,9 @@
         }
       },
       "price": {
-        "current": 3.15,
-        "change_pct": -1.56,
-        "fetched_at": "2026-08-24 22:32:56"
+        "current": 3.32,
+        "change_pct": 5.4,
+        "fetched_at": "2026-08-25 08:07:42"
       },
       "news": [
         {
@@ -13241,7 +13241,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13258,9 +13258,9 @@
         }
       },
       "price": {
-        "current": 14.95,
-        "change_pct": -2.16,
-        "fetched_at": "2026-08-24 22:32:57"
+        "current": 15.25,
+        "change_pct": 2.01,
+        "fetched_at": "2026-08-25 08:08:12"
       },
       "news": [
         {
@@ -13310,7 +13310,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.39,
         "is_active": false,
         "survey": {
@@ -13327,9 +13327,9 @@
         }
       },
       "price": {
-        "current": 18.92,
+        "current": 18.93,
         "change_pct": 0.05,
-        "fetched_at": "2026-08-24 22:33:57"
+        "fetched_at": "2026-08-25 07:48:23"
       },
       "news": [
         {
@@ -13380,9 +13380,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 92.8,
-        "change_pct": -0.38,
-        "fetched_at": "2026-08-24 22:34:50"
+        "current": 94.1,
+        "change_pct": 1.4,
+        "fetched_at": "2026-08-25 07:49:53"
       },
       "news": [
         {
@@ -13432,7 +13432,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.7,
+        "cache_age_hours": 25.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13449,9 +13449,9 @@
         }
       },
       "price": {
-        "current": 233.3,
-        "change_pct": -2.99,
-        "fetched_at": "2026-08-24 22:56:51"
+        "current": 234.75,
+        "change_pct": 0.62,
+        "fetched_at": "2026-08-25 07:49:26"
       },
       "news": [
         {
@@ -13501,7 +13501,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 0.61,
         "is_active": false,
         "survey": {
@@ -13518,9 +13518,9 @@
         }
       },
       "price": {
-        "current": 59.43,
-        "change_pct": 1.09,
-        "fetched_at": "2026-08-24 22:33:12"
+        "current": 59.36,
+        "change_pct": -0.12,
+        "fetched_at": "2026-08-25 08:15:54"
       },
       "news": [
         {
@@ -13570,7 +13570,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 1.88,
         "is_active": false,
         "survey": {
@@ -13594,9 +13594,9 @@
         }
       },
       "price": {
-        "current": 3.98,
-        "change_pct": 0.25,
-        "fetched_at": "2026-08-24 23:01:50"
+        "current": 4.01,
+        "change_pct": 0.75,
+        "fetched_at": "2026-08-25 07:49:33"
       },
       "news": [
         {
@@ -13646,7 +13646,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 3.84,
         "is_active": true,
         "survey": {
@@ -13694,11 +13694,21 @@
         }
       },
       "price": {
-        "current": 33.9,
-        "change_pct": -0.47,
-        "fetched_at": "2026-08-24 22:33:36"
+        "current": 33.56,
+        "change_pct": -1.0,
+        "fetched_at": "2026-08-25 08:28:06"
       },
       "news": [
+        {
+          "title": "首批公募半年报亮眼！南方、华夏、富国、兴证全球四家净利润超10亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "3.40亿元资金今日流入银行股",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "91股今日获机构买入评级",
           "sentiment": 0.0,
@@ -13711,16 +13721,6 @@
         },
         {
           "title": "宁波银行上半年营收净利均保持两位数增长",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
-        },
-        {
-          "title": "宁波银行002142.SZ)2026年中报净利润为165.62亿元、较去年同期上涨12.12%",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
-        },
-        {
-          "title": "宁波银行002142.SZ)：2026年中报净利润为165.62亿元、同比较去年同期上涨12.12%",
           "sentiment": 0.0,
           "date": "2026-08-20"
         }
@@ -13746,7 +13746,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 9.0,
         "score": 0.35,
         "is_active": false,
         "survey": {
@@ -13764,8 +13764,8 @@
       },
       "price": {
         "current": 2.4,
-        "change_pct": 0.42,
-        "fetched_at": "2026-08-24 22:33:55"
+        "change_pct": 0.0,
+        "fetched_at": "2026-08-25 07:48:22"
       },
       "news": [
         {
@@ -13815,7 +13815,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -13839,9 +13839,9 @@
         }
       },
       "price": {
-        "current": 400.36,
-        "change_pct": -3.56,
-        "fetched_at": "2026-08-24 22:34:22"
+        "current": 397.03,
+        "change_pct": -0.83,
+        "fetched_at": "2026-08-25 07:48:43"
       },
       "news": [
         {
@@ -13891,7 +13891,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 3.25,
         "is_active": true,
         "survey": {
@@ -13908,9 +13908,9 @@
         }
       },
       "price": {
-        "current": 29.26,
-        "change_pct": 2.38,
-        "fetched_at": "2026-08-24 22:34:16"
+        "current": 27.8,
+        "change_pct": -4.99,
+        "fetched_at": "2026-08-25 07:48:39"
       },
       "news": [
         {
@@ -13960,7 +13960,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.2,
         "score": 1.15,
         "is_active": false,
         "survey": {
@@ -13977,9 +13977,9 @@
         }
       },
       "price": {
-        "current": 12.3,
-        "change_pct": -1.44,
-        "fetched_at": "2026-08-24 22:33:11"
+        "current": 12.17,
+        "change_pct": -1.06,
+        "fetched_at": "2026-08-25 08:15:24"
       },
       "news": [
         {
@@ -14029,7 +14029,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 17.8,
+        "cache_age_hours": 25.5,
         "score": 3.31,
         "is_active": true,
         "survey": {
@@ -14053,9 +14053,9 @@
         }
       },
       "price": {
-        "current": 56.71,
-        "change_pct": -1.9,
-        "fetched_at": "2026-08-24 22:33:58"
+        "current": 59.1,
+        "change_pct": 4.21,
+        "fetched_at": "2026-08-25 07:48:24"
       },
       "news": [
         {
@@ -14105,7 +14105,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 9.0,
         "score": 2.7,
         "is_active": true,
         "survey": {
@@ -14122,9 +14122,9 @@
         }
       },
       "price": {
-        "current": 11.78,
-        "change_pct": 0.0,
-        "fetched_at": "2026-08-24 22:34:17"
+        "current": 11.6,
+        "change_pct": -1.53,
+        "fetched_at": "2026-08-25 07:48:39"
       },
       "news": [
         {
@@ -14174,7 +14174,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 0.23,
         "is_active": false,
         "survey": {
@@ -14191,9 +14191,9 @@
         }
       },
       "price": {
-        "current": 9.21,
-        "change_pct": -1.92,
-        "fetched_at": "2026-08-24 22:34:23"
+        "current": 9.44,
+        "change_pct": 2.5,
+        "fetched_at": "2026-08-25 07:48:44"
       },
       "news": [
         {
@@ -14243,7 +14243,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.0,
+        "cache_age_hours": 59.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14260,9 +14260,9 @@
         }
       },
       "price": {
-        "current": 56.6,
-        "change_pct": -2.41,
-        "fetched_at": "2026-08-24 22:34:11"
+        "current": 56.5,
+        "change_pct": -0.18,
+        "fetched_at": "2026-08-25 07:48:35"
       },
       "news": [
         {
@@ -14312,7 +14312,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 6.31,
         "is_active": true,
         "survey": {
@@ -14354,9 +14354,9 @@
         }
       },
       "price": {
-        "current": 8.02,
-        "change_pct": 1.65,
-        "fetched_at": "2026-08-24 22:34:01"
+        "current": 7.9,
+        "change_pct": -1.5,
+        "fetched_at": "2026-08-25 07:48:26"
       },
       "news": [
         {
@@ -14407,9 +14407,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 197.7,
-        "change_pct": -3.94,
-        "fetched_at": "2026-08-24 22:34:51"
+        "current": 203.8,
+        "change_pct": 3.09,
+        "fetched_at": "2026-08-25 07:49:54"
       },
       "news": [
         {
@@ -14459,7 +14459,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 0.6,
         "is_active": false,
         "survey": {
@@ -14476,9 +14476,9 @@
         }
       },
       "price": {
-        "current": 4.3,
-        "change_pct": 0.0,
-        "fetched_at": "2026-08-24 23:04:38"
+        "current": 4.35,
+        "change_pct": 1.16,
+        "fetched_at": "2026-08-25 07:49:36"
       },
       "news": [
         {
@@ -14528,7 +14528,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 0.84,
         "is_active": false,
         "survey": {
@@ -14545,9 +14545,9 @@
         }
       },
       "price": {
-        "current": 11.33,
-        "change_pct": -2.5,
-        "fetched_at": "2026-08-24 22:33:46"
+        "current": 11.55,
+        "change_pct": 1.94,
+        "fetched_at": "2026-08-25 07:48:15"
       },
       "news": [
         {
@@ -14597,7 +14597,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.5,
         "score": 4.22,
         "is_active": true,
         "survey": {
@@ -14627,9 +14627,9 @@
         }
       },
       "price": {
-        "current": 11.56,
-        "change_pct": 1.31,
-        "fetched_at": "2026-08-24 22:34:18"
+        "current": 11.59,
+        "change_pct": 0.26,
+        "fetched_at": "2026-08-25 07:48:40"
       },
       "news": [
         {
@@ -14679,7 +14679,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.1,
+        "cache_age_hours": 59.8,
         "score": 3.16,
         "is_active": true,
         "survey": {
@@ -14703,9 +14703,9 @@
         }
       },
       "price": {
-        "current": 31.49,
-        "change_pct": -2.6,
-        "fetched_at": "2026-08-24 22:58:42"
+        "current": 33.36,
+        "change_pct": 5.94,
+        "fetched_at": "2026-08-25 07:49:29"
       },
       "news": [
         {
@@ -14755,7 +14755,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 1.99,
         "is_active": false,
         "survey": {
@@ -14779,9 +14779,9 @@
         }
       },
       "price": {
-        "current": 34.61,
-        "change_pct": -2.15,
-        "fetched_at": "2026-08-24 22:58:05"
+        "current": 35.38,
+        "change_pct": 2.22,
+        "fetched_at": "2026-08-25 07:49:28"
       },
       "news": [
         {
@@ -14870,7 +14870,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 1.38,
         "is_active": false,
         "survey": {
@@ -14887,9 +14887,9 @@
         }
       },
       "price": {
-        "current": 3.33,
-        "change_pct": -2.06,
-        "fetched_at": "2026-08-24 22:33:10"
+        "current": 3.45,
+        "change_pct": 3.6,
+        "fetched_at": "2026-08-25 08:14:48"
       },
       "news": [
         {
@@ -14934,7 +14934,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14951,9 +14951,9 @@
         }
       },
       "price": {
-        "current": 19.78,
-        "change_pct": 0.66,
-        "fetched_at": "2026-08-24 22:33:13"
+        "current": 19.24,
+        "change_pct": -2.73,
+        "fetched_at": "2026-08-25 08:16:24"
       },
       "news": [
         {
@@ -15003,7 +15003,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 2.75,
         "is_active": true,
         "survey": {
@@ -15027,9 +15027,9 @@
         }
       },
       "price": {
-        "current": 19.54,
-        "change_pct": 0.31,
-        "fetched_at": "2026-08-24 22:33:14"
+        "current": 18.64,
+        "change_pct": -4.61,
+        "fetched_at": "2026-08-25 08:16:56"
       },
       "news": [
         {
@@ -15079,7 +15079,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.1,
+        "cache_age_hours": 59.8,
         "score": 2.82,
         "is_active": true,
         "survey": {
@@ -15096,25 +15096,35 @@
         }
       },
       "price": {
-        "current": 29.78,
-        "change_pct": 0.34,
-        "fetched_at": "2026-08-24 22:33:15"
+        "current": 28.31,
+        "change_pct": -4.94,
+        "fetched_at": "2026-08-25 08:17:31"
       },
       "news": [
         {
-          "title": "今日61只股长线走稳 站上年线",
-          "sentiment": 0.0,
-          "date": "2026-08-21"
+          "title": "今日668家公司公布半年报 111家业绩增幅翻倍",
+          "sentiment": null,
+          "date": "2026-08-25"
         },
         {
-          "title": "17只科创板个股主力资金净流入超亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-14"
+          "title": "嘉元科技688388.SH)：2026年中报净利润为3.82亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
         },
         {
-          "title": "嘉元科技688388.SH)：变更持续督导保荐代表人",
-          "sentiment": 0.0,
-          "date": "2026-07-06"
+          "title": "机构风向标 | 嘉元科技6883882026年二季度已披露前十大机构累计持仓占比26.48%",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "嘉元科技：上半年净利润同比增长940% 下游新能源需求旺盛拉动业绩",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "嘉元科技2026年上半年归母净利润为3.82亿元 同比增长940%",
+          "sentiment": null,
+          "date": "2026-08-24"
         }
       ]
     },
@@ -15138,7 +15148,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 2.8,
         "is_active": true,
         "survey": {
@@ -15162,11 +15172,26 @@
         }
       },
       "price": {
-        "current": 55.9,
-        "change_pct": -1.62,
-        "fetched_at": "2026-08-24 22:33:16"
+        "current": 53.79,
+        "change_pct": -3.77,
+        "fetched_at": "2026-08-25 08:18:02"
       },
       "news": [
+        {
+          "title": "恩捷股份002812.SZ)：2026年中报净利润为8.20亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "恩捷股份：2026年上半年盈利8.2亿元 拟10派4.1元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "恩捷股份中报8.20亿净利：单季盈利环比续升 成本价格结构共振",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "靠收购切入半导体市场？业绩连降三年，隔膜龙头星源材质急寻新增长点",
           "sentiment": 0.0,
@@ -15176,16 +15201,6 @@
           "title": "恩捷股份取得工商银行玉溪分行1.8亿元股票回购专项贷款承诺",
           "sentiment": 1.0,
           "date": "2026-07-27"
-        },
-        {
-          "title": "恩捷股份：获金融机构1.8亿元股票回购贷款支持",
-          "sentiment": 1.0,
-          "date": "2026-07-27"
-        },
-        {
-          "title": "恩捷股份002812.SZ)：子公司收到增值税留抵退税约6343万元，将改善现金流",
-          "sentiment": 0.0,
-          "date": "2026-07-24"
         }
       ]
     },
@@ -15209,7 +15224,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 1.29,
         "is_active": false,
         "survey": {
@@ -15239,9 +15254,9 @@
         }
       },
       "price": {
-        "current": 37.48,
-        "change_pct": -1.26,
-        "fetched_at": "2026-08-24 22:34:21"
+        "current": 36.4,
+        "change_pct": -2.88,
+        "fetched_at": "2026-08-25 07:48:42"
       },
       "news": [
         {
@@ -15291,7 +15306,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 2.31,
         "is_active": true,
         "survey": {
@@ -15315,10 +15330,17 @@
         }
       },
       "price": {
-        "current": 61.82,
-        "change_pct": 0.11,
-        "fetched_at": "2026-08-24 22:33:17"
-      }
+        "current": 60.6,
+        "change_pct": -1.97,
+        "fetched_at": "2026-08-25 08:18:30"
+      },
+      "news": [
+        {
+          "title": "谁是户储电池老大？瑞浦兰钧、鹏辉能源各称第一 数据打架背后标准混乱",
+          "sentiment": null,
+          "date": "2026-08-23"
+        }
+      ]
     },
     {
       "code": "300390",
@@ -15340,7 +15362,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 3.53,
         "is_active": true,
         "survey": {
@@ -15364,11 +15386,16 @@
         }
       },
       "price": {
-        "current": 67.23,
-        "change_pct": 2.69,
-        "fetched_at": "2026-08-24 22:33:18"
+        "current": 62.11,
+        "change_pct": -7.62,
+        "fetched_at": "2026-08-25 08:19:04"
       },
       "news": [
+        {
+          "title": "2378家公司公布半年报 435家业绩增幅翻倍",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
         {
           "title": "今日141家公司公布半年报 30家业绩增幅翻倍",
           "sentiment": null,
@@ -15388,11 +15415,6 @@
           "title": "机构风向标 | 天华新能3003902026年二季度已披露持股减少机构超40家",
           "sentiment": 0.0,
           "date": "2026-08-18"
-        },
-        {
-          "title": "天华新能披露2026年半年报：上半年净利润22.92亿元 同比扭亏为盈",
-          "sentiment": 0.0,
-          "date": "2026-08-17"
         }
       ]
     },
@@ -15416,7 +15438,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 1.42,
         "is_active": false,
         "survey": {
@@ -15433,11 +15455,16 @@
         }
       },
       "price": {
-        "current": 49.1,
-        "change_pct": 1.49,
-        "fetched_at": "2026-08-24 22:33:19"
+        "current": 47.01,
+        "change_pct": -4.26,
+        "fetched_at": "2026-08-25 08:19:34"
       },
       "news": [
+        {
+          "title": "“寻找中国龙”调研行首站走进天齐锂业、融捷股份",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
         {
           "title": "有色金属行业资金流入榜：湖南白银、紫金矿业等净流入资金居前",
           "sentiment": 0.0,
@@ -15480,7 +15507,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.5,
         "score": 3.85,
         "is_active": true,
         "survey": {
@@ -15528,9 +15555,9 @@
         }
       },
       "price": {
-        "current": 5.75,
-        "change_pct": -4.17,
-        "fetched_at": "2026-08-24 22:33:20"
+        "current": 5.74,
+        "change_pct": -0.17,
+        "fetched_at": "2026-08-25 08:20:04"
       },
       "news": [
         {
@@ -15580,7 +15607,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.1,
+        "cache_age_hours": 59.8,
         "score": 1.18,
         "is_active": false,
         "survey": {
@@ -15597,9 +15624,9 @@
         }
       },
       "price": {
-        "current": 104.38,
-        "change_pct": -2.33,
-        "fetched_at": "2026-08-24 22:33:21"
+        "current": 103.32,
+        "change_pct": -1.02,
+        "fetched_at": "2026-08-25 08:20:34"
       },
       "news": [
         {
@@ -15625,16 +15652,16 @@
       "watched_by": "2",
       "analysis": {
         "date": "2026-08-25",
-        "grade": "C+",
-        "conclusion": "观察",
-        "moat": "44/100",
-        "reasoning": "按成长科技股的标准看：质量 44/100（营收 10年复合增速 23%），估值偏贵。普通公司，偏贵。",
+        "grade": "B-",
+        "conclusion": "持有",
+        "moat": "—",
+        "reasoning": "按成长科技股的标准看：质量 44/100（营收 10年复合增速 23%），估值合理。普通公司，普通价。",
         "quant_score": 44,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -15658,11 +15685,16 @@
         }
       },
       "price": {
-        "current": 35.42,
-        "change_pct": -3.3,
-        "fetched_at": "2026-08-24 22:33:22"
+        "current": 35.7,
+        "change_pct": 0.79,
+        "fetched_at": "2026-08-25 07:49:49"
       },
       "news": [
+        {
+          "title": "创业板股最新筹码变动：5股股东户数降逾一成",
+          "sentiment": 0.0,
+          "date": "2026-08-25"
+        },
         {
           "title": "跑赢锂电、机器人，3D打印产量飙增52.3%！键凯科技涨停",
           "sentiment": 0.0,
@@ -15682,11 +15714,6 @@
           "title": "5.49亿主力资金净流入，数字水印概念涨0.70%",
           "sentiment": 0.0,
           "date": "2026-08-11"
-        },
-        {
-          "title": "创业板公司业绩快报抢先看",
-          "sentiment": 0.0,
-          "date": "2026-08-07"
         }
       ]
     },
@@ -15710,7 +15737,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.48,
         "is_active": false,
         "survey": {
@@ -15727,9 +15754,9 @@
         }
       },
       "price": {
-        "current": 267.0,
-        "change_pct": -5.32,
-        "fetched_at": "2026-08-24 22:33:23"
+        "current": 269.06,
+        "change_pct": 0.77,
+        "fetched_at": "2026-08-25 08:21:03"
       },
       "news": [
         {
@@ -15779,7 +15806,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.4,
         "score": 0.61,
         "is_active": false,
         "survey": {
@@ -15796,9 +15823,9 @@
         }
       },
       "price": {
-        "current": 33.24,
-        "change_pct": -5.97,
-        "fetched_at": "2026-08-24 22:33:24"
+        "current": 33.31,
+        "change_pct": 0.21,
+        "fetched_at": "2026-08-25 08:21:32"
       },
       "news": [
         {
@@ -15848,7 +15875,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 3.54,
         "is_active": true,
         "survey": {
@@ -15878,11 +15905,21 @@
         }
       },
       "price": {
-        "current": 61.24,
-        "change_pct": -4.13,
-        "fetched_at": "2026-08-24 22:33:25"
+        "current": 60.9,
+        "change_pct": -0.56,
+        "fetched_at": "2026-08-25 08:22:03"
       },
       "news": [
+        {
+          "title": "通富微电新设微电子公司 注册资本5亿元",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "通富微电新设微电子公司 注册资本5亿元",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "杠杆资金大手笔加仓股名单",
           "sentiment": 0.0,
@@ -15897,16 +15934,6 @@
           "title": "通富微电002156龙虎榜数据08-17)",
           "sentiment": 0.0,
           "date": "2026-08-17"
-        },
-        {
-          "title": "002156，获融资客抢筹超14亿元！融资客大幅净买入股出炉",
-          "sentiment": 0.0,
-          "date": "2026-07-23"
-        },
-        {
-          "title": "002156，千亿半导体巨头涨停！",
-          "sentiment": 0.0,
-          "date": "2026-07-22"
         }
       ]
     },
@@ -15923,33 +15950,33 @@
         "date": "2026-08-25",
         "grade": "B+",
         "conclusion": "买入",
-        "moat": "70/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 70/100（营收 10年复合增速 39%），估值合理。好公司，价格合理。",
         "quant_score": 70,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 52.1,
-        "score": 0.4,
-        "is_active": false,
+        "cache_age_hours": 0.2,
+        "score": 0.0,
+        "is_active": true,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 7.9,
-          "direction": "中性",
-          "latest_short": 1.0,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
           "base_short": null,
           "meaningful": true
         }
       },
       "price": {
-        "current": 43.67,
-        "change_pct": -4.67,
-        "fetched_at": "2026-08-24 22:33:26"
+        "current": 42.22,
+        "change_pct": -3.32,
+        "fetched_at": "2026-08-25 10:06:52"
       },
       "news": [
         {
@@ -15999,7 +16026,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 1.76,
         "is_active": false,
         "survey": {
@@ -16016,11 +16043,26 @@
         }
       },
       "price": {
-        "current": 108.88,
-        "change_pct": 8.28,
-        "fetched_at": "2026-08-24 22:33:27"
+        "current": 107.18,
+        "change_pct": -1.56,
+        "fetched_at": "2026-08-25 08:23:04"
       },
       "news": [
+        {
+          "title": "博杰股份：拟1.83亿元收购鼎泰芯源控股权加码磷化铟衬底，标的近三年处于亏损状态",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "博杰股份2026年度定增申请获深交所受理",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "博杰股份：向特定对象发行股票申请获深交所受理",
+          "sentiment": null,
+          "date": "2026-08-23"
+        },
         {
           "title": "博杰股份：拟1.83亿元收购鼎泰芯源控股权",
           "sentiment": 0.0,
@@ -16030,21 +16072,6 @@
           "title": "MLCC概念上涨1.81%，5股主力资金净流入超5000万元",
           "sentiment": 0.0,
           "date": "2026-08-21"
-        },
-        {
-          "title": "富士康概念上涨1.62%，8股主力资金净流入超亿元",
-          "sentiment": 0.0,
-          "date": "2026-08-21"
-        },
-        {
-          "title": "【淘金互动易】2026世界机器人大会即将举办，产业链加速成熟，这家公司已与北京人形机器人创新中心战略合作",
-          "sentiment": null,
-          "date": "2026-08-13"
-        },
-        {
-          "title": "横琴新区概念上涨2.71%，5股主力资金净流入超千万元",
-          "sentiment": 0.0,
-          "date": "2026-08-12"
         }
       ]
     },
@@ -16068,7 +16095,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 8.7,
         "score": 0.35,
         "is_active": false,
         "survey": {
@@ -16085,11 +16112,21 @@
         }
       },
       "price": {
-        "current": 16.26,
-        "change_pct": -3.04,
-        "fetched_at": "2026-08-24 22:33:28"
+        "current": 16.4,
+        "change_pct": 0.86,
+        "fetched_at": "2026-08-25 08:23:33"
       },
       "news": [
+        {
+          "title": "恒润股份603985.SH)：2026年中报净利润为6834.41万元、同比较去年同期上涨70.15%",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "恒润股份：2026年上半年净利润6834.41万元 同比增长70.15%",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
         {
           "title": "恒润股份回复年报问询函 11家客户和供应商重叠",
           "sentiment": 0.0,
@@ -16127,7 +16164,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.7,
+        "cache_age_hours": 9.4,
         "score": 0.01,
         "is_active": false,
         "survey": {
@@ -16144,9 +16181,9 @@
         }
       },
       "price": {
-        "current": 11.7,
-        "change_pct": -2.66,
-        "fetched_at": "2026-08-24 22:33:29"
+        "current": 12.0,
+        "change_pct": 2.56,
+        "fetched_at": "2026-08-25 08:24:04"
       },
       "news": [
         {
@@ -16196,7 +16233,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.3,
         "score": 0.96,
         "is_active": false,
         "survey": {
@@ -16213,9 +16250,9 @@
         }
       },
       "price": {
-        "current": 240.8,
-        "change_pct": -2.67,
-        "fetched_at": "2026-08-24 22:33:30"
+        "current": 238.02,
+        "change_pct": -1.15,
+        "fetched_at": "2026-08-25 08:24:33"
       },
       "news": [
         {
@@ -16265,7 +16302,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16282,9 +16319,9 @@
         }
       },
       "price": {
-        "current": 47.7,
-        "change_pct": -4.7,
-        "fetched_at": "2026-08-24 22:33:31"
+        "current": 47.57,
+        "change_pct": -0.27,
+        "fetched_at": "2026-08-25 08:25:04"
       },
       "news": [
         {
@@ -16334,7 +16371,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -16382,11 +16419,21 @@
         }
       },
       "price": {
-        "current": 33.9,
-        "change_pct": 4.95,
-        "fetched_at": "2026-08-24 22:33:32"
+        "current": 34.71,
+        "change_pct": 2.39,
+        "fetched_at": "2026-08-25 08:25:34"
       },
       "news": [
+        {
+          "title": "8月25日商业零售概念震荡上行 上海九百直线封板",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "创业板活跃股榜单：20股换手率超20%",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "直线涨停！300209，封单超34万手",
           "sentiment": 0.0,
@@ -16401,16 +16448,6 @@
           "title": "行云科技300209.SZ)：2026年中报净利润为1201.54万元",
           "sentiment": 0.0,
           "date": "2026-07-31"
-        },
-        {
-          "title": "机构风向标 | 行云科技3002092026年二季度已披露前十大机构累计持仓占比23.31%",
-          "sentiment": 0.0,
-          "date": "2026-07-31"
-        },
-        {
-          "title": "300209：子公司算力订单金额上调至30.53亿元",
-          "sentiment": 0.0,
-          "date": "2026-07-29"
         }
       ]
     },
@@ -16434,7 +16471,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.8,
+        "cache_age_hours": 9.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16451,20 +16488,35 @@
         }
       },
       "price": {
-        "current": 14.61,
-        "change_pct": -2.99,
-        "fetched_at": "2026-08-24 22:33:33"
+        "current": 16.07,
+        "change_pct": 9.99,
+        "fetched_at": "2026-08-25 08:26:03"
       },
       "news": [
+        {
+          "title": "今日2256只个股突破五日均线",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "涨停股复盘：16股封单超亿元",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "今日2166只个股突破五日均线",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "今日1527只个股突破五日均线",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
         {
           "title": "53.32亿主力资金净流入，F5G概念涨1.53%",
           "sentiment": 0.0,
           "date": "2026-08-21"
-        },
-        {
-          "title": "利好扎堆！000070，最高预增超11倍；2800亿面板龙头上半年预盈超50亿元，接近去年全年净利润总额",
-          "sentiment": 0.0,
-          "date": "2026-07-09"
         }
       ]
     },
@@ -16488,7 +16540,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 8.8,
         "score": 1.5,
         "is_active": false,
         "survey": {
@@ -16512,9 +16564,9 @@
         }
       },
       "price": {
-        "current": 121.78,
-        "change_pct": -3.33,
-        "fetched_at": "2026-08-24 22:33:34"
+        "current": 119.3,
+        "change_pct": -2.04,
+        "fetched_at": "2026-08-25 08:26:35"
       },
       "news": [
         {
@@ -16564,7 +16616,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.5,
+        "cache_age_hours": 9.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -16581,9 +16633,9 @@
         }
       },
       "price": {
-        "current": 38.05,
-        "change_pct": -4.2,
-        "fetched_at": "2026-08-24 22:33:35"
+        "current": 38.48,
+        "change_pct": 1.13,
+        "fetched_at": "2026-08-25 08:27:05"
       },
       "news": [
         {
@@ -16633,7 +16685,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.6,
+        "cache_age_hours": 9.3,
         "score": 1.15,
         "is_active": false,
         "survey": {
@@ -16657,35 +16709,35 @@
         }
       },
       "price": {
-        "current": 15.16,
-        "change_pct": 0.2,
-        "fetched_at": "2026-08-24 22:33:38"
+        "current": 15.15,
+        "change_pct": -0.07,
+        "fetched_at": "2026-08-25 08:29:07"
       },
       "news": [
+        {
+          "title": "A股分红日报丨8月25日，上海电影、中煤能源、两面针等10家A股上市公司股权登记",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "外资持股比例超24%的股票名单",
+          "sentiment": null,
+          "date": "2026-08-25"
+        },
+        {
+          "title": "CRO概念下跌3.91%，主力资金净流出56股",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
+        {
+          "title": "境外投资者持股比例超24%的股票名单",
+          "sentiment": null,
+          "date": "2026-08-24"
+        },
         {
           "title": "境外投资者持股比例超24%的股票名单",
           "sentiment": 0.0,
           "date": "2026-08-21"
-        },
-        {
-          "title": "外资持股比例超24%的股票名单",
-          "sentiment": 0.0,
-          "date": "2026-08-20"
-        },
-        {
-          "title": "境外投资者持股比例超24%的股票名单",
-          "sentiment": 0.0,
-          "date": "2026-08-19"
-        },
-        {
-          "title": "外资持股比例超24%的股票名单",
-          "sentiment": 0.0,
-          "date": "2026-08-18"
-        },
-        {
-          "title": "华测检测300012.SZ)2026年中报净利润为5.64亿元、较去年同期上涨20.63%",
-          "sentiment": 0.0,
-          "date": "2026-08-17"
         }
       ]
     },
@@ -16709,7 +16761,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.4,
+        "cache_age_hours": 9.1,
         "score": 3.88,
         "is_active": true,
         "survey": {
@@ -16739,9 +16791,9 @@
         }
       },
       "price": {
-        "current": 34.06,
-        "change_pct": -3.07,
-        "fetched_at": "2026-08-24 22:33:39"
+        "current": 34.36,
+        "change_pct": 0.88,
+        "fetched_at": "2026-08-25 08:29:36"
       },
       "news": [
         {
