@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>你问的五个问题，每一个都问对了</title>
+<style>
+  :root{
+    --paper:#EBE3D2; --paper2:#F4EEDF; --card:#FBF7EC; --ink:#2C2A22; --ink2:#6C6450; --line:#DDD3BB;
+    --jade:#3F7E56; --jade-bg:#E4EEDF; --gold:#B4882A; --gold-bg:#F3E8C8; --verm:#B0442E; --verm-bg:#F3DDD3;
+    --seal:#B0442E;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0E1512; --paper2:#141C18; --card:#182019; --ink:#EAE4D4; --ink2:#9AA091; --line:#26302A;
+    --jade:#6DB587; --jade-bg:#17251C; --gold:#DCB259; --gold-bg:#241E12; --verm:#DE7157; --verm-bg:#26170F;
+    --seal:#DE7157;
+  }}
+  :root[data-theme="light"]{--paper:#EBE3D2;--paper2:#F4EEDF;--card:#FBF7EC;--ink:#2C2A22;--ink2:#6C6450;--line:#DDD3BB;--jade:#3F7E56;--jade-bg:#E4EEDF;--gold:#B4882A;--gold-bg:#F3E8C8;--verm:#B0442E;--verm-bg:#F3DDD3;--seal:#B0442E;}
+  :root[data-theme="dark"]{--paper:#0E1512;--paper2:#141C18;--card:#182019;--ink:#EAE4D4;--ink2:#9AA091;--line:#26302A;--jade:#6DB587;--jade-bg:#17251C;--gold:#DCB259;--gold-bg:#241E12;--verm:#DE7157;--verm-bg:#26170F;--seal:#DE7157;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.7;
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+  .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:620px;margin:0 auto;padding:26px 18px 60px;}
+  .backlink{display:inline-block;margin-bottom:18px;color:var(--ink2);text-decoration:none;font-size:13px;}
+  .backlink:hover{color:var(--jade);}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:8px;}
+  .mh-l .kick{font-size:11px;letter-spacing:.28em;color:var(--ink2);}
+  .mh-l h1{font-size:26px;margin:4px 0 0;line-height:1.2;text-wrap:balance;}
+  .seal{font-family:"Songti SC","STSong",serif;color:#fff;background:var(--seal);border-radius:5px;
+    padding:6px 8px;font-size:12px;line-height:1.2;text-align:center;letter-spacing:.1em;white-space:nowrap;}
+  .date{font-size:12px;color:var(--ink2);margin:8px 0 22px;}
+
+  .update{background:var(--jade-bg);border:1px solid var(--jade);border-radius:12px;padding:16px 18px;margin-bottom:22px;}
+  .update-t{font-size:16px;font-weight:800;color:var(--jade);margin-bottom:4px;}
+  .update-d{font-size:11px;letter-spacing:.1em;color:var(--ink2);margin-bottom:10px;}
+  .update ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .update li{font-size:14px;line-height:1.5;padding-left:22px;position:relative;}
+  .update li::before{content:"✓";position:absolute;left:0;top:0;color:var(--jade);font-weight:800;}
+  .update li.new::before{content:"＋";color:var(--gold);}
+  .update li.watch::before{content:"→";color:var(--verm);}
+  .update b{color:var(--ink);}
+  .update>p{font-size:14.5px;margin:0 0 12px;}
+  .klesson{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .kl-term{font-size:14.5px;font-weight:800;color:var(--jade);margin-bottom:5px;}
+  .klesson p{font-size:13.5px;margin:0;line-height:1.6;}
+  .kl-fwd{background:var(--gold-bg);border-left:4px solid var(--gold);border-radius:8px;padding:11px 14px;font-size:14px;margin-top:4px;}
+
+  .thesis{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--jade);border-radius:12px;padding:18px 20px;margin-bottom:14px;}
+  .thesis h2{font-size:15px;margin:0 0 8px;color:var(--jade);}
+  .thesis p{margin:0;font-size:15.5px;}
+  .thesis b{color:var(--ink);}
+  .hl-j{color:var(--jade);font-weight:700;} .hl-v{color:var(--verm);font-weight:700;}
+
+  section{margin-top:30px;}
+  .eyebrow{font-size:11px;letter-spacing:.24em;color:var(--ink2);margin-bottom:4px;}
+  h3.song{font-size:21px;margin:0 0 10px;text-wrap:balance;}
+  p{font-size:15px;} p.lead{font-size:15.5px;}
+  .big{font-size:19px;font-weight:800;} .big.mono{font-weight:800;}
+
+  .bucket{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:var(--card);border-left:5px solid var(--bc);}
+  .bucket.storm{--bc:var(--verm);} .bucket.anchor{--bc:var(--jade);} .bucket.weak{--bc:var(--gold);}
+  .b-head{display:flex;align-items:baseline;gap:8px;margin-bottom:3px;}
+  .b-head .ico{font-size:19px;} .b-head .t{font-size:17px;font-weight:800;}
+  .b-sub{font-size:13px;color:var(--ink2);margin-bottom:12px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .chip{font-size:12.5px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:var(--paper2);white-space:nowrap;}
+  .chip .n{color:var(--verm);font-weight:700;} .chip.up .n{color:var(--jade);}
+  .chip .g{color:var(--ink2);font-size:11px;}
+  .takeaway{font-size:14px;background:var(--tb);border-radius:8px;padding:9px 12px;}
+  .bucket.storm .takeaway{--tb:var(--verm-bg);} .bucket.anchor .takeaway{--tb:var(--jade-bg);} .bucket.weak .takeaway{--tb:var(--gold-bg);}
+  .takeaway b{color:var(--ink);}
+
+  .timeline{border:1px solid var(--line);border-radius:12px;padding:6px 18px 10px;background:var(--card);}
+  .tl-row{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line);}
+  .tl-row:last-child{border-bottom:0;}
+  .tl-date{flex:0 0 74px;text-align:right;}
+  .tl-date .d{font-size:17px;font-weight:800;} .tl-date .w{font-size:11px;color:var(--ink2);}
+  .tl-body{flex:1;} .tl-body .co{font-size:15px;font-weight:700;} .tl-body .no{font-size:12.5px;color:var(--ink2);}
+  .tl-flag{display:inline-block;font-size:11px;color:#fff;background:var(--verm);border-radius:4px;padding:1px 7px;margin-left:6px;}
+
+  ol.advice{list-style:none;counter-reset:a;padding:0;margin:0;}
+  ol.advice li{counter-increment:a;position:relative;padding:12px 0 12px 44px;border-bottom:1px solid var(--line);font-size:15.5px;}
+  ol.advice li:last-child{border-bottom:0;}
+  ol.advice li::before{content:counter(a);position:absolute;left:0;top:11px;width:28px;height:28px;border-radius:50%;
+    background:var(--jade);color:#fff;font-family:"Songti SC",serif;font-size:15px;display:grid;place-items:center;font-weight:700;}
+  ol.advice b{color:var(--verm);}
+
+  ul.fuse{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+  ul.fuse li{position:relative;padding:10px 14px 10px 16px;background:var(--verm-bg);border-radius:9px;font-size:14.5px;border-left:3px solid var(--verm);}
+  ul.fuse li b{color:var(--ink);}
+  .tailwind{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:14px 0;background:var(--card);}
+  .tw-row{display:flex;gap:12px;align-items:baseline;padding:11px 15px;border-bottom:1px solid var(--line);}
+  .tw-row:last-child{border-bottom:0;}
+  .tw-co{flex:0 0 88px;font-weight:800;font-size:15px;color:var(--jade);}
+  .tw-v{font-size:13px;color:var(--ink);}
+  .keepcull{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 6px;}
+  @media(max-width:520px){.keepcull{grid-template-columns:1fr;}}
+  .kc{border:1px solid var(--line);border-radius:12px;padding:14px 15px;}
+  .kc-keep{background:var(--jade-bg);border-left:4px solid var(--jade);}
+  .kc-cull{background:var(--verm-bg);border-left:4px solid var(--verm);}
+  .kc-h{font-size:16px;font-weight:800;}
+  .kc-keep .kc-h{color:var(--jade);} .kc-cull .kc-h{color:var(--verm);}
+  .kc-s{font-size:12px;color:var(--ink2);margin:2px 0 9px;}
+  .kc ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .kc li{font-size:13px;line-height:1.5;} .kc li b{color:var(--ink);}
+  .rules{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+  .rule{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-left:4px solid var(--jade);border-radius:11px;padding:13px 16px;background:var(--jade-bg);}
+  .rule-n{flex:0 0 78px;text-align:center;font-size:26px;font-weight:800;color:var(--jade);line-height:1;}
+  .rule-n.song-s{font-size:19px;}
+  .rule-b{font-size:14px;} .rule-b b{color:var(--ink);}
+  .lesson{margin-top:22px;background:var(--gold-bg);border:1px solid var(--gold);border-radius:12px;padding:16px 18px;}
+  .lesson-t{font-size:16px;font-weight:800;margin-bottom:6px;}
+  .lesson p{margin:0;font-size:14.5px;} .lesson b{color:var(--ink);}
+  .foot{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="mh-l">
+      <div class="kick song">私人巴菲特 · 深度研究</div>
+      <h1 class="song">你问的五个问题，每一个都问对了</h1>
+    </div>
+    <div class="seal song">看懂<br>信号</div>
+  </div>
+
+  <div class="date mono">2026-08-25 · 阿姨提问 → 系统修正</div>
+
+  <div class="thesis">
+    <p>这几天您连着问了五个问题。<b>每一个都不是您看错了，是网页把话说错了。</b></p>
+    <p>五个问题背后是同一件事：<b>不同的信号，快慢不一样、可信度不一样、有没有方向也不一样，但我们把它们摆在一起，用一样的红绿、一样的百分比。</b>看起来当然自相矛盾。</p>
+    <p>这篇把每个问题背后的道理讲清楚。<b>看完这五条，您以后看任何一只股票都够用了。</b></p>
+  </div>
+
+  <h2 class="song">您问的五个问题</h2>
+
+  <div class="rules">
+    <div class="rule"><span class="rule-n mono">1</span><span class="rule-b">「华测检测<b>品级是 A</b>，为什么又说<b>看空预警</b>？」</span></div>
+    <div class="rule"><span class="rule-n mono">2</span><span class="rule-b">「机构接连两个月调研的红柱子，<b>股价还是在跌</b>。」</span></div>
+    <div class="rule"><span class="rule-n mono">3</span><span class="rule-b">「都长成这样了，<b>他说股价还没反应</b>。」</span></div>
+    <div class="rule"><span class="rule-n mono">4</span><span class="rule-b">「这个内部人士买入是 <b>4 月</b>，这个滞后的消息<b>没有意义</b>。」</span></div>
+    <div class="rule"><span class="rule-n mono">5</span><span class="rule-b">「小商品城<b>一个说看空在撤，一个说机构在建仓</b>，这就很矛盾。」</span></div>
+  </div>
+
+  <h2 class="song">一、评级和预警，测的根本不是同一件事</h2>
+
+  <div class="klesson">
+    <div class="kl-term">① 评级说的是「公司好不好」，以<b>年</b>为单位</div>
+    <p>A / B / C 这个评级，看的是<b>护城河、赚钱能力、负债、贵还是便宜</b>。这些东西一年才变一次，甚至几年才变一次。它回答的是：<b>「这是不是一门好生意」</b>。</p>
+  </div>
+
+  <div class="klesson">
+    <div class="kl-term">② 「看空预警」说的是「今天的钱往哪走」，以<b>天</b>为单位</div>
+    <p>它看的是今天主力资金是净流入还是净流出。这个数<b>天天在变</b>。它回答的是：<b>「今天有人在买还是在卖」</b>。</p>
+    <p><span class="hl-j">一家好公司今天被人卖，一点也不矛盾。</span>茅台也有跌停的日子。好生意和今天的价格，本来就是两回事。</p>
+  </div>
+
+  <div class="lesson">
+    <div class="lesson-t">这条我们改了什么</div>
+    <p>「看空预警」这个词本身就有毛病 ——「预警」在中文里是<b>警报</b>，而「看多预警」等于「警告你它要涨了」，读不通。现在改成大白话：<b>「资金在流入」「资金在流出」</b>。并且在这一栏上方直接说明：这里看的是最近几天的钱，和 A/B/C 评级是两回事。</p>
+  </div>
+
+  <h2 class="song">二、机构去看过 ≠ 机构看好</h2>
+
+  <div class="klesson">
+    <div class="kl-term">③ 机构调研 = 基金公司派人去公司问问题</div>
+    <p>上市公司必须公开披露「谁来调研过我」。基金经理不会白跑一趟，所以<b>调研是「聪明钱在认真做功课」的痕迹</b>。</p>
+    <p><span class="hl-j">但——去看了，可能看完买，也可能看完不买，甚至看完就卖。</span></p>
+    <p>您说的那句话是对的：<b>「调研到最后并不值得机构买，也不一定」</b>。这句话点破了我们系统一个真的错误：它原来把「有人来调研」直接当成利好，<b>系统里根本没有「机构看完决定不买」这种可能</b>。</p>
+  </div>
+
+  <div class="lesson">
+    <div class="lesson-t">这条我们改了什么</div>
+    <p>调研现在标成<b>「注意力信号」</b>，用<b>灰色</b>，不再用绿色（绿色=看涨）。方向要看<b>调研之后股价怎么走</b>才知道，页面上专门加了一块「<b>调研之后发生了什么</b>」。</p>
+    <p>另外柱子上现在会写明<b>多少家机构</b>—— 之前 1 家和 167 家画出来一样高。</p>
+  </div>
+
+  <h2 class="song">三、"还没反应" 要看多长时间</h2>
+
+  <div class="klesson">
+    <div class="kl-term">④ 「领先信号」= 聪明钱动了，股价还没动</div>
+    <p>这是最值钱的一种信号：<b>机构在悄悄买，但价格还没涨</b>，说明您比市场早知道。</p>
+    <p>问题在于 ——<b>「还没涨」要看多长的时间？</b></p>
+    <p>我们原来只看 <b>5 天</b>。而中石科技那只，4 个月里从 41 涨到 97，<b>翻了一倍多</b>。一只翻倍的股票在任意 5 天里都可能小跌一下，于是系统就在最不该说的时候说了「股价还没反应」。</p>
+    <p><span class="hl-j">您那句「都长成这样了」，一句话就指出了窗口开得太短。</span></p>
+  </div>
+
+  <div class="lesson">
+    <div class="lesson-t">这条我们改了什么</div>
+    <p>加了一道<b>长窗口</b>的闸门：<b>60 天里已经涨了 20% 以上的，无论最近几天怎么走，都不许再说「股价还没反应」</b>。</p>
+  </div>
+
+  <h2 class="song">四、消息也会「过期」，而且过得比想象中快</h2>
+
+  <div class="klesson">
+    <div class="kl-term">⑤ 内部人买入 = 公司里的人自己掏钱买自家股票</div>
+    <p>董事长、高管自己掏钱买，是<b>最直接的信心表达</b> —— 他们最了解这家公司。所以这是所有信号里<b>最可信</b>的一类。</p>
+  </div>
+
+  <div class="klesson">
+    <div class="kl-term">⑥ 但信号会「衰减」—— 内部人的<b>大半效力在头一个月就用完了</b></div>
+    <p>学术界拿几十年的数据算过：内部人买入之后的超额收益，<b>约四分之一在头 5 天就兑现了，约一半在头 1 个月内兑现</b>。而公告本身还要滞后几周才公开。</p>
+    <p>奥来德那笔是 <b>4 月</b>的买入，您 8 月看到 —— 中间隔了 4 个月：</p>
+    <div class="tailwind">
+      <div class="tw-row"><span class="mono">刚发生</span><span>效力 100%</span></div>
+      <div class="tw-row"><span class="mono">1 个月后</span><span>效力剩 50%</span></div>
+      <div class="tw-row"><span class="mono">2 个月后</span><span>效力剩 25%</span></div>
+      <div class="tw-row"><span class="mono">4 个月后</span><span><b>效力剩 7%</b> ← 您看到的那条</span></div>
+    </div>
+    <p><span class="hl-j">您说「这个滞后的消息没有意义」，数字站在您这边。</span></p>
+    <p>不过要补一句：那笔买入<b>本身是极强的信号</b>—— 3 位内部人在 6 天内先后买了 5 笔、合计 2.83% 的股本。这种「<b>多人短时间内一起买</b>」在研究里叫 <b>cluster buy</b>，是内部人信号里<b>最强的形态</b>。而那之后股价确实从 24 涨到了 62.89。</p>
+    <p><b>信号是对的，错在我们把一个「以月计」的东西，摆在了「今天的资金」旁边。</b></p>
+  </div>
+
+  <div class="lesson">
+    <div class="lesson-t">这条我们改了什么</div>
+    <p>页面上现在画一根<b>「还剩多少效力」的条</b>，会随时间变短、变淡：</p>
+    <div class="tailwind">
+      <div class="tw-row"><span class="mono">████████████████████</span><span>100% · 还新鲜</span></div>
+      <div class="tw-row"><span class="mono">██████████░░░░░░░░░░</span><span>50% · 过了一半</span></div>
+      <div class="tw-row"><span class="mono">█░░░░░░░░░░░░░░░░░░░</span><span>7% · 基本失效</span></div>
+    </div>
+    <p>并且明说：它是<b>「自己人当时怎么看这家公司」的证据，不是现在该买的理由</b>。同时新增了 <b>cluster buy</b> 的识别 —— 多人一起买会被专门标出来。</p>
+  </div>
+
+  <h2 class="song">五、把所有信号排成一条链</h2>
+
+  <div class="thesis">
+    <p>前面四条其实是同一个毛病。真正的解法是：<b>把所有信号按「谁在说」排成一条链</b>。</p>
+  </div>
+
+  <div class="rules">
+    <div class="rule"><span class="rule-n mono">0</span><span class="rule-b"><b>这家公司本身怎么样</b> · 以年看 —— 护城河、赚不赚钱、贵还是便宜。<b>这是底子，不是信号。</b></span></div>
+    <div class="rule"><span class="rule-n mono">1</span><span class="rule-b"><b>公司里的人在买还是在卖</b> · 以月看 —— 他们最了解自家公司。<b>但等您看到公告，往往已经过去几周。</b></span></div>
+    <div class="rule"><span class="rule-n mono">2</span><span class="rule-b"><b>上门研究它的机构在做什么</b> · 以季看 —— 去看过、买过、给过评级。<b>调研只说明「有人在看」，不说明看多看空。</b></span></div>
+    <div class="rule"><span class="rule-n mono">3</span><span class="rule-b"><b>市场上的钱往哪走</b> · 以天看 —— 今天谁在买谁在卖。<b>反应最快，也最容易是噪音。</b></span></div>
+    <div class="rule"><span class="rule-n mono">4</span><span class="rule-b"><b>价格自己走成什么样</b> · 看背景 —— 均线、成交量。<b>这些是价格算出来的，它们不领先价格，只是复述。</b></span></div>
+  </div>
+
+  <div class="klesson">
+    <div class="kl-term">⑦ 这条链的用法：看它<b>传到哪一层了</b></div>
+    <p><b>越靠上的人知道得越早，但他们知道的事要更久才反映到股价上。<br>越靠下的信号反应越快，但它多半只是在复述已经发生的事。</b></p>
+    <div class="tailwind">
+      <div class="tw-row"><span><b>上面动了、下面还没动</b></span><span>真正的「领先信号」，您比市场早</span></div>
+      <div class="tw-row"><span><b>一路传到底</b></span><span>已经涨过了 —— 中石科技就是这种</span></div>
+      <div class="tw-row"><span><b>上面看多、下面看空</b></span><span>可能还没传导到，留意</span></div>
+      <div class="tw-row"><span><b>上面看空、下面看多</b></span><span><b>最危险：最懂的人先走，接盘的还没反应过来</b></span></div>
+    </div>
+  </div>
+
+  <div class="lesson">
+    <div class="lesson-t">回头看小商品城那个「矛盾」</div>
+    <p>您当时问：「一个是看空在撤，一个是机构在建仓，这就很矛盾」。</p>
+    <p>现在有答案了：<b>那不是矛盾，是两层在说不同尺度的话</b> —— 而当时页面把它们平铺在一起，还都用了绿色。更要紧的是，「机构在建仓」这句本身就是错的：它是从<b>融券变化的绝对值</b>推出来的，而绝对值<b>没有方向</b>。</p>
+    <p>现在详情页最上方就是这条链，一眼看得出信息传到哪一层了。</p>
+  </div>
+
+  <h2 class="song">最后：一句话记住</h2>
+
+  <div class="thesis">
+    <p><b>看一只股票，先问三件事：</b></p>
+    <p><b>①「这话是谁说的？」</b>——越靠近公司的人越可信。<br>
+       <b>②「这话说的是多久的事？」</b>——今天的钱，还是这一季的机构，还是这一年的公司。<br>
+       <b>③「这条消息多新？」</b>——过期的消息不是错的，只是不该拿来做今天的决定。</p>
+    <p class="mono" style="margin-top:14px">—— 这五条改动，全部来自您这几天的提问。</p>
+  </div>
+
+  <div class="foot">
+    <a class="backlink" href="/research">← 回到研究档案</a>
+  </div>
+
+</div>
+
+</body>
+</html>

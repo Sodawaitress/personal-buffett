@@ -6,6 +6,16 @@
 
 ARTICLES = [
     {
+        # US-181：阿姨这几天连问五个问题，每个背后都是一条真的金融知识，
+        # 而且每个都指出了系统一处真错误。写成科普，把「为什么这么改」讲给她听。
+        "slug": "five-questions-2026",
+        "title": "你问的五个问题，每一个都问对了",
+        "subtitle": "信号怎么读 · 快慢与可信度 · 现象与知识",
+        "cover": "🔍",
+        "date": "2026-08-25",
+        "template": "research/five-questions-2026.html",
+    },
+    {
         "slug": "cancer-vaccine-2026",
         "title": "癌症疫苗来了？涨的那只，正是系统让你减持的",
         "subtitle": "创新药 · 融券读法 · 现象与知识",
