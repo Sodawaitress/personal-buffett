@@ -261,7 +261,7 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
                 "routine_skipped": 0, "caveat": "", "net_direction": None,
                 "latest_date": "", "days_since": None,
                 "is_stale": False, "stale_note": "",
-                "cluster": {}, "cluster_note": "", "horizon_note": ""}
+                "cluster": {}, "cluster_note": "", "horizon_note": "", "decay": {}}
 
     op, routine = [], 0
     for m in rows:
@@ -342,8 +342,18 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
             else:
                 head += L["age_recent"].format(n=days_since)
 
+    # US-180：把半衰期画出来。「4 个月前」是个日期，「还剩 7% 效力」是个判断。
+    decay = {}
+    if days_since is not None:
+        try:
+            from radar_app.data.signal_layers import decay_view
+            decay = decay_view(days_since, "insider")
+        except Exception:
+            decay = {}
+
     return {
         "has_data": bool(op),
+        "decay": decay,
         "headline": head,
         "items": items,
         "routine_skipped": routine,

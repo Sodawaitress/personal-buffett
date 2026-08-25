@@ -718,6 +718,40 @@ def present_stock_page(bundle):
     except Exception:
         cheapness = None
 
+    # US-179/180：信息传到哪一层了 —— 页面顶部那条链
+    #
+    # 渐进披露：这一条是「摘要层」，下面的各区块是「下钻层」。
+    # NN/g 的数据是渐进披露可降低认知负担约 55% —— 我们原来把五个时间尺度
+    # 的东西平铺在一屏里，用户妈妈接连问出的五个问题都是这个结构的产物。
+    signal_chain = None
+    if market == "cn":
+        try:
+            from radar_app.data.signal_layers import (LAYERS, cross_layer_conflict,
+                                                      group_by_layer, layer_directions,
+                                                      transmission_state)
+            _sigs = (signal_conclusion or {}).get("signals") or []
+            _by = group_by_layer(_sigs)
+            # 公司层不来自 signals —— 它是评级/估值那一层，单独喂进去
+            if bundle.get("analysis") or (bundle.get("fund") or {}).get("pe_current"):
+                _by["company"] = [{"key": "company_quality", "direction": None,
+                                   "label": "评级 · 护城河 · 贵还是便宜"}]
+            _st = transmission_state(_by)
+            _dirs = layer_directions(_by)
+            signal_chain = {
+                "layers": [
+                    {**L,
+                     "active": bool(_by.get(L["key"])),
+                     "count": len(_by.get(L["key"]) or []),
+                     "direction": _dirs.get(L["key"]),
+                     "signals": [x.get("label") or x.get("key") for x in (_by.get(L["key"]) or [])][:3]}
+                    for L in LAYERS
+                ],
+                "state": _st,
+                "conflict": cross_layer_conflict(_by),
+            }
+        except Exception:
+            signal_chain = None
+
     # US-142 谁在卖自己公司的股票（A股，半年窗口）
     insider = None
     if market == "cn":
@@ -790,6 +824,7 @@ def present_stock_page(bundle):
         # US-93
         "position_insight": position_insight,
         "cheapness": cheapness,
+        "signal_chain": signal_chain,
         "insider": insider,
         # US-94
         "analyst_consensus": bundle.get("analyst_consensus"),

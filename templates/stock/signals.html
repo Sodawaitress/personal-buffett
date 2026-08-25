@@ -8,6 +8,52 @@
 
   <div class="stock-page-body">
 
+    {# ══ US-179/180 信息传导链：这一页的骨架 ══════════════════════════
+       这条链原本只是 i18n 里的一句说明文字：
+           「研究 → 参与 → 资金 → 价格：调研和机构参与度动得最早」
+       是对的，但只当说明、没当骨架，于是「以天计」和「以季计」的东西
+       被平铺在同一屏里 —— 用户妈妈接连问出的五个问题都是这个结构的产物。
+
+       渐进披露：这条链是**摘要层**，下面各区块是下钻层
+       （NN/g：渐进披露可降低认知负担约 55%）。
+       看一只股票 = 看它**传到哪一层了**。 ══ #}
+    {% if signal_chain %}
+    <div class="chain">
+      <div class="chain-head">
+        <span class="chain-title">信息传到哪了</span>
+        <span class="chain-story">{{ signal_chain.state.story }}</span>
+      </div>
+      <ol class="chain-list">
+        {% for L in signal_chain.layers %}
+        <li class="chain-row{{ ' is-active' if L.active }}{{ ' is-lead' if signal_chain.state.top == L.key and signal_chain.state.gap }}">
+          <span class="chain-dot chain-dir-{{ L.direction or 'none' }}"></span>
+          <span class="chain-name">{{ L.short }}</span>
+          <span class="chain-scale">{{ L.scale }}</span>
+          <span class="chain-what">
+            {% if L.active and L.signals %}{{ L.signals | join(' · ') }}
+            {% elif L.active %}有动静
+            {% else %}—{% endif %}
+          </span>
+          {% if not L.directional %}<span class="chain-nodir">无方向</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% if signal_chain.conflict %}
+      <div class="chain-conflict chain-{{ signal_chain.conflict.severity }}">{{ signal_chain.conflict.text }}</div>
+      {% endif %}
+      <details class="chain-why">
+        <summary>这五层是什么意思</summary>
+        <ul>
+          {% for L in signal_chain.layers %}
+          <li><b>{{ L.short }}</b>（{{ L.scale }}{% if L.half_life %}·{{ L.half_life }}效力减半{% endif %}）：{{ L.hint }}</li>
+          {% endfor %}
+        </ul>
+        <p class="chain-why-note">越靠上的人知道得越早，但你看到时往往已经过去一段；
+          越靠下反应越快，但它多半只是在复述已经发生的事。</p>
+      </details>
+    </div>
+    {% endif %}
+
     {# ── US-119 层1：一句结论（与首页榜单同款措辞，点榜单进来讲同一个故事） ── #}
     {% if signal_conclusion %}
     <div class="sig-verdict sig-verdict-{{ signal_conclusion.direction }}{{ ' sig-verdict-lead' if signal_conclusion.lead }}">
@@ -139,12 +185,26 @@
 
     {# ── US-142 自己人在买还是在卖：最直接的领先信号，与机构调研同层 ── #}
     {% if insider %}
-    <div class="insider-card insider-{{ insider.net_direction or 'none' }}">
+    {# US-180：陈旧的要**看起来**陈旧（"stale data should look stale"），
+       不能只挂个文字标签。decay.tone 驱动整块的淡化程度。 #}
+    <div class="insider-card insider-{{ insider.net_direction or 'none' }} {{ 'decay-' ~ insider.decay.tone if insider.decay else '' }}">
       <div class="insider-head">
         <span class="insider-title">{{ t.insider_title }}</span>
         <span class="insider-window">{{ t.insider_window }}</span>
       </div>
       <div class="insider-headline">{{ insider.headline }}</div>
+      {# 半衰期视觉化：「4 个月前」是个日期，「还剩 7% 效力」是个判断。
+         条形本身就说明了问题，不需要读懂「半衰期」这个词。 #}
+      {% if insider.decay %}
+      <div class="decaybar decaybar-{{ insider.decay.tone }}">
+        <div class="decaybar-track"><div class="decaybar-fill" style="width:{{ insider.decay.pct }}%"></div></div>
+        <div class="decaybar-cap">
+          <span class="decaybar-pct">还剩 {{ insider.decay.pct }}%</span>
+          <span class="decaybar-label">{{ insider.decay.label }}</span>
+        </div>
+        <div class="decaybar-text">{{ insider.decay.text }}</div>
+      </div>
+      {% endif %}
       {# US-177：陈旧提示排在列表**之前** —— 妈妈是自己一条条看日期才发现
          「这个内部人士买入是 4 月」的。列表按重要性排序、不按时间，
          所以时效必须在人开始读明细之前就说清楚。 #}

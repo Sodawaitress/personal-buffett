@@ -184,3 +184,144 @@ def test_the_chain_sentence_still_exists_in_the_ui():
     hit = [v for v in d.values()
            if isinstance(v, dict) and "研究 → 参与 → 资金 → 价格" in str(v.get("zh", ""))]
     assert hit, "那句「研究→参与→资金→价格」不见了 —— 骨架从它来的"
+
+
+# ── US-180：半衰期视觉化 ────────────────────────────────
+
+def test_decay_is_exponential_and_hits_half_at_the_half_life():
+    """定义就是这个：过一个半衰期，剩一半。"""
+    from radar_app.data.signal_layers import remaining_strength
+    assert abs(remaining_strength(30, 30) - 0.5) < 1e-6
+    assert abs(remaining_strength(60, 30) - 0.25) < 1e-6
+    assert abs(remaining_strength(0, 30) - 1.0) < 1e-6
+
+
+def test_moms_case_reads_as_basically_expired():
+    """4 月的内部人买入到 8 月 = 约 4 个半衰期 → 剩不到 10%。
+    她说「这个滞后的消息没有意义」—— 数字支持她。"""
+    from radar_app.data.signal_layers import decay_view
+    v = decay_view(118, "insider")
+    assert v["pct"] <= 10
+    assert v["label"] == "基本失效"
+    assert v["tone"] == "expired"
+
+
+def test_fresh_signal_reads_as_fresh():
+    from radar_app.data.signal_layers import decay_view
+    v = decay_view(3, "insider")
+    assert v["pct"] >= 90 and v["tone"] == "fresh"
+
+
+def test_money_layer_decays_much_faster():
+    """主力资金半衰期几天 —— 同样是 10 天前，钱的信号比内部人衰得多得多。"""
+    from radar_app.data.signal_layers import decay_view
+    assert decay_view(10, "money")["pct"] < decay_view(10, "insider")["pct"] / 2
+
+
+def test_non_decaying_layers_return_nothing():
+    """价格层是派生量、公司层是描述 —— 都谈不上半衰期，**不许硬算**。"""
+    from radar_app.data.signal_layers import decay_view, remaining_strength
+    assert decay_view(30, "price") == {}
+    assert decay_view(30, "company") == {}
+    assert remaining_strength(30, None) is None
+    assert remaining_strength(None, 30) is None
+    assert remaining_strength(30, 0) is None
+
+
+def test_decay_text_avoids_the_jargon():
+    """妈妈不需要先学会「半衰期」这个词才看得懂。"""
+    from radar_app.data.signal_layers import decay_view
+    t = decay_view(118, "insider")["text"]
+    assert "半衰期" not in t
+    assert "还剩约" in t and "效力减半" in t
+
+
+def test_insider_card_carries_the_decay():
+    from datetime import date, timedelta
+
+    from scripts.insider_moves import describe_insider_activity
+    d = (date.today() - timedelta(days=118)).isoformat()
+    r = describe_insider_activity([{
+        "holder_name": "甲", "shares": 1000000, "ratio_total": 0.99, "ratio_own": 0,
+        "avg_price": 10, "change_date": d, "reason": "二级市场买卖", "role": "董事长"}])
+    assert r["decay"]["pct"] <= 10
+    assert describe_insider_activity([])["decay"] == {}
+
+
+def test_stale_looks_stale_not_just_labelled():
+    """实践共识：\"stale data should look stale\" —— 陈旧的要**看起来**陈旧。
+    只挂文字标签不够，整块要跟着淡下去。"""
+    tpl = open(os.path.join(ROOT, 'templates', 'stock', 'signals.html'),
+               encoding='utf-8').read()
+    assert 'decaybar' in tpl
+    assert "'decay-' ~ insider.decay.tone" in tpl, "tone 要驱动整块的淡化"
+    css = open(os.path.join(ROOT, 'static', 'css', 'stock.css'), encoding='utf-8').read()
+    assert '.insider-card.decay-expired' in css and 'opacity' in css
+
+
+def test_decay_never_relies_on_colour_alone():
+    """金融界面通行原则：涨跌/强弱信号不能只靠颜色（色盲、灰度打印）。
+    百分比数字和文字标签必须同时在。"""
+    tpl = open(os.path.join(ROOT, 'templates', 'stock', 'signals.html'),
+               encoding='utf-8').read()
+    seg = tpl[tpl.index('class="decaybar'):][:700]
+    assert 'decay.pct' in seg and 'decay.label' in seg
+
+
+# ── US-180：页面骨架 ────────────────────────────────────
+
+def test_chain_renders_on_the_signals_page():
+    import db
+    db.init_db()
+    from app import app
+    app.config['TESTING'] = True
+    c = app.test_client()
+    with c.session_transaction() as sess:
+        sess['user_id'] = 1
+    code = (db.get_user_holdings(1) or ['000793'])[0]
+    h = c.get(f'/stock/{code}/signals').get_data(as_text=True)
+    assert 'class="chain"' in h
+    assert '信息传到哪了' in h
+    for L in LAYERS:
+        assert L['short'] in h, f"{L['short']} 没渲染出来"
+
+
+def test_chain_never_shows_internal_keys():
+    """页面上不该出现 company_quality 这种内部键名。"""
+    import db
+    db.init_db()
+    from app import app
+    app.config['TESTING'] = True
+    c = app.test_client()
+    with c.session_transaction() as sess:
+        sess['user_id'] = 1
+    code = (db.get_user_holdings(1) or ['000793'])[0]
+    h = c.get(f'/stock/{code}/signals').get_data(as_text=True)
+    seg = h[h.index('class="chain"'):h.index('chain-why')]
+    for k in ('company_quality', 'main_flow_in', 'survey_visit'):
+        assert k not in seg, f"内部键名 {k} 漏到页面上了"
+
+
+def test_chain_explanation_is_collapsed_by_default():
+    """渐进披露：默认只给摘要，想懂再展开（NN/g：可降认知负担约 55%）。"""
+    tpl = open(os.path.join(ROOT, 'templates', 'stock', 'signals.html'),
+               encoding='utf-8').read()
+    # 块内有嵌套 {% if %}，不能拿第一个 {% endif %} 当结尾（我第一版就栽在这）
+    seg = tpl[tpl.index('class="chain"'):tpl.index('US-119 层1')]
+    assert '<details class="chain-why"' in seg
+    head = seg[seg.index('<details class="chain-why"'):][:60]
+    assert ' open' not in head, "解释默认应折叠，不能带 open 属性"
+
+
+def test_directionless_layers_are_marked_in_the_ui():
+    tpl = open(os.path.join(ROOT, 'templates', 'stock', 'signals.html'),
+               encoding='utf-8').read()
+    assert 'chain-nodir' in tpl and '无方向' in tpl
+
+
+def test_dangerous_conflict_is_visually_distinct():
+    """上层看空+下层看多是最危险的组合，不能和 watch 长得一样。"""
+    css = open(os.path.join(ROOT, 'static', 'css', 'stock.css'), encoding='utf-8').read()
+    assert '.chain-danger' in css and '.chain-watch' in css
+    assert css[css.index('.chain-danger'):css.index('.chain-danger') + 200] != \
+           css[css.index('.chain-watch'):css.index('.chain-watch') + 200]

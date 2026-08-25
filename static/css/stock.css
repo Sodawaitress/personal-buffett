@@ -2659,3 +2659,110 @@
   padding-left: 9px;
   border-left: 1px dashed var(--rule);
 }
+
+
+/* ── US-180：半衰期视觉化 ──────────────────────────────
+   用户：「这个其实我们是可以视觉化的不是吗」——对。
+   半衰期是指数衰减，「还剩多少效力」可以直接算：0.5^(天数/半衰期)。
+   条形比「4 个月前」直观：日期是事实，剩余效力是判断。 */
+.decaybar { margin: 8px 0 4px; }
+.decaybar-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.decaybar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .5s ease;
+  background: #15803d;
+}
+.decaybar-cap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+}
+.decaybar-pct { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+.decaybar-label { color: var(--ink-muted); }
+.decaybar-text { font-size: 11px; line-height: 1.5; color: var(--ink-muted); margin-top: 2px; }
+
+/* 越旧越暗 —— 颜色不是唯一线索（百分比和文字标签同时在，色盲也读得出） */
+.decaybar-fresh   .decaybar-fill { background: #15803d; }
+.decaybar-half    .decaybar-fill { background: #b45309; }
+.decaybar-fading  .decaybar-fill { background: #a16207; }
+.decaybar-expired .decaybar-fill { background: var(--ink-faint); }
+
+/* "stale data should look stale" —— 整块跟着淡下去 */
+.insider-card.decay-fading  { opacity: .88; }
+.insider-card.decay-expired { opacity: .72; }
+
+
+/* ══ US-179/180 信息传导链：页面骨架 ══════════════════════
+   渐进披露的「摘要层」：一眼看出信息传到哪一层了。
+   五层的顺序同时是「谁知道得早」「多快兑现」「有多可信」的顺序。 */
+.chain {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 0 14px;
+  background: var(--paper);
+}
+.chain-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.chain-title { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
+.chain-story { font-size: 12px; color: var(--ink-muted); }
+
+.chain-list { list-style: none; margin: 0; padding: 0; }
+.chain-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+  position: relative;
+}
+/* 竖线把五层连成一条链 —— 箭头本身携带信息 */
+.chain-row:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 16px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--rule);
+}
+.chain-row.is-active { color: var(--ink); }
+.chain-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--rule);
+  flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+.chain-row.is-active .chain-dot { background: var(--ink-faint); }
+.chain-dir-bull { background: #15803d !important; }
+.chain-dir-bear { background: #b91c1c !important; }
+.chain-name { width: 4.6em; flex-shrink: 0; font-weight: 500; }
+.chain-scale { width: 3.6em; flex-shrink: 0; font-size: 10px; color: var(--ink-faint); }
+.chain-what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain-nodir {
+  font-size: 9px; padding: 0 4px; border-radius: 6px;
+  background: var(--rule); color: var(--ink-muted); flex-shrink: 0;
+}
+/* 上游动了、下游还没跟上 —— 这才是真正的「领先」 */
+.chain-row.is-lead .chain-name::after { content: " ⚡"; }
+
+.chain-conflict {
+  margin-top: 8px; padding: 7px 9px; border-radius: 4px;
+  font-size: 12px; line-height: 1.6;
+}
+.chain-watch  { background: rgba(180,83,9,.07);  border-left: 2px solid #b45309; color: var(--ink-soft, var(--ink)); }
+.chain-danger { background: rgba(185,28,28,.08); border-left: 2px solid #b91c1c; color: var(--ink); font-weight: 500; }
+
+.chain-why { margin-top: 8px; font-size: 11px; }
+.chain-why summary { cursor: pointer; color: var(--ink-muted); }
+.chain-why ul { margin: 6px 0 0 16px; padding: 0; }
+.chain-why li { margin: 3px 0; color: var(--ink-muted); line-height: 1.6; }
+.chain-why-note { margin: 6px 0 0; color: var(--ink-faint); line-height: 1.6; }

@@ -50,7 +50,8 @@ LAYERS = [
         "short": "公司本身",
         "hint": "护城河、赚不赚钱、贵还是便宜 —— 这是底子，不是信号",
         "scale": "以年看",
-        "half_life": None,          # 不是信号，无衰减
+        "half_life": None,
+        "half_life_days": None,     # 不是信号，无衰减
         "directional": True,
     },
     {
@@ -61,6 +62,7 @@ LAYERS = [
         "hint": "他们最了解自己公司。但等你看到公告，往往已经过去几周",
         "scale": "以月看",
         "half_life": "约 1 个月",
+        "half_life_days": 30,
         "directional": True,
     },
     {
@@ -71,6 +73,7 @@ LAYERS = [
         "hint": "去看过、买过、给过评级。调研只说明「有人在看」，不说明看多看空",
         "scale": "以季看",
         "half_life": "约 1 个季度",
+        "half_life_days": 90,
         "directional": False,       # 调研本身无方向（US-167）
     },
     {
@@ -81,6 +84,7 @@ LAYERS = [
         "hint": "今天谁在买谁在卖。反应最快，也最容易是噪音",
         "scale": "以天看",
         "half_life": "几天",
+        "half_life_days": 4,
         "directional": True,
     },
     {
@@ -90,7 +94,8 @@ LAYERS = [
         "short": "价格本身",
         "hint": "均线、成交量这些是**价格算出来的**，它们不领先价格，只是复述",
         "scale": "看背景",
-        "half_life": None,          # 派生量，谈不上领先
+        "half_life": None,
+        "half_life_days": None,     # 派生量，谈不上领先
         "directional": False,
     },
 ]
@@ -126,6 +131,8 @@ SIGNAL_LAYER = {
     "ma250":               "price",
     "vwap60":              "price",
     "momentum_30d":        "price",
+    # 公司层不是信号，是底子 —— 但要归层，否则 group_by_layer 收不进来
+    "company_quality":     "company",
 }
 
 
@@ -236,3 +243,66 @@ def transmission_state(by_layer: dict) -> dict:
     else:
         story = "从上到下都有动静，信息已经在往价格传导"
     return {"reached": reached, "top": top, "gap": gap, "story": story}
+
+
+# ── 半衰期的视觉化（US-180）──────────────────────────────
+#
+# 用户：「那这个其实我们是可以视觉化的不是吗」——对。半衰期是指数衰减，
+# 「还剩多少效力」是可以直接算出来的一个数，比一句「已经 4 个月了」直观得多。
+#
+#     剩余效力 = 0.5 ^ (已过天数 / 半衰期)
+#
+# 妈妈那条 4 月的内部人买入：4 个月 ÷ 1 个月半衰期 = 4 个半衰期
+#     0.5^4 = 6%  —— 「还剩 6% 效力」一眼就懂，不需要解释半衰期是什么。
+#
+# 设计原则来自实践共识：**"stale data should look stale"** ——
+# 陈旧的东西要**看起来**陈旧，不能只挂个文字标签。所以这个数同时驱动
+# 进度条长度和整块的透明度。
+
+_FRESH_LABELS = [
+    (0.70, "还新鲜",       "fresh"),
+    (0.30, "过了一半",     "half"),
+    (0.10, "大半已过去",   "fading"),
+    (0.00, "基本失效",     "expired"),
+]
+
+
+def remaining_strength(age_days, half_life_days) -> float | None:
+    """还剩多少效力（0–1）。半衰期为 None（不衰减的量）返回 None —— **不猜**。"""
+    try:
+        age = float(age_days)
+        hl = float(half_life_days)
+    except (TypeError, ValueError):
+        return None
+    if hl <= 0 or age < 0:
+        return None
+    return round(0.5 ** (age / hl), 4)
+
+
+def decay_view(age_days, layer_key: str) -> dict:
+    """给页面用的一包：{pct, label, tone, half_life, age_days}。
+
+    pct 是 0–100 的整数，直接当进度条宽度用；tone 用来做「越旧越淡」。
+    """
+    meta = layer_meta(layer_key)
+    hl = meta.get("half_life_days")
+    r = remaining_strength(age_days, hl)
+    if r is None:
+        return {}
+    label, tone = _FRESH_LABELS[-1][1], _FRESH_LABELS[-1][2]
+    for thr, lb, tn in _FRESH_LABELS:
+        if r >= thr:
+            label, tone = lb, tn
+            break
+    return {
+        "pct": int(round(r * 100)),
+        "label": label,
+        "tone": tone,
+        "half_life": meta.get("half_life"),
+        "half_life_days": hl,
+        "age_days": int(age_days),
+        # 一句话，不用读懂「半衰期」也能明白
+        # half_life 本身带「约」字，这里别再加一个
+        "text": f"{int(age_days)} 天前的事。这类信号{meta.get('half_life')}效力减半，"
+                f"现在还剩约 {int(round(r * 100))}%",
+    }
