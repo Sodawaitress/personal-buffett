@@ -443,9 +443,21 @@ def audit_scan_jobs(conn, existing):
             FROM pipeline_jobs WHERE job_type LIKE '%scan%'
             ORDER BY id DESC LIMIT 10
         """)
-        return {"recent": [(r["id"], r["job_type"], r["status"],
-                            str(r["started_at"])[:16], (r["error"] or "")[:240])
-                           for r in rows]}
+        out = {"recent": [(r["id"], r["job_type"], r["status"],
+                           str(r["started_at"])[:16], (r["error"] or "")[:240])
+                          for r in rows]}
+        # US-174：扫描超时到底卡在哪一只 —— 日志尾部会说 [i/N]，
+        # 有这个数才知道是「整体慢」还是「卡在某几只上」。
+        last = _rows(conn, """
+            SELECT id, log FROM pipeline_jobs WHERE job_type LIKE '%scan%'
+              AND log IS NOT NULL AND log <> '' ORDER BY id DESC LIMIT 1
+        """)
+        if last:
+            lg = str(last[0]["log"] or "")
+            out["last_log_id"] = last[0]["id"]
+            out["last_log_tail"] = lg[-600:]
+            out["last_log_len"] = len(lg)
+        return out
     except Exception as e:
         return {"error": f"{type(e).__name__}: {str(e)[:140]}"}
 
@@ -699,6 +711,10 @@ def main():
             jid, jt, st, ca, err = row
             print(f"  #{jid} {jt} {st:8} {ca}")
             if err: print(f"      ⚠️  {err}")
+        if scan_jobs.get("last_log_tail"):
+            print(f"  ── #{scan_jobs.get('last_log_id')} 日志尾部（共 {scan_jobs.get('last_log_len')} 字符）")
+            for ln in str(scan_jobs["last_log_tail"]).splitlines()[-12:]:
+                print(f"      {ln}")
         if scan_jobs.get("error"): print(f"  {scan_jobs['error']}")
 
     if one_off:
