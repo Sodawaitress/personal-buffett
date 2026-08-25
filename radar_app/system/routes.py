@@ -79,6 +79,56 @@ def register_system_routes(app):
 
         def _run():
             update_job(job_id, "running")
+            try:
+                from scripts.stock_pipeline import main as run_pipeline
+                run_pipeline()
+                app_ctx.logger.info("[trigger-pipeline] job %s done", job_id)
+            except Exception as e:
+                update_job(job_id, "failed", error=str(e))
+                app_ctx.logger.warning("[trigger-pipeline] job %s failed: %s", job_id, e)
+                return
+            try:
+                from scripts.backfill_returns import backfill_predictions
+                backfill_predictions()
+                app_ctx.logger.info("[trigger-pipeline] backfill_predictions done")
+            except Exception as e:
+                app_ctx.logger.warning("[trigger-pipeline] backfill_predictions failed: %s", e)
+            update_job(job_id, "done")
+
+        threading.Thread(target=_run, daemon=False, name="gh-pipeline-trigger").start()
+        return jsonify({"status": "started", "job_id": job_id}), 202
+
+    @app.route("/api/trigger-digest", methods=["POST"])
+    def trigger_digest():
+        """GitHub Actions cron step 2: commit daily snapshot + ingest predictions.
+        Runs in its own thread, completely independent of precursor scan."""
+        if not _check_scan_token():
+            return jsonify({"error": "unauthorized"}), 401
+
+        app_ctx = current_app._get_current_object()
+
+        def _run():
+            try:
+                from scripts.daily_digest import run_daily_digest
+                run_daily_digest()
+                app_ctx.logger.info("[trigger-digest] daily digest done")
+            except Exception as e:
+                app_ctx.logger.warning("[trigger-digest] daily digest failed: %s", e)
+
+        threading.Thread(target=_run, daemon=False, name="gh-digest-trigger").start()
+        return jsonify({"status": "started"}), 202
+
+    @app.route("/api/trigger-scan", methods=["POST"])
+    def trigger_scan():
+        """GitHub Actions cron 调用此端点触发每日前兆扫描（仅扫描，不提交快照）。"""
+        if not _check_scan_token():
+            return jsonify({"error": "unauthorized"}), 401
+
+        job_id = create_job(None, "precursor_scan", "cron_scan")
+        app_ctx = current_app._get_current_object()
+
+        def _run():
+            update_job(job_id, "running")
             errors = []
             steps = []
 
@@ -88,7 +138,7 @@ def register_system_routes(app):
                 原来三件事的 print 全打到 stdout（Fly 日志），job.log 里只有
                 开头那一行「▶ 开始扫描前兆信号…」。2026-08-25 查扫描为什么
                 连续超时，翻到的日志**总共 26 个字符**，什么也说明不了。
-                没有可见性就没有诊断 —— 这是本仓反复吃亏的地方。
+                没有可见性就没有诊断。
                 """
                 steps.append(msg)
                 try:
@@ -106,11 +156,10 @@ def register_system_routes(app):
             # 死死停在 263 只，自选股行业覆盖率卡在 60%。
             #
             # 我一开始把这归因于 US-169 的断链。断链是真的，但只是一半：
-            # 链修好之后（08-25 整链跑通），映射**依然没恢复**，因为它在
-            # 这里被饿死。两个独立的原因，各自都足以让它停摆。
+            # 链修好之后映射依然没恢复，因为它在这里被饿死。
+            # 两个独立的原因，各自都足以让它停摆。
             #
-            # 所以便宜的活排前面：行业映射约 2 分钟、内部人几分钟，
-            # 前兆扫描按小时算。让最贵的那件去承担超时风险，而不是拖垮全部。
+            # 所以便宜的活排前面，让最贵的那件去承担超时风险。
             try:
                 from scripts.industry_signals import capture_daily_em, refresh_map_em
                 cap = capture_daily_em()
@@ -119,9 +168,8 @@ def register_system_routes(app):
                 _note(f"行业映射: {mp}")
 
                 # 全军覆没才算错（否则限流导致的零星失败会天天报警）。
-                # 不这样 surface 的话，refresh_map_em 返回的 failed 只留在
-                # 返回值里，外面完全看不见 —— 08-22 我就据此误判过一次
-                # 「三段全成功」，因为它返回 failed 字典而不是抛异常。
+                # refresh_map_em 返回 failed 字典而不是抛异常，不这样 surface
+                # 的话外面完全看不见 —— 08-22 我据此误判过一次「三段全成功」。
                 if not mp.get("boards"):
                     errors.append(f"industry_em: 板块列表拉取失败 "
                                   f"（{'; '.join(mp.get('failed', [])[:2])}）")
@@ -133,8 +181,7 @@ def register_system_routes(app):
                 errors.append(f"industry_em: {e}")
                 _note(f"行业映射失败: {e}")
 
-            # US-142 内部人增减持：同为东财源，只能在 Fly 悉尼跑（GHA 美国 runner
-            # 连不上），所以搭这趟车，不单开服务。失败不拖累前兆扫描。
+            # US-142 内部人增减持：同为东财源，只能在 Fly 悉尼跑，搭这趟车。
             try:
                 import db
                 from scripts.insider_moves import run_insider_refresh
@@ -148,7 +195,7 @@ def register_system_routes(app):
             # 最贵的放最后 —— 它超时的话，前面两件已经落库了
             try:
                 from scripts.precursor_scan import run_precursor_scan
-                _note("前兆扫描: 开始（209 只 A股，按小时计）")
+                _note("前兆扫描: 开始（约 209 只 A股，按小时计）")
                 result = run_precursor_scan()
                 _note(f"前兆扫描: {result}")
             except Exception as e:

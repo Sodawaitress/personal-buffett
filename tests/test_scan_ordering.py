@@ -39,12 +39,32 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 
 
+def _routes_src():
+    return open(os.path.join(ROOT, 'radar_app', 'system', 'routes.py'),
+                encoding='utf-8').read()
+
+
 def _run_body():
-    src = open(os.path.join(ROOT, 'radar_app', 'system', 'routes.py'),
-               encoding='utf-8').read()
-    start = src.index('        def _run():')
-    end = src.index('        threading.Thread(target=_run', start)
-    return src[start:end]
+    """trigger_scan **这一个**端点的 _run 函数体。
+
+    ⚠️ 必须锚定到函数名，不能全局搜 `def _run():` —— 同一个文件里
+    trigger_pipeline / trigger_digest / trigger_backup 各有一个同名内函数。
+
+    2026-08-25 我改这段代码时正是用 `s.index('def _run():')` 定位，
+    匹配到了 trigger_pipeline 的那一个，于是把 91 行连带吞掉，
+    **删掉了 /api/trigger-scan、/api/trigger-digest 两个端点**，
+    线上 trigger-scan 直接 404。
+
+    而这个测试的第一版有**完全相同的缺陷** —— 它也抓第一个 `def _run():`，
+    所以在代码已经坏掉的情况下照样全绿。测试和被测代码犯同一个错，
+    就等于没有测试。
+    """
+    src = _routes_src()
+    fn = src.index('    def trigger_scan():')
+    end_fn = src.index('    @app.route(', fn)
+    body = src[fn:end_fn]
+    start = body.index('        def _run():')
+    return body[start:]
 
 
 def _order():
@@ -100,6 +120,28 @@ def test_failures_are_surfaced_not_swallowed():
     body = _run_body()
     assert "mp.get(\"boards\")" in body or "mp.get('boards')" in body, \
         "板块列表拉不到必须进 errors，否则静默失败"
+
+
+def test_all_trigger_endpoints_still_exist():
+    """本条守的是 2026-08-25 那次真实故障：改 trigger_scan 时误伤了邻居，
+    /api/trigger-scan 和 /api/trigger-digest 被整段删掉，线上 404，
+    当天的前兆扫描和东财映射一次都没跑。
+
+    改一个端点删掉另一个端点，是任何 diff review 都该拦住的事 ——
+    但当时没有任何测试在看「路由还在不在」。
+    """
+    from app import app
+    rules = {str(r.rule) for r in app.url_map.iter_rules()}
+    for path in ('/api/trigger-scan', '/api/trigger-digest',
+                 '/api/trigger-pipeline', '/api/scan-status/<int:job_id>'):
+        assert path in rules, f"{path} 不见了 —— 上次就是这么把线上打挂的"
+
+
+def test_scan_body_is_not_the_pipeline_body():
+    """确认锚定的是 trigger_scan 而不是隔壁的 trigger_pipeline。"""
+    body = _run_body()
+    assert 'run_precursor_scan' in body
+    assert 'stock_pipeline' not in body, "抓错函数了 —— 这是 trigger_pipeline 的内容"
 
 
 def test_job_expiry_is_longer_than_a_normal_scan():
