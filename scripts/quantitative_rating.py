@@ -109,6 +109,7 @@ _T: Dict[str, Dict[str, str]] = {
 
         # ── score_pe_valuation ─────────────────────────────────
         "pe_data_missing":         "PE估值数据缺失",
+        "pe_one_off":              "利润里有一笔一次性收益，市盈率被做低了——这个「便宜」不算数",
         "pe_cheap":                "便宜——跟自己历史价格比，现在处于很低的位置",
         "pe_fairly_cheap":         "略便宜——比自己历史上大多数时候都便宜",
         "pe_fair":                 "正常估值——和自己历史平均价格差不多",
@@ -255,6 +256,7 @@ _T: Dict[str, Dict[str, str]] = {
 
         # ── score_pe_valuation ─────────────────────────────────
         "pe_data_missing":         "PE data unavailable",
+        "pe_one_off":              "Profit includes a one-off gain that flatters the P/E — this \"cheap\" reading does not count",
         "pe_cheap":                "Cheap — near the low end of its own price history",
         "pe_fairly_cheap":         "Fairly cheap — cheaper than most of its own history",
         "pe_fair":                 "Fair value — roughly in line with its own historical average",
@@ -672,21 +674,41 @@ class QuantitativeRater:
     # ─────────────────────────────────────────────────────────
 
     @staticmethod
-    def score_pe_valuation(pe_percentile: Optional[int], locale: str = "zh") -> Tuple[int, str]:
-        """PE 估值评分 (7 分)"""
+    def score_pe_valuation(pe_percentile: Optional[int], locale: str = "zh",
+                           one_off: bool = False) -> Tuple[int, str]:
+        """PE 估值评分 (7 分)。
+
+        US-175：`one_off=True` 表示最近一个财年的利润里有一次性收益
+        （净利润 > 税前利润 ⇒ 税项为负，见 scripts/normalized_earnings）。
+
+        **这时的「便宜」是假的**：一次性收益抬高了净利润，压低了市盈率，
+        于是历史分位也跟着被压低。DUOL 因此在站上显示 13.28 倍、
+        真实约 43 倍 —— 而这个分数正是喂给擂台排名和评级的。
+
+        为什么是「封顶到中性」而不是「按倍数罚分」：
+        我们只还原得出**最近一年**的真实利润，算不出 5 年的还原分位，
+        所以真实分位到底是多少**不知道**。不知道就不该给便宜分 ——
+        但也不该硬罚成「贵」，那同样是编造。封顶到中性(3/7)恰好表达
+        「这个便宜不作数」，而原本就判贵的（1 或 -2 分）保持不变 ——
+        一次性收益只会让它更贵，不会让它变便宜。
+        """
         if pe_percentile is None:
             return 3, _t("pe_data_missing", locale)
 
         if pe_percentile <= 20:
-            return 7, _t("pe_cheap", locale)
+            score, desc = 7, _t("pe_cheap", locale)
         elif pe_percentile <= 40:
-            return 5, _t("pe_fairly_cheap", locale)
+            score, desc = 5, _t("pe_fairly_cheap", locale)
         elif pe_percentile <= 60:
-            return 3, _t("pe_fair", locale)
+            score, desc = 3, _t("pe_fair", locale)
         elif pe_percentile <= 80:
-            return 1, _t("pe_fairly_expensive", locale)
+            score, desc = 1, _t("pe_fairly_expensive", locale)
         else:
-            return -2, _t("pe_expensive", locale)
+            score, desc = -2, _t("pe_expensive", locale)
+
+        if one_off and score > 3:
+            return 3, _t("pe_one_off", locale)
+        return score, desc
 
     @staticmethod
     def score_pb_valuation(pb_percentile: Optional[int], locale: str = "zh") -> Tuple[int, str]:
@@ -725,13 +747,17 @@ class QuantitativeRater:
     @classmethod
     def score_valuation(cls, pe_percentile: Optional[int], pb_percentile: Optional[int],
                         price_52week_pct: Optional[float],
-                        locale: str = "zh") -> Tuple[int, List[str]]:
-        """估值总分 (15 分)"""
+                        locale: str = "zh", one_off: bool = False) -> Tuple[int, List[str]]:
+        """估值总分 (15 分)。one_off 见 score_pe_valuation（US-175）。
+
+        只作用于 PE 一项：PB 用的是净资产、价格位置用的是股价，
+        两者都不受一次性**利润**影响。
+        """
         details = []
         total = 0
         pts = _t("pts", locale)
 
-        pe_score, pe_desc = cls.score_pe_valuation(pe_percentile, locale)
+        pe_score, pe_desc = cls.score_pe_valuation(pe_percentile, locale, one_off=one_off)
         details.append(f"{_t('pe_label', locale)}: {pe_score}/7 {pts} — {pe_desc}")
         total += pe_score
 
@@ -1531,8 +1557,17 @@ class QuantitativeRater:
         moat_score, moat_details = cls.score_moat(annual_data, locale, signals=signals)
         growth_score, growth_details = cls.score_growth_and_management(annual_data, news_signals, locale)
         safety_score, safety_details = cls.score_safety(annual_data, locale)
+        # US-175：先判断利润里有没有一次性收益 —— 有的话这只股票的
+        # 「便宜」是假的，不能让它靠这个拿分、在擂台上排到前面。
+        _one_off = False
+        try:
+            from scripts.normalized_earnings import has_tax_windfall
+            _one_off = bool(annual_data) and has_tax_windfall(annual_data[0] or {})
+        except Exception:
+            _one_off = False
+
         valuation_score, valuation_details = cls.score_valuation(
-            pe_percentile, pb_percentile, price_52week_pct, locale
+            pe_percentile, pb_percentile, price_52week_pct, locale, one_off=_one_off
         )
 
         total_score = moat_score + growth_score + safety_score + valuation_score

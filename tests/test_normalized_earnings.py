@@ -262,3 +262,76 @@ def test_backfill_script_exists_and_is_additive():
     assert 'UPDATE stock_fundamentals SET annual_json' in src
     for banned in ('SET pe_current', 'DELETE FROM', 'DROP '):
         assert banned not in src, f"补数脚本不该做这个：{banned}"
+
+
+# ── US-175：喂给评分系统，不只是展示 ────────────────────
+
+def _rater():
+    import scripts.quantitative_rating as q
+    for _n, c in vars(q).items():
+        if hasattr(c, "score_pe_valuation"):
+            return c
+    raise AssertionError("找不到评分类")
+
+
+def test_one_off_cancels_the_cheap_score():
+    """一次性收益抬高净利润 → 压低市盈率 → 压低历史分位 → 白拿「便宜」的分。
+    这个分直接决定擂台排名和评级，所以不修的话，DUOL 这种股票会因为
+    一笔退税排到前面去。"""
+    R = _rater()
+    for pct in (5, 10, 20, 30, 40):
+        plain, _ = R.score_pe_valuation(pct, "zh")
+        adj, desc = R.score_pe_valuation(pct, "zh", one_off=True)
+        assert plain > 3, f"分位 {pct} 本应是便宜档"
+        assert adj == 3, f"分位 {pct} 有一次性收益时应封顶到中性，实际 {adj}"
+        assert "一次性" in desc
+
+
+def test_one_off_does_not_invent_a_penalty():
+    """只还原得出最近一年，算不出 5 年的还原分位 —— 真实分位**不知道**。
+    不知道就不该给便宜分，但也不该硬罚成「贵」，那同样是编造。"""
+    R = _rater()
+    for pct in (50, 60):
+        assert R.score_pe_valuation(pct, "zh", one_off=True)[0] == 3
+
+
+def test_expensive_stays_expensive():
+    """一次性收益只会让它更贵，不会让它变便宜 —— 已判贵的分数不能被抬高。"""
+    R = _rater()
+    for pct in (70, 80, 95, 100):
+        plain, _ = R.score_pe_valuation(pct, "zh")
+        adj, _ = R.score_pe_valuation(pct, "zh", one_off=True)
+        assert adj == plain, f"分位 {pct}: {plain} → {adj}，贵的档不该动"
+
+
+def test_clean_stock_scores_are_bit_identical():
+    """没有一次性收益的股票，评分必须和改动前逐分相同。"""
+    R = _rater()
+    for pct in (None, 0, 10, 35, 55, 75, 99):
+        assert R.score_pe_valuation(pct, "zh") == R.score_pe_valuation(pct, "zh", one_off=False)
+
+
+def test_only_pe_is_affected():
+    """PB 用净资产、价格位置用股价，都不受一次性**利润**影响。"""
+    R = _rater()
+    a, _ = R.score_valuation(10, 10, 5.0, "zh", one_off=False)
+    b, _ = R.score_valuation(10, 10, 5.0, "zh", one_off=True)
+    assert a - b == 4, f"只该 PE 少 4 分（7→3），实际总分差 {a - b}"
+
+
+def test_scoring_reads_the_windfall_from_annual_data():
+    """判据要接在真实数据上，不能是个永远为 False 的死参数。"""
+    src = open(os.path.join(os.path.dirname(__file__), '..',
+                            'scripts', 'quantitative_rating.py'), encoding='utf-8').read()
+    assert 'has_tax_windfall' in src
+    assert 'one_off=_one_off' in src
+
+
+def test_one_off_message_is_bilingual():
+    """哥哥看英文版（US-148 的债不再新增）。"""
+    R = _rater()
+    zh = R.score_pe_valuation(10, "zh", one_off=True)[1]
+    en = R.score_pe_valuation(10, "en", one_off=True)[1]
+    assert zh != en
+    assert "one-off" in en.lower()
+    assert not any("一" <= ch <= "鿿" for ch in en)
