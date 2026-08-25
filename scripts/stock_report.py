@@ -6,9 +6,108 @@ import db as _db
 # US-168：等级顺序全站只有一份，见 radar_app/watchlist/presenter.py
 from radar_app.watchlist.presenter import grade_rank as _grade_rank
 
+
+# ── US-171：批量取数，替掉逐只查库 ──────────────────────────────────────
+#
+# push-svc 从 3 分钟涨到 18 分钟，2026-08-25 首次撞上 20 分钟上限被杀，
+# **妈妈那天的信一个字都没发出去**。
+#
+# 原因不是 Python 慢，是**往返次数**：每只股票约 8 条 SQL，妈妈 231 只
+# → 约 1900 条。而 Neon 开了 pool_pre_ping（scale-to-zero 会断闲连接，
+# 不探活就 SSL SYSCALL 报错），**每次 get_conn 都额外发一条 SELECT 1**，
+# 于是实际约 3800 次往返。GHA 美国 runner ↔ Neon 单程几百毫秒，
+# 乘起来正好十几分钟。
+#
+# 所以优化的对象是「查库次数」，不是算法。下面几个 _bulk_* 把
+# 「N 只股票各查一次」压成「一条 IN 查询」。
+# 本地 SQLite 上看不出差别（往返几乎免费）—— 这正是它能长到 18 分钟
+# 没人发现的原因。
+
+def _chunks(seq, n=400):
+    """IN 列表分批：Postgres 参数上限 65535，留足余量。"""
+    seq = list(seq)
+    for i in range(0, len(seq), n):
+        yield seq[i:i + n]
+
+
+def _bulk_stock_names(codes) -> dict:
+    """一次取回所有股票名。原来每只一条 SELECT。"""
+    from radar_app.data.core import get_conn
+    out = {}
+    for part in _chunks(codes):
+        keys = {f"c{i}": c for i, c in enumerate(part)}
+        ph = ",".join(f":{k}" for k in keys)
+        with get_conn() as c:
+            for r in c.execute(
+                    f"SELECT code, name_cn, name FROM stocks WHERE code IN ({ph})", keys):
+                out[r["code"]] = r["name_cn"] or r["name"] or r["code"]
+    return {c: out.get(c, c) for c in codes}
+
+
+def _bulk_recent_events(codes, days=14) -> dict:
+    """一次取回所有股票近 N 天的 news_material 事件，按 code 分组。"""
+    from datetime import date, timedelta
+
+    from radar_app.data.core import get_conn
+    cutoff = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+    out = {}
+    for part in _chunks(codes):
+        keys = {f"c{i}": c for i, c in enumerate(part)}
+        ph = ",".join(f":{k}" for k in keys)
+        with get_conn() as c:
+            rows = c.execute(
+                f"""SELECT code, event_date, detail_json FROM stock_events
+                    WHERE code IN ({ph}) AND source = 'news_material'
+                      AND event_date >= :cut
+                    ORDER BY event_date DESC, id DESC""",
+                {**keys, "cut": cutoff}).fetchall()
+        for r in rows:
+            out.setdefault(r["code"], []).append(dict(r))
+    return out
+
+
+def _bulk_last_two_grades(codes, period="daily") -> dict:
+    """一次取回每只最近两条评级。窗口函数在 SQLite ≥3.25 和 PG 都支持，
+    但这里用最朴素的办法（取全部再在 Python 里截断），少一层方言风险。"""
+    from radar_app.data.core import get_conn
+    out = {}
+    for part in _chunks(codes):
+        keys = {f"c{i}": c for i, c in enumerate(part)}
+        ph = ",".join(f":{k}" for k in keys)
+        with get_conn() as c:
+            rows = c.execute(
+                f"""SELECT code, grade, analysis_date FROM analysis_results
+                    WHERE code IN ({ph}) AND period = :p
+                    ORDER BY code, analysis_date DESC""",
+                {**keys, "p": period}).fetchall()
+        for r in rows:
+            lst = out.setdefault(r["code"], [])
+            if len(lst) < 2:
+                lst.append(r["grade"])
+    return out
+
+
+# US-171：一次推送里同一只股票的名字会被查好几遍（早期预警、领先信号、
+# 预言线、评级变化各一次）。缓存只在一次 build 内有效，由 _prime_names()
+# 装载、_reset_caches() 清空 —— 不做全局长效缓存，改了名当天就能反映出来。
+_NAME_CACHE: dict = {}
+
+
+def _prime_names(codes):
+    _NAME_CACHE.update(_bulk_stock_names(codes))
+
+
+def _reset_caches():
+    _NAME_CACHE.clear()
+
+
 def _stock_name(code):
+    if code in _NAME_CACHE:
+        return _NAME_CACHE[code]
     s = _db.get_stock(code) or {}
-    return s.get("name_cn") or s.get("name") or code
+    name = s.get("name_cn") or s.get("name") or code
+    _NAME_CACHE[code] = name
+    return name
 
 def _early_warnings_for(codes, days=14):
     """每股取一条 is_early 的重大动向。
@@ -16,17 +115,15 @@ def _early_warnings_for(codes, days=14):
     US-160：加日期窗口。原来 get_stock_events 取最近 20 条**不做任何日期过滤**，
     于是一个月前的预警也会被当成「今天该注意的」天天推 —— 这是「每天推送
     内容一样」的原因之一。
+
+    US-171：改批量取数。原来每只一条 SELECT，231 只就是 231 次往返
+    （Neon 上再乘 pre_ping 的 SELECT 1）。
     """
     import json
-    from datetime import date, timedelta
-    cutoff = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
     out = []
+    by_code = _bulk_recent_events(codes, days=days)
     for code in codes:
-        for e in (_db.get_stock_events(code) or []):
-            if e.get("source") != "news_material":
-                continue
-            if str(e.get("event_date") or "")[:10] < cutoff:
-                continue
+        for e in by_code.get(code, []):
             try:
                 d = json.loads(e.get("detail_json") or "{}")
             except Exception:
@@ -36,15 +133,19 @@ def _early_warnings_for(codes, days=14):
                 break
     return out
 
+
 def _grade_changes_for(codes):
+    """US-171：批量取数，原来每只一条 get_analysis_history。"""
     out = []
+    by_code = _bulk_last_two_grades(codes)
     for code in codes:
-        hist = _db.get_analysis_history(code, period="daily", limit=2) or []
+        hist = by_code.get(code) or []
         if len(hist) >= 2:
-            new_g, old_g = hist[0].get("grade"), hist[1].get("grade")
+            new_g, old_g = hist[0], hist[1]
             if new_g and old_g and new_g != old_g:
                 out.append((code, old_g, new_g))
     return out
+
 
 def admin_user_id():
     """主 admin（role='admin'，最小 id）——全局 Server酱 有用日报用它的自选股（US-123）。"""
@@ -58,11 +159,21 @@ def admin_user_id():
 
 
 def _signal_leads_for(codes):
-    """机构领先信号（US-123）：每股一句结论，只留 lead 或 high confidence 的。"""
+    """机构领先信号（US-123）：每股一句结论，只留 lead 或 high confidence 的。
+
+    US-171：先 prefetch_for 一次把这批股票的前兆/资金流/基本面/价格全取回来，
+    再逐只算结论 —— 算法不变，往返次数从每只 4~5 次降到整批 5 次。
+    """
     try:
-        from radar_app.data.signal_events import get_signal_conclusion
+        from radar_app.data.signal_events import (clear_prefetch,
+                                                  get_signal_conclusion,
+                                                  prefetch_for)
     except Exception:
         return []
+    try:
+        prefetch_for(codes)
+    except Exception:
+        clear_prefetch()      # 预取失败就走原路径，慢但不错
     out = []
     for code in codes:
         try:
@@ -71,6 +182,7 @@ def _signal_leads_for(codes):
             sc = None
         if sc and (sc.get("lead") or sc.get("confidence") == "high") and sc.get("conclusion"):
             out.append((code, sc["conclusion"], bool(sc.get("lead"))))
+    clear_prefetch()
     return out
 
 
@@ -168,6 +280,11 @@ def build_user_push_payload(user_id: int, date_str: str, extra_user_ids=()):
     codes = list(dict.fromkeys(codes))
     if not codes:
         return "", []
+
+    # US-171：先一次性把名字取回来。这一份 payload 里同一只股票的名字
+    # 会被查四五遍，逐只查在 Neon 上就是四五次跨洋往返。
+    _reset_caches()
+    _prime_names(codes)
 
     # ── 收集候选：(section, item_key, state_hash, 正文行) ──
     cand = []

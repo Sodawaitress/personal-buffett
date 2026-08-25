@@ -49,7 +49,11 @@ jobs:
     # US-170：失败传播语义搬到 pipeline.yml 的 `if: ${{ !cancelled() }}`——
     # workflow_call 下 github.event_name 读到的是**调用方**的事件（实测），
     # 原来那个 if 恒真，留着只会误导。
-    timeout-minutes: 20
+    # US-171：原来 20 分钟。2026-08-25 实测耗时 18 分（08-21 还只要 3 分），
+    # 当晚正好越线被杀，妈妈那天的信一个字都没发出去。
+    # 批量取数后估算约 2 分钟，但**上限仍要留足** —— 超时的代价是整封信没了，
+    # 而多等几分钟没有任何代价。
+    timeout-minutes: 45
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}

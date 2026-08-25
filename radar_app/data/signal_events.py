@@ -19,11 +19,13 @@ _STRONG_ACTIVE_KEYWORDS = ("社保", "QFII", "陆股通", "汇金", "养老", "�
 
 def _get_fundamentals_with_age(code: str) -> tuple[dict, float]:
     """返回 (signals_dict, age_hours)，age 超过阈值时 margin 信号应跳过。"""
-    with get_conn() as c:
-        row = c.execute(
-            "SELECT signals_json, updated_at FROM stock_fundamentals WHERE code=:code",
-            {"code": code},
-        ).fetchone()
+    row = _cached("fundamentals", code)
+    if row is _MISS:
+        with get_conn() as c:
+            row = c.execute(
+                "SELECT signals_json, updated_at FROM stock_fundamentals WHERE code=:code",
+                {"code": code},
+            ).fetchone()
     if not row:
         return {}, 999
     signals = {}
@@ -74,16 +76,103 @@ _SIGNAL_DEFS = {
 RESONANCE_THRESHOLD = 2  # ≥2 个同向信号才上榜
 
 
+# ── US-171：批量预取，把「每只查一次」压成「一条 IN 查询」 ────────────
+#
+# push-svc 从 3 分钟涨到 18 分钟，2026-08-25 撞上 20 分钟上限被杀，
+# 妈妈那天的信一个字都没发出去。瓶颈不是算法，是**往返次数**：
+# get_signal_conclusion 每只要查 4~5 次，妈妈 231 只 ≈ 1000 次；
+# Neon 开了 pool_pre_ping（scale-to-zero 会断闲连接），每次 get_conn
+# 还额外发一条 SELECT 1 —— 实际约 2000 次跨洋往返。
+#
+# 缓存是**显式开关**，不是默认长效：调用方 prefetch_for(codes) 装载、
+# 用完 clear_prefetch()。默认 None = 走原路径，逐只查库。
+# 这样单只查询（详情页）行为完全不变，只有批处理路径受益。
+_PREFETCH: dict = {}
+
+
+def prefetch_for(codes) -> None:
+    """为一批股票预取信号所需的全部单行数据。只在批处理里用。"""
+    codes = list(dict.fromkeys(codes))
+    if not codes:
+        return
+    cutoff = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+    # 调研事件回溯 60 天，后续窗口再 20 天，留足余量取 150 天
+    pcut = (datetime.now() - timedelta(days=150)).strftime("%Y-%m-%d")
+    pre, ff, fund, prices, surveys, series = {}, {}, {}, {}, {}, {}
+
+    def _parts(seq, n=400):
+        for i in range(0, len(seq), n):
+            yield seq[i:i + n]
+
+    for part in _parts(codes):
+        keys = {f"c{i}": c for i, c in enumerate(part)}
+        ph = ",".join(f":{k}" for k in keys)
+        with get_conn() as c:
+            # 每只取最新一条前兆缓存
+            for r in c.execute(
+                    f"""SELECT code, survey_json, short_json, partic_json, fetched_at
+                        FROM stock_precursor_cache WHERE code IN ({ph})
+                        ORDER BY code, fetched_at DESC""", keys):
+                pre.setdefault(r["code"], dict(r))
+            for r in c.execute(
+                    f"""SELECT * FROM stock_fund_flow WHERE code IN ({ph})
+                        ORDER BY code, date DESC""", keys):
+                ff.setdefault(r["code"], dict(r))
+            for r in c.execute(
+                    f"""SELECT code, signals_json, updated_at FROM stock_fundamentals
+                        WHERE code IN ({ph})""", keys):
+                fund[r["code"]] = dict(r)
+            # 两用：前 20 行给 _price_5d；完整序列给 US-167 的调研后续
+            # （它要查任意历史日期的收盘价，取最近 20 行不够）。
+            for r in c.execute(
+                    f"""SELECT code, fetched_at, change_pct, price FROM stock_prices
+                        WHERE code IN ({ph}) AND fetched_at >= :pcut
+                        ORDER BY code, fetched_at DESC""", {**keys, "pcut": pcut}):
+                lst = prices.setdefault(r["code"], [])
+                if len(lst) < 20:
+                    lst.append(dict(r))
+                series.setdefault(r["code"], []).append(dict(r))
+            for r in c.execute(
+                    f"""SELECT code, event_date, n_inst, is_specific FROM survey_events
+                        WHERE code IN ({ph}) AND event_date >= :cut
+                        ORDER BY code, event_date DESC""", {**keys, "cut": cutoff}):
+                surveys.setdefault(r["code"], []).append(dict(r))
+
+    # series 按日期升序，好做「≥d 的第一条」
+    for v in series.values():
+        v.reverse()
+    _PREFETCH.update({"precursor": pre, "fund_flow": ff, "fundamentals": fund,
+                      "prices": prices, "surveys": surveys, "series": series,
+                      "codes": set(codes)})
+
+
+def clear_prefetch() -> None:
+    _PREFETCH.clear()
+
+
+def _cached(bucket: str, code: str):
+    """命中预取返回值；未预取或不在本批里返回 _MISS，调用方走原路径。"""
+    d = _PREFETCH.get(bucket)
+    if d is None or code not in _PREFETCH.get("codes", ()):
+        return _MISS
+    return d.get(code)
+
+
+_MISS = object()
+
+
 def _parse_precursor_cache(code: str) -> dict:
     """从 stock_precursor_cache 读最新缓存，返回 {survey, short_selling, participation}.
     当缓存 survey 为空时，从 survey_events 永久表补回最近 60 天的事件。
     """
-    with get_conn() as c:
-        row = c.execute(
-            "SELECT survey_json, short_json, partic_json, fetched_at "
-            "FROM stock_precursor_cache WHERE code=:code ORDER BY fetched_at DESC LIMIT 1",
-            {"code": code},
-        ).fetchone()
+    row = _cached("precursor", code)
+    if row is _MISS:
+        with get_conn() as c:
+            row = c.execute(
+                "SELECT survey_json, short_json, partic_json, fetched_at "
+                "FROM stock_precursor_cache WHERE code=:code ORDER BY fetched_at DESC LIMIT 1",
+                {"code": code},
+            ).fetchone()
     if not row:
         return {}
     rec = {}
@@ -99,13 +188,16 @@ def _parse_precursor_cache(code: str) -> dict:
     cached_events = (rec.get("survey") or {}).get("events") or []
     if not cached_events:
         try:
-            cutoff = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            with get_conn() as c:
-                perm_rows = c.execute(
-                    "SELECT event_date, n_inst, is_specific FROM survey_events "
-                    "WHERE code=:code AND event_date>=:cutoff ORDER BY event_date DESC",
-                    {"code": code, "cutoff": cutoff},
-                ).fetchall()
+            perm_rows = _cached("surveys", code)
+            if perm_rows is _MISS:
+                cutoff = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+                with get_conn() as c:
+                    perm_rows = c.execute(
+                        "SELECT event_date, n_inst, is_specific FROM survey_events "
+                        "WHERE code=:code AND event_date>=:cutoff ORDER BY event_date DESC",
+                        {"code": code, "cutoff": cutoff},
+                    ).fetchall()
+            perm_rows = perm_rows or []
             if perm_rows:
                 events = [
                     {"date": r["event_date"], "n_inst": r["n_inst"],
@@ -134,7 +226,27 @@ def _survey_direction(code: str, sv: dict) -> tuple[str | None, str]:
         events = (sv.get("events") or [])[:8]   # 只查最近 8 次，控制扫描时的查询量
         if not events:
             return None, ""
-        ft = build(events, db_price_lookup(code))
+        # US-171：批处理里价格已整批取回，逐个事件再查库就是几百次跨洋往返
+        rows = _cached("series", code)
+        if rows is _MISS:
+            lookup = db_price_lookup(code)
+        else:
+            def lookup(d, _rows=rows or []):
+                """取 d 当天或之后最近的收盘价（往后找 6 天，跨周末/长假）。
+                语义必须与 db_price_lookup 一致，否则同一只股票在推送和
+                详情页会给出不同结论。"""
+                try:
+                    from datetime import date as _d, timedelta as _td
+                    d10 = str(d)[:10]
+                    end = (_d.fromisoformat(d10) + _td(days=6)).isoformat()
+                except (ValueError, TypeError):
+                    return None
+                for r in _rows:
+                    f = str(r.get("fetched_at"))[:10]
+                    if d10 <= f <= end:
+                        return r.get("price") or None
+                return None
+        ft = build(events, lookup)
         d = ft.get("direction")
         if d not in ("bull", "bear"):
             return None, ""
@@ -466,11 +578,15 @@ def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict
 
 def _price_5d(code: str) -> float:
     """近 5 交易日累计涨跌幅（%），按天去重防日内多行重复计。"""
-    with get_conn() as c:
-        rows = c.execute(
-            "SELECT fetched_at, change_pct FROM stock_prices WHERE code=:c ORDER BY fetched_at DESC LIMIT 20",
-            {"c": code},
-        ).fetchall()
+    rows = _cached("prices", code)
+    if rows is _MISS:
+        with get_conn() as c:
+            rows = c.execute(
+                "SELECT fetched_at, change_pct FROM stock_prices WHERE code=:c "
+                "ORDER BY fetched_at DESC LIMIT 20",
+                {"c": code},
+            ).fetchall()
+    rows = rows or []
     seen, chgs = set(), []
     for r in rows:
         d = str(r["fetched_at"])[:10]
@@ -525,7 +641,10 @@ def get_signal_conclusion(code: str) -> dict | None:
     """单只股票的结论包（US-119 层1）：与首页榜单同一模型/措辞，保证点榜单进详情讲同一个故事。
     返回 {conclusion, lead, direction, resonance_count, confidence, signals} 或 None（无信号）。"""
     precursor = _parse_precursor_cache(code)
-    fund_flow = get_fund_flow(code)
+    fund_flow = _cached("fund_flow", code)
+    if fund_flow is _MISS:
+        fund_flow = get_fund_flow(code)
+    fund_flow = fund_flow or {}
     raw_signals, signals_age_h = _get_fundamentals_with_age(code)
     detected = _detect_signals(code, precursor, fund_flow, raw_signals, signals_age_h)
     if not detected:

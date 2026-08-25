@@ -84,10 +84,16 @@ def test_orchestrator_calls_every_service_in_order():
 
 
 def test_failure_propagates_but_does_not_block():
-    """原语义：上游 failure 仍放行（各服务互相独立，analyze 挂了也该把已有
-    报告推出去），只有**被取消**才中断整条链。`!cancelled()` 精确复刻它。
+    """上游 failure 放行（各服务互相独立，analyze 挂了也该把已有报告推出去），
+    整个 run 被取消才停链。
 
-    写成 always() 就错了 —— 那样连「用户主动取消」都拦不住。
+    ⚠️ 准确语义：`cancelled()` 判的是**整个 run**，不是上游那一棒。
+    旧的 workflow_run 写法判的是上游的 conclusion，所以某一棒超时
+    （GitHub 记成 cancelled）会挡住下游；现在不会。
+    2026-08-25 实测：push 超时被判 cancelled，radar 照常跑了。
+    这个差别可接受（服务本就独立），但它是差别，不是「精确复刻」。
+
+    写成 always() 才是错的 —— 那样连用户主动取消都拦不住。
     """
     d, _ = _load(ORCHESTRATOR)
     for job, _svc in CHAIN[1:]:
@@ -298,3 +304,15 @@ def test_no_stale_write_permissions_left_over():
             perms = cjob.get('permissions') or {}
             assert 'write' not in str(perms.values()), \
                 f"{svc}:{jname} 还留着写权限 {perms} —— 桥接已删，用不到了"
+
+
+def test_push_timeout_leaves_room_for_growth():
+    """US-171：push-svc 曾从 3 分钟涨到 18 分钟，2026-08-25 撞上 20 分钟上限
+    被杀 —— 妈妈那天的信一个字都没发出去，而且 GitHub 把超时记成
+    `cancelled`，看起来像有人手动取消，不像故障。
+
+    超时的代价是整封信丢失；多等几分钟没有任何代价。所以上限要留足。
+    """
+    d, _ = _load('push-svc.yml')
+    t = d['jobs']['push'].get('timeout-minutes')
+    assert t and int(t) >= 40, f"push-svc 超时上限 {t} 分钟太紧 —— 越线就是整封信没了"
