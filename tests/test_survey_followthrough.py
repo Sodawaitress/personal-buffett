@@ -130,13 +130,28 @@ def test_future_event_skipped():
     assert r["events"] == []
 
 
-def test_missing_price_becomes_pending_not_a_guess():
-    """查不到当时的价格就说查不到，**不能拿今天的价格硬算** ——
-    那正是 US-155 里 backfill 犯过的错（用当前价冒充历史价）。"""
+def test_missing_price_says_so_instead_of_blaming_recency():
+    """查不到当时的价格就说查不到，**不能拿今天的价格硬算**（US-155 的教训），
+    **也不能说成「还太新」**（US-176）。
+
+    生产实拍：锐科激光 07-09 的调研在 08-25 的页面上显示「还太新，看不出」——
+    那是 **47 天前**，20 天观察窗早走完了。真正缺的是价格数据。
+    说成「太新」不只是措辞不准，它指错了方向：用户会以为再等几天就有了。
+    """
     r = build([{"date": "2026-06-10", "n_inst": 5, "is_specific": True}],
               _lk({}), today="2026-08-24")
-    assert r["events"][0]["outcome"] == "pending"
+    assert r["events"][0]["outcome"] == "no_price"
     assert r["events"][0]["pct"] is None
+    assert "查不到" in r["events"][0]["label"]
+    assert "太新" not in r["headline"]
+
+
+def test_genuinely_new_event_still_says_too_new():
+    """真·太新的事件仍然说「太新」—— 两种原因要分得开，不是把一种改成另一种。"""
+    r = build([{"date": "2026-08-22", "n_inst": 5, "is_specific": True}],
+              _lk({}), today="2026-08-24")
+    assert r["events"][0]["outcome"] == "pending"
+    assert "太新" in r["headline"]
 
 
 def test_events_sorted_newest_first():

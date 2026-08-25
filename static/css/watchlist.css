@@ -2546,6 +2546,13 @@
   color: #c62828;
   border: 1px solid #ef9a9a;
 }
+/* 没有任何方向信号时（只有关注度条），不许借红绿暗示方向 */
+.sr-appr-dir-none {
+  background: var(--rule);
+  color: var(--ink-muted);
+  border: 1px solid var(--ink-faint);
+}
+.sr-approaching-none { border-left: 3px dashed var(--ink-faint); }
 
 .sr-appr-top {
   display: flex;
@@ -2590,6 +2597,10 @@
 }
 .sr-appr-bull { background: #81c784; }
 .sr-appr-bear { background: #e57373; }
+/* US-176：关注度是**无方向**的量 —— 用中性灰，不能借红绿说事。
+   原来 survey/participation 写死成 bull，167 家（看空那只）和 1 家
+   （看多那只）在页面上是同一种绿色。 */
+.sr-appr-attention { background: #b0aca5; }
 .sr-appr-pct {
   font-family: -apple-system, sans-serif;
   font-size: 10px;
@@ -2916,3 +2927,27 @@ body.wl-rank-on .rank-badge  { display: flex; }
 .rank-badge.rank-1 .rank-badge-medal, .rank-inline.rank-1 { color: #b8860b; }
 .rank-badge.rank-2 .rank-badge-medal, .rank-inline.rank-2 { color: #8a8a8a; }
 .rank-badge.rank-3 .rank-badge-medal, .rank-inline.rank-3 { color: #a0642a; }
+
+
+/* ── US-176：分组标签 —— 方向和关注度不是同一层东西 ── */
+.sr-appr-group-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  text-transform: none;
+  margin: 6px 0 2px;
+}
+.sr-appr-group-label:first-child { margin-top: 0; }
+.sr-appr-group-note { letter-spacing: 0; opacity: .8; }
+
+/* 区块层面的一句说明：评级和这里的信号是两回事（妈妈问的那个矛盾） */
+.sr-appr-note {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  margin: 6px 0 10px;
+  padding-left: 10px;
+  border-left: 2px solid var(--rule);
+}
+.sr-appr-note strong { color: var(--ink); font-weight: 600; }

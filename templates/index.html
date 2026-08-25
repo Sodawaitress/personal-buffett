@@ -496,6 +496,15 @@ function _renderRadarSignals(data) {
   if (approaching.length) {
     html += `<details class="sr-approaching-fold">`;
     html += `<summary class="sr-approaching-header">接近触发 · 信号预警 <span class="sr-appr-count">${approaching.length}</span></summary>`;
+    // US-176：妈妈问「华测检测品级是 A，为什么是看空预警？锐科激光是 C+，
+    // 反而看多预警？」—— 她比的是两个**不同系统**的输出：
+    //   评级 A/C+  = 基本面质量，时间尺度以年计，回答「是不是一门好生意」
+    //   这里的信号 = 资金流向，时间尺度以天计，回答「今天钱往哪走」
+    // 两者同时成立完全正常（好公司天天有人卖），但页面并排放、都用红绿、
+    // 都用百分比，就成了自相矛盾。所以在区块层面说一次，不是每张卡都说。
+    html += `<p class="sr-appr-note">这里看的是<strong>最近几天的资金和机构动向</strong>，
+      和股票的 A/B/C 评级是两回事 —— 评级说的是公司好不好（以年看），
+      这里说的是钱往哪走（以天看）。好公司也会被短期卖出。</p>`;
     html += '<div class="sr-approaching-list">';
     for (const item of approaching) {
       html += _renderApproachingCard(item);
@@ -554,17 +563,36 @@ function _renderTriggeredCard(item) {
 }
 
 function _renderApproachingCard(item) {
-  const bars  = item.approaching_bars || [];
+  const bars = item.approaching_bars || [];
   const topPct = bars[0]?.pct || 0;
-  const topDir = bars[0]?.direction || 'bull';
+
+  // US-176：方向和关注度是**两类东西**，不能混在一个列表里用同一种颜色。
+  //   方向类（主力资金、融资余额）：有多空，红绿有意义
+  //   关注度类（机构调研、机构参与度）：只说明「有人在看」，无方向
+  // 原来 survey/participation 的 direction 写死成 'bull'，于是 167 家（看空那只）
+  // 和 1 家（看多那只）在页面上是同一种绿色 —— US-167 只改了 _SIGNAL_DEFS，
+  // 这个组件有自己的一套。
+  const dirBars  = bars.filter(b => b.direction === 'bull' || b.direction === 'bear');
+  const attnBars = bars.filter(b => b.direction === 'attention');
+
+  // 徽章的方向取**真正有方向的那根**里排最前的，不是 bars[0] ——
+  // bars[0] 可能是关注度条，它没有方向可言。
+  const lead = dirBars[0];
+  const topDir = lead ? lead.direction : 'none';
+
   const statusDot = item.status === 'holding'
     ? '<span class="sr-status-dot sr-dot-hold" title="持有中"></span>'
     : '<span class="sr-status-dot sr-dot-watch" title="观察中"></span>';
-  const dirBadge = topDir === 'bull'
-    ? '<span class="sr-appr-dir-badge sr-appr-dir-bull">看多预警</span>'
-    : '<span class="sr-appr-dir-badge sr-appr-dir-bear">看空预警</span>';
 
-  const barsHtml = bars.map(b => `
+  // 「看多预警」这个词自相矛盾 —— 「预警」在中文里预示坏事，
+  // 「警告你它要涨了」读不通。改成说人话：钱在往哪走。
+  const dirBadge = topDir === 'bull'
+    ? '<span class="sr-appr-dir-badge sr-appr-dir-bull">资金在流入</span>'
+    : topDir === 'bear'
+      ? '<span class="sr-appr-dir-badge sr-appr-dir-bear">资金在流出</span>'
+      : '<span class="sr-appr-dir-badge sr-appr-dir-none">只有关注度信号</span>';
+
+  const rowHtml = b => `
     <div class="sr-appr-row">
       <span class="sr-appr-label">${b.label}</span>
       <div class="sr-appr-bar-track">
@@ -572,8 +600,17 @@ function _renderApproachingCard(item) {
       </div>
       <span class="sr-appr-pct">${b.pct}%</span>
     </div>
-    <div class="sr-appr-hint">${b.hint}</div>
-  `).join('');
+    <div class="sr-appr-hint">${b.hint}</div>`;
+
+  let barsHtml = '';
+  if (dirBars.length) {
+    barsHtml += `<div class="sr-appr-group-label">钱往哪走</div>` +
+                dirBars.map(rowHtml).join('');
+  }
+  if (attnBars.length) {
+    barsHtml += `<div class="sr-appr-group-label sr-appr-group-attn">谁在关注<span class="sr-appr-group-note">（说明有人在看，不代表看涨）</span></div>` +
+                attnBars.map(rowHtml).join('');
+  }
 
   return `
   <a class="sr-approaching-card sr-approaching-${topDir}" href="/stock/${item.code}#market">

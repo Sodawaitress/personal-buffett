@@ -510,12 +510,27 @@ def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict
                 first_date = datetime.strptime(events[0]["date"][:10], "%Y-%m-%d")
                 age_days = (datetime.now() - first_date).days
                 pct = max(0, min(99, round((1 - age_days / 60) * 100)))
+                n_inst = 0
+                try:
+                    n_inst = int(events[0].get("n_inst") or 0)
+                except (TypeError, ValueError):
+                    n_inst = 0
                 bars.append({
                     "key":       "survey",
                     "label":     "机构调研活跃度",
                     "pct":       pct,
-                    "hint":      f"最近一次调研 {age_days} 天前，30 天内触发" if pct < 100 else "已触发",
-                    "direction": "bull",
+                    # US-176：家数要说出来。1 家和 167 家在页面上原本长得一模一样
+                    # （柱高按单只股票内部归一化），「一个人去看」被画成
+                    # 和「一百六十七个人去看」同样满格。
+                    "hint":      (f"最近一次调研 {age_days} 天前"
+                                  + (f"，{n_inst} 家机构" if n_inst else "")
+                                  + ("，30 天内触发" if pct < 100 else "")) if pct < 100 else "已触发",
+                    "n_inst":    n_inst,
+                    # US-167：调研是**注意力**，不是方向。机构去看了，可能看完买、
+                    # 看完不买、甚至看完就卖。当初只改了 _SIGNAL_DEFS，
+                    # 这个函数自己写死了 "bull" —— 于是 167 家（看空那只）和
+                    # 1 家（看多那只）在页面上是同一种绿色。
+                    "direction": "attention",
                 })
             except Exception:
                 pass
@@ -533,7 +548,9 @@ def _calc_approaching(code: str, precursor: dict, fund_flow: dict, signals: dict
                 "label":     "机构参与度",
                 "pct":       pct,
                 "hint":      f"当前 {latest_v:.0f}，触发需 {threshold:.0f}（+30% 均值）",
-                "direction": "bull",
+                # US-176：同 survey —— 参与度高只说明「机构在场」，不说明多空。
+                # 参与度**突增**才是信号（participation_spike），那是另一条。
+                "direction": "attention",
             })
 
     # 融资余额变化：绝对值 / 15% 进度（仅用新鲜数据）

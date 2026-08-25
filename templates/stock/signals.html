@@ -67,7 +67,14 @@
         <div class="svchart" role="img" aria-label="{{ t.sigctx_survey_title }}">
           {% for b in survey_chart %}
           <div class="svchart-col" tabindex="0">
-            <div class="svchart-barwrap"><div class="svchart-bar{{ ' is-zero' if not b.count }}" style="height:{{ (b.count / maxc * 100) | round }}%"></div></div>
+            {# US-176：柱高按**这只股票自己**的 6 个月最大值归一化，所以一只
+               只有「1 家调研」的股票也会画出满格柱子，和 167 家长得一模一样。
+               跨股票归一化在这个组件里做不到（没有全局尺度），所以把家数直接
+               标在柱子上 —— 让人一眼看见 1 和 167 的差别，不靠柱高去猜。 #}
+            <div class="svchart-barwrap">
+              {% if b.count %}<span class="svchart-n">{{ b.count }}</span>{% endif %}
+              <div class="svchart-bar{{ ' is-zero' if not b.count }}" style="height:{{ (b.count / maxc * 100) | round }}%"></div>
+            </div>
             <div class="svchart-x">{{ b.label }}</div>
             <div class="svchart-tip">{{ b.label }}：{{ b.count }}{{ t.sigctx_n_inst }} / {{ b.visits }}{{ t.sigctx_n_visit }}{% if b.methods %}<br>{{ b.methods | join('、') }}{% endif %}</div>
           </div>

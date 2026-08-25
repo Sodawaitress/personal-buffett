@@ -2600,3 +2600,20 @@
 /* 方向色只做左边一道细线，不喧宾夺主 */
 .svft-bear { border-left: 3px solid var(--down, #27865c); }
 .svft-bull { border-left: 3px solid var(--up, #c0392b); }
+
+
+/* US-176：柱状图上直接标家数 —— 柱高只表达「这只股票自己的相对高低」，
+   绝对量必须用数字说。1 家和 167 家原本画出来一样高。 */
+.svchart-barwrap { position: relative; }
+.svchart-n {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}

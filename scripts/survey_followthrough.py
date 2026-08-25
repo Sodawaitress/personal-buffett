@@ -71,6 +71,7 @@ _LABEL = {
     "followed_down": "调研后跌",
     "no_follow":     "调研后没动",
     "pending":       "还太新，看不出",
+    "no_price":      "查不到当时的股价",
 }
 
 
@@ -104,6 +105,10 @@ def build(events: list, price_lookup, today: str = None) -> dict:
         if elapsed < 0:
             continue
 
+        # US-176：「还太新」和「查不到当时的股价」是两回事，原来混成一句
+        # 「事件太新，或缺少当时的价格数据」。锐科激光 07-09 的调研是 **47 天前**、
+        # 20 天观察窗早走完了，页面却说「还太新，看不出」—— 那是在说谎，
+        # 而且指错了方向：真正缺的是价格数据，用户会以为再等等就好了。
         outcome, pct = "pending", None
         if elapsed >= _MIN_ELAPSED:
             p0 = price_lookup(d0)
@@ -114,6 +119,8 @@ def build(events: list, price_lookup, today: str = None) -> dict:
             if p0 and p1 and p0 > 0:
                 pct = round((p1 - p0) / p0 * 100, 1)
                 outcome = classify(pct)
+            else:
+                outcome = "no_price"
 
         rows.append({
             "date": d0,
@@ -133,7 +140,8 @@ def build(events: list, price_lookup, today: str = None) -> dict:
         "up":      sum(1 for r in rows if r["outcome"] == "followed_up"),
         "down":    sum(1 for r in rows if r["outcome"] == "followed_down"),
         "flat":    sum(1 for r in rows if r["outcome"] == "no_follow"),
-        "pending": sum(1 for r in rows if r["outcome"] == "pending"),
+        "pending":  sum(1 for r in rows if r["outcome"] == "pending"),
+        "no_price": sum(1 for r in rows if r["outcome"] == "no_price"),
     }
     direction, confidence, headline = _judge(rows, summary)
     return {"events": rows, "summary": summary, "direction": direction,
@@ -141,7 +149,8 @@ def build(events: list, price_lookup, today: str = None) -> dict:
 
 
 def _empty():
-    return {"events": [], "summary": {"up": 0, "down": 0, "flat": 0, "pending": 0},
+    return {"events": [], "summary": {"up": 0, "down": 0, "flat": 0, "pending": 0,
+                                     "no_price": 0},
             "direction": None, "confidence": None, "headline": ""}
 
 
@@ -151,9 +160,16 @@ def _judge(rows, summary):
     **专项调研权重更高**：本地回测里专项调研上涨 72%、其他调研 50%（抛硬币），
     所以只有专项调研的后续才配影响方向；普通调研只计入「有人在看」。
     """
-    decided = [r for r in rows if r["outcome"] and r["outcome"] != "pending"]
+    _UNDECIDED = ("pending", "no_price")
+    decided = [r for r in rows if r["outcome"] and r["outcome"] not in _UNDECIDED]
     if not decided:
-        return None, None, "调研后的走势还看不出来（事件太新，或缺少当时的价格数据）"
+        # 说清楚是哪一种 —— 「再等等就有了」和「这数据我们没有」对用户
+        # 意味着完全不同的事
+        if summary.get("no_price") and not summary.get("pending"):
+            return None, None, "查不到调研当时的股价，没法看后续走势"
+        if summary.get("no_price"):
+            return None, None, "部分调研查不到当时的股价，其余的还太新，暂时看不出"
+        return None, None, "调研后的走势还看不出来（事件太新，再等几天）"
     specific = [r for r in decided if r["is_specific"]]
     basis = specific or decided
 
