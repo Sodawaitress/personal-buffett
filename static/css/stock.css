@@ -2617,3 +2617,19 @@
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
+
+
+/* US-177：内部人交易的时效提示。这条要显眼 —— 它会反转整条信息的意义
+   （「自己人在买」vs「自己人四个月前买过」是两回事）。 */
+.insider-stale {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0 4px;
+  padding: 7px 9px;
+  border-radius: 4px;
+  background: rgba(180, 83, 9, 0.07);
+  border-left: 2px solid #b45309;
+  color: var(--ink-soft, var(--ink));
+}
+:root:not([data-theme="light"]) .insider-stale { border-left-color: #fbbf24; }
+:root[data-theme="dark"] .insider-stale { border-left-color: #fbbf24; }

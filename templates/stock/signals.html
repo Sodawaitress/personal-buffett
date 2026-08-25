@@ -145,6 +145,12 @@
         <span class="insider-window">{{ t.insider_window }}</span>
       </div>
       <div class="insider-headline">{{ insider.headline }}</div>
+      {# US-177：陈旧提示排在列表**之前** —— 妈妈是自己一条条看日期才发现
+         「这个内部人士买入是 4 月」的。列表按重要性排序、不按时间，
+         所以时效必须在人开始读明细之前就说清楚。 #}
+      {% if insider.stale_note %}
+      <div class="insider-stale">{{ insider.stale_note }}</div>
+      {% endif %}
       {% if insider['items'] %}
       <ul class="insider-list">
         {% for it in insider['items'] %}

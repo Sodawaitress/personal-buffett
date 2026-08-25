@@ -616,15 +616,79 @@ def _price_5d(code: str) -> float:
     return round(sum(chgs), 2) if chgs else 0.0
 
 
+# US-177：判断「股价还没反应」要用多长的窗口
+#
+# 原来只看近 5 日（_price_5d）。2026-08-25 用户妈妈实拍反例：
+# **中石科技 300684** 的推送写「机构在悄悄研究/建仓，**股价还没反应**
+# → 最早的领先信号」，而它 4 个月里从 41 涨到 97（当时 86）—— **翻了一倍多**。
+# 她的原话：「都长成这样了，他说股价还没反应」。
+#
+# 5 天窗口回答不了「反应了没有」。一只翻倍的股票在任意 5 天里都可能微跌，
+# 于是系统在最不该喊「还没涨」的时候喊了「还没涨」，
+# **而且是朝着让人买入的方向喊**。
+#
+# 修法：短窗口仍用来找「今天的背离」，但要先过一道长窗口的闸 ——
+# 已经明显走过一段的，无论如何不能说「还没反应」。
+_LEAD_LONG_DAYS = 60          # 长窗口：约 3 个月的交易日
+_LEAD_ALREADY_RAN = 20.0      # 60 日累计涨幅超过这个数 = 已经反应过了
+_LEAD_ALREADY_FELL = -20.0
+
+
+def _price_change_over(code: str, days: int) -> float:
+    """近 N 个交易日的累计涨跌幅（%），按天去重防日内多行重复计。
+
+    数据不足时返回 0.0 —— 不是「没涨」，是「不知道」。调用方要当心：
+    0.0 会让闸门放行，所以闸门只用于**否决**，不用于肯定。
+    """
+    rows = _cached("series", code)
+    if rows is _MISS:
+        with get_conn() as c:
+            rows = c.execute(
+                "SELECT fetched_at, change_pct FROM stock_prices WHERE code=:c "
+                "ORDER BY fetched_at DESC LIMIT :n",
+                {"c": code, "n": days * 2},
+            ).fetchall()
+        rows = rows or []
+    else:
+        rows = list(reversed(rows or []))       # series 是升序，这里要降序
+    seen, chgs = set(), []
+    for r in rows:
+        d = str(r["fetched_at"])[:10]
+        try:
+            cp = r["change_pct"]
+        except (KeyError, TypeError, IndexError):
+            cp = None
+        if d in seen or cp is None:
+            continue
+        seen.add(d)
+        chgs.append(float(cp))
+        if len(chgs) >= days:
+            break
+    return round(sum(chgs), 2) if chgs else 0.0
+
+
 def smart_money_vs_price(code: str, resonance: dict) -> str | None:
-    """机构/资金方向 vs 近 5 日价格。真背离=强信号(≥3同向)且价格明显反向，稀有才值钱。"""
+    """机构/资金方向 vs 价格。真背离=强信号(≥3同向)且价格明显反向，稀有才值钱。
+
+    两道窗口（US-177）：
+      长窗口（60日）否决 —— 已经走过一大段的，不能说「还没反应」
+      短窗口（5日）确认 —— 最近确实在反方向动
+    """
     d = resonance.get("direction")
     if d not in ("bull", "bear") or resonance.get("resonance_count", 0) < 3:
         return None
+
+    p60 = _price_change_over(code, _LEAD_LONG_DAYS)
     p5 = _price_5d(code)
-    if d == "bull" and p5 <= -2:     # 机构看多，价格反而明显在跌 → 还没被定价
+
+    if d == "bull" and p5 <= -2:
+        # 已经涨过一大段 → 「还没反应」是假的，不管这 5 天怎么走
+        if p60 >= _LEAD_ALREADY_RAN:
+            return None
         return "lead_bull"
-    if d == "bear" and p5 >= 2:      # 机构看空，价格反而明显在涨 → 还没被定价
+    if d == "bear" and p5 >= 2:
+        if p60 <= _LEAD_ALREADY_FELL:
+            return None
         return "lead_bear"
     return None
 

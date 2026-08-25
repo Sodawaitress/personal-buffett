@@ -36,6 +36,10 @@ _HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 WINDOW_DAYS = int(os.environ.get("INSIDER_WINDOW_DAYS", "180"))
 
+# US-177：超过这个天数，就不能再当成「现在的信号」讲。
+# 60 天≈一个季度，足够让一轮行情走完 —— 奥来德那 4 个月里股价翻倍又腰斩。
+STALE_DAYS = int(os.environ.get("INSIDER_STALE_DAYS", "60"))
+
 # 惯例性原因：与「看空/看多公司」无关的机械交易 → 无信息量
 _ROUTINE_REASONS = ("股权激励", "行权", "解禁", "送转", "分红", "继承", "赠与",
                     "司法", "划转", "换股", "要约")
@@ -116,6 +120,10 @@ _STR = {
         "none": "近半年没有高管或大股东买卖自己公司股票的记录",
         "net_sell": "近半年内部人净卖出",
         "net_buy": "近半年内部人净买入",
+        "age_recent": "，最近一笔 {n} 天前",
+        "age_months": "，最近一笔已是 {n} 个月前",
+        "stale_note": "⚠️ 这些交易发生在 {n} 个月前，是**当时**的动作，不代表现在。"
+                      "这段时间股价可能已经走完了一轮 —— 当历史看，别当现在的信号。",
         "caveat": "高管卖股票的理由可能很私人（买房、缴税），一笔不说明问题；连续、大额、多人同时卖才值得当信号。",
     },
     "en": {
@@ -132,6 +140,10 @@ _STR = {
         "none": "No insider buying or selling on record in the last six months",
         "net_sell": "Insiders were net sellers over the last six months",
         "net_buy": "Insiders were net buyers over the last six months",
+        "age_recent": ", most recent {n} days ago",
+        "age_months": ", most recent was {n} months ago",
+        "stale_note": "⚠️ These trades happened {n} months ago. They describe what insiders did **then**, "
+                      "not now — the price may have already run its course since. Read as history, not a live signal.",
         "caveat": "An executive may sell for entirely personal reasons (a house, a tax bill). One sale means little — repeated, large, or several people selling at once is what matters.",
     },
 }
@@ -163,8 +175,12 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
     L = _STR.get(locale) or _STR["zh"]
     rows = list(moves or [])
     if not rows:
+        # US-177：早返回也要带齐字段，否则模板读到 KeyError。
+        # 「没有数据」和「有数据但很旧」都要能安全渲染。
         return {"has_data": False, "headline": L["none"], "items": [],
-                "routine_skipped": 0, "caveat": "", "net_direction": None}
+                "routine_skipped": 0, "caveat": "", "net_direction": None,
+                "latest_date": "", "days_since": None,
+                "is_stale": False, "stale_note": ""}
 
     op, routine = [], 0
     for m in rows:
@@ -207,10 +223,42 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         items.append({"text": line, "date": x.get("change_date", ""),
                       "direction": x["direction"], "weight": x["weight"]})
 
+    # US-177：说清楚「最近一笔是多久以前」。
+    #
+    # 2026-08-25 用户妈妈实拍：奥来德 688378 的卡片写「近半年内部人净买入」，
+    # 列出的最新一笔是 **2026-04-30** —— 已经 4 个月前，而这 4 个月里股价
+    # 从 ~24 涨到 62.89 又跌回 42.22。她的原话：
+    #     「这个内部人士买入是 4 月」「这个信息就太滞后了」「这个滞后的消息没有意义」
+    #
+    # 卡片没撒谎（确实在「近半年」窗口内），但「近半年内部人净买入」这句话
+    # 读起来是**现在的状态**，而它描述的是四个月前的动作。
+    # 而且列表按重要性排序、不按时间，所以用户得自己一条条看日期才发现。
+    #
+    # 这和「股价还没反应」是同一个病：**把过去发生过的事讲成现在的状态**。
+    days_since = None
+    latest_date = ""
+    for x in op:
+        d = str(x.get("change_date") or "")[:10]
+        if d and d > latest_date:
+            latest_date = d
+    if latest_date:
+        try:
+            from datetime import date as _date
+            days_since = (_date.today() - _date.fromisoformat(latest_date)).days
+        except (ValueError, TypeError):
+            days_since = None
+
+    is_stale = days_since is not None and days_since >= STALE_DAYS
+
     if not op:
         head = L["none"] if not routine else L["routine_note"].format(n=routine)
     else:
         head = L["net_sell"] if net == "sell" else (L["net_buy"] if net == "buy" else L["net_sell"])
+        if days_since is not None:
+            if days_since >= 60:
+                head += L["age_months"].format(n=max(1, round(days_since / 30)))
+            else:
+                head += L["age_recent"].format(n=days_since)
 
     return {
         "has_data": bool(op),
@@ -220,6 +268,11 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         "routine_note": L["routine_note"].format(n=routine) if routine and op else "",
         "caveat": L["caveat"] if op else "",
         "net_direction": net,
+        "latest_date": latest_date,
+        "days_since": days_since,
+        "is_stale": is_stale,
+        "stale_note": (L["stale_note"].format(n=max(1, round(days_since / 30)))
+                       if is_stale else ""),
     }
 
 
