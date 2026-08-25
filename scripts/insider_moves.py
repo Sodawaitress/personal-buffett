@@ -124,10 +124,14 @@ _STR = {
         "age_months": "，最近一笔已是 {n} 个月前",
         "cluster": "{n} 位内部人在 {d} 天内先后买入（{tx} 笔，合计 {r:.2f}% 股本）"
                    " —— 这是内部人信号里最强的形态",
-        "horizon": "这类信号的尺度是**月**，不是天：研究显示内部人买入的超额收益"
-                   "要在 6–12 个月里体现，不是今天买明天涨。",
-        "stale_note": "⚠️ 这些交易发生在 {n} 个月前，是**当时**的动作，不代表现在。"
-                      "这段时间股价可能已经走完了一轮 —— 当历史看，别当现在的信号。",
+        "horizon": "怎么用这条：内部人买入的超额收益**大半在头一个月就兑现了**"
+                   "（约 1/4 在头 5 天、约 1/2 在头 1 个月），而公告本身还要滞后几周。"
+                   "所以它更适合当作**「自己人当时怎么看这家公司」的基本面证据**，"
+                   "不适合当现在的入场理由。",
+        "stale_note": "⚠️ 这些交易发生在 {n} 个月前。研究显示内部人买入的超额收益"
+                      "**大半在头一个月内就走完了** —— 到现在，这条作为入场信号"
+                      "基本已经失效。它仍能说明「自己人当时有信心」，但那是基本面的一条证据，"
+                      "不是现在该买的理由。",
         "caveat": "高管卖股票的理由可能很私人（买房、缴税），一笔不说明问题；连续、大额、多人同时卖才值得当信号。",
     },
     "en": {
@@ -148,10 +152,14 @@ _STR = {
         "age_months": ", most recent was {n} months ago",
         "cluster": "{n} insiders bought within {d} days ({tx} transactions, {r:.2f}% of shares outstanding)"
                    " — the strongest form of insider signal",
-        "horizon": "This signal works on a **multi-month** horizon: the abnormal return from insider "
-                   "buying shows up over 6–12 months, not overnight.",
-        "stale_note": "⚠️ These trades happened {n} months ago. They describe what insiders did **then**, "
-                      "not now — the price may have already run its course since. Read as history, not a live signal.",
+        "horizon": "How to read this: most of the abnormal return from insider buying lands **within the "
+                   "first month** (~1/4 in the first 5 days, ~1/2 in the first month), and the filing "
+                   "itself lags by weeks. Treat it as evidence of **what insiders thought at the time**, "
+                   "not as a reason to buy now.",
+        "stale_note": "⚠️ These trades happened {n} months ago. Most of the abnormal return from insider "
+                      "buying lands **within the first month**, so as an entry signal this has largely "
+                      "expired. It still tells you insiders were confident **at the time** — that is a "
+                      "fundamental data point, not a reason to buy today.",
         "caveat": "An executive may sell for entirely personal reasons (a house, a tax bill). One sale means little — repeated, large, or several people selling at once is what matters.",
     },
 }

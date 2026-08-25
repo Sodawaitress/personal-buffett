@@ -119,8 +119,9 @@ def test_stale_note_appears_and_reframes_it_as_history():
     r = _insider(_ago(118))
     assert r["is_stale"]
     note = r["stale_note"]
-    assert "当历史看" in note and "不代表现在" in note
     assert "4 个月前" in note
+    assert "失效" in note, "要说清作为入场信号已经失效"
+    assert "基本面" in note, "但要保留它作为基本面证据的价值"
 
 
 def test_stale_threshold_is_about_a_quarter():
@@ -138,7 +139,8 @@ def test_stale_note_is_bilingual():
         "avg_price": 10, "change_date": _ago(118), "reason": "二级市场买卖",
         "role": "董事长", "direction": "buy"}], locale="en")
     assert r["is_stale"]
-    assert "history" in r["stale_note"].lower()
+    note = r["stale_note"].lower()
+    assert "expired" in note and "fundamental" in note
     assert not any("一" <= ch <= "鿿" for ch in r["stale_note"])
 
 
@@ -249,15 +251,39 @@ def test_spread_out_buys_are_not_a_cluster():
 
 # ── 有效期必须说出来 ────────────────────────────────────
 
-def test_horizon_note_states_the_multi_month_scale():
-    """妈妈按「今天买明天涨」的尺度衡量一个以月计的信号，所以觉得它没意义。
-    文献：小盘股内部人买入，12 个月尺度超额收益约 7.4%。"""
+def test_horizon_note_says_the_alpha_lands_early():
+    """⚠️ 我第一版把这条写反了，值得留个记号。
+
+    我原本写「这类信号的尺度是**月**，不是天：超额收益要在 6–12 个月里体现」——
+    那是在劝人对一个**已经过期的信号**保持耐心，错在危险的方向。
+
+    查准了（Wharton, 1975–1996 全样本）：
+        约 **1/4** 的超额收益在头 **5 天**兑现
+        约 **1/2** 在头 **1 个月**兑现
+        而 Form 4 披露本身多数滞后 **21 天以上**
+        近期研究更保守：21 个交易日后置信区间已包含 0
+
+    **用户妈妈是对的**：4 个月前的买入，作为入场信号基本已经失效。
+    12 个月 7.4% 那个数字是**累计总量**，不是「要等 12 个月才开始涨」。
+    我把总量误读成了节奏。
+    """
     from scripts.insider_moves import describe_insider_activity
     r = describe_insider_activity([{
         "holder_name": "甲", "shares": 1000000, "ratio_total": 0.99, "ratio_own": 0,
         "avg_price": 10, "change_date": _ago(30), "reason": "二级市场买卖", "role": "董事长"}])
-    assert "月" in r["horizon_note"]
-    assert "6" in r["horizon_note"] and "12" in r["horizon_note"]
+    note = r["horizon_note"]
+    assert "头一个月" in note, "必须说清大半 alpha 在头一个月内兑现"
+    assert "基本面证据" in note, "正确用法是基本面证据，不是入场理由"
+    assert "6–12 个月里体现" not in note, "这是被推翻的说法，不许回退"
+
+
+def test_stale_note_does_not_ask_for_patience():
+    """陈旧提示不能变成「再等等就好了」—— 那正是把总量误读成节奏的后果。"""
+    r = _insider(_ago(118))
+    note = r["stale_note"]
+    assert "失效" in note
+    assert "自己人当时有信心" in note, "要保留它作为基本面证据的价值"
+    assert "再等" not in note
 
 
 def test_card_shows_cluster_above_the_fold():
