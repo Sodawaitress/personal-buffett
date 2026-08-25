@@ -450,6 +450,54 @@ def audit_scan_jobs(conn, existing):
         return {"error": f"{type(e).__name__}: {str(e)[:140]}"}
 
 
+def audit_one_off_profits(conn, existing):
+    """US-172：有多少只股票的市盈率被一次性收益做低了。
+
+    DUOL 站上显示 13.28 倍，真实约 43 倍 —— 一次性退税撑高了净利润。
+    这个错的方向最危险：**它让贵的东西看起来便宜**，而系统里所有
+    「估值便宜」的判断都会被朝着让人买入的方向带偏。
+
+    精确判据（净利润 > 税前利润）要等 fetch 补完字段才有数据。
+    在那之前用**净利率跳变**当代理指标：营收没怎么动、净利率却翻倍，
+    多半是利润里混了非经营的东西。这只是**筛查**，不是判定。
+    """
+    if "stock_fundamentals" not in existing:
+        return {}
+    import json as _json
+    rows = _rows(conn, "SELECT code, pe_current, annual_json FROM stock_fundamentals "
+                       "WHERE annual_json IS NOT NULL AND annual_json <> ''")
+    have_fields = suspects = 0
+    hits = []
+    for r in rows:
+        try:
+            a = _json.loads(r["annual_json"] or "[]")
+        except Exception:
+            continue
+        if not a or len(a) < 2:
+            continue
+        if a[0].get("pretax_income") is not None:
+            have_fields += 1
+        def _f(v):
+            # 年报里混着字符串和 None（不同数据源格式不一），一律先转数
+            try:
+                x = float(v)
+                return x if x == x else None
+            except (TypeError, ValueError):
+                return None
+        cur, prev = _f(a[0].get("net_margin")), _f(a[1].get("net_margin"))
+        rev_c, rev_p = _f(a[0].get("revenue")), _f(a[1].get("revenue"))
+        if cur is None or prev is None or prev <= 0 or cur <= prev:
+            continue
+        # 净利率翻倍以上，而营收没有翻倍 → 利润跳升不是生意驱动的
+        rev_growth = (rev_c / rev_p) if (rev_c and rev_p and rev_p > 0) else 1.0
+        if cur / prev >= 2.0 and rev_growth < 1.8:
+            suspects += 1
+            hits.append((r["code"], r["pe_current"], prev, cur, round(rev_growth, 2)))
+    hits.sort(key=lambda h: (h[1] is None, h[1] or 0))
+    return {"scanned": len(rows), "with_tax_fields": have_fields,
+            "suspects": suspects, "sample": hits[:15]}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -523,11 +571,12 @@ def main():
         ind_gap = audit_industry_gap_detail(conn, existing)
         em_conv = audit_em_convergence(conn, existing)
         scan_jobs = audit_scan_jobs(conn, existing)
+        one_off = audit_one_off_profits(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -651,6 +700,15 @@ def main():
             print(f"  #{jid} {jt} {st:8} {ca}")
             if err: print(f"      ⚠️  {err}")
         if scan_jobs.get("error"): print(f"  {scan_jobs['error']}")
+
+    if one_off:
+        print(f"\n── 一次性收益做低市盈率的嫌疑股（US-172）──")
+        print(f"  扫描 {one_off['scanned']} 只 · 已有税前利润字段 {one_off['with_tax_fields']} 只"
+              f" · 净利率异常跳升 {one_off['suspects']} 只")
+        for code, pe, prev, cur, rg in one_off.get("sample", []):
+            print(f"    {code:10} PE {str(pe)[:6]:7} 净利率 {prev}% → {cur}%  营收×{rg}")
+        if one_off["with_tax_fields"] == 0:
+            print(f"  ⚠️  还没有任何一只有税前利润字段 —— 精确判据要等 fetch 跑过才生效")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")

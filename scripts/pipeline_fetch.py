@@ -343,6 +343,12 @@ def _fetch_financials(code, market, log):
                         if ebit is None:
                             ebit = _fin("Operating Income", col)
                         gross_profit = _fin("Gross Profit", col)
+                        # US-172：一次性收益的判据。净利润 > 税前利润 ⇒ 税项为负
+                        # ⇒ 必有一次性税收收益（如递延所得税估值备抵释放）。
+                        # 没有这两个字段就只能拿净利率跳变去猜 —— DUOL 的
+                        # 市盈率因此在站上显示成 13.28 倍，真实约 43 倍。
+                        pretax = _fin("Pretax Income", col)
+                        tax_prov = _fin("Tax Provision", col)
 
                         roe = (net_income / equity * 100) if net_income and equity and equity > 0 else None
                         npm = (net_income / total_rev * 100) if net_income and total_rev and total_rev > 0 else None
@@ -366,6 +372,8 @@ def _fetch_financials(code, market, log):
                                 "equity": _yi(equity),
                                 "ebit": _yi(ebit),
                                 "cfo": _yi(cfo),
+                                "pretax_income": _yi(pretax),
+                                "tax_provision": _yi(tax_prov),
                                 "shares": float(shares) if shares is not None and shares == shares else None,
                             }
                         )
