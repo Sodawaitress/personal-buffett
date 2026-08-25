@@ -180,3 +180,85 @@ def test_fetch_stores_pretax_and_tax_fields():
     assert '_fin("Pretax Income"' in src
     assert '_fin("Tax Provision"' in src
     assert '"pretax_income":' in src and '"tax_provision":' in src
+
+
+# ── 展示层：US-173 ──────────────────────────────────────
+
+def _tpl(rel):
+    return open(os.path.join(os.path.dirname(__file__), '..', rel),
+                encoding='utf-8').read()
+
+
+def test_card_shows_even_when_data_is_missing():
+    """US-173：原来 `tier != 'unknown'` 才渲染，于是数据不足的股票
+    （本地 13%，多为亏损股：市盈率为负算不出历史分位）**整张卡直接消失**，
+    页面上什么都不说。
+
+    用户 2026-08-25 原话：「安全边际卡到底在哪，我怎么怎么都没找到」。
+    「我不知道」比「什么都不说」诚实，也不会让人以为功能坏了。
+    """
+    tpl = _tpl('templates/stock/letter.html')
+    assert "cheapness.tier != 'unknown'" not in tpl, \
+        "数据不足时不该整张卡消失"
+    assert '{% if cheapness %}' in tpl
+
+
+def test_unknown_tier_has_its_own_style():
+    css = _tpl('static/css/stock.css')
+    assert '.cheap-unknown' in css, "unknown 档要有自己的样式，否则没有左边框"
+
+
+def test_adjusted_pe_appears_right_after_the_line_it_corrects():
+    """修正句必须紧跟在「市盈率处在第 X 百分位」后面 —— 那句正是被它纠正的。
+    隔开了就变成两条不相干的信息。"""
+    from scripts.buffett_signals import describe_cheapness
+    n = normalize(DUOL, "us")
+    r = describe_cheapness(25, "up", ["公司在变强"], "zh", normalized=n, reported_pe=16.6)
+    reasons = r["reason"]
+    assert "百分位" in reasons[0]
+    assert "一次性" in reasons[1], f"修正句应排第二，实际 {reasons}"
+    assert r.get("adjusted_pe")
+
+
+def test_unknown_tier_wording_stands_alone():
+    """数据不足档前一句刚说「没有可比的历史估值」，再接「但这个市盈率…」读不通。"""
+    from scripts.buffett_signals import describe_cheapness
+    n = normalize(DUOL, "us")
+    r = describe_cheapness(None, "up", [], "zh", normalized=n, reported_pe=16.6)
+    assert r["tier"] == "unknown"
+    joined = " ".join(r["reason"])
+    assert "一次性" in joined
+    assert not any(x.startswith("但") for x in r["reason"]), \
+        f"数据不足档不该出现「但…」：{r['reason']}"
+
+
+def test_warning_leads_with_the_one_off():
+    """一次性收益会改变结论方向，比「下跌不代表跌完了」更要紧，要排在前面。"""
+    from scripts.buffett_signals import describe_cheapness
+    n = normalize(DUOL, "us")
+    r = describe_cheapness(25, "up", [], "zh", normalized=n, reported_pe=16.6)
+    assert r["warning"].startswith("利润里有一笔一次性的退税")
+
+
+def test_clean_stock_card_is_untouched():
+    """没有一次性收益的股票，这张卡必须和改动前一模一样。"""
+    from scripts.buffett_signals import describe_cheapness
+    a = describe_cheapness(25, "up", ["x"], "zh")
+    b = describe_cheapness(25, "up", ["x"], "zh", normalized={}, reported_pe=16.6)
+    assert a == b
+
+
+def test_english_card_has_no_fullwidth_colon():
+    """哥哥看英文版。模板里原来写死了中文全角「：」（US-148 同类欠债）。"""
+    tpl = _tpl('templates/stock/letter.html')
+    assert '{{ t.cheap_note_label }}：' not in tpl, "英文界面不该出现全角冒号"
+
+
+def test_backfill_script_exists_and_is_additive():
+    """新字段是后加的，旧记录都没有 —— 不补数这个功能就是完全不生效的。
+    而且补数只能加字段，不能改写已有值（改写会让以后对不上账）。"""
+    src = _tpl('scripts/backfill_tax_fields.py')
+    assert 'pretax_income' in src and 'tax_provision' in src
+    assert 'UPDATE stock_fundamentals SET annual_json' in src
+    for banned in ('SET pe_current', 'DELETE FROM', 'DROP '):
+        assert banned not in src, f"补数脚本不该做这个：{banned}"

@@ -688,12 +688,32 @@ def present_stock_page(bundle):
 
         _fund = bundle.get("fund") or {}
         _evo = _evolution(_fund, bundle.get("analysis"))
+
+        # US-172/173：这张卡说的「市盈率处在第 X 百分位」是拿账面市盈率算的，
+        # 而账面市盈率会被一次性收益做低（DUOL 账面 16.6 倍、真实约 43 倍）。
+        # 在同一张卡上把它纠正掉 —— 不纠正的话，这张卡会继续把贵的说成便宜。
+        _norm = None
+        try:
+            import json as _json
+
+            from scripts.normalized_earnings import normalize as _normalize
+            _annual = _fund.get("annual")
+            if isinstance(_annual, str):
+                _annual = _json.loads(_annual or "[]")
+            if not _annual:
+                _annual = _json.loads(_fund.get("annual_json") or "[]")
+            _norm = _normalize(_annual, bundle.get("market") or "us")
+        except Exception:
+            _norm = None
+
         cheapness = describe_cheapness(
             (_fund.get("signals") or {}).get("pe_percentile_5y") or _fund.get("pe_percentile_5y"),
             _evo.get("direction"),
             # 英文界面下不塞中文依据（evidence 来自 lifecycle，仍是 zh-only，见 US-148）
             _evo.get("evidence") if _loc == "zh" else [],
             locale=_loc,
+            normalized=_norm,
+            reported_pe=_fund.get("pe_current"),
         )
     except Exception:
         cheapness = None

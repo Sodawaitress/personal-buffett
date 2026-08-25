@@ -564,6 +564,9 @@ _FALLING_KNIFE = "从高点跌了多少，不代表还能跌多少。"  # = _CHE
 
 _CHEAP_STR = {
     "zh": {
+        "adj_pe": "但这个市盈率被一次性收益做低了 —— 真实约 {adj} 倍（账面 {raw} 倍）",
+        "adj_pe_solo": "账面市盈率 {raw} 倍是被一次性收益做低的，真实约 {adj} 倍",
+        "adj_warn": "利润里有一笔一次性的退税，不是生意赚来的。按账面市盈率会觉得它便宜。",
         "unknown_head": "估值数据不足，判断不了贵还是便宜",
         "unknown_reason": "缺少可比的历史估值（常见于亏损公司：市盈率为负，比不了）",
         "unknown_act": "这种情况看市净率和现金流更实在。",
@@ -589,6 +592,9 @@ _CHEAP_STR = {
         "knife": "从高点跌了多少，不代表还能跌多少。",
     },
     "en": {
+        "adj_pe": "But that P/E is flattered by a one-off gain — the real one is about {adj}x (reported {raw}x)",
+        "adj_pe_solo": "The reported P/E of {raw}x is flattered by a one-off gain; the real one is about {adj}x",
+        "adj_warn": "Profit includes a one-off tax gain, not operating earnings. The reported P/E makes it look cheaper than it is.",
         "unknown_head": "Not enough valuation data to say cheap or expensive",
         "unknown_reason": "No comparable valuation history (common for loss-making firms: P/E is negative)",
         "unknown_act": "Price-to-book and cash flow are more useful here.",
@@ -617,7 +623,44 @@ _CHEAP_STR = {
 
 
 def describe_cheapness(pe_percentile, evo_direction: str, evo_evidence: list = None,
-                       locale: str = "zh") -> dict:
+                       locale: str = "zh", normalized: dict = None,
+                       reported_pe=None) -> dict:
+    """US-172/173：在原判断之上，叠一层「这个市盈率是不是被一次性收益做低的」。
+
+    `normalized` 来自 scripts.normalized_earnings.normalize()。没有就完全按原样返回。
+
+    为什么要叠在这张卡上：这张卡本来就在说「当前市盈率处在自己过去 5 年的
+    第 X 百分位」—— 而那个分位是**用被做低的市盈率算的**。不在同一处说清楚，
+    这张卡会继续把贵的说成便宜（DUOL：账面 16.6 倍，真实约 43 倍）。
+    """
+    out = _describe_cheapness(pe_percentile, evo_direction, evo_evidence, locale)
+    if not normalized:
+        return out
+    L = _CHEAP_STR.get(locale) or _CHEAP_STR["zh"]
+    try:
+        from scripts.normalized_earnings import adjusted_pe
+        adj = adjusted_pe(reported_pe, normalized)
+    except Exception:
+        adj = None
+    if adj is None:
+        return out
+    out = dict(out)
+    # 插在第一条「市盈率处在第 X 百分位」之后 —— 紧挨着它要修正的那句话
+    reasons = list(out.get("reason") or [])
+    # 数据不足档前一句刚说「没有可比的历史估值」，再接「但这个市盈率…」读不通，
+    # 换成能独立成立的说法。
+    key = "adj_pe_solo" if out.get("tier") == "unknown" else "adj_pe"
+    line = L[key].format(adj=adj, raw=round(float(reported_pe), 1))
+    reasons.insert(1 if reasons else 0, line)
+    out["reason"] = reasons
+    # 提醒栏优先说这个：它会改变结论方向，比「下跌不代表跌完了」更要紧
+    out["warning"] = L["adj_warn"] + ((" " + out["warning"]) if out.get("warning") else "")
+    out["adjusted_pe"] = adj
+    return out
+
+
+def _describe_cheapness(pe_percentile, evo_direction: str, evo_evidence: list = None,
+                        locale: str = "zh") -> dict:
     """估值分位(0-100，自身历史) × 进化轴方向(up/flat/down) → 四态人话标签。
 
     返回 {tier, headline, reason, warning, actionable}。

@@ -2513,6 +2513,8 @@
 .cheap-double_risk      { border-left-color: #b91c1c; }
 .cheap-good_but_pricey  { border-left-color: #1d4ed8; }
 .cheap-cheap_flat, .cheap-neutral { border-left-color: var(--rule); }
+/* US-173：数据不足也要显示，用最淡的边框表示「这里没有结论」 */
+.cheap-unknown { border-left-color: var(--rule); opacity: .82; }
 .cheap-why { margin-top: 8px; font-size: 13px; }
 .cheap-why summary {
   cursor: pointer; color: var(--ink-muted);

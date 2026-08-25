@@ -50,7 +50,10 @@
     <p class="brief-reasoning">{{ analysis.reasoning }}</p>
 
     {# ── US-141 便宜还是贵，以及便宜是不是因为公司变差 ── #}
-    {% if cheapness and cheapness.tier != 'unknown' %}
+    {# US-173：原来是 tier != 'unknown' 才显示，于是数据不足的股票（本地 13%，
+       多为亏损股：市盈率为负算不出历史分位）整张卡直接消失，页面上什么都不说。
+       用户因此以为功能坏了、找不到这张卡。「我不知道」比「什么都不说」诚实。 #}
+    {% if cheapness %}
     <div class="cheap-card cheap-{{ cheapness.tier }}">
       <div class="cheap-head">
         <span class="cheap-label">{{ t.cheap_title }}</span>
@@ -62,7 +65,7 @@
         {% if cheapness.actionable %}<p class="cheap-act">{{ cheapness.actionable }}</p>{% endif %}
       </details>
       {% if cheapness.warning %}
-      <div class="cheap-warn">{{ t.cheap_note_label }}：{{ cheapness.warning }}</div>
+      <div class="cheap-warn">{{ t.cheap_note_label }}{{ "：" if lang == "zh" else ": " }}{{ cheapness.warning }}</div>
       {% endif %}
     </div>
     {% endif %}
