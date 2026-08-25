@@ -159,3 +159,119 @@ def test_stale_note_renders_before_the_item_list():
         "陈旧提示必须排在明细列表之前"
     css = open(os.path.join(ROOT, 'static', 'css', 'stock.css'), encoding='utf-8').read()
     assert '.insider-stale' in css
+
+
+# ══ US-178：全库排查同一个病 + 按有效期分层 ══════════════
+
+def _sig_src():
+    return open(os.path.join(ROOT, 'radar_app', 'data', 'signal_events.py'),
+                encoding='utf-8').read()
+
+
+def test_labels_do_not_claim_more_time_than_the_data_has():
+    """「持续」是时间跨度的断言，数据必须撑得住。
+
+    · main_flow_in/out ← get_fund_flow 是 `ORDER BY date DESC LIMIT 1`，**一天**
+    · inst_buying/selling ← stock_institute_hold_detail 的**单季度**快照，
+      而且季报本身滞后约 2 个月
+    """
+    src = _sig_src()
+    defs = src[src.index('_SIGNAL_DEFS = {'):src.index('RESONANCE_THRESHOLD')]
+    assert '"主力持续流入"' not in defs and '"主力持续流出"' not in defs
+    assert '"机构持续增持"' not in defs and '"机构持续减持"' not in defs
+    assert '当日' in defs, "当日数据要在标签里说明"
+    assert '最新季报' in defs, "季报数据要在标签里说明"
+
+
+def test_fund_flow_really_is_one_day():
+    """本测试的前提：改了取数窗口就来更新上面那条的措辞。"""
+    src = open(os.path.join(ROOT, 'radar_app', 'data', 'stocks.py'), encoding='utf-8').read()
+    seg = src[src.index('def get_fund_flow(code)'):][:400]
+    assert 'ORDER BY date DESC LIMIT 1' in seg
+
+
+def test_not_priced_claim_carries_the_news_age():
+    """「市场还没反应，你早」说的是**事件当天**没异动，但 _early_warnings_for
+    的窗口是 14 天 —— 13 天前的新闻会带着这句话出现在「今天有变化的」里，
+    而推送里原本连日期都不显示。"""
+    src = open(os.path.join(ROOT, 'scripts', 'stock_report.py'), encoding='utf-8').read()
+    seg = src[src.index('for code, d in _early_warnings_for'):][:1400]
+    assert '天前的消息' in seg, "隔天以上必须带上「几天前」"
+    assert 'age <= 1' in seg, "只有当天/昨天才配说「还没反应」"
+
+
+# ── cluster buy：文献认定最强的形态 ─────────────────────
+
+def _ops(rows):
+    from scripts.insider_moves import detect_cluster_buy
+    return detect_cluster_buy(rows)
+
+
+def test_cluster_buy_detected_on_the_real_case():
+    """奥来德 688378 实例：3 人、5 笔、6 天、约 2.83% 股本 —— 教科书级。
+    妈妈说「这个滞后的消息没有意义」，但按文献这恰恰是最强的一种，
+    而且股价此后从约 24 涨到 62.89。错在呈现的尺度，不在数据。"""
+    rows = [
+        {"holder_name": "轩景泉", "direction": "buy", "ratio_total": 0.99, "change_date": "2026-04-30"},
+        {"holder_name": "轩菱忆", "direction": "buy", "ratio_total": 0.68, "change_date": "2026-04-24"},
+        {"holder_name": "MOON HYOUNG DON", "direction": "buy", "ratio_total": 0.30, "change_date": "2026-04-29"},
+        {"holder_name": "轩景泉", "direction": "buy", "ratio_total": 0.70, "change_date": "2026-04-24"},
+        {"holder_name": "轩菱忆", "direction": "buy", "ratio_total": 0.16, "change_date": "2026-04-30"},
+    ]
+    c = _ops(rows)
+    assert c["n_insiders"] == 3
+    assert c["n_tx"] == 5
+    assert c["span_days"] <= 7
+    assert abs(c["ratio_total"] - 2.83) < 0.01
+
+
+def test_one_person_many_trades_is_not_a_cluster():
+    """cluster 的关键是**多个不同的人**，不是多笔。同一个人分批买是一个决定。"""
+    rows = [{"holder_name": "甲", "direction": "buy", "ratio_total": 0.5,
+             "change_date": f"2026-04-{d}"} for d in (10, 12, 14, 16)]
+    assert _ops(rows) == {}
+
+
+def test_sells_do_not_form_a_cluster():
+    """只看买入。卖出的理由可能很私人（买房、缴税），多人同时卖也可能只是
+    解禁期到了 —— 买入没有这种「不得不」的理由。"""
+    rows = [{"holder_name": n, "direction": "sell", "ratio_total": 0.5,
+             "change_date": "2026-04-20"} for n in ("甲", "乙", "丙")]
+    assert _ops(rows) == {}
+
+
+def test_spread_out_buys_are_not_a_cluster():
+    """窗口之外的分散买入不算 —— cluster 的信息量来自「同时」。"""
+    rows = [{"holder_name": "甲", "direction": "buy", "ratio_total": 0.5, "change_date": "2026-01-10"},
+            {"holder_name": "乙", "direction": "buy", "ratio_total": 0.5, "change_date": "2026-04-20"}]
+    assert _ops(rows) == {}
+
+
+# ── 有效期必须说出来 ────────────────────────────────────
+
+def test_horizon_note_states_the_multi_month_scale():
+    """妈妈按「今天买明天涨」的尺度衡量一个以月计的信号，所以觉得它没意义。
+    文献：小盘股内部人买入，12 个月尺度超额收益约 7.4%。"""
+    from scripts.insider_moves import describe_insider_activity
+    r = describe_insider_activity([{
+        "holder_name": "甲", "shares": 1000000, "ratio_total": 0.99, "ratio_own": 0,
+        "avg_price": 10, "change_date": _ago(30), "reason": "二级市场买卖", "role": "董事长"}])
+    assert "月" in r["horizon_note"]
+    assert "6" in r["horizon_note"] and "12" in r["horizon_note"]
+
+
+def test_card_shows_cluster_above_the_fold():
+    tpl = open(os.path.join(ROOT, 'templates', 'stock', 'signals.html'),
+               encoding='utf-8').read()
+    assert 'insider-cluster' in tpl and 'insider-horizon' in tpl
+    assert tpl.index('insider.cluster_note') < tpl.index('insider-list'), \
+        "最强的形态要排在明细之前"
+    css = open(os.path.join(ROOT, 'static', 'css', 'stock.css'), encoding='utf-8').read()
+    assert '.insider-cluster' in css and '.insider-horizon' in css
+
+
+def test_no_data_still_has_every_field():
+    from scripts.insider_moves import describe_insider_activity
+    r = describe_insider_activity([])
+    for k in ("cluster", "cluster_note", "horizon_note", "stale_note", "days_since"):
+        assert k in r, f"缺字段 {k} —— 模板会 KeyError"

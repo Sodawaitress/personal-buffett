@@ -122,6 +122,10 @@ _STR = {
         "net_buy": "近半年内部人净买入",
         "age_recent": "，最近一笔 {n} 天前",
         "age_months": "，最近一笔已是 {n} 个月前",
+        "cluster": "{n} 位内部人在 {d} 天内先后买入（{tx} 笔，合计 {r:.2f}% 股本）"
+                   " —— 这是内部人信号里最强的形态",
+        "horizon": "这类信号的尺度是**月**，不是天：研究显示内部人买入的超额收益"
+                   "要在 6–12 个月里体现，不是今天买明天涨。",
         "stale_note": "⚠️ 这些交易发生在 {n} 个月前，是**当时**的动作，不代表现在。"
                       "这段时间股价可能已经走完了一轮 —— 当历史看，别当现在的信号。",
         "caveat": "高管卖股票的理由可能很私人（买房、缴税），一笔不说明问题；连续、大额、多人同时卖才值得当信号。",
@@ -142,6 +146,10 @@ _STR = {
         "net_buy": "Insiders were net buyers over the last six months",
         "age_recent": ", most recent {n} days ago",
         "age_months": ", most recent was {n} months ago",
+        "cluster": "{n} insiders bought within {d} days ({tx} transactions, {r:.2f}% of shares outstanding)"
+                   " — the strongest form of insider signal",
+        "horizon": "This signal works on a **multi-month** horizon: the abnormal return from insider "
+                   "buying shows up over 6–12 months, not overnight.",
         "stale_note": "⚠️ These trades happened {n} months ago. They describe what insiders did **then**, "
                       "not now — the price may have already run its course since. Read as history, not a live signal.",
         "caveat": "An executive may sell for entirely personal reasons (a house, a tax bill). One sale means little — repeated, large, or several people selling at once is what matters.",
@@ -167,6 +175,70 @@ def _fmt_amount(shares, avg_price, locale="zh") -> str:
     return f"{amt/1e4:.0f}万元"
 
 
+# US-178：cluster buy —— 多个内部人在短窗口内先后买入。
+#
+# 文献一致认为这是内部人信号里**最强的形态**：
+#   · Lakonishok & Lee (2001)：多人同时买时，预测力显著提升
+#   · Cohen, Malloy & Pomorski (2012)「Decoding Inside Information」：
+#     opportunistic（打破自身惯例的）交易，超额收益约为不加区分信号的 **4 倍**
+#   · OpenInsider 把 cluster_buys 列为 "the strongest open-market signal"
+#   · 小盘股内部人买入，**12 个月**尺度超额收益约 7.4%
+#
+# 最后一条决定了措辞：**这是以月计的信号，不是今天买明天涨。**
+# 用户妈妈看到 4 月的买入说「这个滞后的消息没有意义」—— 她按「日内触发」
+# 的标准衡量它，而我们的页面确实把它摆在了实时信号旁边。错在呈现，不在数据。
+# 实际上奥来德那一条是教科书级的 cluster buy（3 人、5 笔、一周内、约 2.5% 股本），
+# 而股价此后从约 24 涨到 62.89 —— 信号是对的，只是它的尺度是月不是天。
+CLUSTER_WINDOW_DAYS = int(os.environ.get("INSIDER_CLUSTER_DAYS", "30"))
+CLUSTER_MIN_INSIDERS = 2
+
+
+def detect_cluster_buy(ops: list, window_days: int = None) -> dict:
+    """在自主择时的**买入**里找 cluster：window 天内 ≥2 个不同的人。
+
+    只看 buy —— 卖出的理由可能很私人（买房、缴税），多人同时卖也可能是
+    解禁期到了；买入没有这种「不得不」的理由，所以 cluster buy 才是强信号。
+    """
+    from datetime import date as _date
+    w = window_days or CLUSTER_WINDOW_DAYS
+    buys = []
+    for x in ops or []:
+        if x.get("direction") != "buy":
+            continue
+        d = str(x.get("change_date") or "")[:10]
+        try:
+            buys.append((_date.fromisoformat(d), x))
+        except (ValueError, TypeError):
+            continue
+    if len(buys) < CLUSTER_MIN_INSIDERS:
+        return {}
+    buys.sort(key=lambda t: t[0])
+
+    best = {}
+    for i, (d0, _) in enumerate(buys):
+        names, ratio, n_tx, last = set(), 0.0, 0, d0
+        for d1, x in buys[i:]:
+            if (d1 - d0).days > w:
+                break
+            nm = (x.get("holder_name") or "").strip()
+            if nm:
+                names.add(nm)
+            try:
+                ratio += abs(float(x.get("ratio_total") or 0))
+            except (TypeError, ValueError):
+                pass
+            n_tx += 1
+            last = d1
+        if len(names) >= CLUSTER_MIN_INSIDERS and len(names) > len(best.get("names", ())):
+            best = {"names": names, "n_insiders": len(names), "n_tx": n_tx,
+                    "ratio_total": round(ratio, 2), "start": d0.isoformat(),
+                    "end": last.isoformat(), "span_days": (last - d0).days}
+    if not best:
+        return {}
+    best.pop("names", None)
+    return best
+
+
 def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
     """把一只股票近半年的内部人交易讲成人话。moves = DB 行或 fetch 结果。
 
@@ -180,7 +252,8 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         return {"has_data": False, "headline": L["none"], "items": [],
                 "routine_skipped": 0, "caveat": "", "net_direction": None,
                 "latest_date": "", "days_since": None,
-                "is_stale": False, "stale_note": ""}
+                "is_stale": False, "stale_note": "",
+                "cluster": {}, "cluster_note": "", "horizon_note": ""}
 
     op, routine = [], 0
     for m in rows:
@@ -235,6 +308,7 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
     # 而且列表按重要性排序、不按时间，所以用户得自己一条条看日期才发现。
     #
     # 这和「股价还没反应」是同一个病：**把过去发生过的事讲成现在的状态**。
+    cluster = detect_cluster_buy(op)
     days_since = None
     latest_date = ""
     for x in op:
@@ -268,6 +342,11 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         "routine_note": L["routine_note"].format(n=routine) if routine and op else "",
         "caveat": L["caveat"] if op else "",
         "net_direction": net,
+        "cluster": cluster,
+        "cluster_note": (L["cluster"].format(n=cluster["n_insiders"], d=max(1, cluster["span_days"]),
+                                             tx=cluster["n_tx"], r=cluster["ratio_total"])
+                         if cluster else ""),
+        "horizon_note": L["horizon"] if op else "",
         "latest_date": latest_date,
         "days_since": days_since,
         "is_stale": is_stale,

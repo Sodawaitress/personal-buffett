@@ -2633,3 +2633,29 @@
 }
 :root:not([data-theme="light"]) .insider-stale { border-left-color: #fbbf24; }
 :root[data-theme="dark"] .insider-stale { border-left-color: #fbbf24; }
+
+
+/* US-178：cluster buy —— 内部人信号里最强的形态，值得比标题更醒目 */
+.insider-cluster {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 8px 0 4px;
+  padding: 7px 9px;
+  border-radius: 4px;
+  background: rgba(21, 128, 61, 0.08);
+  border-left: 2px solid #15803d;
+  color: var(--ink);
+}
+:root:not([data-theme="light"]) .insider-cluster { border-left-color: #4ade80; }
+:root[data-theme="dark"] .insider-cluster { border-left-color: #4ade80; }
+
+/* 有效期：解释「怎么用」，不是「是什么」，所以低调但必须在 */
+.insider-horizon {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  margin: 8px 0 0;
+  padding-left: 9px;
+  border-left: 1px dashed var(--rule);
+}

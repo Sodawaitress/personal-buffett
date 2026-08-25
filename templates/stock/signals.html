@@ -148,6 +148,12 @@
       {# US-177：陈旧提示排在列表**之前** —— 妈妈是自己一条条看日期才发现
          「这个内部人士买入是 4 月」的。列表按重要性排序、不按时间，
          所以时效必须在人开始读明细之前就说清楚。 #}
+      {# US-178：cluster buy 是内部人信号里最强的形态（多人短窗口内同时买），
+         文献一致（Lakonishok&Lee 2001 / Cohen 2012 / OpenInsider）。
+         它比标题更该被看见，所以排在标题正下方。 #}
+      {% if insider.cluster_note %}
+      <div class="insider-cluster">★ {{ insider.cluster_note }}</div>
+      {% endif %}
       {% if insider.stale_note %}
       <div class="insider-stale">{{ insider.stale_note }}</div>
       {% endif %}
@@ -163,6 +169,12 @@
       {% endif %}
       {% if insider.routine_note %}
       <div class="insider-routine">{{ insider.routine_note }}</div>
+      {% endif %}
+      {# 有效期放在明细之后、注意事项之前 —— 它解释的是「怎么用这条信息」，
+         而不是「这条信息是什么」。用户妈妈说「这个滞后的消息没有意义」，
+         正是因为她按「今天买明天涨」的尺度衡量一个以月计的信号。 #}
+      {% if insider.horizon_note %}
+      <div class="insider-horizon">{{ insider.horizon_note }}</div>
       {% endif %}
       {% if insider.caveat %}
       <div class="insider-caveat"><b>{{ t.insider_caveat_label }}：</b>{{ insider.caveat }}</div>
