@@ -289,10 +289,33 @@ def build_user_push_payload(user_id: int, date_str: str, extra_user_ids=()):
     # ── 收集候选：(section, item_key, state_hash, 正文行) ──
     cand = []
 
+    # US-178：「市场还没反应，你早」说的是**事件当天**市场没异动（AR z 值），
+    # 但 _early_warnings_for 的窗口是 **14 天** —— 一条 13 天前的新闻会带着
+    # 这句话出现在「今天有变化的」里，而这 13 天市场早就反应完了。
+    # 而且推送里**不显示日期**，读的人根本不知道这是哪天的事。
+    #
+    # 和 US-177 是同一个病（把过去的观测讲成现在的状态），只是这次
+    # 越界的是「事件日」和「今天」之间那段距离。
+    from datetime import date as _date
     for code, d in _early_warnings_for(codes):
-        tail = "（市场还没反应，你早）" if d.get("market_status") == "not_priced" else ""
+        ev_date = str(d.get("date") or d.get("event_date") or "")[:10]
+        age = None
+        try:
+            age = (_date.today() - _date.fromisoformat(ev_date)).days
+        except (ValueError, TypeError):
+            age = None
+        if d.get("market_status") == "not_priced":
+            if age is None:
+                tail = "（当时市场没反应）"
+            elif age <= 1:
+                tail = "（市场还没反应，你早）"
+            else:
+                # 隔了几天就只能说「当天」，不能再说「还没」
+                tail = f"（{age} 天前的消息，**当天**市场没反应）"
+        else:
+            tail = ""
         text = d.get("explain") or d.get("title", "")
-        cand.append(("early", f"early:{code}", state_hash(text),
+        cand.append(("early", f"early:{code}", state_hash(text, tail),
                      f"· {_stock_name(code)}：{text}{tail}"))
 
     for code, conclusion, is_lead in _signal_leads_for(codes):
