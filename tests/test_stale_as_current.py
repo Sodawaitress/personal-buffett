@@ -301,3 +301,46 @@ def test_no_data_still_has_every_field():
     r = describe_insider_activity([])
     for k in ("cluster", "cluster_note", "horizon_note", "stale_note", "days_since"):
         assert k in r, f"缺字段 {k} —— 模板会 KeyError"
+
+
+# ── US-185：「当日」这个词有歧义 ────────────────────────
+
+def test_label_does_not_say_the_ambiguous_dangri():
+    """US-178 我把标签改成「主力资金流入（当日）」，本意是说**窗口**
+    （这个数只覆盖一天）。用户妈妈读成了**新鲜度**（这是今天的数）——
+    而页面同时显示「前兆数据 15 小时前」「1天前」，于是她问：
+
+        「还有这个你有说明他这个都是当天的资金波动」
+        「那我怎么去更新它呢？这个好像都是我一打开你就有，
+         而不是我能更新的了的是吧」
+
+    同一个词两种意思，正是我们一直在修的病 —— 只不过这次是我造成的。
+    改法：标签只说**是什么**，日期放进 detail 说**是哪天的**。
+    """
+    src = _sig_src()
+    defs = src[src.index('_SIGNAL_DEFS = {'):src.index('RESONANCE_THRESHOLD')]
+    # 只看会显示给用户的标签行；注释里复盘这段历史是应该留的
+    labels = "\n".join(ln for ln in defs.splitlines()
+                        if '"label"' in ln)
+    assert '（当日）' not in labels, "「当日」有歧义：窗口 or 新鲜度？"
+    assert '"主力资金流入"' in labels and '"主力资金流出"' in labels
+
+
+def test_fund_flow_detail_carries_the_actual_date():
+    """给具体日期就不用猜「当日」指哪天。"""
+    import radar_app.data.signal_events as se
+    sig = se._detect_signals("X", {}, {"main_ratio": 7.2, "main_net": 0.52,
+                                       "date": "2026-08-26"}, {})
+    assert sig, "应检出主力流入"
+    assert "08-26" in sig[0]["detail"]
+    assert "收盘" in sig[0]["detail"]
+
+
+def test_missing_date_degrades_quietly():
+    """没有日期时不能编一个 —— 少说一句，不说错话。"""
+    import radar_app.data.signal_events as se
+    sig = se._detect_signals("X", {}, {"main_ratio": -5.2, "main_net": -0.36,
+                                       "date": None}, {})
+    assert sig
+    d = sig[0]["detail"]
+    assert "收盘" not in d and "净占比" in d

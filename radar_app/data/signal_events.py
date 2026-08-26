@@ -63,16 +63,23 @@ _SIGNAL_DEFS = {
     "survey_visit":      {"label": "机构专程调研",  "direction": "attention", "weight": 2},
     "survey_active":     {"label": "机构调研活跃",  "direction": "attention", "weight": 1},
     "participation_spike": {"label": "机构参与度突增", "direction": "bull", "weight": 2},
-    # US-178：标签必须落在数据的窗口之内。
-    # get_fund_flow 是 `ORDER BY date DESC LIMIT 1` —— **一天**的数据，
-    # 说「持续」是时间断言，数据撑不住。
-    "main_flow_in":      {"label": "主力资金流入（当日）", "direction": "bull", "weight": 2},
+    # US-178：标签必须落在数据的窗口之内。get_fund_flow 是
+    # `ORDER BY date DESC LIMIT 1` —— **一天**的数据，说「持续」撑不住。
+    #
+    # US-185：但「（当日）」这个词本身有歧义。我写的时候指的是**窗口**
+    # （这个数只覆盖一天），用户妈妈读成了**新鲜度**（这是今天的数）——
+    # 而页面同时显示「前兆数据 15 小时前」「1天前」，于是她问
+    # 「那我怎么去更新它呢？」。同一个词两种意思，正是我们一直在修的病。
+    #
+    # 改法：标签只说**是什么**，日期放进 detail 说**是哪天的**。
+    # 具体日期没有歧义，也不需要她去猜「当日」指哪天。
+    "main_flow_in":      {"label": "主力资金流入", "direction": "bull", "weight": 2},
     # 来自 stock_institute_hold_detail 的**单个季度**快照（`持股比例增幅 > 0` 的家数），
     # 且季报本身滞后约 2 个月。说「持续」同样越界。
     "inst_buying":       {"label": "机构增持（最新季报）", "direction": "bull", "weight": 1},
     "margin_surge_bull": {"label": "融资余额快速增加","direction": "bull", "weight": 1},
     "short_down":        {"label": "融券做空在减少", "direction": "bull", "weight": 1},
-    "main_flow_out":     {"label": "主力资金流出（当日）", "direction": "bear", "weight": 2},
+    "main_flow_out":     {"label": "主力资金流出", "direction": "bear", "weight": 2},
     "inst_selling":      {"label": "机构减持（最新季报）", "direction": "bear", "weight": 1},
     "short_up":          {"label": "融券做空在增加", "direction": "bear", "weight": 2},
     "margin_surge_bear": {"label": "融资余额快速减少","direction": "bear", "weight": 1},
@@ -329,7 +336,13 @@ def _detect_signals(code: str, precursor: dict, fund_flow: dict, signals: dict,
             mr = float(main_ratio)
             mn = float(main_net or 0)
             if abs(mr) >= 3:
-                detail = f"净占比 {mr:+.1f}%，净{'流入' if mn > 0 else '流出'} {abs(mn):.2f} 亿"
+                # US-185：把**数据实际是哪天的**写出来。资金流是逐日数据，
+                # 而扫描每天只跑一次 —— 「当日」到底指今天还是上一个交易日，
+                # 用户没法从字面判断，只能去猜。给日期就不用猜。
+                _d = str(fund_flow.get("date") or "")[:10]
+                _when = f"{_d[5:].replace('-', '-')} 收盘 · " if len(_d) == 10 else ""
+                detail = (f"{_when}净占比 {mr:+.1f}%，"
+                          f"净{'流入' if mn > 0 else '流出'} {abs(mn):.2f} 亿")
                 if mr > 0:
                     add("main_flow_in",  detail)
                 else:
