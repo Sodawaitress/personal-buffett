@@ -111,15 +111,40 @@ def run_tender_refresh(codes, days=30):
     except Exception:
         pass
     hit = tenders_for(codes, days=days)
+
+    # US-183：存下来时就把「这单占年营收多少」算好。
+    #
+    # 用户妈妈问「能不能看订单量」—— 方向对，但「快」争不来（公告一出所有人
+    # 同时看到）。能争的是**「谁先看懂」**：同样一笔 1.2 亿的订单，
+    # 对营收 10 亿的公司是 12%（大事），对营收 1000 亿的是 0.12%（噪音）。
+    # 差一百倍，而绝大多数人不会当场去算。
+    import db as _db
+    from scripts.order_size import size_up
+
+    def _annual(code):
+        try:
+            return (_db.get_fundamentals(code) or {}).get("annual") or []
+        except Exception:
+            return []
+
     events = []
     for code, tenders in hit.items():
+        ann = _annual(code)
         for t in tenders[:3]:   # 每股最多存3条最新
+            detail = {"url": t["url"], "name": t["name"]}
+            try:
+                sz = size_up(t["title"], ann)
+            except Exception:
+                sz = {}
+            if sz:
+                # 标题没写金额时 size_up 返回空 —— 那就只存标题，不编数
+                detail["order_size"] = sz
             events.append({
                 "code": code,
                 "event_type": t.get("etype", "tender_win"),
                 "event_date": t["date"],
-                "summary": t["title"],
-                "detail": {"url": t["url"], "name": t["name"]},
+                "summary": t["title"] + (f"（{sz['text']}）" if sz else ""),
+                "detail": detail,
             })
     n = save_catalyst_events(events, source="cninfo_tender") if events else 0
     return {"codes_with_tender": len(hit), "events_saved": n}
