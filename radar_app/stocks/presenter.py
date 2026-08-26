@@ -718,6 +718,29 @@ def present_stock_page(bundle):
     except Exception:
         cheapness = None
 
+    # US-186：在手订单（合同负债）——不发中标公告的公司，订单藏在这里
+    order_book = None
+    if market == "cn":
+        try:
+            from scripts.order_book import (annual_revenue_yuan,
+                                            order_book_signal,
+                                            revenue_yoy_from_annual)
+            _f = bundle.get("fund") or {}
+            _ob = (_f.get("signals") or {}).get("order_book") or {}
+            _ann = _f.get("annual") or []
+            if _ob.get("contract_liab"):
+                _s = order_book_signal(
+                    _ob.get("contract_liab"), _ob.get("contract_liab_yoy"),
+                    revenue_yoy_from_annual(_ann), annual_revenue_yuan(_ann),
+                    industry=(bundle.get("stock") or {}).get("sector") or "",
+                    locale=_loc,
+                )
+                if _s:
+                    order_book = {**_s, "report_date": _ob.get("report_date", ""),
+                                  "field": _ob.get("field", "")}
+        except Exception:
+            order_book = None
+
     # US-179/180：信息传到哪一层了 —— 页面顶部那条链
     #
     # 渐进披露：这一条是「摘要层」，下面的各区块是「下钻层」。
@@ -825,6 +848,7 @@ def present_stock_page(bundle):
         "position_insight": position_insight,
         "cheapness": cheapness,
         "signal_chain": signal_chain,
+        "order_book": order_book,
         "insider": insider,
         # US-94
         "analyst_consensus": bundle.get("analyst_consensus"),

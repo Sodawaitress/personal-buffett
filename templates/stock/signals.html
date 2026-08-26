@@ -183,6 +183,40 @@
     </div>
     {% endif %}
 
+    {# ── US-186 在手订单（合同负债）──────────────────────────────
+       用户妈妈问「能不能看订单量」。中标公告只覆盖靠投标做生意的行业
+       （US-184），而消费/医药/科技/锂电这些公司的订单藏在财报的
+       「合同负债」里：客户下单预付 → 合同负债增加；交付确认收入 →
+       转成营收。所以它是**已经收了钱、还没交货**的部分。
+
+       关键不是它涨了多少，是它**比营收快多少** —— 一起涨只说明生意在
+       长大，不含额外信息。 ── #}
+    {% if order_book and order_book.text %}
+    <div class="obook obook-{{ order_book.tier }}">
+      <div class="obook-head">
+        <span class="obook-title">在手订单</span>
+        {% if order_book.report_date %}<span class="obook-date">{{ order_book.report_date }} 财报</span>{% endif %}
+      </div>
+      <div class="obook-text">{{ order_book.text }}</div>
+      {% if order_book.gap is not none and order_book.tier not in ('too_small', 'unknown_gap') %}
+      <div class="obook-bars">
+        <div class="obook-row">
+          <span class="obook-label">在手订单同比</span>
+          {# |v| < 1% 显示「基本持平」——「-0%」既难看又误导 #}
+          <span class="obook-val {{ '' if order_book.cl_yoy|abs < 1 else ('up' if order_book.cl_yoy > 0 else 'down') }}">{% if order_book.cl_yoy|abs < 1 %}基本持平{% else %}{{ '%+.0f'|format(order_book.cl_yoy) }}%{% endif %}</span>
+        </div>
+        <div class="obook-row">
+          <span class="obook-label">营收同比</span>
+          <span class="obook-val {{ '' if order_book.rev_yoy|abs < 1 else ('up' if order_book.rev_yoy > 0 else 'down') }}">{% if order_book.rev_yoy|abs < 1 %}基本持平{% else %}{{ '%+.0f'|format(order_book.rev_yoy) }}%{% endif %}</span>
+        </div>
+      </div>
+      {% endif %}
+      <div class="obook-note">合同负债 = 客户已付钱、公司还没交货的部分。
+        它<b>比营收快</b>，说明订单在积累、收入还没体现；<b>比营收慢</b>，说明在消化存量。
+        这是季报数据，一个季度更新一次。</div>
+    </div>
+    {% endif %}
+
     {# ── US-142 自己人在买还是在卖：最直接的领先信号，与机构调研同层 ── #}
     {% if insider %}
     {# US-180：陈旧的要**看起来**陈旧（"stale data should look stale"），

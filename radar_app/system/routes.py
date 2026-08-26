@@ -181,6 +181,17 @@ def register_system_routes(app):
                 errors.append(f"industry_em: {e}")
                 _note(f"行业映射失败: {e}")
 
+            # US-186 在手订单（合同负债）：季报数据，一季度才变一次，
+            # 所以走「渐进收敛」—— 每轮只抓一批最久没刷过的，跨天铺满。
+            # 排在贵活之前（US-174/184 的教训：贵的会把后面的饿死）。
+            try:
+                from scripts.order_book import refresh as refresh_order_book
+                ob = refresh_order_book()
+                _note(f"在手订单: {ob}")
+            except Exception as e:
+                errors.append(f"order_book: {e}")
+                _note(f"在手订单失败: {e}")
+
             # US-142 内部人增减持：同为东财源，只能在 Fly 悉尼跑，搭这趟车。
             try:
                 import db

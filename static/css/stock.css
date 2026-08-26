@@ -2766,3 +2766,39 @@
 .chain-why ul { margin: 6px 0 0 16px; padding: 0; }
 .chain-why li { margin: 3px 0; color: var(--ink-muted); line-height: 1.6; }
 .chain-why-note { margin: 6px 0 0; color: var(--ink-faint); line-height: 1.6; }
+
+
+/* ── US-186 在手订单（合同负债）──────────────────────────
+   属于「公司本身」那一层：真实经营变化，不是市场情绪。
+   慢（季报频率）但真。 */
+.obook {
+  border: 1px solid var(--rule);
+  border-left-width: 3px;
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  background: var(--paper);
+}
+.obook-building      { border-left-color: #15803d; }
+.obook-mild_building { border-left-color: #4d7c4f; }
+.obook-draining      { border-left-color: #b91c1c; }
+.obook-steady,
+.obook-too_small,
+.obook-unknown_gap   { border-left-color: var(--rule); }
+
+.obook-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+.obook-title { font-size: 12px; font-weight: 600; color: var(--ink); }
+.obook-date { font-size: 10px; color: var(--ink-faint); }
+.obook-text { font-size: 13px; line-height: 1.65; color: var(--ink); }
+
+.obook-bars { margin: 8px 0 0; }
+.obook-row { display: flex; align-items: baseline; gap: 8px; font-size: 12px; padding: 2px 0; }
+.obook-label { width: 6.4em; color: var(--ink-faint); flex-shrink: 0; }
+.obook-val { font-variant-numeric: tabular-nums; font-weight: 600; }
+.obook-val.up { color: #15803d; }
+.obook-val.down { color: #b91c1c; }
+
+.obook-note {
+  font-size: 11px; line-height: 1.6; color: var(--ink-muted);
+  margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--rule);
+}
