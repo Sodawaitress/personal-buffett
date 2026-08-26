@@ -510,6 +510,23 @@ def audit_one_off_profits(conn, existing):
             "suspects": suspects, "sample": hits[:15]}
 
 
+def audit_event_sources(conn, existing):
+    """stock_events 各来源有多少数据 —— 用户妈妈问「能不能看订单量」，
+    而中标信号（US-131，source='cninfo_tender'）搭的是 precursor_scan 的车，
+    那条车最近一直超时/失败。先确认生产上到底有没有数据，再谈能不能用。"""
+    if "stock_events" not in existing:
+        return {}
+    try:
+        rows = _rows(conn, """
+            SELECT COALESCE(source,'(空)') AS src, COUNT(*) AS n,
+                   MAX(event_date) AS latest
+            FROM stock_events GROUP BY 1 ORDER BY 2 DESC
+        """)
+        return {"sources": [(r["src"], r["n"], str(r["latest"])[:10]) for r in rows]}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -584,11 +601,12 @@ def main():
         em_conv = audit_em_convergence(conn, existing)
         scan_jobs = audit_scan_jobs(conn, existing)
         one_off = audit_one_off_profits(conn, existing)
+        ev_src = audit_event_sources(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -725,6 +743,14 @@ def main():
             print(f"    {code:10} PE {str(pe)[:6]:7} 净利率 {prev}% → {cur}%  营收×{rg}")
         if one_off["with_tax_fields"] == 0:
             print(f"  ⚠️  还没有任何一只有税前利润字段 —— 精确判据要等 fetch 跑过才生效")
+
+    if ev_src:
+        print(f"\n── stock_events 各来源（US-131 中标/订单信号在不在）──")
+        for src, n, latest in ev_src.get("sources", []):
+            print(f"    {src:20} {n:6} 条   最新 {latest}")
+        if not any(s == "cninfo_tender" for s, _, _ in ev_src.get("sources", [])):
+            print(f"  ⚠️  cninfo_tender（中标/订单）**一条都没有** —— "
+                  f"它搭 precursor_scan 的车，而那条车最近一直超时")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
