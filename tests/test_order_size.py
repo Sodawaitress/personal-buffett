@@ -119,3 +119,40 @@ def test_order_belongs_to_the_company_layer_not_the_money_layer():
     """
     from radar_app.data.signal_layers import LAYER_ORDER
     assert LAYER_ORDER[0] == "company"
+
+
+# ── US-184：抓取本身的两个毛病 ──────────────────────────
+
+def _tender_src():
+    return open(os.path.join(os.path.dirname(__file__), '..',
+                             'scripts', 'tender_signals.py'), encoding='utf-8').read()
+
+
+def test_sedate_is_actually_used():
+    """旧注释写「不传 seDate（"~"格式巨潮不认→空）」—— 2026-08-27 实测这句不成立。
+
+    不带日期时「中标」全库 totalpages=614（约 18400 条），翻 25 页只拿到 4%，
+    而且排序未必是时间倒序，落在近 30 天里的只剩零头。实测对比：
+        不带 seDate：73 只公司 / 88 条
+        带 seDate  ：75 只公司 / **188 条**（耗时相当）
+    """
+    src = _tender_src()
+    # 只看真实代码行，注释里复盘那段历史是应该留的
+    code_lines = [ln for ln in src.splitlines()
+                  if ln.strip() and not ln.strip().startswith('#')]
+    body = "\n".join(code_lines)
+    assert '_query(keyword, se, page, column)' in body, "seDate 没传进去"
+    assert 'se = f"{(date.today() - timedelta(days=days)).isoformat()}~' in body
+
+
+def test_tender_runs_before_the_slow_loop():
+    """中标原本挂在 209 只循环**后面**。那个循环按小时计、job 120 分钟被判死，
+    于是中标一次都轮不到 —— 和 US-174「行业映射排第三被饿死」同一个毛病。
+    次序按「谁最容易被饿死」排：这段约 30 秒，该排最前。"""
+    src = open(os.path.join(os.path.dirname(__file__), '..',
+                            'scripts', 'precursor_scan.py'), encoding='utf-8').read()
+    # 只看 run_precursor_scan 函数体内 —— 文件别处也有同名的推导式变量
+    fn = src[src.index('def run_precursor_scan('):]
+    assert fn.count('run_tender_refresh(codes') == 1, "搬动时留下了重复块"
+    assert fn.index('run_tender_refresh(codes') < fn.index('for i, code in enumerate(codes):'), \
+        "中标必须排在逐股扫描循环之前，否则循环超时它就永远轮不到"

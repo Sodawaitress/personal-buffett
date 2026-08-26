@@ -50,9 +50,24 @@ def _query(searchkey, se_date, page, column, retries=3):
     raise last
 
 
-def fetch_recent_tenders(days=30, max_pages=25):
+def fetch_recent_tenders(days=30, max_pages=40):
     """近 N 天全市场胚胎期公告(中标/合同/扩产) → {code: [{code,name,title,date,url,etype}]}。
-    巨潮按发布时间倒序返回；不传 seDate（"~"格式巨潮不认→空），改代码里按日期过滤+提前停。"""
+
+    ## US-184：seDate 是能用的，旧注释是错的
+
+    原注释写「不传 seDate（"~"格式巨潮不认→空）」，于是改成不带日期、翻 25 页
+    再按日期过滤。2026-08-27 实测这句话不成立 ——
+    `seDate="2026-07-28~2026-08-27"` 巨潮**认**，而且返回完整。
+
+    不带日期时「中标」全库 `totalpages=614`（约 18400 条），翻 25 页只拿到 4%，
+    而且排序未必是时间倒序，所以落在近 30 天里的只剩零头。实测对比：
+
+        不带 seDate：73 只公司 / 88 条
+        带 seDate  ：75 只公司 / **188 条**   （耗时相当）
+
+    条数翻倍，成本不变。
+    """
+    se = f"{(date.today() - timedelta(days=days)).isoformat()}~{date.today().isoformat()}"
     cutoff = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
     out = {}
     seen = set()
@@ -60,7 +75,7 @@ def fetch_recent_tenders(days=30, max_pages=25):
         for column in ("szse", "sse"):
             for page in range(1, max_pages + 1):
                 try:
-                    j = _query(keyword, "", page, column)
+                    j = _query(keyword, se, page, column)
                 except Exception:
                     break
                 anns = j.get("announcements") or []

@@ -101,6 +101,19 @@ def run_precursor_scan(codes: list[str] | None = None) -> dict:
     print(f"  precursor_scan: 开始扫描 {len(codes)} 只 A 股…")
     start = time.time()
 
+    # ── 中标/订单信号（US-131，巨潮）——**必须排在逐股扫描之前**（US-184）
+    #
+    # 原来它挂在 209 只循环的**后面**。那个循环按小时计，job 在 120 分钟被判死，
+    # 于是中标一次都轮不到 —— 和 US-174 里「行业映射排第三被饿死」是同一个毛病，
+    # 只是换了个地方。次序按「谁最容易被饿死」排：便宜的先跑（这段约 30 秒）。
+    tender = {"codes_with_tender": 0, "events_saved": 0}
+    try:
+        from scripts.tender_signals import run_tender_refresh
+        tender = run_tender_refresh(codes, days=30)
+        print(f"  precursor_scan: 中标刷新 {tender}")
+    except Exception as e:
+        print(f"  precursor_scan: 中标刷新失败 — {e}")
+
     # 1. 调研：一次批量拉完（快，约 1 分钟）
     print("  precursor_scan: [1/3] 机构调研活动…")
     surveys = _call_with_timeout(fetch_survey_activity, set(codes), timeout=120, fallback={})
@@ -140,15 +153,6 @@ def run_precursor_scan(codes: list[str] | None = None) -> dict:
 
     elapsed = time.time() - start
     print(f"  precursor_scan: 完成 {len(codes)} 只，活跃 {active_count} 只，耗时 {elapsed:.0f}s")
-
-    # 搭车刷新中标信号（US-131，巨潮，🥚胚胎期）——同在 Fly 悉尼、巨潮可达
-    tender = {"codes_with_tender": 0, "events_saved": 0}
-    try:
-        from scripts.tender_signals import run_tender_refresh
-        tender = run_tender_refresh(codes, days=30)
-        print(f"  precursor_scan: 中标刷新 {tender}")
-    except Exception as e:
-        print(f"  precursor_scan: 中标刷新失败 — {e}")
 
     return {"scanned": len(codes), "active": active_count, "tender": tender}
 
