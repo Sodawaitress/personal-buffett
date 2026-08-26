@@ -1,33 +1,5 @@
 [
   {
-    "code": "002415",
-    "name": "海康威视",
-    "date": "2026-08-25",
-    "advice": "已持仓可继续持有；未持仓可等回调至¥34.00附近分批建仓，止损¥32.00。空头认输 + 中期派现催化。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 67,
-      "short_change_pct": -79.4,
-      "survey_count_30d": 2,
-      "price": 34.75
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-08-25",
-    "advice": "适合组合防御底仓；今日-1%是加仓机会，¥33附近分批，止损¥31。机构5次特定对象调研，中报双位数增长。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 16.9,
-      "survey_count_30d": 6,
-      "price": 33.56
-    }
-  },
-  {
     "code": "300394",
     "name": "天孚通信",
     "date": "2026-08-25",
@@ -58,15 +30,71 @@
   {
     "code": "000001",
     "name": "平安银行",
-    "date": "2026-08-25",
-    "advice": "适合防御底仓；¥11.5分批建仓，止损¥10.80。派现在9月中前后到账，可以吃股息。融券异常属对冲不必吓到。",
+    "date": "2026-08-26",
+    "advice": "未持仓可¥11.60附近分批建仓，止损¥10.80。融券+183.5%属对冲（表格第1行：融券增+超预期+调研有），不是看空。派现9月中前后到账，可吃股息。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
       "quant_score": 73,
-      "short_change_pct": 190.7,
+      "short_change_pct": 183.5,
       "survey_count_30d": 2,
-      "price": 11.59
+      "price": 11.73
+    }
+  },
+  {
+    "code": "002415",
+    "name": "海康威视",
+    "date": "2026-08-26",
+    "advice": "未持仓可¥34.80附近分批建仓，止损¥32.50。空头认输 -79.1%（表格第4行：融券减+有调研）+ Grade A 好公司便宜 + 深市中期分红催化。已持仓继续持有。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": -79.1,
+      "survey_count_30d": 2,
+      "price": 34.78
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-08-26",
+    "advice": "适合防御底仓；¥33.50–¥34.20分批建仓，止损¥31.50。5次特定对象调研（最强持续性信号），价格未充分反映。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": -1.0,
+      "survey_count_30d": 5,
+      "price": 34.04
+    }
+  },
+  {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-08-26",
+    "advice": "未持仓可¥60–¥62分批建仓，止损¥57。30天11次调研全场最高，业绩短期-5.35%已消化，机构在等下一波拐点。设3段建仓：现价40%，回调¥58加30%，破¥57止损。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": 0.2,
+      "survey_count_30d": 11,
+      "price": 61.9
+    }
+  },
+  {
+    "code": "300760",
+    "name": "迈瑞医疗",
+    "date": "2026-08-26",
+    "advice": "不用追，可¥160–¥162分批慢慢布局，止损¥152。ROE 21.6%+便宜的医疗器械龙头，长期防御逻辑，适合半年以上持有周期。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 8.0,
+      "survey_count_30d": 0,
+      "price": 161.05
     }
   }
 ]
