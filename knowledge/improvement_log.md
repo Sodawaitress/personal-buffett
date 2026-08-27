@@ -5018,3 +5018,85 @@ Day 1 数据太少，仅作起点确认。
 - **PushNotification 内容聚焦**：08-26 Wed Routine 完成 · Gate ① PASS 1.66h（宽通道）+ Gate ② PASS 真新签名 + Gate ③ 环境拦截延续（修订建议 14 升级 P1） · 5 选覆盖银行×2/安防/工控/医疗 · 重点推 平安银行（融券 +183.5% 对冲教材）+ 海康威视（空头认输 -79.1%）+ 汇川技术（11 次调研全场最高） · 今日不推名单：天华新能（融券 +590% 全市场最极端 + 数据质量警告） · 08-25 两条预言 Day 1 都在预期区间内 · picks_open 台账 7 条
 
 ---
+
+## 2026-08-27 (Thu) · Run 1 · 双 Gate FAIL · 服务器数据未刷新
+
+### 门控裁决
+
+**Gate ②（价格签名） FAIL** — 今日签名 `bbd0aa8295f837a62b46148e20084fcc`
+与 `knowledge/last_price_signature.txt` 里 08-26 的签名**完全一致**，说明
+Fly.io pipeline 从昨天到今天没有推进任何价格。这是服务器**空跑或未跑**的
+铁证 —— 昨晚 CST 23:20 前后本该产出的 08-27 新快照没落地。
+
+**Gate ①（时效）FAIL** — 走**严格 20h 通道**（因 Gate ② FAIL）。
+- `generated_at`: 2026-08-26T11:39:21Z （= CST 08-26 19:39）
+- 现在 UTC: 2026-08-27T13:14:42Z （= CST 08-27 21:14）
+- 年龄: **25.59h > 20h（严格阈值）→ FAIL**
+
+**求值顺序印证**：先 Gate ② 后 Gate ① — Gate ② 直接说清楚是「pipeline 停摆」
+而不是「pipeline 慢一步」，Gate ① 才用严格阈值把老快照拦下。US-149 的双通道
+设计在今天派上了用场。
+
+**Step 2.5 回访 · 无翻转** — 服务端 `pick_reversals=[]`（正确：昨天刚推的
+5 只 + 前日延续的 2 只，都没到 21 天回访窗口的翻转触发条件；且今日无新数据
+可算翻转）。
+
+**Step 3-5 五选正文** — **按规程不写**。CLAUDE_ROUTINE：
+> 「宁可发'今日无分析'让妈妈失望一次，也不要发基于陈旧数据的
+> '有信心的错误分析'，后者会让妈妈追加错误的仓位。2026-07-01 事故的核心教训
+> 是：**给了反向的信心比什么都不发更危险**。」
+
+### 事件根因（观察，不下结论）
+
+**snapshot 快照仓库最后 commit 时间**从 08-26 起没有推进 —— 说明 Fly.io 上
+真正负责生成 daily_snapshot.json 的服务（应是 digest-svc 或 precursor scanner
+产物后的 commit 步骤）今天没跑成功。可能：
+- 8 月 27 日恰是 A 股非交易日？—— 排除，2026-08-27 是周四。
+- Fly.io 调度出问题？—— 需要运维查 `fly logs -a personal-buffett`（不在 Routine
+  职责内）。
+- **US-138/139 分服务排班之后** market-svc / analyze-svc / radar-svc / digest-svc
+  链条中某一环今日未产 artifact，快照没有被 commit（US-138 的老雷区：任何
+  一环挂掉且推送方无告警，用户就是无声失联）。
+
+### Routine 的动作
+
+- **`output/daily_push.txt`** = 一条「服务器数据未刷新，今日无分析」的告知
+  推送。wechat-push.yml 会照发给妈妈，让她今天知道系统状态，而不是拿到基于
+  昨日快照的假五选。
+- **`output/predictions_pending.json`** = **不动**。08-26 写入的 2 条预言
+  （海康 up / 汇川 sideways）尚未被 Fly.io 消费，保留原样等下一次服务器活过来
+  后自然入库；今天没有新预言也不该新增。
+- **`output/picks_open.json`** = **不动**。今天没有新五选，就没有新条目要
+  加。7 条现存台账保留，21 天窗口自然到期即可（08-25 的 2 条到 09-15 会
+  滚出窗口）。
+- **`knowledge/last_price_signature.txt`** = **不覆盖**。签名与昨日相同，
+  写回是无害的 no-op，但保留原值可让明天的 Gate ② 继续用同一基准正确判定
+  「服务器是否终于推进」。
+
+### 学习积累
+
+- **本次是 CLAUDE_ROUTINE 定义的「双 Gate 双 FAIL」情形的首次真正触发**（08-06
+  事故后设的阈值终于抓到了一次真停摆），流程无缝走通。
+- **教训验证**：Gate ② 的签名指纹是「服务器空跑」的唯一识别方式；如果只有
+  Gate ①（时效），会因排班分服务后的常态延时（22.15h）而误判，US-149 的双
+  通道设计救了今天不会误伤。
+- **下一步 ops 需要跟进**：Fly.io 的 5 服务链条（fetch-svc → analyze-svc →
+  radar-svc → market-svc → digest-svc → push-svc）今天卡在哪一环，需要看
+  `flyctl logs` 或对应 GHA workflow 的 08-27 运行状态。**Routine 不修**，
+  但 PushNotification 会把这个信号送出去。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` = `bbd0aa8295f837a62b46148e20084fcc`（不变）
+- `output/predictions_pending.json` = 保留 08-26 的 2 条（海康 up / 汇川 sideways），
+  等 Fly.io 恢复后入库
+- `output/picks_open.json` = 保留 7 条（08-25 延续 2 条 + 08-26 五选 5 条），
+  21 天窗口内
+- `output/daily_push.txt` = 单条「服务器数据未刷新」告知（wechat-push.yml 会推给妈妈）
+- **PushNotification 内容聚焦**：08-27 Thu Routine 触发 · **双 Gate FAIL**：
+  Gate ② 签名与 08-26 完全一致（服务器空跑）+ Gate ① 25.59h > 20h 严格阈值。
+  今日不推五选，只发「服务器未刷新」告知给妈妈。**根因需运维查 Fly.io**：
+  digest-svc / precursor scanner 或 commit snapshot 步骤今天没跑成功，
+  8-27（周四交易日）新快照未落地。
+
+---
