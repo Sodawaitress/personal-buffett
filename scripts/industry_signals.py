@@ -82,26 +82,56 @@ MIN_DAYS_FOR_SIGNAL = 5
 # ── 数据源适配器：两套体系并行，各自独立 ────────────────────
 
 _EM_HEADERS = {"User-Agent": "Mozilla/5.0"}
-_EM_BASE = "https://push2.eastmoney.com/api/qt/clist/get"
+# US-188：主机按可用性排序，逐个降级。
+#
+# 2026-08-28 实测：`push2.eastmoney.com` 这台**两地都 502**
+# （Fly 悉尼 + 新西兰住宅 IP），所以不是 IP 信誉问题，是那台主机本身挂了。
+# 编号镜像（1./7./19./82.push2）第一发能通、第二发就 RemoteDisconnected ——
+# 按 IP 限流，和 US-158 当初的判断一致，不能当主源。
+#
+# `push2delay`（**延时行情**主机）完全可用，而且限流宽松得多：
+# 实测连打 8 发全过，而 push2 的记录是「打 6 发就 502」。
+#
+# **对行业分类来说延时毫无影响** —— 我们要的是「这只股票属于哪个板块」，
+# 不是实时价格。板块归属一天都不会变一次。
+#
+# ⚠️ 一个会静默出错的差异：push2 返回的 `diff` 是**列表**，
+# push2delay 返回的是**字典**（键 "0","1","2"）。下面的 isinstance
+# 分支两种都吃得下 —— 换主机时最容易在这里拿到空结果还不报错。
+_EM_HOSTS = (
+    "https://push2delay.eastmoney.com/api/qt/clist/get",   # 主源：延时，限流宽
+    "https://push2.eastmoney.com/api/qt/clist/get",        # 备用：实时，常 502
+    "https://82.push2.eastmoney.com/api/qt/clist/get",     # 备用：编号镜像，限流紧
+)
+_EM_BASE = _EM_HOSTS[0]
 
 
 def _em_get(params: str, tries: int = 3):
-    """东财 push2 请求（带退避）。push2his 历史主机是被拒的，push2 可用。"""
+    """东财行情请求。按主机可用性逐个降级，每台各退避重试。"""
     import time
 
     import requests
-    for i in range(tries):
-        try:
-            r = requests.get(f"{_EM_BASE}?{params}", timeout=25, headers=_EM_HEADERS)
-            r.raise_for_status()
-            d = r.json()
-            diff = (d.get("data") or {}).get("diff")
-            items = list(diff.values()) if isinstance(diff, dict) else (diff or [])
-            return items, (d.get("data") or {}).get("total")
-        except Exception:
-            if i == tries - 1:
-                raise
-            time.sleep(3 * (i + 1))
+    last = None
+    for base in _EM_HOSTS:
+        for i in range(tries):
+            try:
+                r = requests.get(f"{base}?{params}", timeout=25, headers=_EM_HEADERS)
+                r.raise_for_status()
+                d = r.json()
+                diff = (d.get("data") or {}).get("diff")
+                items = list(diff.values()) if isinstance(diff, dict) else (diff or [])
+                if items:
+                    return items, (d.get("data") or {}).get("total")
+                # 200 但空 —— 换主机，别把空结果当成「这个板块没有成分股」
+                last = ValueError(f"{base} 返回 200 但 data 为空")
+                break
+            except Exception as e:
+                last = e
+                if i == tries - 1:
+                    break
+                time.sleep(3 * (i + 1))
+    if last:
+        raise last
     return [], None
 
 
