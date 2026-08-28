@@ -226,6 +226,85 @@ def backfill() -> dict:
     return {"filled_5d": done[5], "filled_10d": done[10], "filled_20d": done[20]}
 
 
+# ── 行业集中度（US-193）───────────────────────────────
+#
+# routine 里早就写着「不要五只都是同一行业 / 至少一只防御型」，
+# **但那只是一句文字，没有任何东西在检查**。
+#
+# 2026-08-28 实测超标：澜起（DDR5 接口）· 胜宏（AI-PCB）· 海光（国产 CPU）
+# —— 名字完全不同，但**赚的是同一条产业链的钱**（AI 服务器）。
+# 看起来买了 5 只，实际 3 只押的是同一件事：一条砍单消息就能让它们一起跌。
+#
+# 这个检查**不禁止集中**（有时一条主线确实特别好），只让它**可见** ——
+# 尤其是能看出「是不是连续几周都押在同一条线上」，那才是真危险。
+_CONCENTRATION_LIMIT = 0.40      # 单一行业占比超过这个数就标出来
+_DEFENSIVE = ("医药", "生物", "食品", "饮料", "白酒", "公用", "电力",
+              "燃气", "水务", "商业", "零售", "银行", "保险")
+
+
+def _industry_of(c, code: str):
+    """取行业名。stock_industry_map 存了两种格式（JSON / 裸字符串），
+    都要吃得下 —— 只认一种会静默漏掉一半。"""
+    r = c.execute("SELECT industry FROM stock_industry_map WHERE code=:c",
+                  {"c": str(code).zfill(6)}).fetchone()
+    if not r or not r["industry"]:
+        return None
+    raw = str(r["industry"]).strip()
+    if raw.startswith("{"):
+        try:
+            return (json.loads(raw) or {}).get("name")
+        except Exception:
+            return None
+    return raw
+
+
+def concentration(pick_date: str) -> dict:
+    """某一天五选的行业分布。返回 {} 表示行业数据不足 —— **不猜**。"""
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT code, name FROM pick_ledger WHERE pick_date=:d",
+            {"d": pick_date}).fetchall()
+        if not rows:
+            return {}
+        buckets, unknown = {}, 0
+        for r in rows:
+            ind = _industry_of(c, r["code"])
+            if not ind:
+                unknown += 1
+                continue
+            buckets.setdefault(ind, []).append(r["name"] or r["code"])
+    known = sum(len(v) for v in buckets.values())
+    if known < 3:
+        # 行业数据覆盖不到一半，算出来的集中度没有意义
+        return {"date": pick_date, "n": len(rows), "unknown": unknown,
+                "insufficient": True}
+    top_ind, top_names = max(buckets.items(), key=lambda kv: len(kv[1]))
+    top_pct = round(len(top_names) / known, 2)
+    has_def = any(any(k in ind for k in _DEFENSIVE) for ind in buckets)
+    return {
+        "date": pick_date, "n": len(rows), "unknown": unknown,
+        "industries": {k: len(v) for k, v in
+                       sorted(buckets.items(), key=lambda kv: -len(kv[1]))},
+        "top_industry": top_ind, "top_pct": top_pct,
+        "over_limit": top_pct > _CONCENTRATION_LIMIT,
+        "has_defensive": has_def,
+        "warn": (f"最大单一行业「{top_ind}」占 {int(top_pct*100)}%"
+                 f"（{len(top_names)}/{known}）"
+                 + ("" if has_def else " · 且没有防御型")
+                 if top_pct > _CONCENTRATION_LIMIT or not has_def else ""),
+    }
+
+
+def concentration_history(days: int = 30) -> list:
+    """最近几次五选的集中度 —— **连续押同一条线**才是真危险，
+    单看一天看不出来。"""
+    with _conn() as c:
+        ds = [r["d"] for r in c.execute(
+            "SELECT DISTINCT pick_date AS d FROM pick_ledger "
+            "ORDER BY d DESC LIMIT :n", {"n": days}).fetchall()]
+    return [concentration(d) for d in ds]
+
+
 def scorecard(horizon: int = 10) -> dict:
     """成绩单。报**超额收益**，不报绝对胜率 ——
     没有基准的胜率会误导（US-189：绝对 +1.2% 其实跑输大盘 +4%）。"""
@@ -259,6 +338,53 @@ def scorecard(horizon: int = 10) -> dict:
         "by_reason": {t: {"n": len(v), "avg_excess": round(sum(v) / len(v), 2)}
                       for t, v in sorted(by_tag.items(),
                                          key=lambda kv: -len(kv[1]))},
+    }
+
+
+def history_for(code: str) -> dict:
+    """某只股票的推荐历史 —— 给**股票详情页**用（US-194）。
+
+    台账原本只是后台账本，用户看不见。但它恰恰是最该被看见的东西：
+    「这只股票被推荐过几次、当时说了什么、后来涨了还是跌了」。
+
+    这是反馈闭环对用户可见的那一半 —— 没有它，用户只能看到「今天推荐了
+    什么」，看不到「上次推荐的后来怎么样」。
+    """
+    with _conn() as c:
+        rows = c.execute("""
+            SELECT pick_date, entry_price, advice, reason_tags,
+                   ret_5d, ret_10d, ret_20d, excess_5d, excess_10d, excess_20d
+            FROM pick_ledger WHERE code=:c ORDER BY pick_date DESC
+        """, {"c": str(code).zfill(6)}).fetchall()
+    if not rows:
+        return {}
+    items, resolved = [], []
+    for r in rows:
+        tags = []
+        try:
+            tags = json.loads(r["reason_tags"] or "[]")
+        except Exception:
+            pass
+        # 优先报**超额**：绝对涨跌会被大盘带着走，说明不了选股本身
+        best_h = next((h for h in (20, 10, 5) if r[f"excess_{h}d"] is not None), None)
+        it = {
+            "date": r["pick_date"],
+            "entry": r["entry_price"],
+            "advice": (r["advice"] or "")[:80],
+            "tags": tags,
+            "horizon": best_h,
+            "excess": r[f"excess_{best_h}d"] if best_h else None,
+            "ret": r[f"ret_{best_h}d"] if best_h else None,
+        }
+        items.append(it)
+        if it["excess"] is not None:
+            resolved.append(float(it["excess"]))
+    return {
+        "count": len(items),
+        "items": items[:5],
+        "resolved": len(resolved),
+        "avg_excess": round(sum(resolved) / len(resolved), 2) if resolved else None,
+        "beat": sum(1 for x in resolved if x > 0),
     }
 
 

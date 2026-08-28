@@ -75,6 +75,16 @@ def main():
             bf = ledger_backfill()
             run.tick()
             print(f"  ✅ 五选台账：落账 {ing.get('added', 0)} 条 · 回填 {bf}")
+            # US-193：行业集中度 —— routine 里「不要五只同一行业」原本只是
+            # 一句没人检查的文字。2026-08-28 实测超标（AI 服务器链 3/5）而
+            # 无人发现。这里不禁止集中，只让它可见。
+            try:
+                from scripts.pick_ledger import concentration_history
+                for c2 in concentration_history(3):
+                    if c2 and c2.get("warn"):
+                        print(f"  ⚠️ 五选集中度 {c2['date']}：{c2['warn']}")
+            except Exception as e:
+                print(f"  ⚠️ 集中度检查失败（不影响台账）: {e}")
         except Exception as e:
             print(f"  ⚠️ 五选台账失败（不影响快照）: {e}")
 

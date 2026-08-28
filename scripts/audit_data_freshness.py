@@ -732,11 +732,16 @@ def main():
         picks = audit_pick_accuracy(conn, existing)
         bench = audit_benchmark_feasibility(conn, existing)
         card = audit_scorecard(conn, existing)
+        try:
+            from scripts.pick_ledger import concentration_history
+            conc = concentration_history(8)
+        except Exception:
+            conc = []
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -899,6 +904,22 @@ def main():
         print(f"  8 月有 ≥30 只股票同日价格的交易日：{len(ds)} 天")
         for d, n, a in ds[:8]:
             print(f"    {d}  {n:3} 只  等权平均 {a:+.2f}%")
+
+    if conc:
+        print(f"\n── 五选的行业集中度（US-193）──")
+        print(f"  买 5 只的意义是「不把鸡蛋放一个篮子」。但名字不同 ≠ 篮子不同 ——")
+        print(f"  三只 AI 服务器链的股票，一条砍单消息就会让它们一起跌。")
+        for c2 in conc:
+            if not c2:
+                continue
+            if c2.get("insufficient"):
+                print(f"    {c2['date']}  行业数据不足（{c2['n']} 只中 {c2['unknown']} 只无行业）")
+                continue
+            flag = "⚠️ " if c2.get("over_limit") or not c2.get("has_defensive") else "   "
+            inds = " · ".join(f"{k}{v}" for k, v in c2["industries"].items())
+            print(f"  {flag}{c2['date']}  {inds}")
+            if c2.get("warn"):
+                print(f"        {c2['warn']}")
 
     if card:
         print(f"\n── 五选成绩单（US-192，基准=自选池等权平均）──")

@@ -8,6 +8,46 @@
 
   <div class="stock-page-body">
 
+    {# ── US-194 这只股票被五选推荐过几次、后来怎么样 ──────────────
+       台账原本只是后台账本，用户看不见。但它恰恰最该被看见：
+       没有它，用户只知道「今天推荐了什么」，不知道「上次推荐的后来怎么样」。
+
+       报**超额收益**而不是绝对涨跌 —— 绝对涨跌会被大盘带着走，
+       说明不了选股本身（US-189：绝对 +1.2% 其实跑输大盘 +4%）。 ── #}
+    {% if pick_history and pick_history.count %}
+    <div class="pickhist">
+      <div class="pickhist-head">
+        <span class="pickhist-title">这只股票被推荐过 {{ pick_history.count }} 次</span>
+        {% if pick_history.avg_excess is not none %}
+        <span class="pickhist-avg {{ 'up' if pick_history.avg_excess > 0 else 'down' }}">
+          平均跑赢大盘 {{ '%+.1f'|format(pick_history.avg_excess) }}%
+        </span>
+        {% else %}
+        <span class="pickhist-pending">结果还没出来</span>
+        {% endif %}
+      </div>
+      <ul class="pickhist-list">
+        {% for it in pick_history['items'] %}
+        <li class="pickhist-row">
+          <span class="pickhist-date">{{ it.date }}</span>
+          <span class="pickhist-tags">
+            {% for t in it.tags %}<span class="pickhist-tag">{{ t }}</span>{% endfor %}
+            {% if not it.tags %}<span class="pickhist-tag pickhist-tag-none">—</span>{% endif %}
+          </span>
+          <span class="pickhist-res">
+            {% if it.excess is not none %}
+            <b class="{{ 'up' if it.excess > 0 else 'down' }}">{{ '%+.1f'|format(it.excess) }}%</b>
+            <span class="pickhist-h">{{ it.horizon }}日超额</span>
+            {% else %}<span class="pickhist-h">等结果</span>{% endif %}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="pickhist-note">「超额」= 这只股票的涨跌 <b>减去</b> 同期自选池的平均涨跌。
+        大盘涨的时候人人都涨，只有跑赢平均才说明选得对。结果由系统自动回填，不经人工。</div>
+    </div>
+    {% endif %}
+
     {# ══ US-179/180 信息传导链：这一页的骨架 ══════════════════════════
        这条链原本只是 i18n 里的一句说明文字：
            「研究 → 参与 → 资金 → 价格：调研和机构参与度动得最早」

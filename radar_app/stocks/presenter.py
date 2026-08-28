@@ -718,6 +718,16 @@ def present_stock_page(bundle):
     except Exception:
         cheapness = None
 
+    # US-194：这只股票被五选推荐过几次、结果如何。
+    # 台账原本只是后台账本，用户看不见 —— 但它恰恰最该被看见：
+    # 没有它，用户只知道「今天推荐了什么」，不知道「上次推荐的后来怎么样」。
+    pick_history = None
+    try:
+        from scripts.pick_ledger import history_for
+        pick_history = history_for(bundle["code"]) or None
+    except Exception:
+        pick_history = None
+
     # US-186：在手订单（合同负债）——不发中标公告的公司，订单藏在这里
     order_book = None
     if market == "cn":
@@ -849,6 +859,7 @@ def present_stock_page(bundle):
         "cheapness": cheapness,
         "signal_chain": signal_chain,
         "order_book": order_book,
+        "pick_history": pick_history,
         "insider": insider,
         # US-94
         "analyst_consensus": bundle.get("analyst_consensus"),

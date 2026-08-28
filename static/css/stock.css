@@ -2802,3 +2802,45 @@
   font-size: 11px; line-height: 1.6; color: var(--ink-muted);
   margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--rule);
 }
+
+
+/* ── US-194 推荐历史 ────────────────────────────────────
+   台账对用户可见的那一半。放在页面最上面 ——
+   「上次推荐的后来怎么样」比今天的信号更该先看到。 */
+.pickhist {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ink-faint);
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin: 0 0 14px;
+  background: var(--paper);
+}
+.pickhist-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+.pickhist-title { font-size: 12px; font-weight: 600; color: var(--ink); }
+.pickhist-avg { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pickhist-avg.up { color: #15803d; }
+.pickhist-avg.down { color: #b91c1c; }
+.pickhist-pending { font-size: 11px; color: var(--ink-muted); }
+
+.pickhist-list { list-style: none; margin: 0; padding: 0; }
+.pickhist-row {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 12px; padding: 3px 0;
+  border-top: 1px dashed var(--rule);
+}
+.pickhist-row:first-child { border-top: none; }
+.pickhist-date { width: 5.6em; flex-shrink: 0; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.pickhist-tags { flex: 1; min-width: 0; display: flex; gap: 4px; flex-wrap: wrap; }
+.pickhist-tag {
+  font-size: 10px; padding: 0 5px; border-radius: 7px;
+  background: var(--rule); color: var(--ink-muted); white-space: nowrap;
+}
+.pickhist-tag-none { opacity: .5; }
+.pickhist-res { flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.pickhist-res .up { color: #15803d; }
+.pickhist-res .down { color: #b91c1c; }
+.pickhist-h { font-size: 10px; color: var(--ink-faint); margin-left: 3px; }
+.pickhist-note {
+  font-size: 11px; line-height: 1.6; color: var(--ink-muted);
+  margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--rule);
+}
