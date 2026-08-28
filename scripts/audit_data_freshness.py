@@ -609,6 +609,51 @@ def audit_benchmark_feasibility(conn, existing):
                      for r in rows]}
 
 
+def audit_scorecard(conn, existing):
+    """US-192 五选成绩单 —— 报**超额收益**，不报绝对胜率。
+
+    没有基准的胜率会误导：US-189 那次算出 68.6% 看着不错，
+    但同期大盘 +4%，绝对 +1.2% 其实是**跑输**的。
+    """
+    if "pick_ledger" not in existing:
+        return {}
+    out = {}
+    for h in (5, 10, 20):
+        rows = _rows(conn, f"""
+            SELECT code, name, pick_date, ret_{h}d AS r, excess_{h}d AS e, reason_tags
+            FROM pick_ledger WHERE ret_{h}d IS NOT NULL
+        """)
+        ex = [float(r["e"]) for r in rows if r["e"] is not None]
+        if not rows:
+            continue
+        import json as _json
+        by_tag = {}
+        for r in rows:
+            if r["e"] is None:
+                continue
+            try:
+                tags = _json.loads(r["reason_tags"] or "[]") or ["（无标签）"]
+            except Exception:
+                tags = ["（无标签）"]
+            for t in tags:
+                by_tag.setdefault(t, []).append(float(r["e"]))
+        out[h] = {
+            "n": len(rows), "n_bench": len(ex),
+            "beat": sum(1 for x in ex if x > 0),
+            "avg_excess": round(sum(ex) / len(ex), 2) if ex else None,
+            "avg_raw": round(sum(float(r["r"]) for r in rows) / len(rows), 2),
+            "by_reason": {t: (len(v), round(sum(v) / len(v), 2))
+                          for t, v in sorted(by_tag.items(), key=lambda kv: -len(kv[1]))},
+            "best": sorted([(r["pick_date"], r["code"], r["name"], float(r["e"]))
+                            for r in rows if r["e"] is not None],
+                           key=lambda x: -x[3])[:3],
+            "worst": sorted([(r["pick_date"], r["code"], r["name"], float(r["e"]))
+                             for r in rows if r["e"] is not None],
+                            key=lambda x: x[3])[:3],
+        }
+    return out
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -686,11 +731,12 @@ def main():
         ev_src = audit_event_sources(conn, existing)
         picks = audit_pick_accuracy(conn, existing)
         bench = audit_benchmark_feasibility(conn, existing)
+        card = audit_scorecard(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -853,6 +899,23 @@ def main():
         print(f"  8 月有 ≥30 只股票同日价格的交易日：{len(ds)} 天")
         for d, n, a in ds[:8]:
             print(f"    {d}  {n:3} 只  等权平均 {a:+.2f}%")
+
+    if card:
+        print(f"\n── 五选成绩单（US-192，基准=自选池等权平均）──")
+        for h, v in sorted(card.items()):
+            if v["avg_excess"] is None:
+                print(f"  {h:2}日：{v['n']} 条，还没有基准可比")
+                continue
+            print(f"  {h:2}日：{v['n']} 条 · 绝对 {v['avg_raw']:+.2f}% · "
+                  f"**超额 {v['avg_excess']:+.2f}%** · 跑赢基准 {v['beat']}/{v['n_bench']}")
+            for t, (n, e) in list(v["by_reason"].items())[:5]:
+                print(f"       {t:8} n={n:2}  超额 {e:+.2f}%")
+            if v["best"]:
+                d, c2, nm, e = v["best"][0]
+                print(f"       最好 {d} {c2} {nm or ''} {e:+.1f}%")
+            if v["worst"]:
+                d, c2, nm, e = v["worst"][0]
+                print(f"       最差 {d} {c2} {nm or ''} {e:+.1f}%")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
