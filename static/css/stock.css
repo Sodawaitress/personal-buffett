@@ -2844,3 +2844,12 @@
   font-size: 11px; line-height: 1.6; color: var(--ink-muted);
   margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--rule);
 }
+
+
+/* US-195：人数够但赌注太小的 cluster —— 不能用「最强形态」的绿色 */
+.insider-cluster.insider-cluster-weak {
+  background: var(--rule);
+  border-left-color: var(--ink-faint);
+  font-weight: 400;
+  color: var(--ink-muted);
+}

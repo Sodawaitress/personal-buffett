@@ -344,3 +344,71 @@ def test_missing_date_degrades_quietly():
     assert sig
     d = sig[0]["detail"]
     assert "收盘" not in d and "净占比" in d
+
+
+# ── US-195：cluster buy 要看赌注，不只看人数 ────────────
+
+def _cluster(n_people, ratio_each, shares, price, own=20):
+    from scripts.insider_moves import detect_cluster_buy
+    return detect_cluster_buy([
+        {"holder_name": f"人{i}", "direction": "buy", "ratio_total": ratio_each,
+         "ratio_own": own, "shares": shares, "avg_price": price,
+         "change_date": "2026-08-26"} for i in range(n_people)])
+
+
+def test_many_people_tiny_stake_is_not_the_strongest_form():
+    """妈妈实拍误报：页面标「★ 8 位内部人在 1 天内先后买入（合计 0.02% 股本）
+    —— 这是内部人信号里最强的形态」。
+
+    对照奥来德那次**真** cluster：3 人、**2.83%** 股本 —— 差 140 倍。
+
+    生产实测过去三个月全部 15 组「cluster」占股本都 ≤0.13%，其中
+    600458 是 **11 个人合计 0.000%** —— 那不可能是主动看多，
+    是员工持股/股权激励行权。
+
+    文献里 cluster buy 强，是因为「多人**用真金白银**同时下注」。
+    US-183 只判人数和窗口，**漏掉了最关键的那一维**。
+    """
+    c = _cluster(8, 0.003, 100000, 14.5)
+    assert c["n_insiders"] == 8
+    assert c["is_strong"] is False, "人数够但赌注太小，不能叫最强形态"
+
+
+def test_real_cluster_is_still_strong():
+    """不能矫枉过正 —— 奥来德那种真 cluster 必须仍然判强。"""
+    from scripts.insider_moves import detect_cluster_buy
+    c = detect_cluster_buy([
+        {"holder_name": n, "direction": "buy", "ratio_total": r, "ratio_own": 30,
+         "shares": s, "avg_price": 10, "change_date": "2026-04-24"}
+        for n, r, s in (("甲", 0.99, 1e7), ("乙", 0.68, 7e6), ("丙", 0.30, 3e6))])
+    assert c["is_strong"] is True
+
+
+def test_either_ratio_or_amount_qualifies():
+    """小盘股 0.5% 股本可能金额不大，大盘股 5000 万可能占比很小 ——
+    单用一条会漏掉其中一类。"""
+    assert _cluster(2, 0.30, 1000, 100)["is_strong"] is True          # 占比够
+    assert _cluster(2, 0.001, 3000000, 20)["is_strong"] is True       # 金额够
+    assert _cluster(2, 0.001, 1000, 100)["is_strong"] is False        # 都不够
+
+
+def test_weak_cluster_wording_is_honest():
+    from scripts.insider_moves import describe_insider_activity
+    r = describe_insider_activity([
+        {"holder_name": f"人{i}", "shares": 100000, "ratio_total": 0.003,
+         "ratio_own": 20, "avg_price": 14.5, "change_date": "2026-08-26",
+         "reason": "二级市场买卖", "role": "高管"} for i in range(8)])
+    note = r["cluster_note"]
+    assert "最强" not in note
+    assert "金额太小" in note and "员工持股" in note
+
+
+def test_weak_cluster_does_not_get_the_strong_visual():
+    """绿色 + ★ 是「最强形态」的视觉。弱的用同一套 = 把噪音包装成信号。"""
+    tpl = open(os.path.join(ROOT, 'templates', 'stock', 'signals.html'),
+               encoding='utf-8').read()
+    assert 'insider-cluster-weak' in tpl
+    seg = tpl[tpl.index('insider.cluster_note'):][:400]
+    assert 'is_strong' in seg, "★ 只给强的"
+    css = open(os.path.join(ROOT, 'static', 'css', 'stock.css'), encoding='utf-8').read()
+    assert '.insider-cluster.insider-cluster-weak' in css

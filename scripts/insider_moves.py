@@ -122,8 +122,11 @@ _STR = {
         "net_buy": "近半年内部人净买入",
         "age_recent": "，最近一笔 {n} 天前",
         "age_months": "，最近一笔已是 {n} 个月前",
-        "cluster": "{n} 位内部人在 {d} 天内先后买入（{tx} 笔，合计 {r:.2f}% 股本）"
+        "cluster": "{n} 位内部人在 {d} 天内先后买入（{tx} 笔，合计 {r:.2f}% 股本，约 {amt}）"
                    " —— 这是内部人信号里最强的形态",
+        "cluster_weak": "{n} 位内部人在 {d} 天内先后买入，但合计只有 {r:.2f}% 股本"
+                        "（约 {amt}）—— 人数够了但**金额太小**，"
+                        "更像员工持股或例行增持，不当强信号看",
         "horizon": "怎么用这条：内部人买入的超额收益**大半在头一个月就兑现了**"
                    "（约 1/4 在头 5 天、约 1/2 在头 1 个月），而公告本身还要滞后几周。"
                    "所以它更适合当作**「自己人当时怎么看这家公司」的基本面证据**，"
@@ -150,8 +153,11 @@ _STR = {
         "net_buy": "Insiders were net buyers over the last six months",
         "age_recent": ", most recent {n} days ago",
         "age_months": ", most recent was {n} months ago",
-        "cluster": "{n} insiders bought within {d} days ({tx} transactions, {r:.2f}% of shares outstanding)"
+        "cluster": "{n} insiders bought within {d} days ({tx} transactions, {r:.2f}% of shares outstanding, ~{amt})"
                    " — the strongest form of insider signal",
+        "cluster_weak": "{n} insiders bought within {d} days, but only {r:.2f}% of shares outstanding "
+                        "(~{amt}) — enough people, **too little money**. Looks like an employee "
+                        "share plan or routine top-up, not a strong signal",
         "horizon": "How to read this: most of the abnormal return from insider buying lands **within the "
                    "first month** (~1/4 in the first 5 days, ~1/2 in the first month), and the filing "
                    "itself lags by weeks. Treat it as evidence of **what insiders thought at the time**, "
@@ -200,6 +206,30 @@ def _fmt_amount(shares, avg_price, locale="zh") -> str:
 CLUSTER_WINDOW_DAYS = int(os.environ.get("INSIDER_CLUSTER_DAYS", "30"))
 CLUSTER_MIN_INSIDERS = 2
 
+# ── US-195：光有人数不算 cluster，还要看**赌注多大** ────────────────
+#
+# 2026-08-29 用户妈妈实拍误报：页面标
+#   「★ 8 位内部人在 1 天内先后买入（8 笔，合计 **0.02%** 股本）
+#     —— 这是内部人信号里最强的形态」
+#
+# 对照奥来德那次**真**的 cluster：3 人、5 笔、**2.83%** 股本 —— **差 140 倍**。
+#
+# 生产实测过去三个月全部 15 组「cluster」的占股本比例：
+#
+#     002049  8 人   0.022%
+#     688551  2 人   0.128%   ← 全场最高
+#     600458 11 人   0.000%   ← 11 个人，占股本 0.000%
+#     002601  4 人   0.007%
+#
+# **没有一组接近 2.83%。** 600458 那条尤其说明问题：11 个人同时买、
+# 合计占股本 0.000% —— 这不可能是主动看多，是员工持股计划/股权激励行权。
+#
+# 文献里 cluster buy 之所以是最强形态，恰恰因为「多人**用真金白银**同时
+# 下注」。0.02% 不是真金白银。US-183 只判了「人数 ≥2」和「窗口 ≤30 天」，
+# **漏掉了最关键的那一维**。
+CLUSTER_MIN_RATIO = float(os.environ.get("INSIDER_CLUSTER_MIN_RATIO", "0.5"))
+CLUSTER_MIN_AMOUNT = float(os.environ.get("INSIDER_CLUSTER_MIN_AMOUNT", "5e7"))
+
 
 def detect_cluster_buy(ops: list, window_days: int = None) -> dict:
     """在自主择时的**买入**里找 cluster：window 天内 ≥2 个不同的人。
@@ -224,7 +254,7 @@ def detect_cluster_buy(ops: list, window_days: int = None) -> dict:
 
     best = {}
     for i, (d0, _) in enumerate(buys):
-        names, ratio, n_tx, last = set(), 0.0, 0, d0
+        names, ratio, n_tx, last, amount = set(), 0.0, 0, d0, 0.0
         for d1, x in buys[i:]:
             if (d1 - d0).days > w:
                 break
@@ -237,13 +267,25 @@ def detect_cluster_buy(ops: list, window_days: int = None) -> dict:
                 pass
             n_tx += 1
             last = d1
+            try:
+                amount += abs(float(x.get("shares") or 0)) * float(x.get("avg_price") or 0)
+            except (TypeError, ValueError):
+                pass
         if len(names) >= CLUSTER_MIN_INSIDERS and len(names) > len(best.get("names", ())):
             best = {"names": names, "n_insiders": len(names), "n_tx": n_tx,
-                    "ratio_total": round(ratio, 2), "start": d0.isoformat(),
-                    "end": last.isoformat(), "span_days": (last - d0).days}
+                    "ratio_total": round(ratio, 2), "amount": amount,
+                    "start": d0.isoformat(), "end": last.isoformat(),
+                    "span_days": (last - d0).days}
     if not best:
         return {}
     best.pop("names", None)
+
+    # US-195：赌注够大才叫「最强形态」。两条任一达标即可 ——
+    # 小盘股 0.5% 股本可能金额不大，大盘股 5000 万可能占比很小，
+    # 单用一条会漏掉其中一类。
+    big_ratio = best["ratio_total"] >= CLUSTER_MIN_RATIO
+    big_amount = best.get("amount", 0) >= CLUSTER_MIN_AMOUNT
+    best["is_strong"] = bool(big_ratio or big_amount)
     return best
 
 
@@ -361,9 +403,12 @@ def describe_insider_activity(moves: list, locale: str = "zh") -> dict:
         "caveat": L["caveat"] if op else "",
         "net_direction": net,
         "cluster": cluster,
-        "cluster_note": (L["cluster"].format(n=cluster["n_insiders"], d=max(1, cluster["span_days"]),
-                                             tx=cluster["n_tx"], r=cluster["ratio_total"])
-                         if cluster else ""),
+        "cluster_note": (
+            L["cluster" if cluster.get("is_strong") else "cluster_weak"].format(
+                n=cluster["n_insiders"], d=max(1, cluster["span_days"]),
+                tx=cluster["n_tx"], r=cluster["ratio_total"],
+                amt=_fmt_amount(cluster.get("amount", 0) / 1.0, 1.0, locale) or "金额不详")
+            if cluster else ""),
         "horizon_note": L["horizon"] if op else "",
         "latest_date": latest_date,
         "days_since": days_since,

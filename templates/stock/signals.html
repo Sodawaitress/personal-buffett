@@ -285,8 +285,11 @@
       {# US-178：cluster buy 是内部人信号里最强的形态（多人短窗口内同时买），
          文献一致（Lakonishok&Lee 2001 / Cohen 2012 / OpenInsider）。
          它比标题更该被看见，所以排在标题正下方。 #}
+      {# US-195：强弱要分开。绿色 + ★ 是「最强形态」的视觉，
+         人数够但金额太小的那种不能用同一套 —— 否则就是把噪音
+         包装成信号（妈妈实拍：8 人 0.02% 股本被标成「最强形态」）。 #}
       {% if insider.cluster_note %}
-      <div class="insider-cluster">★ {{ insider.cluster_note }}</div>
+      <div class="insider-cluster{{ '' if insider.cluster and insider.cluster.is_strong else ' insider-cluster-weak' }}">{% if insider.cluster and insider.cluster.is_strong %}★ {% endif %}{{ insider.cluster_note }}</div>
       {% endif %}
       {% if insider.stale_note %}
       <div class="insider-stale">{{ insider.stale_note }}</div>
