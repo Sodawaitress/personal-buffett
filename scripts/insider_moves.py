@@ -42,7 +42,13 @@ STALE_DAYS = int(os.environ.get("INSIDER_STALE_DAYS", "60"))
 
 # 惯例性原因：与「看空/看多公司」无关的机械交易 → 无信息量
 _ROUTINE_REASONS = ("股权激励", "行权", "解禁", "送转", "分红", "继承", "赠与",
-                    "司法", "划转", "换股", "要约")
+                    # US-200：员工持股计划也属这一类。研究上二者的共同点是
+                    # **不是个人看多的表达** —— 员工持股计划参与面广、
+                    # 无硬性业绩考核、侧重「利益共享」；股权激励有强制考核、
+                    # 按预设条件行权。两者都是**公司安排的制度**，
+                    # 不是「某个人今天觉得便宜所以自掏腰包买」。
+                    "员工持股", "持股计划", "激励对象", "限制性股票",
+                    "回购注销", "股份支付")
 # 占本人持股比例达到这个量级才算「动真格」（低于此且原因惯例 = 噪音）
 _MEANINGFUL_OWN_PCT = 5.0
 # 占总股本比例达到这个量级，无论原因都值得看
@@ -89,8 +95,28 @@ def classify_insider_move(shares, ratio_total, ratio_own, reason: str = "",
 
     if deliberate:
         kind = "opportunistic"          # 刻意协商的通道，没有「机械发生」的可能
-    elif routine_reason and not big:
-        kind = "routine"                # 机械原因 + 不大 = 噪音
+    elif routine_reason and direction == "buy":
+        # US-200：原来写的是 `routine_reason and not big` —— 只要金额够大，
+        # 股权激励行权也会被当成主动增持。**那是错的，而且是机制层面的错。**
+        #
+        # ⚠️ **但只对买入侧成立 —— 买卖是不对称的：**
+        #   买入：股权激励行权是**被动**的，解锁条件到了就行权，
+        #         行不行权取决于考核和税务，不取决于他此刻怎么看公司
+        #   卖出：拿到股票后**卖多少、什么时候卖，是自己的选择** ——
+        #         哪怕股票来源是股权激励，「卖掉本人持股一半」仍然是主动决定
+        #
+        # 第一版我把这条改成了对买卖都生效，被既有测试
+        # test_big_sale_is_opportunistic_even_if_reason_mechanical 当场抓到。
+        #
+        # 股权激励 / 员工持股 与主动增持的区别不在金额，在**性质**：
+        #   股权激励：按预设条件行权，有强制业绩考核，价格往往低于市价 ——
+        #             是「履行激励计划的必要程序」，行不行权更多取决于
+        #             解锁条件和个人税务，不取决于他此刻怎么看公司
+        #   主动增持：自掏腰包按市价买 —— 才是「我看好，我下注」
+        #
+        # 一次 2 亿的股权激励行权，说明的是「三年前定的考核达标了」，
+        # 不是「他今天觉得便宜」。**金额再大也换不来这个含义。**
+        kind = "routine"
     else:
         kind = "opportunistic" if big else "routine"
 
@@ -238,8 +264,22 @@ CLUSTER_MIN_INSIDERS = 2
 # 文献里 cluster buy 之所以是最强形态，恰恰因为「多人**用真金白银**同时
 # 下注」。0.02% 不是真金白银。US-183 只判了「人数 ≥2」和「窗口 ≤30 天」，
 # **漏掉了最关键的那一维**。
-CLUSTER_MIN_RATIO = float(os.environ.get("INSIDER_CLUSTER_MIN_RATIO", "0.5"))
-CLUSTER_MIN_AMOUNT = float(os.environ.get("INSIDER_CLUSTER_MIN_AMOUNT", "5e7"))
+# 门槛的来历（US-200，2026-08-29 查文献后修正）：
+#
+# 我第一版拍了「0.5% 股本 或 5000 万」——**5000 万太高了**。
+# 实证研究（高管增持事件策略）：
+#   · 增持金额下限 **250万–400万** 就有可用的信号价值，年化超额约 22%
+#   · 金额下限越高，最优持有期越长（250万→10日、300万→30日、400万→45日）
+#   · 董监高增持公告后 90 日平均超额 **+3.8%**，显著高于个人和公司股东
+#
+# 但也不能只看绝对金额 —— 一家 3000 亿市值的公司里 300 万等于没有。
+# 所以两条并存、任一达标即可：
+#   占股本 ≥0.3%   → 相对量够（小盘股走这条）
+#   金额 ≥1000 万  → 绝对量够（大盘股走这条），取研究下限 400 万的
+#                     2.5 倍，因为我们要的是「值得单独推一条微信」的
+#                     强信号，不是「有统计价值」的边缘信号
+CLUSTER_MIN_RATIO = float(os.environ.get("INSIDER_CLUSTER_MIN_RATIO", "0.3"))
+CLUSTER_MIN_AMOUNT = float(os.environ.get("INSIDER_CLUSTER_MIN_AMOUNT", "1e7"))
 
 
 def detect_cluster_buy(ops: list, window_days: int = None) -> dict:

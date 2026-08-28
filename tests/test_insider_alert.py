@@ -54,10 +54,13 @@ def _seed(code, people, ratio_each, shares, price, days_ago=2):
 # ── 门槛① 赌注够大 ──────────────────────────────────────
 
 def test_weak_cluster_is_not_alerted():
-    """妈妈实拍的那种：8 人但合计 0.02% 股本。
-    生产上这类占绝大多数 —— 不拦掉就会天天弹。"""
+    """人数够、但**赌注两条都不够**（占股本 0.02%、金额约 232 万）。
+    生产上这类占绝大多数 —— 不拦掉就会天天弹。
+
+    注：US-200 把金额门槛从 5000 万降到 1000 万（研究下限是 250-400 万），
+    所以样本金额也跟着调小，才落在「弱」这一档。"""
     from scripts.insider_alert import find_alerts
-    _seed("900002", 8, 0.003, 100000, 14.5)
+    _seed("900002", 8, 0.003, 20000, 14.5)
     assert find_alerts(codes=["900002"]) == []
 
 
@@ -97,10 +100,14 @@ def test_dedup_does_not_repeat_the_same_cluster():
     db.init_db()
     from radar_app.data.push_ledger import (commit_pushed, filter_changed,
                                             state_hash)
+    from radar_app.data.core import get_conn
     from scripts.insider_alert import find_alerts
     _seed("900001", 3, 0.66, 1e7, 20)
     a = find_alerts(codes=["900001"])[0]
     key = f"insider_cluster:{a['code']}:{a['cluster']['end']}"
+    # 每次从干净状态开始 —— 上一次跑留下的记账会让「第一次」变成「推过了」
+    with get_conn() as c:
+        c.execute("DELETE FROM push_ledger WHERE item_key = :k", {"k": key})
     items = [(key, state_hash(a["cluster"]["n_insiders"],
                               a["cluster"]["ratio_total"]), a)]
     ch, _ = filter_changed(1, items)
@@ -153,3 +160,62 @@ def test_alert_runs_right_after_insider_refresh():
     assert 'insider_alert' in fn
     assert fn.index('run_insider_refresh') < fn.index('insider_alert'), \
         "提醒必须跑在内部人刷新之后"
+
+
+# ══ US-200：查文献后修正的两处 ══════════════════════════
+
+def test_equity_incentive_is_never_opportunistic_no_matter_the_size():
+    """原来写的是 `routine_reason and not big` —— **只要金额够大，
+    股权激励行权也会被当成主动增持**。那是机制层面的错。
+
+    股权激励/员工持股 与 主动增持的区别**不在金额，在性质**：
+
+        股权激励：按预设条件行权，有强制业绩考核，价格往往低于市价 ——
+                  行不行权取决于解锁条件和个人税务，不取决于他此刻怎么看公司
+        主动增持：自掏腰包按市价买 —— 才是「我看好，我下注」
+
+    **一次 2 亿的股权激励行权，说明的是「三年前定的考核达标了」，
+    不是「他今天觉得便宜」。金额再大也换不来这个含义。**
+    """
+    from scripts.insider_moves import classify_insider_move as f
+    for reason in ("股权激励行权", "员工持股计划", "限制性股票归属",
+                   "激励对象获授", "回购注销"):
+        c = f(1e7, 0.5, 30, reason, "董事长", 20)      # 2 亿，占股本 0.5%
+        assert c["kind"] == "routine", f"{reason} 不该判成主动增持"
+
+
+def test_real_open_market_buying_still_counts():
+    """不能矫枉过正 —— 自掏腰包按市价买的必须仍然算数。"""
+    from scripts.insider_moves import classify_insider_move as f
+    for reason in ("二级市场买卖", "大宗交易", "集中竞价"):
+        assert f(1e7, 0.5, 30, reason, "董事长", 20)["kind"] == "opportunistic"
+
+
+def test_thresholds_follow_the_evidence_not_a_guess():
+    """我第一版拍了「0.5% 股本 或 **5000 万**」——查完文献发现太高。
+
+    实证（高管增持事件策略）：
+      · 增持金额下限 **250万–400万** 就有可用信号，年化超额约 22%
+      · 金额下限越高，最优持有期越长（250万→10日 / 300万→30日 / 400万→45日）
+      · 董监高增持公告后 90 日平均超额 **+3.8%**，显著高于个人和公司股东
+
+    取 1000 万 = 研究下限 400 万的 2.5 倍 —— 我们要的是
+    「值得单独推一条微信」的强信号，不是「有统计价值」的边缘信号。
+    """
+    from scripts.insider_moves import CLUSTER_MIN_AMOUNT, CLUSTER_MIN_RATIO
+    assert CLUSTER_MIN_AMOUNT == 1e7, "5000 万太高，研究下限是 250-400 万"
+    assert CLUSTER_MIN_RATIO == 0.3
+    src = open(os.path.join(ROOT, 'scripts', 'insider_moves.py'),
+               encoding='utf-8').read()
+    assert "250万" in src and "400万" in src, "门槛的来历要写在代码里"
+
+
+def test_amount_alone_cannot_promote_a_routine_trade():
+    """光有金额不够 —— 妈妈那条 1160 万够金额门槛了，但它是员工持股性质。
+    两道关卡必须都过：先判性质（不是机制性交易），再看赌注。"""
+    from scripts.insider_moves import describe_insider_activity
+    r = describe_insider_activity([
+        {"holder_name": f"人{i}", "shares": 100000, "ratio_total": 0.003,
+         "ratio_own": 20, "avg_price": 14.5, "change_date": "2026-08-26",
+         "reason": "员工持股计划", "role": "高管"} for i in range(8)])
+    assert not (r.get("cluster") or {}), "机制性交易根本不该形成 cluster"

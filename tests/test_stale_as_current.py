@@ -366,6 +366,8 @@ def test_missing_date_degrades_quietly():
 # ── US-195：cluster buy 要看赌注，不只看人数 ────────────
 
 def _cluster(n_people, ratio_each, shares, price, own=20):
+    """注：US-200 把金额门槛从 5000 万降到 1000 万（实证下限 250-400 万），
+    所以这里的样本金额也跟着调小才落在「弱」档。"""
     from scripts.insider_moves import detect_cluster_buy
     return detect_cluster_buy([
         {"holder_name": f"人{i}", "direction": "buy", "ratio_total": ratio_each,
@@ -386,7 +388,7 @@ def test_many_people_tiny_stake_is_not_the_strongest_form():
     文献里 cluster buy 强，是因为「多人**用真金白银**同时下注」。
     US-183 只判人数和窗口，**漏掉了最关键的那一维**。
     """
-    c = _cluster(8, 0.003, 100000, 14.5)
+    c = _cluster(8, 0.003, 20000, 14.5)
     assert c["n_insiders"] == 8
     assert c["is_strong"] is False, "人数够但赌注太小，不能叫最强形态"
 
@@ -404,15 +406,15 @@ def test_real_cluster_is_still_strong():
 def test_either_ratio_or_amount_qualifies():
     """小盘股 0.5% 股本可能金额不大，大盘股 5000 万可能占比很小 ——
     单用一条会漏掉其中一类。"""
-    assert _cluster(2, 0.30, 1000, 100)["is_strong"] is True          # 占比够
-    assert _cluster(2, 0.001, 3000000, 20)["is_strong"] is True       # 金额够
+    assert _cluster(2, 0.20, 1000, 100)["is_strong"] is True          # 占比够(0.4%)
+    assert _cluster(2, 0.001, 600000, 20)["is_strong"] is True        # 金额够(2400万)
     assert _cluster(2, 0.001, 1000, 100)["is_strong"] is False        # 都不够
 
 
 def test_weak_cluster_wording_is_honest():
     from scripts.insider_moves import describe_insider_activity
     r = describe_insider_activity([
-        {"holder_name": f"人{i}", "shares": 100000, "ratio_total": 0.003,
+        {"holder_name": f"人{i}", "shares": 20000, "ratio_total": 0.003,
          "ratio_own": 20, "avg_price": 14.5, "change_date": "2026-08-26",
          "reason": "二级市场买卖", "role": "高管"} for i in range(8)])
     note = r["cluster_note"]
