@@ -9,6 +9,7 @@ def register_routes(app, bcrypt, oauth):
     from radar_app.dashboard.routes import register_dashboard_routes
     from radar_app.portfolio.routes import register_portfolio_routes
     from radar_app.public.routes import register_public_routes
+    from radar_app.picks.routes import register_picks_routes
     from radar_app.research.routes import register_research_routes
     from radar_app.search.routes import register_search_routes
     from radar_app.stocks.routes import register_stock_routes
@@ -18,6 +19,7 @@ def register_routes(app, bcrypt, oauth):
     register_auth_routes(app, bcrypt, oauth)
     register_dashboard_routes(app)
     register_public_routes(app)
+    register_picks_routes(app)
     register_research_routes(app)
     register_search_routes(app)
     register_admin_routes(app)

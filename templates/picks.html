@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}今日五选 — {{ t.brand if t else '私人巴菲特' }}{% endblock %}
+{% block content %}
+<div class="picks-page">
+
+  {# US-196：五选原本只活在微信推送和 git 里 —— 微信一刷就过去了，回头找不着。
+     用户妈妈：「我这个是里面逃出来的这么多股票，然后这个网站又慢，
+     有的信息就错过了」。这一页就是让它有个能回头翻的地方。 #}
+
+  {% if not doc %}
+  <div class="picks-empty">
+    <h1>今日五选</h1>
+    {# 解析不出来时明说「还没生成」，不显示半截错乱的内容 ——
+       后者会让人以为系统坏了，或者把残缺分析当成完整判断。 #}
+    <p>今天的五选还没生成。<br>
+      五选在交易日收盘后由系统写出；遇到数据未刷新的日子会主动跳过，
+      <b>宁可不发，也不拿陈旧数据下判断</b>。</p>
+  </div>
+  {% else %}
+
+  <div class="picks-head">
+    <h1>今日五选</h1>
+    <span class="picks-date">{{ doc.date }}</span>
+    {% if doc.age_days is not none and doc.age_days > 1 %}
+    <span class="picks-stale">{{ doc.age_days }} 天前的，今天还没更新</span>
+    {% endif %}
+  </div>
+  {% if doc.note %}<p class="picks-note">{{ doc.note }}</p>{% endif %}
+
+  {% if doc.theme %}
+  <div class="picks-theme"><span class="picks-theme-k">今日主题</span>{{ doc.theme }}</div>
+  {% endif %}
+
+  {# US-193 行业集中度：名字不同 ≠ 篮子不同。
+     三只 AI 服务器链的股票，一条砍单消息就会让它们一起跌。 #}
+  {% if doc.concentration and doc.concentration.warn %}
+  <div class="picks-conc">⚠️ {{ doc.concentration.warn }}<br>
+    <span class="picks-conc-note">买 5 只的意义是「不把鸡蛋放一个篮子」。
+      名字不同不代表篮子不同 —— 同一条产业链的股票会因为同一条消息一起跌。</span></div>
+  {% endif %}
+
+  {% for it in doc['items'] %}
+  <div class="pick">
+    <div class="pick-head">
+      <span class="pick-n">{{ it.n }}</span>
+      <a class="pick-name" href="/stock/{{ it.code }}/signals">{{ it.name }}</a>
+      <span class="pick-code">{{ it.code }}</span>
+      {% if it.change %}<span class="pick-chg {{ 'up' if it.change.startswith('+') else 'down' }}">{{ it.change }}</span>{% endif %}
+      {% if it.badge %}<span class="pick-badge">{{ it.badge }}</span>{% endif %}
+    </div>
+
+    {# US-197 验证「对不对」：每条推荐旁边就是它上次的成绩。
+       如果某只反复被选中却反复跑输，一眼就看得出来。
+       结果来自台账，由流水线自动回填，不经人工。 #}
+    {% if it.history and it.history.count %}
+    <div class="pick-record">
+      <span class="pick-record-k">过往战绩</span>
+      被推荐过 {{ it.history.count }} 次
+      {% if it.history.avg_excess is not none %}
+      · <b class="{{ 'up' if it.history.avg_excess > 0 else 'down' }}">平均跑赢大盘 {{ '%+.1f'|format(it.history.avg_excess) }}%</b>
+      {% else %}· 结果还没出来{% endif %}
+    </div>
+    {% endif %}
+
+    {% for k, v in it.layers.items() %}
+    <div class="pick-layer"><span class="pick-layer-k">{{ k }}</span>{{ v }}</div>
+    {% endfor %}
+
+    {% if it.verdict %}<div class="pick-verdict"><b>今天的判断</b>{{ it.verdict }}</div>{% endif %}
+    {% if it.action %}<div class="pick-action"><b>操作提示</b>{{ it.action }}</div>{% endif %}
+    <a class="pick-more" href="/stock/{{ it.code }}/signals">看完整信号 →</a>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if archive %}
+  <details class="picks-arch">
+    <summary>往期五选与成绩（{{ archive|length }} 期）</summary>
+    <p class="picks-arch-note">「超额」= 这些股票的涨跌 <b>减去</b> 同期自选池的平均涨跌。
+      大盘涨的时候人人都涨，只有跑赢平均才说明选得对。由系统自动回填，不经人工。</p>
+    <ul class="picks-arch-list">
+      {% for a in archive %}
+      <li class="picks-arch-row">
+        <span class="picks-arch-d">{{ a.date }}</span>
+        <span class="picks-arch-n">{{ a.n }} 只</span>
+        <span class="picks-arch-e">
+          {% if a.excess is not none %}
+          <b class="{{ 'up' if a.excess > 0 else 'down' }}">{{ '%+.1f'|format(a.excess) }}%</b>
+          <span class="picks-arch-h">{{ a.horizon }}日超额</span>
+          {% else %}<span class="picks-arch-h">等结果</span>{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
+</div>
+{% endblock %}

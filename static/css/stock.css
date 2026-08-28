@@ -2853,3 +2853,86 @@
   font-weight: 400;
   color: var(--ink-muted);
 }
+
+/* ══ US-196/197 今日五选专栏 ══════════════════════════════
+   五选原本只活在微信推送和 git 里 —— 微信一刷就过去了，回头找不着。
+   这一页让它有个能回头翻的地方，并且**每条推荐都带着历史战绩出现**。 */
+.picks-page { max-width: 760px; margin: 0 auto; padding: 16px 14px 40px; }
+.picks-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.picks-head h1 { font-size: 20px; margin: 0; color: var(--ink); }
+.picks-date { font-size: 13px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.picks-stale {
+  font-size: 11px; padding: 1px 7px; border-radius: 9px;
+  background: rgba(180,83,9,.1); color: #b45309; border: 1px solid rgba(180,83,9,.25);
+}
+.picks-note { font-size: 12px; color: var(--ink-muted); line-height: 1.7; margin: 6px 0 0; }
+
+.picks-theme {
+  margin: 14px 0; padding: 10px 12px; border-radius: 5px;
+  background: var(--paper); border-left: 3px solid var(--accent, var(--ink-faint));
+  font-size: 14px; line-height: 1.75; color: var(--ink);
+}
+.picks-theme-k { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 4px; }
+
+.picks-conc {
+  margin: 12px 0; padding: 9px 11px; border-radius: 5px; font-size: 13px; line-height: 1.7;
+  background: rgba(180,83,9,.07); border-left: 3px solid #b45309; color: var(--ink);
+}
+.picks-conc-note { font-size: 11px; color: var(--ink-muted); }
+
+.pick {
+  border: 1px solid var(--rule); border-radius: 6px;
+  padding: 12px 14px; margin: 14px 0; background: var(--paper);
+}
+.pick-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.pick-n {
+  width: 20px; height: 20px; line-height: 20px; text-align: center; flex-shrink: 0;
+  border-radius: 50%; background: var(--rule); color: var(--ink-muted); font-size: 11px;
+}
+.pick-name { font-size: 16px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.pick-name:hover { text-decoration: underline; }
+.pick-code { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.pick-chg { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pick-chg.up { color: #b91c1c; }      /* A股红涨绿跌 */
+.pick-chg.down { color: #15803d; }
+.pick-badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--rule); color: var(--ink-muted); }
+
+.pick-record {
+  font-size: 12px; margin: 0 0 9px; padding: 6px 9px; border-radius: 4px;
+  background: var(--surface-2, var(--rule)); color: var(--ink-soft, var(--ink));
+}
+.pick-record-k { font-size: 10px; color: var(--ink-faint); margin-right: 6px; }
+.pick-record .up { color: #15803d; }
+.pick-record .down { color: #b91c1c; }
+
+.pick-layer { font-size: 13px; line-height: 1.75; margin: 5px 0; color: var(--ink-soft, var(--ink)); }
+.pick-layer-k {
+  display: inline-block; min-width: 3.6em; margin-right: 6px;
+  font-size: 11px; color: var(--ink-faint);
+}
+.pick-verdict, .pick-action {
+  font-size: 13px; line-height: 1.75; margin: 8px 0 0;
+  padding-top: 7px; border-top: 1px dashed var(--rule); color: var(--ink);
+}
+.pick-verdict b, .pick-action b { display: block; font-size: 11px; color: var(--ink-faint); font-weight: 600; }
+.pick-more { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--ink-muted); text-decoration: none; }
+.pick-more:hover { text-decoration: underline; }
+
+.picks-arch { margin-top: 22px; font-size: 13px; }
+.picks-arch summary { cursor: pointer; color: var(--ink-muted); }
+.picks-arch-note { font-size: 11px; line-height: 1.7; color: var(--ink-muted); margin: 8px 0; }
+.picks-arch-list { list-style: none; margin: 0; padding: 0; }
+.picks-arch-row {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 4px 0; border-top: 1px dashed var(--rule); font-size: 12px;
+}
+.picks-arch-d { width: 6em; flex-shrink: 0; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.picks-arch-n { width: 4em; flex-shrink: 0; color: var(--ink-muted); }
+.picks-arch-e { flex: 1; text-align: right; font-variant-numeric: tabular-nums; }
+.picks-arch-e .up { color: #15803d; }
+.picks-arch-e .down { color: #b91c1c; }
+.picks-arch-h { font-size: 10px; color: var(--ink-faint); margin-left: 4px; }
+
+.picks-empty { padding: 30px 0; }
+.picks-empty h1 { font-size: 20px; margin: 0 0 10px; }
+.picks-empty p { font-size: 13px; line-height: 1.8; color: var(--ink-muted); }

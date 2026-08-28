@@ -27,6 +27,12 @@
             {{ t.nav_watchlist }}
           </a>
 
+          {# US-196：五选原本只活在微信推送里，一刷就过去了、回头找不着。
+             给它一个能回头翻的入口。 #}
+          <a href="/picks" {% if request.endpoint == 'picks_today' %}class="active"{% endif %}>
+            今日五选
+          </a>
+
           {% if session.get('role') == 'admin' %}
           <a href="{{ url_for('admin_users') }}" {% if request.endpoint in ('admin_users','admin_user_detail') %}class="active"{% endif %} style="color:#b8860b;font-weight:600">
             <i class="bi bi-shield-lock me-1"></i>{{ t.nav_admin }}
