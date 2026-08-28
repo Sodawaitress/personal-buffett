@@ -670,16 +670,20 @@ def audit_insider_cluster_quality(conn, existing):
     if "insider_changes" not in existing:
         return {}
     rows = _rows(conn, """
-        SELECT code, change_date, COUNT(DISTINCT holder_name) AS n_people,
+        -- ⚠️ 裸列 change_date 不能和 GROUP BY substr(...) 混用：
+        -- SQLite 容忍、**Postgres 报 GroupingError**。US-168 栽过一次，
+        -- 这次我又写了一遍 —— 所以 SELECT 里只出现聚合过的列。
+        SELECT code, substr(change_date,1,10) AS d,
+               COUNT(DISTINCT holder_name) AS n_people,
                COUNT(*) AS n_tx, SUM(ABS(ratio_total)) AS ratio_sum,
                SUM(ABS(shares) * COALESCE(avg_price,0)) AS amount
         FROM insider_changes
         WHERE change_date >= '2026-06-01' AND shares > 0
         GROUP BY code, substr(change_date,1,10)
         HAVING COUNT(DISTINCT holder_name) >= 2
-        ORDER BY change_date DESC LIMIT 15
+        ORDER BY 2 DESC LIMIT 15
     """)
-    return {"clusters": [(r["code"], str(r["change_date"])[:10], r["n_people"],
+    return {"clusters": [(r["code"], str(r["d"])[:10], r["n_people"],
                          r["n_tx"], round(float(r["ratio_sum"] or 0), 3),
                          round(float(r["amount"] or 0) / 1e4))
                         for r in rows]}
