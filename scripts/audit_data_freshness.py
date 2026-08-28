@@ -654,6 +654,37 @@ def audit_scorecard(conn, existing):
     return out
 
 
+def audit_insider_cluster_quality(conn, existing):
+    """US-195：cluster buy 的判定只看人数和窗口，**没看金额占比**。
+
+    2026-08-29 用户妈妈实拍：页面标「★ 8 位内部人在 1 天内先后买入
+    （8 笔，合计 **0.02%** 股本）—— 这是内部人信号里最强的形态」。
+
+    对照奥来德那次真正的 cluster buy：3 人、5 笔、**2.83%** 股本。
+    **差 140 倍。**
+
+    文献里 cluster buy 之所以强，是因为「多人**用真金白银**同时下注」。
+    0.02% 股本、单笔一百多万，更像员工持股计划行权或象征性增持 ——
+    **人数够了，但赌注不够。**
+    """
+    if "insider_changes" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT code, change_date, COUNT(DISTINCT holder_name) AS n_people,
+               COUNT(*) AS n_tx, SUM(ABS(ratio_total)) AS ratio_sum,
+               SUM(ABS(shares) * COALESCE(avg_price,0)) AS amount
+        FROM insider_changes
+        WHERE change_date >= '2026-06-01' AND shares > 0
+        GROUP BY code, substr(change_date,1,10)
+        HAVING COUNT(DISTINCT holder_name) >= 2
+        ORDER BY change_date DESC LIMIT 15
+    """)
+    return {"clusters": [(r["code"], str(r["change_date"])[:10], r["n_people"],
+                         r["n_tx"], round(float(r["ratio_sum"] or 0), 3),
+                         round(float(r["amount"] or 0) / 1e4))
+                        for r in rows]}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -732,6 +763,7 @@ def main():
         picks = audit_pick_accuracy(conn, existing)
         bench = audit_benchmark_feasibility(conn, existing)
         card = audit_scorecard(conn, existing)
+        icl = audit_insider_cluster_quality(conn, existing)
         try:
             from scripts.pick_ledger import concentration_history
             conc = concentration_history(8)
@@ -741,7 +773,7 @@ def main():
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -904,6 +936,15 @@ def main():
         print(f"  8 月有 ≥30 只股票同日价格的交易日：{len(ds)} 天")
         for d, n, a in ds[:8]:
             print(f"    {d}  {n:3} 只  等权平均 {a:+.2f}%")
+
+    if icl:
+        print(f"\n── 内部人 cluster buy 的赌注有多大（US-195）──")
+        print(f"  文献认定 cluster 强，是因为「多人**用真金白银**同时下注」。")
+        print(f"  对照：奥来德真 cluster = 3 人 / 2.83% 股本。")
+        print(f"  {'代码':8} {'日期':11} {'人数':>3} {'笔数':>3} {'占股本%':>8} {'金额(万)':>9}")
+        for code, d, np_, nt, rs, amt in icl.get("clusters", []):
+            flag = "  " if rs >= 0.5 else "⚠️"
+            print(f"  {flag}{code:8} {d:11} {np_:>3} {nt:>3} {rs:>8.3f} {amt:>9.0f}")
 
     if conc:
         print(f"\n── 五选的行业集中度（US-193）──")
