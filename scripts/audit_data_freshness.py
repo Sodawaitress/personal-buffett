@@ -584,6 +584,31 @@ def audit_pick_accuracy(conn, existing):
             "detail": sorted(have, key=lambda x: -abs(x[2]))[:15]}
 
 
+def audit_benchmark_feasibility(conn, existing):
+    """US-192：台账要算「超额收益」，就必须有基准。看能不能自己合成。
+
+    没有指数数据（market_data.cn_indices 只存最新快照、无历史，且停在 07-28），
+    东财 K 线接口两台主机都返回空。
+
+    但我们有 215 只 A股的**逐日**价格 —— 用它们的**等权平均涨跌**当基准，
+    对「五选跑赢自选池没有」这个问题其实**更贴切**：
+    用户真正关心的不是「跑赢上证」，是「这五只比我池子里其余的强吗」。
+    """
+    if "stock_prices" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT substr(fetched_at,1,10) AS d,
+               COUNT(DISTINCT code) AS n,
+               AVG(change_pct) AS avg_chg
+        FROM stock_prices
+        WHERE change_pct IS NOT NULL AND fetched_at >= '2026-08-01'
+        GROUP BY 1 HAVING COUNT(DISTINCT code) >= 30
+        ORDER BY 1 DESC LIMIT 20
+    """)
+    return {"days": [(str(r["d"]), r["n"], round(float(r["avg_chg"] or 0), 2))
+                     for r in rows]}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -660,11 +685,12 @@ def main():
         one_off = audit_one_off_profits(conn, existing)
         ev_src = audit_event_sources(conn, existing)
         picks = audit_pick_accuracy(conn, existing)
+        bench = audit_benchmark_feasibility(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -820,6 +846,13 @@ def main():
                 print(f"    {d}  {code}  {r:+6.1f}%   （{d0} → {d1}）")
         else:
             print(f"  ⚠️  一条都算不出来 —— stock_prices 里没有推荐日附近的价格")
+
+    if bench:
+        print(f"\n── 能不能自己合成基准（US-192）──")
+        ds = bench.get("days", [])
+        print(f"  8 月有 ≥30 只股票同日价格的交易日：{len(ds)} 天")
+        for d, n, a in ds[:8]:
+            print(f"    {d}  {n:3} 只  等权平均 {a:+.2f}%")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
