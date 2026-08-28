@@ -203,6 +203,21 @@ def register_system_routes(app):
                 errors.append(f"insider: {e}")
                 _note(f"内部人失败: {e}")
 
+            # US-199 内部人强买入即时提醒：**必须紧跟在内部人刷新之后** ——
+            # 数据刚落库就判断，才谈得上「及时」。
+            #
+            # 这是**额外**的一条微信，不和每日五选混在一起，所以必须稀有：
+            # 只推强 cluster（US-195 的门槛）+ 14 天内的。按生产数据估计
+            # 一个月一两条。**如果它开始每天响，说明门槛错了，
+            # 该回来调门槛，而不是让用户学会忽略它。**
+            try:
+                from scripts.insider_alert import run as insider_alert
+                al = insider_alert()
+                _note(f"内部人提醒: {al}")
+            except Exception as e:
+                errors.append(f"insider_alert: {e}")
+                _note(f"内部人提醒失败: {e}")
+
             # 最贵的放最后 —— 它超时的话，前面两件已经落库了
             try:
                 from scripts.precursor_scan import run_precursor_scan
