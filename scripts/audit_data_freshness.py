@@ -689,6 +689,43 @@ def audit_insider_cluster_quality(conn, existing):
                         for r in rows]}
 
 
+def audit_insider_lag(conn, existing):
+    """US-198：内部人数据到底滞后多久 —— **实测，不套用美股规则**。
+
+    我在 US-177/191 里写「公告本身还要滞后几周」，引用的是**美股 Form 4**
+    的规则（多数交易 21 天以上才公开）。**A股的披露要求完全不同** ——
+    而我从没验证过。
+
+    我们只存了 `CHANGE_DATE`（变动日），没存公告日，所以「延迟多久」
+    在系统里根本没有数据支撑。但 `fetched_at`（我们抓到它的时刻）
+    减去 `change_date` 就是**上限**：真实延迟一定 ≤ 这个数。
+    """
+    if "insider_changes" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT code, holder_name,
+               substr(change_date,1,10) AS d,
+               substr(fetched_at,1,10) AS f
+        FROM insider_changes
+        WHERE change_date IS NOT NULL AND fetched_at IS NOT NULL
+        ORDER BY change_date DESC LIMIT 40
+    """)
+    from datetime import date as _date
+    lags = []
+    for r in rows:
+        try:
+            lag = (_date.fromisoformat(str(r["f"])) - _date.fromisoformat(str(r["d"]))).days
+        except Exception:
+            continue
+        if 0 <= lag <= 400:
+            lags.append((str(r["d"]), str(r["f"]), lag, r["code"]))
+    if not lags:
+        return {"n": 0}
+    vals = sorted(x[2] for x in lags)
+    return {"n": len(vals), "min": vals[0], "median": vals[len(vals) // 2],
+            "max": vals[-1], "sample": lags[:8]}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -768,6 +805,7 @@ def main():
         bench = audit_benchmark_feasibility(conn, existing)
         card = audit_scorecard(conn, existing)
         icl = audit_insider_cluster_quality(conn, existing)
+        ilag = audit_insider_lag(conn, existing)
         try:
             from scripts.pick_ledger import concentration_history
             conc = concentration_history(8)
@@ -777,7 +815,7 @@ def main():
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -940,6 +978,15 @@ def main():
         print(f"  8 月有 ≥30 只股票同日价格的交易日：{len(ds)} 天")
         for d, n, a in ds[:8]:
             print(f"    {d}  {n:3} 只  等权平均 {a:+.2f}%")
+
+    if ilag and ilag.get("n"):
+        print(f"\n── 内部人数据实际滞后多久（US-198）──")
+        print(f"  我在 US-177 里写「公告还要滞后几周」，引用的是**美股 Form 4**")
+        print(f"  的规则（21 天以上）。A股完全不同，而我从没验证过。")
+        print(f"  fetched_at − change_date 是延迟的**上限**（真实 ≤ 这个数）：")
+        print(f"    {ilag['n']} 条：最小 {ilag['min']} 天 · 中位 {ilag['median']} 天 · 最大 {ilag['max']} 天")
+        for d, f, lag, code in ilag["sample"]:
+            print(f"      {code}  变动 {d} → 我们抓到 {f}  （{lag} 天）")
 
     if icl:
         print(f"\n── 内部人 cluster buy 的赌注有多大（US-195）──")
