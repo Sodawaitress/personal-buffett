@@ -127,14 +127,23 @@ _STR = {
         "cluster_weak": "{n} 位内部人在 {d} 天内先后买入，但合计只有 {r:.2f}% 股本"
                         "（约 {amt}）—— 人数够了但**金额太小**，"
                         "更像员工持股或例行增持，不当强信号看",
-        "horizon": "怎么用这条：内部人买入的超额收益**大半在头一个月就兑现了**"
-                   "（约 1/4 在头 5 天、约 1/2 在头 1 个月），而公告本身还要滞后几周。"
-                   "所以它更适合当作**「自己人当时怎么看这家公司」的基本面证据**，"
-                   "不适合当现在的入场理由。",
-        "stale_note": "⚠️ 这些交易发生在 {n} 个月前。研究显示内部人买入的超额收益"
+        # US-198 更正：原文写「公告本身还要滞后几周」—— 那是**美股 Form 4**
+        # 的规则（多数 21 天以上）。A股完全不同，实测最快 **1 天**就能拿到
+        # （688551 / 002049 变动 08-26 → 08-27 抓到）。我当时直接套用了
+        # 美股规则，从没验证过 —— 而这个错的方向危险：它会让人放弃一个
+        # 其实很及时的信号。
+        "horizon": "怎么用这条：内部人买入的超额收益**大半在头一个月就兑现**"
+                   "（约 1/4 在头 5 天、约 1/2 在头 1 个月）。"
+                   "好消息是 A股披露很快 —— 实测最快 **1 天**就能看到，"
+                   "所以**及时看到的话，这条信号基本是完整的**；"
+                   "隔了一两个月才看到，那就只剩「自己人当时怎么看」的参考价值了。",
+        # US-198：说清「不是数据慢，是没及时看到」—— 数据 1 天就到了。
+        "stale_note": "⚠️ 这些交易发生在 {n} 个月前。内部人买入的超额收益"
                       "**大半在头一个月内就走完了** —— 到现在，这条作为入场信号"
-                      "基本已经失效。它仍能说明「自己人当时有信心」，但那是基本面的一条证据，"
-                      "不是现在该买的理由。",
+                      "基本已经失效。\n"
+                      "注意：**不是数据慢**（A股实测最快 1 天就能拿到），是这条"
+                      "已经过去太久。它仍能说明「自己人当时有信心」，"
+                      "那是基本面的一条证据，不是现在该买的理由。",
         "caveat": "高管卖股票的理由可能很私人（买房、缴税），一笔不说明问题；连续、大额、多人同时卖才值得当信号。",
     },
     "en": {
@@ -159,13 +168,15 @@ _STR = {
                         "(~{amt}) — enough people, **too little money**. Looks like an employee "
                         "share plan or routine top-up, not a strong signal",
         "horizon": "How to read this: most of the abnormal return from insider buying lands **within the "
-                   "first month** (~1/4 in the first 5 days, ~1/2 in the first month), and the filing "
-                   "itself lags by weeks. Treat it as evidence of **what insiders thought at the time**, "
-                   "not as a reason to buy now.",
+                   "first month** (~1/4 in the first 5 days, ~1/2 in the first month). The good news is "
+                   "that A-share disclosure is fast — measured as little as **1 day** — so if you see it "
+                   "promptly the signal is largely intact. Seen a month or two later, it is only evidence "
+                   "of **what insiders thought at the time**.",
         "stale_note": "⚠️ These trades happened {n} months ago. Most of the abnormal return from insider "
                       "buying lands **within the first month**, so as an entry signal this has largely "
-                      "expired. It still tells you insiders were confident **at the time** — that is a "
-                      "fundamental data point, not a reason to buy today.",
+                      "expired. Note this is **not a data lag** — A-share disclosure runs as fast as one "
+                      "day. It still tells you insiders were confident **at the time**: a fundamental "
+                      "data point, not a reason to buy today.",
         "caveat": "An executive may sell for entirely personal reasons (a house, a tax bill). One sale means little — repeated, large, or several people selling at once is what matters.",
     },
 }

@@ -122,6 +122,8 @@ def test_stale_note_appears_and_reframes_it_as_history():
     assert "4 个月前" in note
     assert "失效" in note, "要说清作为入场信号已经失效"
     assert "基本面" in note, "但要保留它作为基本面证据的价值"
+    # US-198：要说清「不是数据慢，是没及时看到」—— 因果不能搞反
+    assert "不是数据慢" in note
 
 
 def test_stale_threshold_is_about_a_quarter():
@@ -266,6 +268,19 @@ def test_horizon_note_says_the_alpha_lands_early():
     **用户妈妈是对的**：4 个月前的买入，作为入场信号基本已经失效。
     12 个月 7.4% 那个数字是**累计总量**，不是「要等 12 个月才开始涨」。
     我把总量误读成了节奏。
+
+    ⚠️ **第二次更正（US-198）**：上面「Form 4 滞后 21 天以上」是**美股**的
+    规则，我当时直接套到 A股 上，从没验证过。用户追问
+    「你之前不是说内部人买入是会延迟的信息吗」才去实测 ——
+
+        A股实测：40 条，最快 **1 天**（688551/002049 变动 08-26 → 08-27 抓到）
+
+    **衰减速度没错（1 个月减半），错的是「看到它要多久」。**
+    A股披露快，所以**及时看到的话信号基本完整**。
+    这个错的方向危险：它会让人放弃一个其实很及时的信号。
+
+    教训：**拿一个语境下的事实用到另一个语境里** ——
+    和「本地测不出生产」是同一类错，只是这次跨的是市场而不是环境。
     """
     from scripts.insider_moves import describe_insider_activity
     r = describe_insider_activity([{
@@ -273,8 +288,10 @@ def test_horizon_note_says_the_alpha_lands_early():
         "avg_price": 10, "change_date": _ago(30), "reason": "二级市场买卖", "role": "董事长"}])
     note = r["horizon_note"]
     assert "头一个月" in note, "必须说清大半 alpha 在头一个月内兑现"
-    assert "基本面证据" in note, "正确用法是基本面证据，不是入场理由"
     assert "6–12 个月里体现" not in note, "这是被推翻的说法，不许回退"
+    # US-198：也不许回退到「公告滞后几周」那个美股说法
+    assert "滞后几周" not in note
+    assert "1 天" in note and "A股" in note, "要说清 A股 披露有多快"
 
 
 def test_stale_note_does_not_ask_for_patience():
