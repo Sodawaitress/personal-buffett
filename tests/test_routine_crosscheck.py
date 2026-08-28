@@ -109,3 +109,65 @@ def test_the_duolingo_precedent_is_recorded():
     seg = _step35()
     assert 'US-172' in seg
     assert '13.28' in seg and '43' in seg
+
+
+# ── US-191：先搞清楚 routine 跑在什么环境里 ──────────────
+
+def test_routine_documents_its_execution_environment():
+    """用户问：「你真的知道每日 routine 是咋搞的吗？整个链条，
+    那不是个对话框哦」—— 我确实是假设出来的。
+
+    从提交痕迹倒推：author == committer == `Claude <noreply@anthropic.com>`，
+    每天 UTC 13:2x 固定，无 CI 痕迹。既不是 GitHub Actions
+    （那会是 github-actions[bot]），也不是 Claude Code 会话
+    （那会是仓库主人的身份）—— 是**第三个环境**：带 GitHub 连接的定时任务。
+
+    **不知道环境就会设计出跑不动或者重复造轮子的步骤** ——
+    2026-08-28 就发生过：给 routine 加 Step 3.5 时误以为要「新增」
+    搜索能力，而 Gate ③ 早就在用 WebSearch 了。
+    """
+    s = _routine()
+    assert '触发方式与运行环境' in s
+    seg = s[s.index('## 触发方式与运行环境'):]
+    assert 'noreply@anthropic.com' in seg, "要写明它以什么身份提交"
+    assert 'github-actions' in seg, "要写明它**不是**什么（最容易认错的那个）"
+    assert 'WebSearch' in seg, "要写明它有哪些能力"
+
+
+def test_documented_trigger_time_discrepancy_is_not_hidden():
+    """文档写 17:30 北京时间，实际提交是 UTC 13:2x ≈ 北京 21:2x —— 对不上。
+    没查清楚之前不能假装一致，要把矛盾标出来。"""
+    s = _routine()
+    seg = s[s.index('## 触发时间'):]
+    assert '对不上' in seg or '以实际观测为准' in seg
+
+
+# ── US-191：搜索缓存陈旧 —— 有代价的教训 ────────────────
+
+def test_step35_warns_about_stale_search_cache():
+    """improvement_log 实测：08-19 搜天孚只拿到 08-17 的数据，
+    搜美的只拿到 07-28 的。Gate ③ 为此迭代过方法论 ——
+    「严守双站点同日报价会因缓存差异误报」。
+
+    Step 3.5 第一版设计时假设「搜到的是最新的」，会把陈旧缓存
+    误判成「事实反转」，制造大量假矛盾。
+    """
+    seg = _step35()
+    assert '缓存' in seg and '陈旧' in seg
+    assert '08-17' in seg or '07-28' in seg, "要留具体日期，抽象警告没人会当真"
+
+
+def test_only_dated_facts_newer_than_snapshot_count():
+    """判定规则必须是「找显著矛盾」而不是「找完全吻合」。"""
+    seg = _step35()
+    assert '搜不到东西 ≠ 有问题' in seg
+    assert '晚于快照' in seg, "只有比快照更新的事实才能推翻快照"
+    assert '无有效反证' in seg, "拿不准时要有一个明确的中性归类"
+
+
+def test_false_positives_are_named_as_the_bigger_risk():
+    """假矛盾比漏掉真矛盾更糟：它会把推送塞满噪音，用户不看了，
+    真矛盾出现时反而被淹没。这个权衡要写在流程里，否则后来的人
+    会以为「宁可错报不可漏报」。"""
+    seg = _step35()
+    assert '假矛盾比漏掉真矛盾更糟' in seg
