@@ -527,6 +527,63 @@ def audit_event_sources(conn, existing):
         return {"error": f"{type(e).__name__}: {str(e)[:120]}"}
 
 
+# US-189：每日五选到底准不准 —— 这是第一次真去算。
+#
+# 现状：`output/picks_open.json` 只记「推荐了什么」，**不记后来怎么样**；
+# 历史五选散落在每日推送的正文里，从没结构化留存。
+# 所以「五选准确度」这件事，系统里一直没有答案。
+#
+# 这里先用硬编码的历史清单（从 git 里的 daily_push.txt 逐日抠出来）
+# 算一次真实表现 —— 先知道准不准，再决定要不要建长期台账。
+_PICKS_2026_08 = {
+    "2026-08-11": ["689009", "300124", "688008", "300394", "000333"],
+    "2026-08-18": ["300394", "300124", "301349", "002415", "002142"],
+    "2026-08-19": ["300684", "000333", "002415", "600415", "000001"],
+    "2026-08-20": ["300476", "300394", "000333", "002415", "000001"],
+    "2026-08-21": ["300394", "000680", "002142", "000333", "002252"],
+    "2026-08-25": ["002415", "002142", "300394", "002130", "000001"],
+    "2026-08-26": ["000001", "002415", "002142", "300124", "300760"],
+}
+
+
+def audit_pick_accuracy(conn, existing):
+    """五选推荐之后，实际涨了还是跌了。"""
+    if "stock_prices" not in existing:
+        return {}
+    from datetime import date, timedelta
+
+    def _px_on_or_after(code, d, slack=8):
+        end = (date.fromisoformat(d) + timedelta(days=slack)).isoformat()
+        r = _rows(conn, "SELECT fetched_at, price FROM stock_prices WHERE code=:c "
+                        "AND fetched_at >= :a AND fetched_at <= :b AND price IS NOT NULL "
+                        "ORDER BY fetched_at ASC LIMIT 1",
+                  c=code, a=d, b=end + " 23:59:59")
+        return (r[0]["price"], str(r[0]["fetched_at"])[:10]) if r else (None, None)
+
+    def _latest(code):
+        r = _rows(conn, "SELECT fetched_at, price FROM stock_prices WHERE code=:c "
+                        "AND price IS NOT NULL ORDER BY fetched_at DESC LIMIT 1", c=code)
+        return (r[0]["price"], str(r[0]["fetched_at"])[:10]) if r else (None, None)
+
+    out, computable = [], 0
+    for d, codes in sorted(_PICKS_2026_08.items()):
+        for code in codes:
+            p0, d0 = _px_on_or_after(code, d)
+            p1, d1 = _latest(code)
+            if p0 and p1 and p0 > 0 and d1 and d1 > (d0 or ""):
+                out.append((d, code, round((p1 - p0) / p0 * 100, 1), d0, d1))
+                computable += 1
+            else:
+                out.append((d, code, None, d0, d1))
+    have = [r for r in out if r[2] is not None]
+    up = sum(1 for r in have if r[2] > 0)
+    return {"total": len(out), "computable": computable,
+            "up": up, "down": len(have) - up,
+            "win_rate": round(up * 100 / len(have), 1) if have else None,
+            "avg": round(sum(r[2] for r in have) / len(have), 1) if have else None,
+            "detail": sorted(have, key=lambda x: -abs(x[2]))[:15]}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -602,11 +659,12 @@ def main():
         scan_jobs = audit_scan_jobs(conn, existing)
         one_off = audit_one_off_profits(conn, existing)
         ev_src = audit_event_sources(conn, existing)
+        picks = audit_pick_accuracy(conn, existing)
 
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -751,6 +809,17 @@ def main():
         if not any(s == "cninfo_tender" for s, _, _ in ev_src.get("sources", [])):
             print(f"  ⚠️  cninfo_tender（中标/订单）**一条都没有** —— "
                   f"它搭 precursor_scan 的车，而那条车最近一直超时")
+
+    if picks:
+        print(f"\n── 每日五选的真实表现（US-189）──")
+        print(f"  8 月共 {picks['total']} 条推荐 · 有价可算 {picks['computable']} 条")
+        if picks.get("win_rate") is not None:
+            print(f"  推荐后至今：涨 {picks['up']} / 跌 {picks['down']}  →  "
+                  f"胜率 {picks['win_rate']}% · 平均 {picks['avg']:+.1f}%")
+            for d, code, r, d0, d1 in picks["detail"]:
+                print(f"    {d}  {code}  {r:+6.1f}%   （{d0} → {d1}）")
+        else:
+            print(f"  ⚠️  一条都算不出来 —— stock_prices 里没有推荐日附近的价格")
 
     if wl_filter:
         print(f"\n── 自选页筛选：等级分布 + 筛选查询 ──")
