@@ -61,6 +61,23 @@ def main():
         except Exception as e:
             print(f"  ⚠️ 回填失败（不影响快照）: {e}")
 
+        # US-192 五选台账：落账 + 回填收益 + 算超额。**必须跑在这里** ——
+        # digest 是链条最后一棒，价格已全部落库；而且这一段是**纯代码**，
+        # Claude 只写 picks_open.json，成绩单它碰不到。
+        # 五选是 Claude 的人工判断（见 CLAUDE_ROUTINE Run 1），
+        # 让它自己算自己的成绩单是结构性的利益冲突（US-189）。
+        try:
+            from scripts.pick_ledger import backfill as ledger_backfill
+            from scripts.pick_ledger import ingest as ledger_ingest
+            from scripts.pick_ledger import seed_history
+            seed_history()                       # 一次性灌历史，重复运行安全
+            ing = ledger_ingest()
+            bf = ledger_backfill()
+            run.tick()
+            print(f"  ✅ 五选台账：落账 {ing.get('added', 0)} 条 · 回填 {bf}")
+        except Exception as e:
+            print(f"  ⚠️ 五选台账失败（不影响快照）: {e}")
+
         # US-155：分析结果的 7d/30d 收益标注。生产从来没有任何东西调用过
         # backfill()（只有本地 launchd 在跑，且它因 SELECT 漏列每次必崩），
         # 所以 label_7d_return / label_30d_return 全表为空 →

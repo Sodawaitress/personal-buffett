@@ -461,6 +461,29 @@ _SCHEMA_SQL = """
         CREATE INDEX IF NOT EXISTS idx_survey_events_code ON survey_events(code, event_date);
 
         -- 用户信号预测记录（US-75 预言家日报）
+        -- US-192 五选台账：推荐当天落账，5/10/20 日由**代码**自动回填。
+        -- 关键设计：Claude 只写 picks_open.json，回填全部由流水线算 ——
+        -- 五选是 Claude 的判断，成绩单不能也由 Claude 写。
+        CREATE TABLE IF NOT EXISTS pick_ledger (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            code          TEXT NOT NULL,
+            name          TEXT,
+            pick_date     TEXT NOT NULL,       -- 推荐日
+            entry_price   REAL,                -- 推荐日收盘（落账时锁定）
+            grade         TEXT,
+            quant_score   REAL,
+            advice        TEXT,
+            reason_tags   TEXT,                -- 推荐理由分类（JSON 数组）
+            -- 回填字段（全部由代码算，Claude 无权写）
+            ret_5d        REAL, ret_10d  REAL, ret_20d  REAL,
+            bench_5d      REAL, bench_10d REAL, bench_20d REAL,
+            excess_5d     REAL, excess_10d REAL, excess_20d REAL,
+            resolved_20d  INTEGER DEFAULT 0,
+            updated_at    TEXT,
+            UNIQUE(code, pick_date)
+        );
+        CREATE INDEX IF NOT EXISTS idx_pick_ledger_date ON pick_ledger(pick_date);
+
         CREATE TABLE IF NOT EXISTS signal_predictions (
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id           INTEGER REFERENCES users(id) ON DELETE CASCADE,
