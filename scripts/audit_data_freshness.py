@@ -787,6 +787,16 @@ def audit_duol_state(conn, existing):
     return out
 
 
+def _latest_year(annual_json):
+    """年报里最新是哪一年 —— 评级不对时，先问「它看的是哪年的数」。"""
+    import json as _j
+    try:
+        ann = _j.loads(annual_json or "[]")
+    except Exception:
+        return None
+    return (ann[0] or {}).get("year") if ann else None
+
+
 def audit_investable_ranking(conn, existing):
     """自己用一次：把**我们真的买得到的**股票（Sharesies 支持 NZ/AU/US）
     按网站自己的评级排出来，连同刚补上的估值分位。
@@ -801,7 +811,7 @@ def audit_investable_ranking(conn, existing):
     rows = _rows(conn, """
         SELECT a.code, a.grade, a.conclusion, a.quant_score, a.reasoning,
                f.pe_current, f.pe_percentile_5y, f.pe_pct_window_years,
-               f.pe_pct_range, s.name, s.market
+               f.pe_pct_range, f.annual_json, s.name, s.market, s.company_type
         FROM (SELECT DISTINCT ON (code) code, grade, conclusion, quant_score,
                      reasoning FROM analysis_results ORDER BY code, id DESC) a
         LEFT JOIN stock_fundamentals f ON f.code = a.code
@@ -820,7 +830,9 @@ def audit_investable_ranking(conn, existing):
             "score": r["quant_score"], "pe": r["pe_current"],
             "pct": r["pe_percentile_5y"], "win": r["pe_pct_window_years"],
             "range": r["pe_pct_range"],
-            "why": (r["reasoning"] or "").split("。")[0][:60],
+            "why": (r["reasoning"] or "").replace("\n", " ")[:150],
+            "ctype": r["company_type"],
+            "latest_year": _latest_year(r["annual_json"]),
         })
     out.sort(key=lambda x: (order.get((x["grade"] or "NR").upper(), 8),
                             -(x["score"] or 0)))
@@ -972,12 +984,16 @@ def main():
 
     if investable:
         print(f"  [可投资清单] 非 A 股共 {len(investable)} 只，按网站自己的评级排序")
-        for _r in investable[:22]:
+        for _i, _r in enumerate(investable[:22]):
             _pe = f"{_r['pe']:.1f}x" if _r["pe"] else "—"
             _pc = (f"第{_r['pct']}分位/近{_r['win']}年" if _r["pct"] is not None
                    else "无可比历史")
             print(f"      {(_r['grade'] or 'NR'):<3} {_r['code']:<9} "
                   f"{(_r['name'] or ''):<20} {_pe:>8} {_pc:<18} {_r['conclusion'] or ''}")
+            if _i < 6:
+                print(f"          类型={_r['ctype']} 年报最新={_r['latest_year']} "
+                      f"分={_r['score']}")
+                print(f"          {_r['why']}")
 
     print(f"\n{'='*66}")
     print(f"数据源体检 · backend={backend} · {'生产' if is_prod else '⚠️ 本地库，结论不算数'}")
