@@ -766,6 +766,24 @@ def audit_duol_state(conn, existing):
                            "quant_score": a[0]["quant_score"],
                            "date": str(a[0]["analysis_date"])[:10],
                            "reasoning": (a[0]["reasoning"] or "")[:120]}
+
+    # 补数跑完之后，US-172 的归一化到底算不算得出来 ——
+    # 只看 has_pretax 不够，那只说明字段有值，不说明结论出得来
+    try:
+        from scripts.normalized_earnings import normalize, adjusted_pe, describe
+        norm = normalize(ann, market="us")
+        out["norm_has_windfall"] = norm.get("has_windfall")
+        out["norm_adjusted_eps"] = norm.get("adjusted_eps") or norm.get("adjusted_net_profit")
+        out["adjusted_pe"] = adjusted_pe(row.get("pe_current"), norm)
+        out["describe"] = describe(norm, reported_pe=row.get("pe_current"))[:160]
+    except Exception as e:
+        out["norm_error"] = f"{type(e).__name__}: {e}"
+
+    # 用户问题的第二半：AI 摘要说「便宜」，卡片说「判断不了」。
+    # 两句话来自不同的源，谁都不知道对方存在 —— 把两边的输入并排摊出来。
+    out["reasoning_says_cheap"] = "便宜" in ((a[0]["reasoning"] or "") if a else "")
+    out["card_can_judge"] = out.get("adjusted_pe") is not None or \
+        row.get("pe_percentile_5y") is not None
     return out
 
 
