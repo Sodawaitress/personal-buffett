@@ -1351,9 +1351,19 @@ class QuantitativeRater:
 
     @classmethod
     def _value_tier(cls, profile, pe_pct, pb_pct, price_52week_pct, locale,
+                    one_off: bool = False,
                     pe_current=None, pb_current=None, industry=None):
         """估值档：返回 (tier_zh, rank0-3, 理由)；无数据 → (None, 1, '')。
-        优先级：① 跟同行业比(行业中性化 z) > ② 跟自己历史比(分位) > ③ 股价位置。"""
+        优先级：① 跟同行业比(行业中性化 z) > ② 跟自己历史比(分位) > ③ 股价位置。
+
+        US-202 起返回第 4 个值 `basis`：这个档位**是靠什么证据得出的**
+        （"peer" 同行比 / "pct" 自身历史分位 / "price" 仅股价位置）。
+
+        为什么必须往外传：③ 只知道「股价比自己过去低」，那不是估值。
+        一只跌了 80% 的股票，如果利润跌了 90%，其实更贵了。
+        以前三条路都被叫做「估值便宜」，是把受限的观测讲成了不受限的结论
+        —— 和 US-151/163/176/182 同一个错误族。
+        """
         metric = profile["v"]
         if metric == "none":
             return None, 1, ""
@@ -1374,11 +1384,20 @@ class QuantitativeRater:
                 rank, word = 3, cls._rz("远高于同行", "well above peers", locale)
             reason = cls._rz(f"{name} {word}（{z:+.1f}个标准差）",
                              f"{name} {word} ({z:+.1f}σ vs industry)", locale)
-            return cls._tier_label(rank, locale), rank, reason
+            return cls._tier_label(rank, locale), rank, reason, "peer"
 
         def from_pct(p, name):
             if p is None:
                 return None
+            # US-202：利润里有一次性收益时，PE 被做低了 —— 这个「便宜」不算数。
+            # （US-175 已经把 one_off 接到 15 分的估值分上，但**没接到这里**，
+            #  而这里才是决定评级矩阵和那句摘要的地方。所以页面上会出现
+            #  「估值便宜。好公司 + 便宜，难得」+ A 级买入 —— 全建立在假 PE 上。）
+            if one_off and name == "PE" and p <= 60:
+                return 2, cls._rz(
+                    f"PE 看着低（第{p}百分位），但利润里有一次性收益——这个「便宜」不算数",
+                    f"PE looks low (pct {p}) but profit includes a one-off — this \"cheap\" does not count",
+                    locale)
             if p <= 25:
                 return 0, cls._rz(f"{name}处于历史低位（第{p}百分位）", f"{name} historically cheap (pct {p})", locale)
             if p <= 60:
@@ -1387,7 +1406,7 @@ class QuantitativeRater:
                 return 2, cls._rz(f"{name}偏贵（第{p}百分位）", f"{name} pricey (pct {p})", locale)
             return 3, cls._rz(f"{name}处于历史高位（第{p}百分位）", f"{name} historically expensive (pct {p})", locale)
 
-        res = None
+        res, basis = None, "pct"
         if metric == "pb":
             res = from_pct(pb_pct, "PB")
         elif metric == "pe":
@@ -1395,6 +1414,7 @@ class QuantitativeRater:
         elif metric == "pe_or_price":
             res = from_pct(pe_pct, "PE")
         if res is None and metric in ("price", "pe_or_price") and price_52week_pct is not None:
+            basis = "price"
             p = price_52week_pct
             if p >= 85:
                 res = (3, cls._rz(f"股价接近52周高点（{p:.0f}%位置）", f"near 52-wk high ({p:.0f}%)", locale))
@@ -1405,9 +1425,9 @@ class QuantitativeRater:
             else:
                 res = (0, cls._rz(f"股价处于偏低位置（{p:.0f}%）", f"lower range ({p:.0f}%)", locale))
         if res is None:
-            return None, 1, ""
+            return None, 1, "", None
         rank, reason = res
-        return cls._tier_label(rank, locale), rank, reason
+        return cls._tier_label(rank, locale), rank, reason, basis
 
     # 质量档 × 估值档 → (grade, conclusion, emoji, (一句话_zh, _en))  —— 方案 A 矩阵
     _MATRIX = {
@@ -1424,6 +1444,40 @@ class QuantitativeRater:
         ("lo", 2): ("D", "减持", "🔴", ("质量弱又不便宜", "weak and not cheap")),
         ("lo", 3): ("D", "卖出", "🔴", ("又弱又贵", "weak and expensive")),
     }
+
+    # 措辞必须跟着证据走。US-202：
+    # 「估值便宜」是一个关于**价格相对于价值**的结论；
+    # 而 basis="price" 只知道「股价比自己过去低」—— 那是关于价格相对于**自己历史价格**的
+    # 观测，跟公司值多少钱无关。一只跌了 80% 的股票，如果利润跌了 90%，反而更贵了。
+    #
+    # 以前三条证据路径都被统一叫做「估值X」，是把受限的观测讲成了不受限的结论
+    # ——US-151/163/176/182 同一个错误族，这次栽在最显眼的那句话上。
+    _BASIS_PHRASE = {
+        "peer":  ("估值{t}（比同行）", "valuation {t} vs peers"),
+        "pct":   ("估值{t}（比自己历史）", "valuation {t} vs own history"),
+        "price": ("股价处于{p}（估值本身判断不了）", "price in {p} of range (valuation itself unknown)"),
+    }
+    _PRICE_WORD = {0: ("偏低位置", "the lower part"), 1: ("中位", "mid range"),
+                   2: ("偏高位置", "the upper part"), 3: ("高位", "the top")}
+
+    @classmethod
+    def _value_phrase(cls, rank, has_value, basis, locale):
+        """注意收的是 **rank（0-3）不是 tier 文案**。
+
+        tier 是已经本地化过的字符串（中文「便宜」），把它插进英文句子会得到
+        "valuation 便宜 vs peers" —— 小刚用的就是英文版。
+        措辞要在各自语言里各自生成，不能拿一种语言的成品去拼另一种。
+        （和 US-148 双语债同源。）
+        """
+        if not has_value:
+            return "估值数据不足" if locale != "en" else "valuation data thin"
+        zh, en = cls._BASIS_PHRASE.get(basis, cls._BASIS_PHRASE["pct"])
+        if basis == "price":
+            w_zh, w_en = cls._PRICE_WORD.get(rank, cls._PRICE_WORD[1])
+            return zh.format(p=w_zh) if locale != "en" else en.format(p=w_en)
+        if locale == "en":
+            return en.format(t=cls._tier_label(rank, "en") or "")
+        return zh.format(t=cls._tier_label(rank, "zh"))
 
     @classmethod
     def _combine(cls, quality, value_rank, has_value, profile, locale):
@@ -1493,8 +1547,19 @@ class QuantitativeRater:
         flags, penalty = cls._forensic_flags(annual_data, locale)
         quality = max(0.0, min(100.0, quality - penalty))
 
-        tier, value_rank, v_reason = cls._value_tier(
+        # US-202：一次性收益识别。US-175 写过这段，但**只写在了 `_rate_legacy` 里** ——
+        # 真正跑的是 `rate_stock`，所以线上一直没生效。
+        # 这就是多邻国页面「估值便宜 / A 级买入」的来源：账面 PE 16.5x，
+        # 扣掉那笔一次性退税之后真实约 43x。
+        try:
+            from scripts.normalized_earnings import has_tax_windfall
+            _one_off = bool(annual_data) and has_tax_windfall(annual_data[0] or {})
+        except Exception:
+            _one_off = False
+
+        tier, value_rank, v_reason, v_basis = cls._value_tier(
             profile, pe_percentile, pb_percentile, price_52week_pct, locale,
+            one_off=_one_off,
             pe_current=pe_current, pb_current=pb_current, industry=industry)
         has_value = tier is not None
 
@@ -1513,9 +1578,9 @@ class QuantitativeRater:
         top_q = q_reasons[0] if q_reasons else ""
         reasoning = cls._rz(
             f"按{type_label}的标准看：质量 {q_int}/100（{top_q}），"
-            f"{('估值' + tier) if has_value else '估值数据不足'}。{verdict}。",
+            f"{cls._value_phrase(value_rank, has_value, v_basis, locale)}。{verdict}。",
             f"As {type_label}: quality {q_int}/100 ({top_q}), "
-            f"{('valuation ' + (tier or '')) if has_value else 'valuation data thin'}. {verdict}.",
+            f"{cls._value_phrase(value_rank, has_value, v_basis, 'en')}. {verdict}.",
             locale)
         if cycle_note:
             reasoning += "\n🔄 " + cycle_note
