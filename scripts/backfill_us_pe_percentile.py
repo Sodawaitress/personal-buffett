@@ -19,7 +19,14 @@ from sqlalchemy import text
 from scripts.us_valuation_percentile import pe_percentile, describe
 
 
-def _is_us(code: str) -> bool:
+def _needs_percentile(code: str) -> bool:
+    """A 股以外的都算 —— 名字别再叫 `_is_us`。
+
+    第一版叫 `_is_us`，判据是「不是 6 位数字」，于是 2359.HK / XRO.NZ
+    也被放了进来。它们**确实**该被处理（港股纽股同样没有分位，
+    yfinance 也同样能拉），但函数名说的是另一回事。
+    名字和判据不一致，下一个人（包括我自己）就会照名字去理解代码。
+    """
     return bool(code) and not code.isdigit()
 
 
@@ -27,13 +34,20 @@ def run(limit: int = 40) -> dict:
     import yfinance as yf
     from scripts.normalized_earnings import normalize
 
+    # US-203：脚本直连数据库，**不经过 Flask 启动流程**，所以迁移不会自动跑。
+    # 第一次上生产时 pe_pct_window_years 列不存在，12 只算出分位的股票
+    # 全部写入失败 —— 而日志里只报 UndefinedColumn，看着像权限问题。
+    # 和 scripts/industry_benchmarks.py 同一个模式：自己先确保列在。
+    from radar_app.data import core as _db
+    _db._migrate()
+
     engine = get_engine()
     with engine.begin() as conn:
         rows = conn.execute(text(
             "SELECT code, annual_json, pe_current, pe_percentile_5y "
             "FROM stock_fundamentals")).mappings().all()
 
-    todo = [r for r in rows if _is_us(r["code"]) and r["pe_percentile_5y"] is None]
+    todo = [r for r in rows if _needs_percentile(r["code"]) and r["pe_percentile_5y"] is None]
     stat = {"done": 0, "no_history": 0, "failed": 0, "total": len(todo)}
 
     for r in todo[:limit]:

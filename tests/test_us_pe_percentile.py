@@ -168,3 +168,20 @@ def test_describe_never_mixes_languages(locale):
     out = describe({}, locale)
     has_cn = any("一" <= c <= "鿿" for c in out)
     assert has_cn == (locale != "en"), out
+
+
+def test_backfill_runs_migrations_before_writing():
+    """US-203 上生产第一次：12 只股票算出了分位，**一只都没写进去** ——
+    `pe_pct_window_years` 列不存在。
+
+    脚本直连数据库，不经过 Flask 启动流程，迁移不会自动跑。
+    日志里只报 UndefinedColumn，看着像权限问题，其实是「谁负责建列」没定。
+
+    守的是接线：脚本必须自己确保列在。
+    """
+    import inspect
+    from scripts import backfill_us_pe_percentile as b
+    src = inspect.getsource(b.run)
+    assert "_migrate()" in src, "补数脚本没跑迁移，新列不会存在"
+    assert src.index("_migrate()") < src.index("UPDATE stock_fundamentals"), \
+        "迁移必须在写入之前"
