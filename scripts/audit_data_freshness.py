@@ -726,6 +726,49 @@ def audit_insider_lag(conn, existing):
             "max": vals[-1], "sample": lags[:8]}
 
 
+def audit_duol_state(conn, existing):
+    """US-202：用户实拍 DUOL 页面自相矛盾 ——
+    上方 AI 摘要说「估值便宜。好公司 + 便宜，难得」，
+    下方卡片说「估值数据不足，判断不了贵还是便宜」，
+    而 PE 显示 **17.4x**（US-172 查明真实约 43x），各项评分全是 None。
+
+    先把这只股票在生产上的真实状态摊开，再谈修哪一个。
+    """
+    if "stock_fundamentals" not in existing:
+        return {}
+    import json as _j
+    out = {}
+    r = _rows(conn, "SELECT * FROM stock_fundamentals WHERE code='DUOL'")
+    if not r:
+        return {"missing": True}
+    row = dict(r[0])
+    out["pe_current"] = row.get("pe_current")
+    out["pe_percentile_5y"] = row.get("pe_percentile_5y")
+    out["pb_current"] = row.get("pb_current")
+    try:
+        ann = _j.loads(row.get("annual_json") or "[]")
+    except Exception:
+        ann = []
+    out["annual_years"] = len(ann)
+    out["has_pretax"] = bool(ann) and ann[0].get("pretax_income") is not None
+    out["latest_year"] = (ann[0] or {}).get("year") if ann else None
+    try:
+        sig = _j.loads(row.get("signals_json") or "{}")
+    except Exception:
+        sig = {}
+    out["signals_keys"] = sorted(sig.keys())[:12]
+    # 最新一次分析的评分
+    a = _rows(conn, """SELECT grade, conclusion, quant_score, reasoning, analysis_date
+                       FROM analysis_results WHERE code='DUOL'
+                       ORDER BY id DESC LIMIT 1""")
+    if a:
+        out["analysis"] = {"grade": a[0]["grade"], "conclusion": a[0]["conclusion"],
+                           "quant_score": a[0]["quant_score"],
+                           "date": str(a[0]["analysis_date"])[:10],
+                           "reasoning": (a[0]["reasoning"] or "")[:120]}
+    return out
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -806,6 +849,7 @@ def main():
         card = audit_scorecard(conn, existing)
         icl = audit_insider_cluster_quality(conn, existing)
         ilag = audit_insider_lag(conn, existing)
+        duol = audit_duol_state(conn, existing)
         try:
             from scripts.pick_ledger import concentration_history
             conc = concentration_history(8)
@@ -815,7 +859,7 @@ def main():
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "duol": duol, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -978,6 +1022,11 @@ def main():
         print(f"  8 月有 ≥30 只股票同日价格的交易日：{len(ds)} 天")
         for d, n, a in ds[:8]:
             print(f"    {d}  {n:3} 只  等权平均 {a:+.2f}%")
+
+    if duol:
+        print(f"\n── DUOL 在生产上的真实状态（US-202）──")
+        for k, v in duol.items():
+            print(f"    {k}: {v}")
 
     if ilag and ilag.get("n"):
         print(f"\n── 内部人数据实际滞后多久（US-198）──")
