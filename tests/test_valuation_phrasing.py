@@ -136,3 +136,32 @@ def test_declared_price_metric_still_has_a_valuation_axis():
         {"v": "price"}, None, None, 7.4, "zh",
         pe_current=None, pb_current=None, industry=None)
     assert basis == "price", "未盈利公司的估值轴被误伤了"
+
+
+def test_preprofit_company_near_lows_is_not_graded_a_buy():
+    """US-204：自己用一次就撞上的。
+
+    可投资清单跑出来，**排第一的 A 级买入是 T1 Energy** —— 一家未盈利的
+    太阳能公司，股价在 52 周区间第 8%。摘要一句话里自相矛盾：
+    「估值本身判断不了。好公司 + 便宜，难得。」
+
+    US-202 修的时候我**故意放过了这个分支**，理由是「未盈利公司本来就没有
+    市盈率，股价位置是它设计上唯一的估值轴」。那个理由是错的：
+    **没有市盈率，不等于股价位置就变成了估值。它对谁都不是估值。**
+
+    一个自己不用的工具，这种错就永远排在第一位没人看见。
+    """
+    prof = {"v": "price"}
+    tier, rank, reason, basis = Q._value_tier(
+        prof, None, None, 8.0, "zh",
+        pe_current=None, pb_current=None, industry=None)
+    assert basis == "price"
+
+    has_value = tier is not None and basis not in ("price", "price_fallback")
+    grade, conclusion, _e, verdict = Q._combine(70, rank, has_value, prof, "zh")
+    assert conclusion != "买入", f"未盈利公司靠「跌得深」拿到了买入: {verdict}"
+    assert "便宜" not in verdict, verdict
+
+    # 但位置本身仍然要说出来 —— 别把已知的也藏起来
+    phrase = Q._value_phrase(rank, has_value, basis, "zh")
+    assert "股价" in phrase, f"位置信息被一起丢掉了: {phrase}"

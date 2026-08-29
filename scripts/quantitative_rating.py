@@ -1478,7 +1478,10 @@ class QuantitativeRater:
         措辞要在各自语言里各自生成，不能拿一种语言的成品去拼另一种。
         （和 US-148 双语债同源。）
         """
-        if basis == "price_fallback":
+        # US-204：两种 price 现在都不驱动评级了，但**位置本身仍是信息**，
+        # 别把它一起丢掉 —— 说「估值数据不足」而不说「股价在哪」，
+        # 等于把已知的也藏起来了。
+        if basis in ("price_fallback", "price") and not has_value:
             w_zh, w_en = cls._PRICE_WORD.get(rank, cls._PRICE_WORD[1])
             zh, en = cls._BASIS_PHRASE["price_fallback"]
             return zh.format(p=w_zh) if locale != "en" else en.format(p=w_en)
@@ -1575,9 +1578,18 @@ class QuantitativeRater:
             one_off=_one_off,
             pe_current=pe_current, pb_current=pb_current, industry=industry)
         has_value = tier is not None
-        # 降级来的股价位置说不了贵贱 —— 估值轴按「无数据」中性处理。
+        # 股价位置说不了贵贱 —— 估值轴按「无数据」中性处理。
         # 位置本身仍然会出现在摘要和理由里，只是不许它去决定评级。
-        if v_basis == "price_fallback":
+        #
+        # US-204：这里原本只挡 `price_fallback`，放过了「设计上就只有股价位置」
+        # 的 `price`（未盈利公司）。当时的理由是「它们本来就没有市盈率，
+        # 股价位置是唯一的轴」—— **那个理由是错的**。没有市盈率不等于
+        # 股价位置就变成了估值；它对谁都不是估值。
+        #
+        # 后果是自己用一次就撞上了：T1 Energy（未盈利太阳能）股价在 52 周
+        # 区间第 8%，拿到 **A 级买入**，顶在可投资清单第一位，
+        # 而摘要一句话里自相矛盾：「估值本身判断不了。好公司 + 便宜，难得。」
+        if v_basis in ("price_fallback", "price"):
             has_value = False
 
         # 周期股：按周期位置调整估值档（峰值往贵推=PE陷阱预警，谷底往便宜推=机会）
