@@ -226,3 +226,20 @@ def test_companies_without_thin_years_are_untouched():
     prices = _weekly(2022, 4, lambda d: 100.0 + (d.year - 2022) * 20)
     res = pe_percentile(_FakeTicker(eps, prices))
     assert res and res["n"] == 4 * 52, f"有点被误剔了: {res}"
+
+
+def test_backfill_can_refresh_existing_values():
+    """US-203：补数默认只补空值 —— 对「填坑」是对的，但**算法修好之后
+    坏数据不会被覆盖**。
+
+    微利年过滤上线后重跑，total 从 38 掉到 26 —— 那 12 只带着修复前的
+    错误分位（NVDA 第 0 百分位）安安静静留在生产上，日志还显示成功。
+
+    「只补空值」是个隐含假设：**已有的值都是对的**。改了算法就不成立。
+    """
+    import inspect
+    from scripts import backfill_us_pe_percentile as b
+    assert "refresh" in inspect.signature(b.run).parameters, \
+        "补数没有重算模式，算法改动后坏数据无法覆盖"
+    src = inspect.getsource(b.run)
+    assert "refresh or" in src, "refresh 参数没有真的绕过「只补空值」的过滤"

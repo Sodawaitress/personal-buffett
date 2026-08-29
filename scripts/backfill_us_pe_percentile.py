@@ -30,7 +30,15 @@ def _needs_percentile(code: str) -> bool:
     return bool(code) and not code.isdigit()
 
 
-def run(limit: int = 40) -> dict:
+def run(limit: int = 40, refresh: bool = False) -> dict:
+    """refresh=True 时重算**已经有值**的行。
+
+    US-203：补数默认只补空值 —— 这对「填坑」是对的，但**算法修好之后
+    坏数据不会被覆盖**。微利年过滤上线后重跑，`total` 从 38 掉到 26，
+    那 12 只带着修复前的错误分位（NVDA 第 0 百分位）安安静静留在生产上。
+
+    「只补空值」是个隐含假设：**已有的值都是对的**。改了算法就不成立了。
+    """
     import yfinance as yf
     from scripts.normalized_earnings import normalize
 
@@ -47,7 +55,8 @@ def run(limit: int = 40) -> dict:
             "SELECT code, annual_json, pe_current, pe_percentile_5y "
             "FROM stock_fundamentals")).mappings().all()
 
-    todo = [r for r in rows if _needs_percentile(r["code"]) and r["pe_percentile_5y"] is None]
+    todo = [r for r in rows if _needs_percentile(r["code"])
+            and (refresh or r["pe_percentile_5y"] is None)]
     stat = {"done": 0, "no_history": 0, "failed": 0, "total": len(todo)}
 
     for r in todo[:limit]:
@@ -86,5 +95,7 @@ def run(limit: int = 40) -> dict:
 
 
 if __name__ == "__main__":
-    lim = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 40
-    print(run(lim))
+    args = [a for a in sys.argv[1:]]
+    ref = "--refresh" in args
+    nums = [a for a in args if a.isdigit()]
+    print(run(int(nums[0]) if nums else 40, refresh=ref))

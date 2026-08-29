@@ -18,6 +18,10 @@ on:
   workflow_call:
   workflow_dispatch:
     inputs:
+      refresh:
+        description: 'true = 重算已有分位（算法改动后必须跑一次）'
+        required: false
+        default: 'false'
       limit:
         description: '本轮最多补多少只（留空=全部）'
         required: false
@@ -40,7 +44,8 @@ jobs:
       # US-203：美股的估值分位。和上面的税前利润是对称的两半 ——
       # 美股缺分位，A股缺税前利润，各补各的。
       - name: Backfill US P/E percentile (US-203)
-        run: python -m scripts.backfill_us_pe_percentile ${{ github.event.inputs.limit || '40' }}
+        # refresh：算法改动之后必须重算已有值，否则坏数据永远留在库里
+        run: python -m scripts.backfill_us_pe_percentile ${{ github.event.inputs.limit || '40' }} ${{ github.event.inputs.refresh == 'true' && '--refresh' || '' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
