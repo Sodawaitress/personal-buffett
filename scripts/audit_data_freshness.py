@@ -787,6 +787,46 @@ def audit_duol_state(conn, existing):
     return out
 
 
+def audit_investable_ranking(conn, existing):
+    """自己用一次：把**我们真的买得到的**股票（Sharesies 支持 NZ/AU/US）
+    按网站自己的评级排出来，连同刚补上的估值分位。
+
+    动机是用户那句「做了这么久结果我们自己不选几个玩玩，这不是知行不合一吗，
+    也不方便我验证网站是否有用」—— 一个自己不用的工具，好坏是不知道的。
+
+    A 股（222 只）占了库里的绝大多数，但在 Sharesies 上买不到，所以这里排除。
+    """
+    if "analysis_results" not in existing:
+        return {}
+    rows = _rows(conn, """
+        SELECT a.code, a.grade, a.conclusion, a.quant_score, a.reasoning,
+               f.pe_current, f.pe_percentile_5y, f.pe_pct_window_years,
+               f.pe_pct_range, s.name, s.market
+        FROM (SELECT DISTINCT ON (code) code, grade, conclusion, quant_score,
+                     reasoning FROM analysis_results ORDER BY code, id DESC) a
+        LEFT JOIN stock_fundamentals f ON f.code = a.code
+        LEFT JOIN stocks s ON s.code = a.code
+    """)
+    order = {"A": 0, "A-": 1, "B+": 2, "B": 3, "B-": 4, "C+": 5, "C": 6,
+             "D": 7, "NR": 9}
+    out = []
+    for r in rows:
+        code = r["code"] or ""
+        if code.isdigit():
+            continue                      # A 股：Sharesies 买不到
+        out.append({
+            "code": code, "name": (r["name"] or "")[:22],
+            "grade": r["grade"], "conclusion": r["conclusion"],
+            "score": r["quant_score"], "pe": r["pe_current"],
+            "pct": r["pe_percentile_5y"], "win": r["pe_pct_window_years"],
+            "range": r["pe_pct_range"],
+            "why": (r["reasoning"] or "").split("。")[0][:60],
+        })
+    out.sort(key=lambda x: (order.get((x["grade"] or "NR").upper(), 8),
+                            -(x["score"] or 0)))
+    return out
+
+
 def audit_valuation_basis_by_market(conn, existing):
     """US-202 收尾：修完之后，两个市场各自还剩什么证据可用？
 
@@ -905,6 +945,7 @@ def main():
         ilag = audit_insider_lag(conn, existing)
         duol = audit_duol_state(conn, existing)
         vbasis = audit_valuation_basis_by_market(conn, existing)
+        investable = audit_investable_ranking(conn, existing)
         try:
             from scripts.pick_ledger import concentration_history
             conc = concentration_history(8)
@@ -914,7 +955,7 @@ def main():
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "duol": duol, "valuation_basis": vbasis, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "duol": duol, "valuation_basis": vbasis, "investable": investable, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -928,6 +969,15 @@ def main():
         print(f"  [估值证据] {_m} 共 {_d.get('总数',0)} 只")
         for _k in ("有当期PE", "有PE分位", "有PB分位", "有税前利润", "无任何分位"):
             print(f"      {_k:<8} {_d.get(_k,0):>4}  ({_d.get(_k,0)/_t*100:.0f}%)")
+
+    if investable:
+        print(f"  [可投资清单] 非 A 股共 {len(investable)} 只，按网站自己的评级排序")
+        for _r in investable[:22]:
+            _pe = f"{_r['pe']:.1f}x" if _r["pe"] else "—"
+            _pc = (f"第{_r['pct']}分位/近{_r['win']}年" if _r["pct"] is not None
+                   else "无可比历史")
+            print(f"      {(_r['grade'] or 'NR'):<3} {_r['code']:<9} "
+                  f"{(_r['name'] or ''):<20} {_pe:>8} {_pc:<18} {_r['conclusion'] or ''}")
 
     print(f"\n{'='*66}")
     print(f"数据源体检 · backend={backend} · {'生产' if is_prod else '⚠️ 本地库，结论不算数'}")
