@@ -57,7 +57,30 @@ _FALLBACK_RATE = 0.21
 _MIN_RATE, _MAX_RATE = 0.05, 0.40
 
 
+# A 股的年报字段是带单位的字符串（'823.20亿'、'1,720.54亿'、'5300万'），
+# 美股的是裸浮点。US-202：`float('823.20亿')` 抛异常 → 返回 None
+# → `has_tax_windfall` 当成缺数据 → **A 股的一次性收益检测静默失效**。
+#
+# 这是「拿一个语境的事实用到另一个语境」的第三次（US-154/168/171 数据库，
+# US-198 内部人披露规则）。这次的形态最隐蔽：它不报错，只是永远返回 False。
+_UNIT = {"亿": 1e8, "万": 1e4, "千": 1e3}
+
+
 def _num(v):
+    if isinstance(v, str):
+        t = v.strip().replace(",", "").replace("，", "")
+        if not t:
+            return None
+        mult = 1.0
+        for u, m in _UNIT.items():
+            if t.endswith(u):
+                t, mult = t[:-len(u)], m
+                break
+        try:
+            f = float(t) * mult
+        except ValueError:
+            return None
+        return f if f == f else None
     try:
         f = float(v)
         return f if f == f else None      # 挡掉 NaN

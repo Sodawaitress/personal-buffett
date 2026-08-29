@@ -240,6 +240,29 @@ def fetch_cn_advanced(code: str, annual: list = None) -> dict:
             except (ValueError, TypeError):
                 ann["ebit"] = None
 
+            # US-202：利润总额早就抓来了，但只拿去算 EBIT，没存下来 ——
+            # 于是 US-172 的一次性收益检查（净利润 > 税前利润）对 A 股
+            # **一次都没生效过**：生产 222 只 A 股，有税前利润字段的是 0 只。
+            #
+            # 两个市场当时是镜像的缺口：美股有税前利润没有估值分位，
+            # A 股有分位没有税前利润。补数脚本只写了美股那半边。
+            #
+            # ⚠️ 单位必须跟同一行里的 net_profit 一致。A 股这些字段存的是
+            # 带单位的字符串（'823.20亿'）；如果这里存成「亿为单位的裸数字」
+            # 1147.55，那 has_tax_windfall 会拿 823 亿 和 1147.55 比 ——
+            # **茅台会被判成有一次性收益**（实测过，确实会）。
+            # 同一行里两种单位，是这个仓库另一条老毛病的翻版。
+            _yi_str = lambda v: (f"{float(v)/1e8:.2f}亿" if v == v else None)
+            try:
+                ann["pretax_income"] = _yi_str(_tot)
+            except (ValueError, TypeError):
+                ann["pretax_income"] = None
+            _tax = lp_yr_row.iloc[0].get('所得税费用')
+            try:
+                ann["tax_provision"] = _yi_str(_tax)
+            except (ValueError, TypeError):
+                ann["tax_provision"] = None
+
         net_p_yi = _parse_num(ann.get('net_profit', ''))   # 亿
         eps       = _parse_num(ann.get('eps', ''))
         ocf_ps    = _parse_num(ann.get('ocf_per_share', ''))
