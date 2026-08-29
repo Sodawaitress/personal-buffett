@@ -1,4 +1,4 @@
-name: backfill-svc (US-202)
+name: backfill-svc (US-202/203)
 
 # 一次性/按需补数入口。
 #
@@ -37,6 +37,13 @@ jobs:
           python-version: '3.12'
       - name: Install deps
         run: pip install -r requirements.txt
+      # US-203：美股的估值分位。和上面的税前利润是对称的两半 ——
+      # 美股缺分位，A股缺税前利润，各补各的。
+      - name: Backfill US P/E percentile (US-203)
+        run: python -m scripts.backfill_us_pe_percentile ${{ github.event.inputs.limit || '40' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Backfill pretax/tax fields (US-172)
         # 被流水线调用时（inputs 为空）默认每轮 30 只 —— 跑几天自然补完，
         # 不必也不该每天跑全量

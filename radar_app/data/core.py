@@ -750,6 +750,12 @@ def _migrate():
         ("insider_changes",    "ratio_own",      "REAL"),   # 占其本人持股 %
         ("insider_changes",    "reason",         "TEXT"),   # 竞价交易/大宗交易/股权激励…
         ("insider_changes",    "kind",           "TEXT"),   # routine / opportunistic
+        # US-203：分位的**窗口长度**必须跟着分位一起存。
+        # 列名叫 pe_percentile_5y，但那是 A 股的语境（百度给的就是近5年）；
+        # 美股用 yfinance 只拿得到 4 期年度 EPS，实际窗口 3.5-4 年。
+        # 同一列装两种窗口而不记录是哪种，就是把受限的观测讲成不受限的结论。
+        ("stock_fundamentals", "pe_pct_window_years", "REAL"),
+        ("stock_fundamentals", "pe_pct_range",        "TEXT"),   # "20.8-44.7" 供页面显示区间
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).
