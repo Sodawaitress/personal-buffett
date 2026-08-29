@@ -107,7 +107,9 @@ def test_current_pe_is_the_latest_not_the_max():
     造一段价格：先高后低。当前 PE 应该落在**低分位**，
     如果实现取了排序后的最大值，就会报 100。
     """
-    eps = {2021: 1.0, 2022: 1.0, 2023: 1.0, 2024: 1.0, 2025: 1.0}
+    # EPS 取 5.0 让 PE 落在 40 / 4 —— 若用 EPS 1.0，PE 200 会被
+    # _MAX_SANE_PE 当成微利年剔掉，测试红得像是算法坏了。
+    eps = {2021: 5.0, 2022: 5.0, 2023: 5.0, 2024: 5.0, 2025: 5.0}
     prices = _weekly(2022, 4, lambda d: 200.0 if d.year <= 2024 else 20.0)
     res = pe_percentile(_FakeTicker(eps, prices))
     assert res, "应该算得出分位"
@@ -137,8 +139,8 @@ def test_window_length_is_reported_not_assumed_to_be_five_years():
     窗口长度必须出现在返回值和人话描述里 —— 否则又是一次
     「把受限的观测讲成不受限的结论」。
     """
-    eps = {2021: 1.0, 2022: 1.0, 2023: 1.0, 2024: 1.0, 2025: 1.0}
-    prices = _weekly(2022, 4, lambda d: 100.0 + d.year)
+    eps = {2021: 5.0, 2022: 5.0, 2023: 5.0, 2024: 5.0, 2025: 5.0}
+    prices = _weekly(2022, 4, lambda d: 100.0 + (d.year - 2022) * 10)
     res = pe_percentile(_FakeTicker(eps, prices))
     assert "years" in res and res["years"] > 0
     assert f"{res['years']}" in describe(res), "人话里没写清楚是几年的窗口"
@@ -185,3 +187,42 @@ def test_backfill_runs_migrations_before_writing():
     assert "_migrate()" in src, "补数脚本没跑迁移，新列不会存在"
     assert src.index("_migrate()") < src.index("UPDATE stock_fundamentals"), \
         "迁移必须在写入之前"
+
+
+def test_near_zero_earnings_years_are_excluded_not_counted_as_expensive():
+    """US-203 生产首跑抓到的：AIA.NZ 区间 28–2315 倍（中位数 259），
+    LITE 到 2623 倍。那是公司微利那几年 —— EPS 接近 0，PE 爆到几千倍。
+    它是正数，所以 `eps > 0` 放它过去了。
+
+    后果**有方向，而且是最危险的那个方向**：任何从微利恢复到正常盈利的
+    公司，历史区间被那段天价 PE 占满，今天无论多贵都排在最低分位。
+    实测 NVDA 报第 0、FPH/HBM 报第 1 —— 全部看着「史上最便宜」。
+    修完之后分别变成 28 / 46 / 40。
+
+    「微利年的 PE」不是估值信息，不该参与排名。
+    """
+    # 前两年微利（EPS 0.01 → PE 10000 倍），后三年正常
+    # 微利只占 1 年（2022 年用的是 2021 年报），正常年份 4 年 → 剔除比例 20%
+    eps = {2021: 0.01, 2022: 1.0, 2023: 1.0, 2024: 1.0, 2025: 1.0, 2026: 1.0}
+    prices = _weekly(2022, 5, lambda d: 100.0)
+    res = pe_percentile(_FakeTicker(eps, prices))
+    assert res, "正常年份够多，应该还算得出"
+    assert res["high"] <= 150, f"天价 PE 漏进区间了: {res}"
+    assert res["pct"] > 20, f"当前 PE 被微利年拽到了第 {res['pct']} 百分位"
+
+
+def test_mostly_near_zero_earnings_gives_no_percentile_at_all():
+    """微利年占了大半 → 这家公司就是没有可比的估值历史，返回空。
+    留一个「勉强算得出」的分位比留空更有害。"""
+    eps = {2020: 0.01, 2021: 0.01, 2022: 0.01, 2023: 0.01, 2024: 1.0, 2025: 1.0}
+    prices = _weekly(2021, 5, lambda d: 100.0)
+    assert pe_percentile(_FakeTicker(eps, prices)) == {}
+
+
+def test_companies_without_thin_years_are_untouched():
+    """反过来别修过头：没有微利年份的公司，一个点都不该被剔。
+    AAPL(99) 和 LULU(6) 在修前修后完全一致 —— 这是这条修改的边界证明。"""
+    eps = {2021: 5.0, 2022: 5.0, 2023: 5.0, 2024: 5.0, 2025: 5.0}
+    prices = _weekly(2022, 4, lambda d: 100.0 + (d.year - 2022) * 20)
+    res = pe_percentile(_FakeTicker(eps, prices))
+    assert res and res["n"] == 4 * 52, f"有点被误剔了: {res}"

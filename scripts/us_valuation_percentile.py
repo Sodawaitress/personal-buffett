@@ -33,6 +33,22 @@ from __future__ import annotations
 _MIN_YEARS = 3.0          # 少于 3 年正盈利覆盖 → 不给分位
 _MIN_POINTS = 60          # 少于 60 个周线点 → 不给分位
 
+# 「正利润」不等于「有意义的利润」。
+#
+# 生产首跑抓到的：AIA.NZ 区间 28–2315 倍（中位数 259），LITE 到 2623 倍。
+# 那是公司微利那几年——EPS 接近 0，PE 就爆到几千倍。它是正数，
+# 所以 `eps > 0` 放它过去了。
+#
+# 后果**有方向，而且是最危险的那个方向**：任何从微利恢复到正常盈利的
+# 公司，历史区间都被那段天价 PE 占满，于是今天无论多贵都排在最低分位。
+# 实测 NVDA 报第 0 百分位、FPH/HBM 报第 1 —— 全部看着「史上最便宜」。
+#
+# 这和 US-202 是同一个错误族：**把受限的观测讲成不受限的结论**。
+# 「微利年的 PE」根本不是估值信息，不该参与排名。
+_MAX_SANE_PE = 150.0
+# 剔掉之后剩得太少 → 这家公司就是没有可比的估值历史，返回空
+_MAX_DROPPED_RATIO = 0.25
+
 
 def _annual_eps(ticker):
     """{fiscal_year_end(date) -> diluted EPS}，按时间升序。"""
@@ -85,17 +101,23 @@ def pe_percentile(ticker, current_pe=None, normalized_eps_ratio=None):
     if hist is None or getattr(hist, "empty", True) or "Close" not in hist:
         return {}
 
-    pes, covered_days, latest_pe = [], set(), None
+    pes, covered_days, latest_pe, dropped = [], set(), None, 0
     for ts, close in hist["Close"].items():
         day = ts.date()
         eps = _eps_at(eps_points, day)
         if eps is None or eps <= 0 or close != close or close <= 0:
             continue                       # 亏损年 / 缺价 → 整点剔除
-        pes.append(close / eps)
-        latest_pe = pes[-1]                # ← 排序**之前**记下来
+        pe = close / eps
+        if pe > _MAX_SANE_PE:
+            dropped += 1               # 微利年：不是「贵」，是「没有可比的利润」
+            continue
+        pes.append(pe)
+        latest_pe = pe                     # ← 排序**之前**记下来
         covered_days.add(day)
     if len(pes) < _MIN_POINTS:
         return {}
+    if dropped / (dropped + len(pes)) > _MAX_DROPPED_RATIO:
+        return {}                          # 大半段历史没有有意义的利润
 
     years = (max(covered_days) - min(covered_days)).days / 365.25
     if years < _MIN_YEARS:
