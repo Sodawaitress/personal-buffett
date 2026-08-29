@@ -787,6 +787,42 @@ def audit_duol_state(conn, existing):
     return out
 
 
+def audit_valuation_basis_by_market(conn, existing):
+    """US-202 收尾：修完之后，两个市场各自还剩什么证据可用？
+
+    估值档的三条证据路径（同行比 / 自身历史分位 / 股价位置）现在会
+    如实标注来源，于是「哪个市场根本没有估值证据」这件事第一次能被量出来。
+    """
+    if "stock_fundamentals" not in existing:
+        return {}
+    import json as _j, re as _re
+    from collections import defaultdict
+    stat = defaultdict(lambda: defaultdict(int))
+    rows = _rows(conn, """SELECT code, annual_json, pe_current, pb_current,
+                                 pe_percentile_5y, pb_percentile_5y
+                          FROM stock_fundamentals""")
+    for r in rows:
+        code = r["code"] or ""
+        m = "A股" if _re.fullmatch(r"\d{6}", code) else "美股"
+        stat[m]["总数"] += 1
+        try:
+            ann = _j.loads(r["annual_json"] or "[]")
+        except Exception:
+            ann = []
+        if ann and ann[0].get("pretax_income") is not None:
+            stat[m]["有税前利润"] += 1
+        if r["pe_percentile_5y"] is not None:
+            stat[m]["有PE分位"] += 1
+        if r["pb_percentile_5y"] is not None:
+            stat[m]["有PB分位"] += 1
+        if r["pe_current"] is not None:
+            stat[m]["有当期PE"] += 1
+        # 两条证据都没有 → 估值档只能靠股价位置 → 现在会诚实地说「不知道」
+        if r["pe_percentile_5y"] is None and r["pb_percentile_5y"] is None:
+            stat[m]["无任何分位"] += 1
+    return {m: dict(d) for m, d in stat.items()}
+
+
 def audit_watchlist_filter(conn, existing):
     """自选页筛选：等级词汇表一致性 + 那条 GROUP BY 在生产跑不跑得通。
 
@@ -868,6 +904,7 @@ def main():
         icl = audit_insider_cluster_quality(conn, existing)
         ilag = audit_insider_lag(conn, existing)
         duol = audit_duol_state(conn, existing)
+        vbasis = audit_valuation_basis_by_market(conn, existing)
         try:
             from scripts.pick_ledger import concentration_history
             conc = concentration_history(8)
@@ -877,7 +914,7 @@ def main():
     payload = {"backend": backend, "is_production": is_prod,
                "checked_at": datetime.utcnow().isoformat() + "Z",
                "tables": tables, "moat": moat, "fundamentals": fundamentals,
-               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "duol": duol, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
+               "survey_followthrough": survey_ft, "watchlist_filter": wl_filter, "one_off_profits": one_off, "event_sources": ev_src, "pick_accuracy": picks, "benchmark": bench, "scorecard": card, "concentration": conc, "insider_clusters": icl, "insider_lag": ilag, "duol": duol, "valuation_basis": vbasis, "industry_gap": ind_gap, "em_convergence": em_conv, "scan_jobs": scan_jobs,
                "northbound": northbound, "company_type": company_type,
                "moat_detail": moat_detail, "industry_gaps": industry_gaps,
                "industry_coverage": industry_cov, "users": users}
@@ -885,6 +922,12 @@ def main():
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
+
+    for _m, _d in (vbasis or {}).items():
+        _t = _d.get("总数", 0) or 1
+        print(f"  [估值证据] {_m} 共 {_d.get('总数',0)} 只")
+        for _k in ("有当期PE", "有PE分位", "有PB分位", "有税前利润", "无任何分位"):
+            print(f"      {_k:<8} {_d.get(_k,0):>4}  ({_d.get(_k,0)/_t*100:.0f}%)")
 
     print(f"\n{'='*66}")
     print(f"数据源体检 · backend={backend} · {'生产' if is_prod else '⚠️ 本地库，结论不算数'}")
