@@ -1414,7 +1414,14 @@ class QuantitativeRater:
         elif metric == "pe_or_price":
             res = from_pct(pe_pct, "PE")
         if res is None and metric in ("price", "pe_or_price") and price_52week_pct is not None:
-            basis = "price"
+            # US-202：两种「只有股价位置」性质完全不同 ——
+            #   metric == "price"        未盈利公司，本来就没有市盈率，
+            #                            股价位置是设计上唯一的估值轴
+            #   metric == "pe_or_price"  公司**有利润**，只是缺分位数据，
+            #                            于是降级掉到了股价位置 = 我们不知道贵贱
+            # 后者不该拿去驱动评级矩阵的估值轴（多邻国就是栽在这里：
+            # 股价在 52 周区间最底部 7%，被判成「便宜」→ A 级买入）。
+            basis = "price" if metric == "price" else "price_fallback"
             p = price_52week_pct
             if p >= 85:
                 res = (3, cls._rz(f"股价接近52周高点（{p:.0f}%位置）", f"near 52-wk high ({p:.0f}%)", locale))
@@ -1456,6 +1463,8 @@ class QuantitativeRater:
         "peer":  ("估值{t}（比同行）", "valuation {t} vs peers"),
         "pct":   ("估值{t}（比自己历史）", "valuation {t} vs own history"),
         "price": ("股价处于{p}（估值本身判断不了）", "price in {p} of range (valuation itself unknown)"),
+        "price_fallback": ("估值数据不足，只知道股价处于{p}",
+                           "valuation data thin; only known: price in {p} of range"),
     }
     _PRICE_WORD = {0: ("偏低位置", "the lower part"), 1: ("中位", "mid range"),
                    2: ("偏高位置", "the upper part"), 3: ("高位", "the top")}
@@ -1469,6 +1478,10 @@ class QuantitativeRater:
         措辞要在各自语言里各自生成，不能拿一种语言的成品去拼另一种。
         （和 US-148 双语债同源。）
         """
+        if basis == "price_fallback":
+            w_zh, w_en = cls._PRICE_WORD.get(rank, cls._PRICE_WORD[1])
+            zh, en = cls._BASIS_PHRASE["price_fallback"]
+            return zh.format(p=w_zh) if locale != "en" else en.format(p=w_en)
         if not has_value:
             return "估值数据不足" if locale != "en" else "valuation data thin"
         zh, en = cls._BASIS_PHRASE.get(basis, cls._BASIS_PHRASE["pct"])
@@ -1562,6 +1575,10 @@ class QuantitativeRater:
             one_off=_one_off,
             pe_current=pe_current, pb_current=pb_current, industry=industry)
         has_value = tier is not None
+        # 降级来的股价位置说不了贵贱 —— 估值轴按「无数据」中性处理。
+        # 位置本身仍然会出现在摘要和理由里，只是不许它去决定评级。
+        if v_basis == "price_fallback":
+            has_value = False
 
         # 周期股：按周期位置调整估值档（峰值往贵推=PE陷阱预警，谷底往便宜推=机会）
         cycle_note = ""
