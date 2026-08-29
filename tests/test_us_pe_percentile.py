@@ -243,3 +243,29 @@ def test_backfill_can_refresh_existing_values():
         "补数没有重算模式，算法改动后坏数据无法覆盖"
     src = inspect.getsource(b.run)
     assert "refresh or" in src, "refresh 参数没有真的绕过「只补空值」的过滤"
+
+
+def test_percentile_does_not_accept_an_outside_pe():
+    """US-203：排名必须用序列自己的最新 PE。
+
+    第一版接受 `current_pe`，生产上传库里的 `pe_current`（TTM 口径），
+    而序列是按**上一完整财年 EPS** 算的。口径不同，成长股 TTM 利润更高
+    → TTM 市盈率更低 → 永远排在低分位：
+
+        NVDA 第 28 → 第 **0**   SMCI 第 55 → 第 **5**   AAPL 第 99 → 第 66
+
+    偏差方向一致：**都让东西看起来更便宜**。
+
+    参数是被**删掉**的，不是改默认值 —— 能传错的接口迟早会被传错。
+    """
+    import inspect
+    assert "current_pe" not in inspect.signature(pe_percentile).parameters, \
+        "还能从外面塞一个不同口径的 PE 进来"
+
+
+def test_result_states_which_earnings_it_used():
+    eps = {2021: 5.0, 2022: 5.0, 2023: 5.0, 2024: 5.0, 2025: 5.0}
+    prices = _weekly(2022, 4, lambda d: 100.0 + (d.year - 2022) * 10)
+    res = pe_percentile(_FakeTicker(eps, prices))
+    assert res.get("current") is not None, "没报出排名用的是哪个 PE"
+    assert "财年" in describe(res), "人话里没说清楚按什么利润算的"

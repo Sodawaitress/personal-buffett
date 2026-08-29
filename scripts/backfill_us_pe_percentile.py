@@ -72,8 +72,9 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
             if norm and norm.get("reported"):
                 ratio = norm["normalized"] / norm["reported"]
 
-            res = pe_percentile(yf.Ticker(code), r["pe_current"],
-                                normalized_eps_ratio=ratio)
+            # 不再传库里的 pe_current —— 那是 TTM 口径，和这条按年报算的
+            # 历史序列不是一回事，混着排名会让成长股永远显得便宜。
+            res = pe_percentile(yf.Ticker(code), normalized_eps_ratio=ratio)
             if not res:
                 stat["no_history"] += 1
                 print(f"  ⏭ {code}  {describe(res)}")

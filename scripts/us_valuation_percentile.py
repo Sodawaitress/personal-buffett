@@ -79,8 +79,24 @@ def _eps_at(eps_points, day):
     return val
 
 
-def pe_percentile(ticker, current_pe=None, normalized_eps_ratio=None):
-    """返回 {pct, years, n, low, high, median} 或 {} —— 算不出就空，不猜。
+def pe_percentile(ticker, normalized_eps_ratio=None):
+    """返回 {pct, current, years, n, low, high, median} 或 {} —— 算不出就空。
+
+    ⚠️ **排名用的是序列自己的最新 PE，不接受外部传入的 pe_current。**
+
+    第一版接受 `current_pe`，生产上传的是库里的 `pe_current`（TTM 口径，
+    最近四个季度）。而这条历史序列是**上一个完整财年的 EPS** 算的。
+    两个口径不同：成长股 TTM 利润更高 → TTM 市盈率更低 → 拿去跟按年报算的
+    历史比，永远排在低分位。
+
+        NVDA  同口径第 28 → 混口径第 **0**
+        SMCI  同口径第 55 → 混口径第 **5**
+        AAPL  同口径第 99 → 混口径第 66
+
+    偏差方向一致：**都让东西看起来更便宜**。和 US-202 全篇同一个错误族 ——
+    拿一个语境的数字放进另一个语境的排名。
+
+    所以这个参数被删掉了，不是改默认值。**能传错的接口，迟早会被传错。**
 
     normalized_eps_ratio：US-172 归一化后的「真实利润 / 账面利润」比。
     传进来时，历史 EPS 里被一次性收益抬高的那一年会被按比例还原，
@@ -127,10 +143,12 @@ def pe_percentile(ticker, current_pe=None, normalized_eps_ratio=None):
     n = len(pes)
     # ⚠️ 不能写 `pes[-1]` —— 排完序它是**最大值**，于是每只股票都是第 100 百分位。
     # 第一版就是这么写的，AAPL 和 LULU 一起报 100，形态太整齐才看出来。
-    cur = current_pe if current_pe is not None else latest_pe
+    cur = latest_pe
     below = sum(1 for p in pes if p <= cur)
     return {
         "pct": round(below / n * 100),
+        "current": round(cur, 1),
+        "basis": "上一完整财年 EPS",
         "years": round(years, 1),
         "n": n,
         "low": round(pes[0], 1),
@@ -145,9 +163,11 @@ def describe(res: dict, locale: str = "zh") -> str:
         return ("正利润历史不足 3 年，没有可比的估值区间"
                 if locale != "en" else
                 "under 3 years of profitable history — no comparable valuation range")
-    p, y = res["pct"], res["years"]
+    p, y, c = res["pct"], res["years"], res.get("current")
     if locale == "en":
-        return (f"P/E at the {p}th percentile of the past {y} years "
-                f"(range {res['low']}–{res['high']}x, median {res['median']}x)")
-    return (f"市盈率处于近 {y} 年的第 {p} 百分位"
-            f"（区间 {res['low']}–{res['high']} 倍，中位数 {res['median']} 倍）")
+        return (f"P/E {c}x — {p}th percentile of the past {y} years "
+                f"(range {res['low']}–{res['high']}x, median {res['median']}x, "
+                f"on last-full-year EPS)")
+    return (f"市盈率 {c} 倍，处于近 {y} 年的第 {p} 百分位"
+            f"（区间 {res['low']}–{res['high']} 倍，中位数 {res['median']} 倍；"
+            f"按上一完整财年利润计）")
