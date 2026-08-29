@@ -1,0 +1,43 @@
+name: backfill-svc (US-202)
+
+# 一次性/按需补数入口。
+#
+# 起因：US-172 给美股年报加了 `pretax_income` / `tax_provision` 两个字段
+# （判断利润里有没有一次性收益），但**旧记录一条都没有**，而当时没有
+# 任何入口能在生产上跑补数。我在 PRODUCT.md 里标了「⏳ 待跑」就过去了。
+#
+# 后果：US-172/173/175 三条**全是空转** —— 页面照旧显示被做低的市盈率，
+# 评分照旧给便宜分。2026-08-29 用户实拍 DUOL 页面才发现：
+# AI 摘要说「估值便宜。好公司 + 便宜，难得」，而那个 PE 是 16.5x，
+# 真实约 43x。
+#
+# 教训：**「待办」不是落地。** 需要人手动跑一次的东西，等于没做 ——
+# 所以这个 workflow 除了手动触发，也挂进了每日流水线（见 pipeline.yml）。
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: '本轮最多补多少只（留空=全部）'
+        required: false
+        default: ''
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Backfill pretax/tax fields (US-172)
+        # 被流水线调用时（inputs 为空）默认每轮 30 只 —— 跑几天自然补完，
+        # 不必也不该每天跑全量
+        run: python -m scripts.backfill_tax_fields ${{ github.event.inputs.limit || '30' }}

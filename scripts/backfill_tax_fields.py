@@ -28,7 +28,7 @@ def _yi(v):
         return None
 
 
-def backfill(codes=None, sleep_s: float = 1.0) -> dict:
+def backfill(codes=None, sleep_s: float = 1.0, limit: int = None) -> dict:
     import yfinance as yf
 
     with get_conn() as c:
@@ -42,8 +42,24 @@ def backfill(codes=None, sleep_s: float = 1.0) -> dict:
                 "SELECT f.code, f.annual_json FROM stock_fundamentals f "
                 "JOIN stocks s ON s.code = f.code WHERE s.market = 'us'")]
 
-    done = skipped = failed = 0
+    # 先挑出真正需要补的（已补过的直接跳过，不发请求）
+    todo = []
     for r in rows:
+        try:
+            annual = json.loads(r["annual_json"] or "[]")
+        except Exception:
+            annual = []
+        if not annual:
+            continue
+        if all(y.get("pretax_income") is not None for y in annual):
+            continue
+        todo.append(r)
+    remaining_before = len(todo)
+    if limit:
+        todo = todo[:limit]
+
+    done = skipped = failed = 0
+    for r in todo:
         try:
             annual = json.loads(r["annual_json"] or "[]")
         except Exception:
@@ -83,8 +99,23 @@ def backfill(codes=None, sleep_s: float = 1.0) -> dict:
             failed += 1
             print(f"  ⚠️ {r['code']}: {type(e).__name__}: {str(e)[:60]}")
         time.sleep(sleep_s)
-    return {"done": done, "skipped": skipped, "failed": failed, "total": len(rows)}
+    return {"done": done, "skipped": skipped, "failed": failed,
+            "total": len(rows), "remaining": max(0, remaining_before - done)}
 
 
 if __name__ == "__main__":
-    print(backfill(sys.argv[1:] or None))
+    # US-202：支持 `python -m scripts.backfill_tax_fields 30` 只补 30 只。
+    # 挂进每日流水线后不该每天跑全量 —— 已补过的会被 skip，但仍要发请求
+    # 判断，所以直接限量更省。
+    args = sys.argv[1:]
+    limit = None
+    codes = None
+    if len(args) == 1 and args[0].isdigit():
+        limit = int(args[0])
+    elif args:
+        codes = args
+    r = backfill(codes, limit=limit)
+    print(r)
+    # 补完还有多少没补 —— 让流水线日志能看出「还要跑几轮」
+    if r.get("remaining"):
+        print(f"  还剩 {r['remaining']} 只没有税前利润字段")

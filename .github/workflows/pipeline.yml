@@ -93,6 +93,21 @@ jobs:
     uses: ./.github/workflows/precursor-svc.yml
     secrets: inherit
 
+  # US-202：补数必须挂进流水线，不能只留一个「待办」。
+  #
+  # US-172 加了 pretax_income/tax_provision 两个字段，但旧记录一条都没有，
+  # 而当时没有任何入口能在生产上跑补数 —— 我在 PRODUCT.md 标了「⏳ 待跑」
+  # 就过去了。后果：US-172/173/175 三条全是空转，直到用户实拍 DUOL 页面
+  # （AI 说「估值便宜」而那个 PE 是被一次性收益做低的 16.5x）才发现。
+  #
+  # **「待办」不是落地。** 需要人手动跑一次的东西，等于没做。
+  # 每轮限量 30 只，跑几天自然补完；之后新增的股票也会被自动接住。
+  backfill:
+    needs: market
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/backfill-svc.yml
+    secrets: inherit
+
   digest:
     needs: precursor
     if: ${{ !cancelled() }}

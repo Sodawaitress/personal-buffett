@@ -49,6 +49,9 @@ CHAIN = [
     ('radar',     'radar-svc.yml'),
     ('market',    'market-svc.yml'),
     ('precursor', 'precursor-svc.yml'),
+    # US-202：补数和前兆扫描**并联**（互不依赖，省时间）。
+    # 它必须在这个列表里，否则所有链条断言都碰不到它。
+    ('backfill',  'backfill-svc.yml'),
     ('digest',    'digest-svc.yml'),
 ]
 
@@ -68,38 +71,62 @@ def _all_workflow_files():
 
 # ── 编排结构 ────────────────────────────────────────────
 
-def test_orchestrator_calls_every_service_in_order():
+def test_orchestrator_calls_every_service():
+    """每一棒都调用它该调用的可重用工作流。
+
+    ⚠️ US-202 起链条**不再是一条直线** —— `backfill` 和 `precursor` 并联
+    （互不依赖，省时间）。所以顺序断言不能再假设 CHAIN 是线性的，
+    改成检查真实的 `needs` 图（见下一条）。
+    """
     d, _ = _load(ORCHESTRATOR)
     jobs = d['jobs']
-    for i, (job, svc) in enumerate(CHAIN):
+    for job, svc in CHAIN:
         assert job in jobs, f"编排器缺少 {job}"
         assert jobs[job]['uses'].endswith(svc), \
             f"{job} 应调用 {svc}，实际 {jobs[job]['uses']}"
-        if i == 0:
-            assert not jobs[job].get('needs'), "第一棒不该有 needs"
-        else:
-            prev = CHAIN[i - 1][0]
-            assert jobs[job].get('needs') == prev, \
-                f"{job} 的上游应是 {prev}，实际 {jobs[job].get('needs')}"
 
 
-def test_failure_propagates_but_does_not_block():
-    """上游 failure 放行（各服务互相独立，analyze 挂了也该把已有报告推出去），
-    整个 run 被取消才停链。
+def test_dependency_graph_is_acyclic_and_rooted_at_fetch():
+    """依赖图必须从 fetch 出发、无环、每棒可达 ——
+    比「硬编码一条直线」更能容纳并联，也更能抓到真问题
+    （US-169 那次断链就是「可达性」出的问题）。"""
+    d, _ = _load(ORCHESTRATOR)
+    jobs = d['jobs']
+    deps = {}
+    for n, j in jobs.items():
+        need = j.get('needs') or []
+        deps[n] = [need] if isinstance(need, str) else list(need)
 
-    ⚠️ 准确语义：`cancelled()` 判的是**整个 run**，不是上游那一棒。
-    旧的 workflow_run 写法判的是上游的 conclusion，所以某一棒超时
-    （GitHub 记成 cancelled）会挡住下游；现在不会。
-    2026-08-25 实测：push 超时被判 cancelled，radar 照常跑了。
-    这个差别可接受（服务本就独立），但它是差别，不是「精确复刻」。
+    roots = [n for n, v in deps.items() if not v]
+    assert roots == ['fetch'], f"应只有 fetch 是起点，实际 {roots}"
 
-    写成 always() 才是错的 —— 那样连用户主动取消都拦不住。
+    # 拓扑可达 + 无环
+    seen, order = set(), []
+    remaining = dict(deps)
+    while remaining:
+        ready = [n for n, v in remaining.items() if all(x in seen for x in v)]
+        assert ready, f"依赖图有环或断裂，卡在 {sorted(remaining)}"
+        for n in ready:
+            seen.add(n)
+            order.append(n)
+            remaining.pop(n)
+    assert set(order) == set(jobs), "有棒次不可达"
+    # digest 必须排在 precursor 之后 —— 它要读扫描写进去的数据
+    assert order.index('digest') > order.index('precursor')
+
+
+def test_every_called_workflow_is_covered_by_the_chain_list():
+    """US-202 暴露的守卫盲区：给编排器加了 `backfill` 这一棒，
+    而 CHAIN 是硬编码的列表 —— 新棒次**不会被任何断言碰到**。
+
+    所以「secrets 有没有继承」「失败传不传播」这些检查对它全部失效。
+    改成：编排器里每个 `uses:` 的 job 都必须在 CHAIN 里登记。
     """
     d, _ = _load(ORCHESTRATOR)
-    for job, _svc in CHAIN[1:]:
-        cond = str(d['jobs'][job].get('if', ''))
-        assert 'cancelled()' in cond and cond.strip().startswith('${{ !'), \
-            f"{job} 的 if 应为 !cancelled()，实际 {cond!r}"
+    called = {n for n, j in d['jobs'].items() if 'uses' in j}
+    listed = {n for n, _ in CHAIN}
+    missing = called - listed
+    assert not missing, f"这些棒次没进 CHAIN，所有链条断言对它们失效: {missing}"
 
 
 def test_secrets_are_inherited_by_every_call():
