@@ -808,6 +808,17 @@ class QuantitativeRater:
         if not annual_data:
             return flags
 
+        # US-204：「便宜」和「便宜是有原因的」必须能被区分开。
+        #
+        # 生产上 LULU 拿到 A 级买入，依据是「ROE 31.8%（巴菲特线 15%）」+
+        # 市盈率第 6 分位。但那是**过去的成绩**：营收增速 18.6% → 10.1% →
+        # 4.9% 连续腰斩，毛利率掉 2.6 个点，净利润从 1815 掉到 1579。
+        #
+        # 9.4 倍市盈率配 4.9% 的增速，市场给的估值是对的，不是捡漏。
+        # ROE 描述的是过去，红旗要描述的是**现在正在发生什么**。
+        _cls = QuantitativeRater
+        flags.extend(_cls._deterioration_flags(annual_data, locale))
+
         latest = annual_data[0]
 
         try:
@@ -1039,12 +1050,65 @@ class QuantitativeRater:
                 break
         return sc, cls._rz(f"{len(roes)}年 ROE 稳定度", f"{len(roes)}-yr ROE stability", locale)
 
+    # 复合增速超过这个数，说明起点基数太小，百分比不再有意义。
+    # 200%/年 = 三年翻 27 倍 —— 真实经营几乎不会持续这样。
+    _CAGR_MEANINGLESS = 200.0
+
+    # 「过去很好」和「现在在变差」可以同时成立 —— 后者才是买入前要问的。
+    _DECEL_RATIO = 0.5      # 最近一年增速掉到长期复合增速的一半以下
+    _MARGIN_DROP = 2.0      # 毛利率同比掉 2 个百分点以上
+
+    @classmethod
+    def _deterioration_flags(cls, annual, locale="zh"):
+        """三条「正在变差」的信号，各自独立，缺字段就跳过（不猜）。"""
+        out = []
+        revs = [cls._num(y.get("revenue")) for y in (annual or [])]
+        revs = [v for v in revs if v is not None]
+        if len(revs) >= 3 and revs[1] > 0 and revs[-1] > 0:
+            yoy = revs[0] / revs[1] - 1
+            cagr = (revs[0] / revs[-1]) ** (1 / (len(revs) - 1)) - 1
+            if cagr > 0.05 and yoy < cagr * cls._DECEL_RATIO:
+                out.append(cls._rz(
+                    f"增长在减速：最近一年 {yoy*100:.1f}%，"
+                    f"而 {len(revs)}年复合是 {cagr*100:.1f}%",
+                    f"growth decelerating: latest {yoy*100:.1f}% vs "
+                    f"{len(revs)}-yr CAGR {cagr*100:.1f}%", locale))
+
+        nets = [cls._num(y.get("net_profit")) for y in (annual or [])]
+        if len(nets) >= 2 and nets[0] is not None and nets[1] is not None \
+                and nets[1] > 0 and nets[0] < nets[1]:
+            out.append(cls._rz(
+                f"净利润在下滑：{nets[1]:,.0f} → {nets[0]:,.0f}",
+                f"net profit falling: {nets[1]:,.0f} → {nets[0]:,.0f}", locale))
+
+        gms = [cls._num(y.get("gross_margin")) for y in (annual or [])]
+        if len(gms) >= 2 and gms[0] is not None and gms[1] is not None \
+                and gms[1] - gms[0] >= cls._MARGIN_DROP:
+            out.append(cls._rz(
+                f"毛利率在走低：{gms[1]:.1f}% → {gms[0]:.1f}%",
+                f"gross margin eroding: {gms[1]:.1f}% → {gms[0]:.1f}%", locale))
+        return out
+
     @classmethod
     def _q_rev_cagr(cls, annual, signals, locale, industry=None):
         revs = [v for v in cls._series(annual, "revenue") if v is not None]
         if len(revs) < 2 or revs[-1] <= 0 or revs[0] <= 0:
             return None, ""
         cagr = ((revs[0] / revs[-1]) ** (1 / (len(revs) - 1)) - 1) * 100
+        # US-204：基数接近零时复合增速会爆炸。生产上抓到 T1 Energy
+        # 「营收 2年复合增速 **25067%**」→ 质量 100/100 → A 级买入，
+        # 顶在可投资清单第一位。
+        #
+        # 和微利年的天价市盈率完全同形：**分母接近零 → 数字爆炸 →
+        # 被当成特别好**。那边修了，这边漏了。
+        #
+        # 从 0.4 亿涨到 100 亿和从 100 亿涨到 130 亿，前者的百分比更大，
+        # 但它说明的是「以前几乎没有生意」，不是「现在增长更强」。
+        if cagr > cls._CAGR_MEANINGLESS:
+            return 60, cls._rz(
+                f"营收从极低基数起步（{len(revs)}年 {cagr:.0f}%），增速不可比",
+                f"revenue grew off a near-zero base ({cagr:.0f}%) — not comparable",
+                locale)
         sc = cls._band(cagr, [(30, 100), (20, 85), (15, 70), (10, 55), (0, 35)], 10)
         return sc, cls._rz(f"营收 {len(revs)}年复合增速 {cagr:.0f}%",
                            f"revenue {len(revs)}-yr CAGR {cagr:.0f}%", locale)
