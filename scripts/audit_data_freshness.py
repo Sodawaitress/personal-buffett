@@ -110,6 +110,7 @@ def audit_moat(conn, existing):
                a.quant_score AS qs, s.market AS market
         FROM analysis_results a
         LEFT JOIN stocks s ON s.code = a.code
+        LEFT JOIN stock_meta m ON m.code = a.code
         WHERE a.analysis_date = :d
     """, d=newest)
 
@@ -811,11 +812,12 @@ def audit_investable_ranking(conn, existing):
     rows = _rows(conn, """
         SELECT a.code, a.grade, a.conclusion, a.quant_score, a.reasoning,
                f.pe_current, f.pe_percentile_5y, f.pe_pct_window_years,
-               f.pe_pct_range, f.annual_json, s.name, s.market, s.company_type
+               f.pe_pct_range, f.annual_json, s.name, s.market, m.company_type
         FROM (SELECT DISTINCT ON (code) code, grade, conclusion, quant_score,
                      reasoning FROM analysis_results ORDER BY code, id DESC) a
         LEFT JOIN stock_fundamentals f ON f.code = a.code
         LEFT JOIN stocks s ON s.code = a.code
+        LEFT JOIN stock_meta m ON m.code = a.code
     """)
     order = {"A": 0, "A-": 1, "B+": 2, "B": 3, "B-": 4, "C+": 5, "C": 6,
              "D": 7, "NR": 9}
