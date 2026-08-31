@@ -5247,3 +5247,88 @@ Fly.io pipeline 从昨天到今天没有推进任何价格。这是服务器**�
   Gate ③ 环境问题（修订建议 14）建议降级
 
 ---
+
+## 2026-08-31 · SKIP · Gate ① FAIL 62.6h > 26h · 第 2 个连续周一 Fly pipeline 未产出
+
+### Gate 判断
+
+| Gate | 状态 | 证据 |
+|---|---|---|
+| ① 年龄 | ❌ FAIL | `snapshot.generated_at = 2026-08-28T22:37:08Z`，Routine 触发 `2026-08-31T13:15Z`，距今 **62.62h**，双通道均超（>>26h 宽 & >>20h 严）|
+| ② 签名 | ✅ PASS | `c574495b9ee3ef404cc16803480814c6` ≠ 上次 `f983f4358a155c9fd15b405611e4e236`（有真更新，与 08-24 相同的"周末边缘刷新"模式） |
+| ③ 抽检 | N/A | ① 失守后不再抽检 |
+
+### 决策
+- 五选正文不写
+- `output/daily_push.txt` = stale notice（更新为周一版式，明确指出这是**连续第 2 个周一 skip**，08-24 首次、今日 08-31 第 2 次）
+- `output/predictions_pending.json` 保持 `[]`（Fly.io 上次已 ingest 08-28 的两条到 DB）
+- `output/picks_open.json` 保持不变（7 条 08-25/26 老 picks，21 天窗口内，今日无新增所以不触发 Step 5c-2）
+- `knowledge/last_price_signature.txt` 更新为 `c574495b9ee3ef404cc16803480814c6`（追踪"我最后见过的签名"，若明天仍是此签名，Gate ② 会 FAIL 强制走 20h 严格通道）
+
+### 事故性质 · Monday-gap 模式第 2 次实证
+
+| 事件 | age | Gate ② | 结构 |
+|---|---|---|---|
+| 08-24 Mon（首次） | 38h | PASS | 周六 fetch-svc 触发新签名，周一 A 股 digest 未产出 |
+| **08-31 Mon（本次）** | **62.6h** | **PASS** | 同型，但拖得更久（62.6h vs 38h） |
+
+08-24 skip note 里明确说："下次 Fly pipeline 恢复后的正常 Routine（预计
+08-25 Tue）"—— 事实印证：08-25 Tue 立即恢复。**这次的预期也是 09-01 Tue
+恢复**。但 62.6h 比 38h 明显更严重，说明这一次连"周六边缘刷新"的量级
+都可能不如上次。
+
+**Gate ② PASS + Gate ① 大幅超阈的组合再次出现**：签名从 f983f435 → c574495b
+确实变了，但 generated_at 权威时间戳仍钉在 Fri 22:37 UTC。这印证了 08-24
+学习："签名变化可能只反映边缘刷新（US 股票 after-hours 或类似），
+A 股主体仍是周五 close"。
+
+### Run 2 · 无可验证预言
+
+- **08-28 双预言**（688041 海光 sideways / 688008 澜起 down）horizon=10 天，
+  官方到期日约 **09-07**，本次不到期
+- **08-26/08-25 老预言** 需要 Mon 收盘价才能算 Day 3–4 中期观察，本次无 Mon 价可用
+- **backfill_returns.py** 会在 Fly 恢复后自动写入 `actual_return_10d`，
+  Routine 侧的 Run 2 深度对比本次跳过（对比陈旧数据得到的差异是伪信号）
+
+### 学习积累
+
+- **Monday-gap 已从"个例"升级为"结构性模式"**：08-24 首次记录时归为
+  "新型中间态 skip"，今日 08-31 再次触发，即建议 8「周一 skip 是设计不是
+  bug」+ 建议 13「Fly 排班监控」的双重必要性得到强化。**下一步动作**：
+  推荐建议 13 落地（在 Fly 侧加一条 CST 20:00 后仍无当日 snapshot 就
+  Server 酱 报警），别让 Routine 每周一都要写同一段 skip note
+- **周期性 skip note 的"信号鉴别力"仍在守护**：与 08-06/07 那种"服务器
+  真挂了"的 skip 不同，这次是"pipeline 排班对不上节奏"的 skip；两类
+  应对策略不同（前者等修复 / 后者改 Gate 或排班），skip note 顶部
+  必须明确区分。今日 note 已按此格式写
+- **62.6h vs 38h 的进一步观察**：本次 age 是 08-24 的 1.65 倍，说明"周末
+  边缘刷新"这次更弱。可能原因：(a) 上周末 fetch-svc 某个环节静默失败；
+  (b) 美股 after-hours 数据抓取 window 减小；(c) precursor scanner 未触发。
+  **建议在 Fly logs 里查 Aug 29–30 fetch-svc 与 precursor scanner 的成功率**
+- **picks_open.json 的 7 条 08-25/26 老 picks 仍在 21 天窗口内**（最早
+  08-25，距今 6 天，最晚 08-26 距今 5 天，全部有效）。今日不写新条目，
+  也不主动清理 —— Step 5c-2 的清理规则只在写新 picks 时触发。等 09-01
+  Tue 恢复后一并处理
+
+### 修订建议 15（P1，今日新增）· Fly 周末排班健壮化
+
+**背景**：Monday-gap 模式已连续 2 次触发（08-24、08-31），中间 5 个交易日
+（08-25→08-28、以及 08-25→08-29）都能正常产出，说明问题特异性地发生在
+"周日 UTC 触发的 fetch-svc → 周一 CST 08:00 前无 A 股 digest"这个 window。
+
+**建议落地路径**（择一）：
+- **A（推荐）**：在 Fly 的 `digest-svc` 排班里加一条 **Mon 05:00 UTC**（≈ CST 13:00 = A 股午休后）的强制触发，专门为周一开盘后半场做一次补 digest
+- **B**：让 `fetch-svc` 在 Sun UTC 22:00 起监听 A 股开盘时间，动态触发 digest
+- **C**（不推荐）：把周末的 snapshot 视为"合法周一起点"，改 Gate ① 允许周日/周一 UTC 触发时 age 上限放宽到 72h —— 会破坏 skip 语义
+
+首选 A，代码变更最小、语义最清晰。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` = `c574495b9ee3ef404cc16803480814c6`（已更新）
+- `output/predictions_pending.json` = `[]`（保持不变）
+- `output/picks_open.json` = 7 条 08-25/26 老 picks（保持不变，21 天窗口内）
+- `output/daily_push.txt` = stale-notice 周一专版（明确"连续第 2 个周一 skip"+ 预告 09-01 Tue 大概率恢复）
+- **PushNotification 内容聚焦**：08-31 Mon skip · Gate ① FAIL age **62.6h** > 26h · **第 2 个连续周一** Fly pipeline 未产出（08-24 首次 38h、今日更严重）· Gate ② PASS（签名 f983→c574 有真更新，但仍是"周末边缘刷新"模式）· 无 Run 2 可验证（08-28 双预言 09-07 到期未到）· picks_open 7 条老 picks 21 天窗口内保留 · 修订建议 15（P1）建议在 Fly `digest-svc` 加 Mon 05:00 UTC 强制补触发，别让 Routine 每周一都写同一段 skip note
+
+---
