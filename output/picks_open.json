@@ -1,5 +1,75 @@
 [
   {
+    "code": "688256",
+    "name": "寒武纪",
+    "date": "2026-09-01",
+    "advice": "¥1112 不追高。回调到 ¥900 以下再分批。已持仓可减仓 20%-30% 锁定利润。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 72,
+      "short_change_pct": 36.2,
+      "survey_count_30d": 0,
+      "price": 1112.18
+    }
+  },
+  {
+    "code": "000977",
+    "name": "浪潮信息",
+    "date": "2026-09-01",
+    "advice": "涨停不追。明后天看龙虎榜资金结构：机构+北向净买入=可以关注；仍是游资唱主角=出货信号。已持仓可先减仓一半锁定利润。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 81,
+      "short_change_pct": 4.7,
+      "survey_count_30d": 0,
+      "price": 85.18
+    }
+  },
+  {
+    "code": "300274",
+    "name": "阳光电源",
+    "date": "2026-09-01",
+    "advice": "不追跌。等 9 月是否有大机构现场调研公告（那才是真信号）。已持仓者可择机减半，等季度报再看。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": -42.1,
+      "survey_count_30d": 3,
+      "price": 91.5
+    }
+  },
+  {
+    "code": "688235",
+    "name": "百济神州",
+    "date": "2026-09-01",
+    "advice": "可关注建仓机会。当前 ¥269.86 分批建仓（先 30% 仓），等回调到 ¥250 附近加仓。已持仓可继续持有。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": 256.4,
+      "survey_count_30d": 2,
+      "price": 269.86
+    }
+  },
+  {
+    "code": "000680",
+    "name": "山推股份",
+    "date": "2026-09-01",
+    "advice": "¥10.51 可小仓位跟进（起 10% 仓）。回调到 ¥10 附近加仓。9 月看能否再来一次现场参观，出现就加仓。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 52,
+      "short_change_pct": 59.5,
+      "survey_count_30d": 3,
+      "price": 10.51
+    }
+  },
+  {
     "code": "300394",
     "name": "天孚通信",
     "date": "2026-08-25",
@@ -151,20 +221,6 @@
       "short_change_pct": 4.0,
       "survey_count_30d": 8,
       "price": 40.91
-    }
-  },
-  {
-    "code": "688235",
-    "name": "百济神州",
-    "date": "2026-08-28",
-    "advice": "¥270–¥275分批建仓20%，止损¥255。Grade A + 半年报净利+627% + 8-6 152家特定对象调研+路演+电话会。融券+148.9%属对冲（US-166 表第1行：业绩超预期+调研有），不是看空。半年以上持有周期，别追¥285以上。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": 148.9,
-      "survey_count_30d": 2,
-      "price": 279.75
     }
   }
 ]

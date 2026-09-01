@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-09-01",
+    "code": "300274",
+    "name": "阳光电源",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "H1 中报业绩承压（营收 -29% 净利 -32%）+ 空头显著减少（-42%）+ 机构 3 次调研但均非现场——底部博弈型磨底",
+    "price_at_prediction": 91.5
+  },
+  {
+    "date": "2026-09-01",
+    "code": "688235",
+    "name": "百济神州",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "8/6 152 家机构特定对象+路演+电话高质量调研 + 中报净利 32.71 亿超预期 + 融券极端增长为对冲不是看空",
+    "price_at_prediction": 269.86
+  }
+]
