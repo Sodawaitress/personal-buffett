@@ -65,3 +65,19 @@ def test_routine_doc_tells_it_to_repair_not_just_skip():
     assert "gh workflow run pipeline.yml" in doc, \
         "Routine 没有被告知 Gate FAIL 时要去拉起上游"
     assert "cron_punctuality" in doc, "Routine 不知道怎么验收准点率"
+
+
+def test_routine_doc_names_the_right_upstream():
+    """US-206：Routine 日志一个月来把 Gate FAIL 记成「fly pipeline 未产出」，
+    修订建议 15 据此提出「给 Fly digest-svc 加强制补触发」。
+
+    但 `daily snapshot` 的提交者是 `github-actions[bot]`，
+    提交时间和 GHA pipeline 的结束时间一分不差。**迟到的是 GHA 的 cron，
+    不是 Fly 的排班。** 给 Fly 加补触发不会解决任何问题。
+
+    诊断「谁没按时干活」，先看产出物是谁提交的、几点提交的 ——
+    名字里带什么组件不算证据。
+    """
+    doc = open("CLAUDE_ROUTINE.md", encoding="utf-8").read()
+    assert "github-actions[bot]" in doc, \
+        "Routine 不知道快照是 GHA 产出的，会继续怪 Fly"

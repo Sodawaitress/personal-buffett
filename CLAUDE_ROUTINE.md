@@ -140,6 +140,35 @@ https://raw.githubusercontent.com/Sodawaitress/personal-buffett/main/snapshots/d
 
 **沿革**：20h 硬阈是 2026-08-06 事故后设的，当时假设 pipeline 在 CST 凌晨/上午出快照。US-138 拆分服务后生成时间结构性推后到 CST 深夜，20h 遂在 08-12 / 08-14 两次规律性误杀了健康数据（两次都是 Gate ② PASS、Gate ① 21.9h / 22.15h 微超阈）。改进日志「修订建议 7 · 思路 B」，P0。
 
+### ⚠️ 快照是 GitHub Actions 产出的，不是 Fly（US-206 更正）
+
+本 Routine 的日志里，Gate FAIL 一直被记成「**fly** pipeline 未产出」
+（08-31「2nd consecutive monday fly pipeline未产出」、
+09-01「fly pipeline恢复」），修订建议 15 因此提出「Fly digest-svc 加
+Mon 05:00 UTC 强制补触发」。
+
+**那是怪错了组件。** 从提交痕迹倒推：
+
+```
+09-01 16:39 github-actions[bot] chore: daily snapshot 2026-09-01
+08-31 18:41 github-actions[bot] chore: daily snapshot 2026-08-31
+08-28 22:37 github-actions[bot] chore: daily snapshot 2026-08-28
+08-27 21:56 github-actions[bot] chore: daily snapshot 2026-08-27
+```
+
+作者是 `github-actions[bot]`，**时间和 GHA pipeline 的结束时间一分不差**
+（16:43 / 18:45 / 22:40 / 22:00）。
+
+Fly 那边有 `/api/trigger-scan`、`/api/trigger-digest` 端点，是被 GHA 调用的
+一环 —— 但**决定快照什么时候出现的是 GHA 的 cron**，不是 Fly 的排班。
+
+给 Fly 加补触发不会解决问题，因为 Fly 从来不是那个迟到的人。
+
+> **诊断一个「谁没按时干活」的问题，先去看那件产出物到底是谁提交的、几点提交的。**
+> 名字里带什么组件不算证据。
+
+---
+
 ### Gate ① FAIL 时：先修，再跳过（US-206）
 
 **跳过不是处理，是记录。** 到 2026-09-02 为止，Gate FAIL 的处理一直是「写进日志、五选留空、下次再说」—— 于是同一个原因连着犯了一个月，8 月跑 8 天跳 11 天。
