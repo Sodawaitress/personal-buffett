@@ -9986,3 +9986,39 @@ LULU 三条全中；多邻国（增速 44→41→39%，利润和毛利率都在�
 守卫四条，两条做了反向验证：改回整点 → 红；改成会跑过 routine 的时间 → 红。脚本从 workflow 文件读 cron 而不是写死 —— 否则改完时间之后它会拿旧基准算，报出一堆假的准点。
 
 **这一条的方法**：用户描述的是一个**时间上的感觉**（「似乎在前面」）。把它变成可查的，只需要问一句「这两件事各自实际发生在几点」，然后去调数据。不需要读代码。
+
+
+## US-207 · 「幂等」不等于「并发安全」
+
+**实现状态（2026-09-03）**：✅ 已发布。
+
+09-02 的 pipeline，`market` 一棒挂了：
+
+```
+[SQL: CREATE INDEX IF NOT EXISTS idx_precursor_history_code ON precursor_history(code, snapshot_date)]
+psycopg2.errors.DeadlockDetected
+  Process 25788 waits for ShareLock on relation 24992
+  Process 26949 waits for RowExclusiveLock on relation 24957
+```
+
+来自 `svc_market.py:101` 的 `db.init_db()`，那行旁边的注释写着「**幂等**，确保 service_runs 等表在 Neon 上存在」。
+
+**幂等只保证结果一样，不保证并发安全。** `CREATE TABLE IF NOT EXISTS` 重复跑不会出错，但两个进程同时跑会互相锁死 —— DDL 拿的是重锁，获取顺序一交叉就死锁。
+
+规模：`init_db()` 一次发 **59 条 DDL**，仓里 **28 处**在调它。每个 `svc_*.py` 启动都调，Fly 上的 web 应用启动也调。撞上只是时间问题。
+
+而且 US-203 我还给补数脚本加了 `_migrate()` —— **自己往火上添了一把柴**（当时的理由「脚本直连数据库不跑迁移」是对的，但没想到 DDL 频率本身就是风险）。
+
+**修法**：Postgres 顾问锁 `pg_advisory_lock`，标准做法。拿不到就等，拿到的跑完再放。SQLite 单写者，走 no-op。
+
+两个坑写进守卫了：
+- **锁必须挂在一条一直开着的连接上**。用 `engine.begin()` 每条语句一个事务的话，会话一结束锁就自动放了 —— 看着有锁，实际没锁。
+- **异常路径必须释放**。DDL 中途抛异常没放锁的话，整条流水线后面全卡死 —— **比死锁更糟，死锁至少会被 Postgres 检测并终止一方**。
+
+### 关于 US-206 的验收：还没有有效样本
+
+09-02 那次启动于 12:08 UTC，而 cron 改动是同日 11:33 UTC 才推上去的 —— **那次是旧 cron 迟到触发的，不算数**。
+
+第一次真正的验收是 09-03 07:23 UTC。`python -m scripts.cron_punctuality` 随时可查。
+
+**记一下这个动作本身**：改完配置马上去看「改动生效时间」和「下一次触发时间」谁先谁后。这次差一点就把一个无效样本当成了验收结果。

@@ -104,15 +104,57 @@ def _dialect_sql(sql: str) -> str:
     return sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
 
 
+# US-207：DDL 必须串行化。
+#
+# 2026-09-02 pipeline 的 market 一棒挂在 Postgres 死锁上：
+#     [SQL: CREATE INDEX IF NOT EXISTS idx_precursor_history_code ...]
+#     Process 25788 waits for ShareLock on relation 24992
+#     Process 26949 waits for RowExclusiveLock on relation 24957
+#
+# 原因很朴素：`init_db()` 每次发 59 条 DDL，仓里有 28 处在调它
+# （每个 svc_*.py 启动都调，Fly 上的 web 应用启动也调）。
+# DDL 拿的是重锁，两个进程一交叉，锁的获取顺序就反了 —— 死锁。
+#
+# 「幂等」只保证**结果**一样，不保证**并发安全**。
+# CREATE TABLE IF NOT EXISTS 重复跑不会出错，但两个进程同时跑会互相锁死。
+#
+# 顾问锁是 Postgres 上处理并发迁移的标准做法：拿不到就等，
+# 拿到的那个跑完再放。SQLite 是单写者，不需要。
+_DDL_LOCK_KEY = 0x5042435F44444C   # 'PBC_DDL'
+
+
+@contextmanager
+def _ddl_lock():
+    """把 DDL 串起来。锁必须挂在**一条一直开着的连接**上 ——
+    `engine.begin()` 每条语句一个事务，会话一结束锁就没了。"""
+    eng = get_engine()
+    if eng.dialect.name != "postgresql":
+        yield
+        return
+    conn = eng.connect()
+    try:
+        conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": _DDL_LOCK_KEY})
+        conn.commit()
+        yield
+    finally:
+        try:
+            conn.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": _DDL_LOCK_KEY})
+            conn.commit()
+        except Exception:
+            pass
+        conn.close()
+
+
 def init_db():
     if DATABASE_URL.startswith("sqlite"):
         os.makedirs(os.path.dirname(_DEFAULT_SQLITE) or ".", exist_ok=True)
     # Split on ";" so this works for both SQLite and PostgreSQL.
     # executescript() is SQLite-only; statement-by-statement is universal.
     stmts = [s.strip() for s in _SCHEMA_SQL.split(";") if s.strip()]
-    with get_engine().begin() as conn:
-        for stmt in stmts:
-            conn.execute(text(_dialect_sql(stmt)))
+    with _ddl_lock():
+        with get_engine().begin() as conn:
+            for stmt in stmts:
+                conn.execute(text(_dialect_sql(stmt)))
 
 
 _SCHEMA_SQL = """
@@ -760,12 +802,13 @@ def _migrate():
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).
     engine = get_engine()
-    for table, col, typedef in new_cols:
-        try:
-            with engine.begin() as conn:
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}"))
-        except Exception:
-            pass
+    with _ddl_lock():                     # US-207：同一把锁，和 init_db 串在一起
+        for table, col, typedef in new_cols:
+            try:
+                with engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}"))
+            except Exception:
+                pass
 
     # Drop legacy table left over from pre-2026-04-13 code cleanup
     try:
