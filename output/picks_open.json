@@ -1,5 +1,75 @@
 [
   {
+    "code": "689009",
+    "name": "九号公司",
+    "date": "2026-09-02",
+    "advice": "未持仓可 ¥40–¥42 分批建 20%–30% 底仓，回调到 ¥38 加仓。已持仓继续持有，等下一次特定对象调研公告触发加仓。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": -2.3,
+      "survey_count_30d": 2,
+      "price": 41.78
+    }
+  },
+  {
+    "code": "600660",
+    "name": "福耀玻璃",
+    "date": "2026-09-02",
+    "advice": "观察为主，不追今日反弹。等 ¥54 以下再考虑；或等第三季报确认利润转折方向。已持仓者可继续持有底仓 30%。半年报 -17.37%、汇率主因，注意评级下调风险。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 76,
+      "short_change_pct": 24.4,
+      "survey_count_30d": 1,
+      "price": 57.85
+    }
+  },
+  {
+    "code": "301611",
+    "name": "珂玛科技",
+    "date": "2026-09-02",
+    "advice": "回避。未持仓不建仓；已持仓者跌破 ¥90 严格止损。'高估值 + 空头累积 + 0 调研 + 散户杠杆'雏形，Q1 净利 -47.31%，站上自己都写'观察'。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 90,
+      "short_change_pct": 90.2,
+      "survey_count_30d": 0,
+      "price": 94.66
+    }
+  },
+  {
+    "code": "300760",
+    "name": "迈瑞医疗",
+    "date": "2026-09-02",
+    "advice": "未持仓可 ¥165–¥170 分批建 30% 底仓，跌到 ¥155 加仓。已持仓继续持有，别追高。不要把汇兑亏损当业务恶化。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 9.1,
+      "survey_count_30d": 1,
+      "price": 169.08
+    }
+  },
+  {
+    "code": "002415",
+    "name": "海康威视",
+    "date": "2026-09-02",
+    "advice": "未持仓可 ¥35.5–¥36.5 分批建 30%–40% 仓位，回调到 ¥34 加仓。本周五选里最建议建仓的一只（若只能选一个，就选它）。空头 -50% 平仓 + 203 家调研 + 13 家特定对象是建仓期典型信号。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 67,
+      "short_change_pct": -50.4,
+      "survey_count_30d": 2,
+      "price": 35.92
+    }
+  },
+  {
     "code": "688256",
     "name": "寒武纪",
     "date": "2026-09-01",
@@ -11,34 +81,6 @@
       "short_change_pct": 36.2,
       "survey_count_30d": 0,
       "price": 1112.18
-    }
-  },
-  {
-    "code": "000977",
-    "name": "浪潮信息",
-    "date": "2026-09-01",
-    "advice": "涨停不追。明后天看龙虎榜资金结构：机构+北向净买入=可以关注；仍是游资唱主角=出货信号。已持仓可先减仓一半锁定利润。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 81,
-      "short_change_pct": 4.7,
-      "survey_count_30d": 0,
-      "price": 85.18
-    }
-  },
-  {
-    "code": "300274",
-    "name": "阳光电源",
-    "date": "2026-09-01",
-    "advice": "不追跌。等 9 月是否有大机构现场调研公告（那才是真信号）。已持仓者可择机减半，等季度报再看。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": -42.1,
-      "survey_count_30d": 3,
-      "price": 91.5
     }
   },
   {
@@ -56,6 +98,34 @@
     }
   },
   {
+    "code": "300274",
+    "name": "阳光电源",
+    "date": "2026-09-01",
+    "advice": "不追跌。等 9 月是否有大机构现场调研公告（那才是真信号）。已持仓者可择机减半，等季度报再看。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": -42.1,
+      "survey_count_30d": 3,
+      "price": 91.5
+    }
+  },
+  {
+    "code": "000977",
+    "name": "浪潮信息",
+    "date": "2026-09-01",
+    "advice": "涨停不追。明后天看龙虎榜资金结构：机构+北向净买入=可以关注；仍是游资唱主角=出货信号。已持仓可先减仓一半锁定利润。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 81,
+      "short_change_pct": 4.7,
+      "survey_count_30d": 0,
+      "price": 85.18
+    }
+  },
+  {
     "code": "000680",
     "name": "山推股份",
     "date": "2026-09-01",
@@ -67,6 +137,104 @@
       "short_change_pct": 59.5,
       "survey_count_30d": 3,
       "price": 10.51
+    }
+  },
+  {
+    "code": "688041",
+    "name": "海光信息",
+    "date": "2026-08-28",
+    "advice": "可¥235–¥240分批建仓30%，止损¥220。新入库质量最高（q93）国产CPU龙头，半年报净利+49.69% + 8-17特定对象调研20家 + 昨日杠杆资金净买入超亿。信创政策依赖限制仓位（≤总仓 5-8%）。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 93,
+      "short_change_pct": 9.7,
+      "survey_count_30d": 1,
+      "price": 245.97
+    }
+  },
+  {
+    "code": "688008",
+    "name": "澜起科技",
+    "date": "2026-08-28",
+    "advice": "不追高。涨停后2-3天有兑现节奏；未持仓等回调至¥200附近，已持仓可分批兑现锁利。上月249家调研已44天无跟进，机构主动加码信号不新鲜。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 84,
+      "short_change_pct": 7.8,
+      "survey_count_30d": 2,
+      "price": 221.22
+    }
+  },
+  {
+    "code": "600111",
+    "name": "北方稀土",
+    "date": "2026-08-28",
+    "advice": "¥38.50–¥40附近可建仓20-30%，止损¥36。8次调研全场密度最强 + 半年报净利+120%，等出口配额/战略储备消息催化。别追¥42以上（现金流质量瑕疵限制估值上限）。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 47,
+      "short_change_pct": 4.0,
+      "survey_count_30d": 8,
+      "price": 40.91
+    }
+  },
+  {
+    "code": "300476",
+    "name": "胜宏科技",
+    "date": "2026-08-28",
+    "advice": "现价不追。¥240–¥245分批建仓30%，止损¥228。5次现场参观（含深交所专场）+ 半年报净利+33.3% + 摩根大通瑞银新进十大股东——本轮最完整的机构信号组合。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 77,
+      "short_change_pct": 24.1,
+      "survey_count_30d": 5,
+      "price": 263.05
+    }
+  },
+  {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-08-26",
+    "advice": "未持仓可¥60–¥62分批建仓，止损¥57。30天11次调研全场最高，业绩短期-5.35%已消化，机构在等下一波拐点。设3段建仓：现价40%，回调¥58加30%，破¥57止损。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": 0.2,
+      "survey_count_30d": 11,
+      "price": 61.9
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-08-26",
+    "advice": "适合防御底仓；¥33.50–¥34.20分批建仓，止损¥31.50。5次特定对象调研（最强持续性信号），价格未充分反映。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": -1.0,
+      "survey_count_30d": 5,
+      "price": 34.04
+    }
+  },
+  {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-08-26",
+    "advice": "未持仓可¥11.60附近分批建仓，止损¥10.80。融券+183.5%属对冲（表格第1行：融券增+超预期+调研有），不是看空。派现9月中前后到账，可吃股息。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 73,
+      "short_change_pct": 183.5,
+      "survey_count_30d": 2,
+      "price": 11.73
     }
   },
   {
@@ -95,132 +263,6 @@
       "short_change_pct": 5.4,
       "survey_count_30d": 0,
       "price": 17.05
-    }
-  },
-  {
-    "code": "000001",
-    "name": "平安银行",
-    "date": "2026-08-26",
-    "advice": "未持仓可¥11.60附近分批建仓，止损¥10.80。融券+183.5%属对冲（表格第1行：融券增+超预期+调研有），不是看空。派现9月中前后到账，可吃股息。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 73,
-      "short_change_pct": 183.5,
-      "survey_count_30d": 2,
-      "price": 11.73
-    }
-  },
-  {
-    "code": "002415",
-    "name": "海康威视",
-    "date": "2026-08-26",
-    "advice": "未持仓可¥34.80附近分批建仓，止损¥32.50。空头认输 -79.1%（表格第4行：融券减+有调研）+ Grade A 好公司便宜 + 深市中期分红催化。已持仓继续持有。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": -79.1,
-      "survey_count_30d": 2,
-      "price": 34.78
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-08-26",
-    "advice": "适合防御底仓；¥33.50–¥34.20分批建仓，止损¥31.50。5次特定对象调研（最强持续性信号），价格未充分反映。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": -1.0,
-      "survey_count_30d": 5,
-      "price": 34.04
-    }
-  },
-  {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-08-26",
-    "advice": "未持仓可¥60–¥62分批建仓，止损¥57。30天11次调研全场最高，业绩短期-5.35%已消化，机构在等下一波拐点。设3段建仓：现价40%，回调¥58加30%，破¥57止损。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": 0.2,
-      "survey_count_30d": 11,
-      "price": 61.9
-    }
-  },
-  {
-    "code": "300760",
-    "name": "迈瑞医疗",
-    "date": "2026-08-26",
-    "advice": "不用追，可¥160–¥162分批慢慢布局，止损¥152。ROE 21.6%+便宜的医疗器械龙头，长期防御逻辑，适合半年以上持有周期。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 8.0,
-      "survey_count_30d": 0,
-      "price": 161.05
-    }
-  },
-  {
-    "code": "688008",
-    "name": "澜起科技",
-    "date": "2026-08-28",
-    "advice": "不追高。涨停后2-3天有兑现节奏；未持仓等回调至¥200附近，已持仓可分批兑现锁利。上月249家调研已44天无跟进，机构主动加码信号不新鲜。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 84,
-      "short_change_pct": 7.8,
-      "survey_count_30d": 2,
-      "price": 221.22
-    }
-  },
-  {
-    "code": "300476",
-    "name": "胜宏科技",
-    "date": "2026-08-28",
-    "advice": "现价不追。¥240–¥245分批建仓30%，止损¥228。5次现场参观（含深交所专场）+ 半年报净利+33.3% + 摩根大通瑞银新进十大股东——本轮最完整的机构信号组合。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 77,
-      "short_change_pct": 24.1,
-      "survey_count_30d": 5,
-      "price": 263.05
-    }
-  },
-  {
-    "code": "688041",
-    "name": "海光信息",
-    "date": "2026-08-28",
-    "advice": "可¥235–¥240分批建仓30%，止损¥220。新入库质量最高（q93）国产CPU龙头，半年报净利+49.69% + 8-17特定对象调研20家 + 昨日杠杆资金净买入超亿。信创政策依赖限制仓位（≤总仓 5-8%）。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 93,
-      "short_change_pct": 9.7,
-      "survey_count_30d": 1,
-      "price": 245.97
-    }
-  },
-  {
-    "code": "600111",
-    "name": "北方稀土",
-    "date": "2026-08-28",
-    "advice": "¥38.50–¥40附近可建仓20-30%，止损¥36。8次调研全场密度最强 + 半年报净利+120%，等出口配额/战略储备消息催化。别追¥42以上（现金流质量瑕疵限制估值上限）。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 47,
-      "short_change_pct": 4.0,
-      "survey_count_30d": 8,
-      "price": 40.91
     }
   }
 ]
