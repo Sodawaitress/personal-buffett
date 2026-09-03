@@ -1,16 +1,72 @@
 [
   {
+    "code": "002602",
+    "name": "世纪华通",
+    "date": "2026-09-03",
+    "advice": "长线可¥13.80-¥14.20分批建仓20-30%、跌破¥13.20止损。短线不追。业绩兑现后的多空分歧期。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 82,
+      "short_change_pct": 115.7,
+      "survey_count_30d": 0,
+      "price": 14.03
+    }
+  },
+  {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-09-03",
+    "advice": "¥11.90附近可小仓位建仓3-5%（占家庭仓位）、跌破¥11.30止损。防御型压舱石，慢慢加不要急。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 73,
+      "short_change_pct": 252.3,
+      "survey_count_30d": 2,
+      "price": 11.91
+    }
+  },
+  {
+    "code": "300012",
+    "name": "华测检测",
+    "date": "2026-09-03",
+    "advice": "¥14.50-¥14.80分批建仓20-30%、跌破¥13.80止损。若明后天继续跌反而更好。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 69,
+      "short_change_pct": -42.0,
+      "survey_count_30d": 1,
+      "price": 14.54
+    }
+  },
+  {
     "code": "689009",
     "name": "九号公司",
-    "date": "2026-09-02",
-    "advice": "未持仓可 ¥40–¥42 分批建 20%–30% 底仓，回调到 ¥38 加仓。已持仓继续持有，等下一次特定对象调研公告触发加仓。",
+    "date": "2026-09-03",
+    "advice": "¥38-¥40分批建仓15-20%（不要低于回购上限¥38.70太多），跌破¥36止损。公司回购托底。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
       "quant_score": 78,
-      "short_change_pct": -2.3,
+      "short_change_pct": -1.2,
       "survey_count_30d": 2,
-      "price": 41.78
+      "price": 39.67
+    }
+  },
+  {
+    "code": "HBM",
+    "name": "Hudbay Minerals",
+    "date": "2026-09-03",
+    "advice": "US$25-$27分批建仓10-15%、止损US$23。9-8除息$0.01不为分红买。融资已解决扩产不稀释，中期买点。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 65,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 27.02
     }
   },
   {
@@ -221,20 +277,6 @@
       "short_change_pct": -1.0,
       "survey_count_30d": 5,
       "price": 34.04
-    }
-  },
-  {
-    "code": "000001",
-    "name": "平安银行",
-    "date": "2026-08-26",
-    "advice": "未持仓可¥11.60附近分批建仓，止损¥10.80。融券+183.5%属对冲（表格第1行：融券增+超预期+调研有），不是看空。派现9月中前后到账，可吃股息。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 73,
-      "short_change_pct": 183.5,
-      "survey_count_30d": 2,
-      "price": 11.73
     }
   },
   {
