@@ -1,5 +1,75 @@
 [
   {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-09-04",
+    "advice": "¥58-¥60 分批建仓 20-25%，跌破 ¥56 止损。Q3 业绩若如管理层指引 +10-30%，即为催化。工控伺服 31% 市占率第一，但 H1 归母净利 -5.35%（汇兑+新能源汽车双压）。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": -37.2,
+      "survey_count_30d": 10,
+      "price": 60.15
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-09-04",
+    "advice": "¥34-¥34.5 附近可小仓位建仓 5-8%（家庭仓位占比），跌破 ¥33 止损。慢慢加，不追。城商行 A 股旗手，估值分位便宜。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 20.7,
+      "survey_count_30d": 4,
+      "price": 34.4
+    }
+  },
+  {
+    "code": "002050",
+    "name": "三花智控",
+    "date": "2026-09-04",
+    "advice": "¥35.5-¥36.5 可分批建仓 15-20%，跌破 ¥34 止损。追高不建议，等回调。8-27 特定对象调研 201 家 + 公司回购 1.49 亿。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": 21.5,
+      "survey_count_30d": 2,
+      "price": 36.3
+    }
+  },
+  {
+    "code": "600885",
+    "name": "宏发股份",
+    "date": "2026-09-04",
+    "advice": "不追今日 +8.1% 涨幅。等回调 ¥33-¥34 再考虑建仓 10-15%。分析师 12mo 目标 ¥36.26 上行空间已不大。继电器全球第一 27% 市占率。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": 28.2,
+      "survey_count_30d": 1,
+      "price": 35.65
+    }
+  },
+  {
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-09-04",
+    "advice": "等回调 ¥235-¥240 分批建仓 10-15%，跌破 ¥220 止损。CPO/AI 光模块相关订单公告是关键催化。30 日 3 次全部现场参观。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 90,
+      "short_change_pct": -35.9,
+      "survey_count_30d": 3,
+      "price": 248.81
+    }
+  },
+  {
     "code": "002602",
     "name": "世纪华通",
     "date": "2026-09-03",
@@ -249,48 +319,6 @@
       "short_change_pct": 24.1,
       "survey_count_30d": 5,
       "price": 263.05
-    }
-  },
-  {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-08-26",
-    "advice": "未持仓可¥60–¥62分批建仓，止损¥57。30天11次调研全场最高，业绩短期-5.35%已消化，机构在等下一波拐点。设3段建仓：现价40%，回调¥58加30%，破¥57止损。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": 0.2,
-      "survey_count_30d": 11,
-      "price": 61.9
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-08-26",
-    "advice": "适合防御底仓；¥33.50–¥34.20分批建仓，止损¥31.50。5次特定对象调研（最强持续性信号），价格未充分反映。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": -1.0,
-      "survey_count_30d": 5,
-      "price": 34.04
-    }
-  },
-  {
-    "code": "300394",
-    "name": "天孚通信",
-    "date": "2026-08-25",
-    "advice": "不追高；若回调到¥230以下再考虑，未持仓者观望。已持仓可继续持有但注意兑现节奏。估值透支预期。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 90,
-      "short_change_pct": -29.5,
-      "survey_count_30d": 3,
-      "price": 257.1
     }
   },
   {
