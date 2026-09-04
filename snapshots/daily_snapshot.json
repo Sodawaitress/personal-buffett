@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-04T16:50:04.269294Z",
+  "generated_at": "2026-09-04T17:06:29.387752Z",
   "scope": "all_users",
-  "price_snapshot_at": "2026-09-04T16:50:04.269316Z",
+  "price_snapshot_at": "2026-09-04T17:06:29.387765Z",
   "stocks_with_fresh_price": 257,
   "stocks_total": 258,
   "price_signature": "8208b49fc6ada8770cfc0a7a2c7bfa51",
@@ -358,7 +358,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -427,7 +427,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 1.19,
         "is_active": false,
         "survey": {
@@ -503,9 +503,9 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 2.07,
-        "is_active": true,
+        "cache_age_hours": 0.1,
+        "score": 0.26,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
           "days_since_latest": 4,
@@ -519,9 +519,9 @@
           ]
         },
         "short_selling": {
-          "change_pct": -3.1,
+          "change_pct": 5.2,
           "direction": "中性",
-          "latest_short": 111.6,
+          "latest_short": 121.0,
           "base_short": 115.1,
           "meaningful": true
         }
@@ -579,7 +579,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 1.15,
         "is_active": false,
         "survey": {
@@ -648,7 +648,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.48,
         "is_active": false,
         "survey": {
@@ -730,7 +730,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 0.0,
         "score": 0.07,
         "is_active": false,
         "survey": {
@@ -739,7 +739,7 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -1.4,
+          "change_pct": -1.3,
           "direction": "中性",
           "latest_short": 49.5,
           "base_short": 50.2,
@@ -799,7 +799,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -875,19 +875,19 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 2.0,
-        "is_active": true,
+        "cache_age_hours": 0.1,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 69.8,
-          "direction": "做空增加",
-          "latest_short": 651.0,
-          "base_short": 383.4,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -944,7 +944,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 0.59,
         "is_active": false,
         "survey": {
@@ -1020,7 +1020,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.9,
         "score": 1.38,
         "is_active": false,
         "survey": {
@@ -1089,7 +1089,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 0.24,
         "is_active": false,
         "survey": {
@@ -1158,7 +1158,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 0.63,
         "is_active": false,
         "survey": {
@@ -1234,19 +1234,19 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 2.06,
-        "is_active": true,
+        "cache_age_hours": 0.0,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 104.7,
-          "direction": "做空增加",
-          "latest_short": 13.6,
-          "base_short": 6.7,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -1303,7 +1303,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.4,
         "score": 1.12,
         "is_active": false,
         "survey": {
@@ -1379,11 +1379,11 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 25.0,
-        "score": 1.99,
-        "is_active": false,
+        "cache_age_hours": 0.2,
+        "score": 2.85,
+        "is_active": true,
         "survey": {
-          "count_30d": 3,
+          "count_30d": 1,
           "days_since_latest": 2,
           "events": [
             {
@@ -1391,26 +1391,14 @@
               "n_inst": 1,
               "method": "业绩说明会,网络文字互动方式",
               "is_specific": false
-            },
-            {
-              "date": "2026-07-30",
-              "n_inst": 14,
-              "method": "公司现场接待",
-              "is_specific": false
-            },
-            {
-              "date": "2026-07-22",
-              "n_inst": 16,
-              "method": "公司现场接待",
-              "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": null,
-          "direction": "",
-          "latest_short": null,
-          "base_short": null,
+          "change_pct": 453.6,
+          "direction": "做空增加",
+          "latest_short": 15.2,
+          "base_short": 2.7,
           "meaningful": true
         }
       },
@@ -1467,7 +1455,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -1536,7 +1524,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 25.0,
         "score": 3.3,
         "is_active": true,
         "survey": {
@@ -1618,7 +1606,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -1694,7 +1682,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 0.14,
         "is_active": false,
         "survey": {
@@ -1770,7 +1758,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1846,7 +1834,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -1915,7 +1903,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.7,
         "score": 1.0,
         "is_active": false,
         "survey": {
@@ -1997,7 +1985,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.9,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -2066,7 +2054,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 0.82,
         "is_active": false,
         "survey": {
@@ -2135,7 +2123,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 0.18,
         "is_active": false,
         "survey": {
@@ -2204,8 +2192,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 0.0,
+        "cache_age_hours": 0.1,
+        "score": 0.58,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -2213,10 +2201,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": null,
-          "direction": "",
-          "latest_short": null,
-          "base_short": null,
+          "change_pct": 11.7,
+          "direction": "中性",
+          "latest_short": 10.4,
+          "base_short": 9.3,
           "meaningful": true
         }
       },
@@ -2273,7 +2261,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2342,7 +2330,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 1.82,
         "is_active": false,
         "survey": {
@@ -2424,7 +2412,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2506,7 +2494,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2575,7 +2563,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.9,
         "score": 0.61,
         "is_active": false,
         "survey": {
@@ -2644,7 +2632,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 0.7,
         "is_active": false,
         "survey": {
@@ -2720,7 +2708,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.8,
         "score": 0.24,
         "is_active": false,
         "survey": {
@@ -2789,7 +2777,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 0.78,
         "is_active": false,
         "survey": {
@@ -2858,7 +2846,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2927,7 +2915,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 2.33,
         "is_active": true,
         "survey": {
@@ -3003,19 +2991,19 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 0.27,
-        "is_active": false,
+        "cache_age_hours": 0.1,
+        "score": 2.0,
+        "is_active": true,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": null,
-          "direction": "",
-          "latest_short": null,
-          "base_short": null,
+          "change_pct": 290.6,
+          "direction": "做空增加",
+          "latest_short": 5.8,
+          "base_short": 1.5,
           "meaningful": true
         }
       },
@@ -3072,7 +3060,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.7,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -3148,7 +3136,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 2.12,
         "is_active": true,
         "survey": {
@@ -3217,7 +3205,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 24.9,
         "score": 1.61,
         "is_active": false,
         "survey": {
@@ -3293,7 +3281,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 24.9,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -3362,7 +3350,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3438,7 +3426,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.8,
         "score": 3.0,
         "is_active": true,
         "survey": {
@@ -3532,7 +3520,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.8,
         "score": 0.52,
         "is_active": false,
         "survey": {
@@ -3608,7 +3596,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.47,
         "is_active": false,
         "survey": {
@@ -3677,23 +3665,17 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 3.0,
+        "cache_age_hours": 0.1,
+        "score": 2.0,
         "is_active": true,
         "survey": {
-          "count_30d": 2,
+          "count_30d": 1,
           "days_since_latest": 25,
           "events": [
             {
               "date": "2026-08-10",
               "n_inst": 1,
               "method": "业绩说明会",
-              "is_specific": false
-            },
-            {
-              "date": "2026-07-21",
-              "n_inst": 27,
-              "method": "电话会议",
               "is_specific": false
             }
           ]
@@ -3759,9 +3741,9 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 2.27,
-        "is_active": true,
+        "cache_age_hours": 0.1,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 1,
           "days_since_latest": 18,
@@ -3775,10 +3757,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 15.4,
-          "direction": "中性",
-          "latest_short": 13.4,
-          "base_short": 11.6,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -3835,7 +3817,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 2.1,
         "is_active": true,
         "survey": {
@@ -3904,7 +3886,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3973,7 +3955,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.9,
         "score": 1.5,
         "is_active": false,
         "survey": {
@@ -4049,7 +4031,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4137,7 +4119,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 1.6,
         "is_active": false,
         "survey": {
@@ -4213,7 +4195,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.8,
         "score": 2.5,
         "is_active": true,
         "survey": {
@@ -4289,19 +4271,19 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 25.0,
-        "score": 0.05,
-        "is_active": false,
+        "cache_age_hours": 0.2,
+        "score": 2.0,
+        "is_active": true,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 1.0,
-          "direction": "中性",
-          "latest_short": 91.9,
-          "base_short": 91.0,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -4358,7 +4340,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4427,7 +4409,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4509,7 +4491,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4578,7 +4560,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.38,
         "is_active": false,
         "survey": {
@@ -4647,7 +4629,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.4,
         "score": 0.26,
         "is_active": false,
         "survey": {
@@ -4723,7 +4705,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.4,
         "score": 0.13,
         "is_active": false,
         "survey": {
@@ -4799,7 +4781,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -4868,7 +4850,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.57,
         "is_active": false,
         "survey": {
@@ -4937,7 +4919,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 1.36,
         "is_active": false,
         "survey": {
@@ -5006,7 +4988,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 0.73,
         "is_active": false,
         "survey": {
@@ -5082,8 +5064,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 25.0,
-        "score": 3.78,
+        "cache_age_hours": 0.2,
+        "score": 3.42,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -5091,9 +5073,9 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 35.6,
+          "change_pct": 37.3,
           "direction": "做空增加",
-          "latest_short": 1645.8,
+          "latest_short": 1667.5,
           "base_short": 1214.1,
           "meaningful": true
         }
@@ -5151,7 +5133,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -5220,7 +5202,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -5289,7 +5271,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 0.31,
         "is_active": false,
         "survey": {
@@ -5358,7 +5340,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 0.28,
         "is_active": false,
         "survey": {
@@ -5434,7 +5416,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 2.25,
         "is_active": true,
         "survey": {
@@ -5503,7 +5485,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 1.05,
         "is_active": false,
         "survey": {
@@ -5579,7 +5561,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 25.0,
         "score": 0.1,
         "is_active": false,
         "survey": {
@@ -5648,7 +5630,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 0.23,
         "is_active": false,
         "survey": {
@@ -5724,7 +5706,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 1.02,
         "is_active": false,
         "survey": {
@@ -5793,7 +5775,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 2.44,
         "is_active": true,
         "survey": {
@@ -5875,7 +5857,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 1.62,
         "is_active": false,
         "survey": {
@@ -5951,7 +5933,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6027,7 +6009,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6368,7 +6350,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -6444,7 +6426,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -6891,7 +6873,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.07,
         "is_active": true,
         "survey": {
@@ -6960,7 +6942,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 0.35,
         "is_active": false,
         "survey": {
@@ -7036,7 +7018,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.7,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7112,7 +7094,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.9,
         "score": 0.66,
         "is_active": false,
         "survey": {
@@ -7188,7 +7170,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 1.95,
         "is_active": false,
         "survey": {
@@ -7257,7 +7239,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 2.23,
         "is_active": true,
         "survey": {
@@ -7333,7 +7315,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.5,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -7402,8 +7384,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 0.5,
+        "cache_age_hours": 0.2,
+        "score": 0.28,
         "is_active": false,
         "survey": {
           "count_30d": 1,
@@ -7412,16 +7394,16 @@
             {
               "date": "2026-07-14",
               "n_inst": 1,
-              "method": "再融资,网络文字互动",
+              "method": "",
               "is_specific": false
             }
           ]
         },
         "short_selling": {
-          "change_pct": null,
-          "direction": "",
-          "latest_short": null,
-          "base_short": null,
+          "change_pct": -5.6,
+          "direction": "中性",
+          "latest_short": 28.0,
+          "base_short": 29.7,
           "meaningful": true
         }
       },
@@ -7478,7 +7460,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.3,
         "score": 0.79,
         "is_active": false,
         "survey": {
@@ -7547,7 +7529,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.5,
+        "cache_age_hours": 24.7,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -7623,7 +7605,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.0,
+        "cache_age_hours": 0.3,
         "score": 1.04,
         "is_active": false,
         "survey": {
@@ -7692,8 +7674,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 25.0,
-        "score": 0.81,
+        "cache_age_hours": 0.2,
+        "score": 0.55,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -7701,10 +7683,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 12.0,
-          "direction": "中性",
-          "latest_short": 377.6,
-          "base_short": 337.1,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -7761,7 +7743,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.4,
         "score": 2.78,
         "is_active": true,
         "survey": {
@@ -7830,7 +7812,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.61,
         "is_active": false,
         "survey": {
@@ -7899,7 +7881,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.58,
         "is_active": true,
         "survey": {
@@ -7968,18 +7950,18 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 1.39,
-        "is_active": false,
+        "cache_age_hours": 0.1,
+        "score": 2.28,
+        "is_active": true,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 27.7,
+          "change_pct": 28.1,
           "direction": "中性",
-          "latest_short": 29.6,
+          "latest_short": 29.7,
           "base_short": 23.2,
           "meaningful": true
         }
@@ -8037,7 +8019,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.9,
         "score": 0.52,
         "is_active": false,
         "survey": {
@@ -8113,8 +8095,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 0.57,
+        "cache_age_hours": 0.1,
+        "score": 0.28,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -8122,9 +8104,9 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 11.3,
+          "change_pct": -5.6,
           "direction": "中性",
-          "latest_short": 8.2,
+          "latest_short": 7.0,
           "base_short": 7.4,
           "meaningful": true
         }
@@ -8182,7 +8164,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 24.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -8264,7 +8246,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -8333,7 +8315,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 25.0,
         "score": 1.48,
         "is_active": false,
         "survey": {
@@ -8402,7 +8384,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -8471,7 +8453,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 0.12,
         "is_active": false,
         "survey": {
@@ -8540,7 +8522,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.9,
         "score": 0.99,
         "is_active": false,
         "survey": {
@@ -8934,7 +8916,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 2.39,
         "is_active": true,
         "survey": {
@@ -9003,7 +8985,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 24.9,
         "score": 0.53,
         "is_active": false,
         "survey": {
@@ -9072,7 +9054,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 25.0,
         "score": 0.92,
         "is_active": false,
         "survey": {
@@ -9148,7 +9130,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9217,7 +9199,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 1.08,
         "is_active": false,
         "survey": {
@@ -9293,7 +9275,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 25.0,
         "score": 1.85,
         "is_active": false,
         "survey": {
@@ -9381,7 +9363,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 1.13,
         "is_active": false,
         "survey": {
@@ -9457,7 +9439,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9526,7 +9508,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 1.91,
         "is_active": false,
         "survey": {
@@ -9595,7 +9577,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9677,7 +9659,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 1.84,
         "is_active": false,
         "survey": {
@@ -9753,7 +9735,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 2.25,
         "is_active": true,
         "survey": {
@@ -9829,7 +9811,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 1.15,
         "is_active": false,
         "survey": {
@@ -9898,7 +9880,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.06,
         "is_active": false,
         "survey": {
@@ -9967,7 +9949,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 1.74,
         "is_active": false,
         "survey": {
@@ -10036,7 +10018,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.8,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10118,7 +10100,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 1.55,
         "is_active": false,
         "survey": {
@@ -10194,7 +10176,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 1.11,
         "is_active": false,
         "survey": {
@@ -10263,8 +10245,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 25.0,
-        "score": 2.0,
+        "cache_age_hours": 0.2,
+        "score": 2.76,
         "is_active": true,
         "survey": {
           "count_30d": 0,
@@ -10272,9 +10254,9 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -59.2,
+          "change_pct": 750.0,
           "direction": "中性",
-          "latest_short": 0.1,
+          "latest_short": 1.3,
           "base_short": 0.2,
           "meaningful": false
         }
@@ -10332,7 +10314,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.5,
         "score": 1.65,
         "is_active": false,
         "survey": {
@@ -10401,7 +10383,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 1.77,
         "is_active": false,
         "survey": {
@@ -10470,19 +10452,19 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 2.0,
-        "is_active": true,
+        "cache_age_hours": 0.1,
+        "score": 0.0,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": 52.3,
-          "direction": "做空增加",
-          "latest_short": 2.4,
-          "base_short": 1.6,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -10539,7 +10521,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10608,7 +10590,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.4,
         "score": 0.19,
         "is_active": false,
         "survey": {
@@ -10684,7 +10666,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.98,
         "is_active": false,
         "survey": {
@@ -10753,7 +10735,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
+        "cache_age_hours": 0.1,
         "score": 0.33,
         "is_active": false,
         "survey": {
@@ -10822,7 +10804,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -10891,7 +10873,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 0.9,
         "is_active": false,
         "survey": {
@@ -10960,7 +10942,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.3,
         "score": 0.68,
         "is_active": false,
         "survey": {
@@ -11029,7 +11011,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.7,
         "score": 0.79,
         "is_active": false,
         "survey": {
@@ -11129,7 +11111,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 0.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -11198,7 +11180,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 1.66,
         "is_active": false,
         "survey": {
@@ -11267,7 +11249,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -11336,7 +11318,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.7,
         "score": 0.25,
         "is_active": false,
         "survey": {
@@ -11412,7 +11394,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.9,
         "score": 0.56,
         "is_active": false,
         "survey": {
@@ -11488,7 +11470,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 1.61,
         "is_active": false,
         "survey": {
@@ -11557,7 +11539,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.0,
+        "cache_age_hours": 0.3,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -11633,7 +11615,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.47,
         "is_active": false,
         "survey": {
@@ -11702,7 +11684,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 1.98,
         "is_active": false,
         "survey": {
@@ -11778,7 +11760,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 0.9,
         "is_active": false,
         "survey": {
@@ -11847,7 +11829,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.3,
         "is_active": false,
         "survey": {
@@ -11923,7 +11905,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.8,
         "score": 0.06,
         "is_active": false,
         "survey": {
@@ -11992,7 +11974,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.66,
         "is_active": false,
         "survey": {
@@ -12068,7 +12050,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.97,
         "is_active": false,
         "survey": {
@@ -12150,8 +12132,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 1.14,
+        "cache_age_hours": 0.1,
+        "score": 0.43,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -12159,9 +12141,9 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 22.8,
+          "change_pct": 8.7,
           "direction": "中性",
-          "latest_short": 9.2,
+          "latest_short": 8.2,
           "base_short": 7.5,
           "meaningful": true
         }
@@ -12219,7 +12201,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 0.84,
         "is_active": false,
         "survey": {
@@ -12288,7 +12270,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 0.41,
         "is_active": false,
         "survey": {
@@ -12364,7 +12346,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -12433,7 +12415,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12827,7 +12809,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 0.21,
         "is_active": false,
         "survey": {
@@ -12956,7 +12938,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13010,7 +12992,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 0.08,
         "is_active": false,
         "survey": {
@@ -13132,7 +13114,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.39,
         "is_active": false,
         "survey": {
@@ -13201,7 +13183,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -13270,7 +13252,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.57,
         "is_active": false,
         "survey": {
@@ -13392,7 +13374,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 25.0,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -13461,7 +13443,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.4,
         "score": 0.43,
         "is_active": false,
         "survey": {
@@ -13537,7 +13519,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 1.33,
         "is_active": false,
         "survey": {
@@ -13613,7 +13595,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 2.59,
         "is_active": true,
         "survey": {
@@ -13707,7 +13689,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -13776,7 +13758,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.2,
         "score": 0.31,
         "is_active": false,
         "survey": {
@@ -13852,7 +13834,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 1.01,
         "is_active": false,
         "survey": {
@@ -13928,7 +13910,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.6,
         "score": 2.95,
         "is_active": true,
         "survey": {
@@ -13997,8 +13979,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 0.69,
+        "cache_age_hours": 0.0,
+        "score": 0.3,
         "is_active": false,
         "survey": {
           "count_30d": 1,
@@ -14013,9 +13995,9 @@
           ]
         },
         "short_selling": {
-          "change_pct": 3.7,
+          "change_pct": 5.9,
           "direction": "中性",
-          "latest_short": 10.3,
+          "latest_short": 10.5,
           "base_short": 9.9,
           "meaningful": true
         }
@@ -14073,7 +14055,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 0.4,
         "score": 3.55,
         "is_active": true,
         "survey": {
@@ -14142,7 +14124,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.5,
         "score": 1.46,
         "is_active": false,
         "survey": {
@@ -14211,7 +14193,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14280,7 +14262,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14415,7 +14397,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 1.02,
         "is_active": false,
         "survey": {
@@ -14484,7 +14466,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14553,7 +14535,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.3,
         "score": 2.27,
         "is_active": true,
         "survey": {
@@ -14635,7 +14617,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.6,
+        "cache_age_hours": 24.9,
         "score": 0.68,
         "is_active": false,
         "survey": {
@@ -14704,7 +14686,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.5,
         "score": 1.73,
         "is_active": false,
         "survey": {
@@ -14835,7 +14817,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.15,
         "is_active": false,
         "survey": {
@@ -14911,16 +14893,16 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 2.1,
-        "is_active": true,
+        "cache_age_hours": 0.1,
+        "score": 1.32,
+        "is_active": false,
         "survey": {
           "count_30d": 0,
           "days_since_latest": null,
           "events": []
         },
         "short_selling": {
-          "change_pct": -27.2,
+          "change_pct": -26.5,
           "direction": "中性",
           "latest_short": 1.1,
           "base_short": 1.5,
@@ -14980,7 +14962,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15056,7 +15038,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 24.9,
         "score": 0.5,
         "is_active": false,
         "survey": {
@@ -15132,7 +15114,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15208,7 +15190,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.06,
         "is_active": false,
         "survey": {
@@ -15284,7 +15266,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15360,7 +15342,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15436,7 +15418,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15512,7 +15494,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 1.24,
         "is_active": false,
         "survey": {
@@ -15588,7 +15570,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 24.9,
         "score": 2.12,
         "is_active": true,
         "survey": {
@@ -15657,7 +15639,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 4.0,
         "is_active": true,
         "survey": {
@@ -15733,7 +15715,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15802,7 +15784,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.1,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15871,7 +15853,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 0.3,
         "is_active": false,
         "survey": {
@@ -15953,7 +15935,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 25.0,
         "score": 1.07,
         "is_active": false,
         "survey": {
@@ -16022,7 +16004,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16091,8 +16073,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 1.69,
+        "cache_age_hours": 0.1,
+        "score": 1.26,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -16100,10 +16082,10 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": 13.8,
-          "direction": "中性",
-          "latest_short": 2.6,
-          "base_short": 2.3,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -16160,7 +16142,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 0.32,
         "is_active": false,
         "survey": {
@@ -16229,7 +16211,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.9,
         "score": 1.66,
         "is_active": false,
         "survey": {
@@ -16298,7 +16280,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16367,7 +16349,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16467,7 +16449,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16536,7 +16518,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16605,7 +16587,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16674,7 +16656,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.0,
         "score": 0.02,
         "is_active": false,
         "survey": {
@@ -16750,7 +16732,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16826,8 +16808,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.9,
-        "score": 1.64,
+        "cache_age_hours": 0.1,
+        "score": 0.14,
         "is_active": false,
         "survey": {
           "count_30d": 1,
@@ -16836,7 +16818,7 @@
             {
               "date": "2026-07-16",
               "n_inst": 16,
-              "method": "特定对象调研,现场参观",
+              "method": "",
               "is_specific": true
             }
           ]
@@ -16902,7 +16884,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.3,
         "score": 1.6,
         "is_active": false,
         "survey": {
@@ -16971,7 +16953,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 1.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -17040,7 +17022,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
+        "cache_age_hours": 25.0,
         "score": 1.94,
         "is_active": false,
         "survey": {
@@ -17109,7 +17091,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.7,
+        "cache_age_hours": 25.0,
         "score": 1.66,
         "is_active": false,
         "survey": {
@@ -17178,8 +17160,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 1.76,
+        "cache_age_hours": 0.1,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
@@ -17194,10 +17176,10 @@
           ]
         },
         "short_selling": {
-          "change_pct": 5.2,
-          "direction": "中性",
-          "latest_short": 22.2,
-          "base_short": 21.1,
+          "change_pct": null,
+          "direction": "",
+          "latest_short": null,
+          "base_short": null,
           "meaningful": true
         }
       },
@@ -17254,7 +17236,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -17330,7 +17312,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 2.48,
         "is_active": true,
         "survey": {
@@ -17406,7 +17388,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.6,
         "score": 1.12,
         "is_active": false,
         "survey": {
@@ -17475,7 +17457,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.45,
         "is_active": false,
         "survey": {
@@ -17544,7 +17526,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.63,
         "is_active": false,
         "survey": {
@@ -17626,7 +17608,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 1.1,
         "score": 0.38,
         "is_active": false,
         "survey": {
@@ -17695,8 +17677,8 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 24.8,
-        "score": 0.7,
+        "cache_age_hours": 0.0,
+        "score": 0.82,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -17704,9 +17686,9 @@
           "events": []
         },
         "short_selling": {
-          "change_pct": -13.9,
+          "change_pct": -16.5,
           "direction": "中性",
-          "latest_short": 26.8,
+          "latest_short": 26.0,
           "base_short": 31.2,
           "meaningful": true
         }
@@ -17764,7 +17746,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -17833,7 +17815,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 1.2,
         "score": 0.42,
         "is_active": false,
         "survey": {
@@ -17902,7 +17884,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 3.31,
         "is_active": true,
         "survey": {
@@ -17971,7 +17953,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.5,
         "score": 1.29,
         "is_active": false,
         "survey": {
@@ -18100,7 +18082,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 1.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
