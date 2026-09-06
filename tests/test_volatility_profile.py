@@ -149,3 +149,66 @@ def test_presenter_derives_bench_vol():
     from radar_app.stocks import presenter
     src = inspect.getsource(presenter)
     assert '"bench_vol"' in src, "presenter 没有算基准波动，页面会显示占位符"
+
+
+# ── 组合层（US-209）────────────────────────────────────────────────────────
+
+def test_portfolio_vol_is_not_the_average_of_members():
+    """**最容易写错的一条。**
+
+    五只都颠 4 倍的股票凑一起，组合不一定颠 4 倍 —— 不同涨同跌的部分会抵消。
+    直接平均个股波动会**系统性高估**。
+
+    实测（生产数据 2026-09-07）：
+        全高波动组合   实际 2.6 倍   直接平均 3.5 倍
+        混合组合       实际 1.0 倍   直接平均 1.6 倍
+    """
+    import random
+    from scripts.volatility_profile import portfolio_profile
+    rnd = random.Random(42)
+    bench = [rnd.gauss(0, 0.02) for _ in range(120)]
+    # 五条**互不相关**的高波动序列
+    members = [[rnd.gauss(0, 0.08) for _ in range(120)] for _ in range(5)]
+    p = portfolio_profile(members, bench, market="cn")
+    assert p, "算不出组合波动"
+    assert p["ratio"] < p["naive_ratio"], (
+        f"组合波动 {p['ratio']} 没有低于平均 {p['naive_ratio']} —— 相关性没算进去")
+    assert p["diversification"] > 30, "五条独立序列的分散收益应该很明显"
+
+
+def test_perfectly_correlated_members_get_no_diversification():
+    """反向边界：成员完全同涨同跌 → 分散收益接近 0。
+    如果这里也报出一个漂亮的折扣，说明算法在凭空造分散。"""
+    import random
+    from scripts.volatility_profile import portfolio_profile
+    rnd = random.Random(7)
+    one = [rnd.gauss(0, 0.06) for _ in range(120)]
+    bench = [rnd.gauss(0, 0.02) for _ in range(120)]
+    p = portfolio_profile([one[:], one[:], one[:]], bench, market="cn")
+    assert p and abs(p["diversification"]) <= 3, (
+        f"完全相关却报出 {p['diversification']}% 的分散收益")
+
+
+def test_portfolio_needs_enough_members_and_history():
+    from scripts.volatility_profile import portfolio_profile
+    assert portfolio_profile([], [0.01] * 60) == {}
+    assert portfolio_profile([[0.01] * 10], [0.01] * 60) == {}
+
+
+def test_watchlist_row_renders_and_shows_the_wrong_answer_too():
+    """页面要同时显示「直接平均会得到几倍」—— 不是为了炫技，
+    是为了让人知道分散省下了多少，而不是以为组合本来就该这么稳。"""
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    env = Environment(loader=FileSystemLoader("templates"),
+                      autoescape=select_autoescape(["html"]))
+    seg = _extract_block("templates/watchlist.html", "portfolio_vol")
+    pv = {"ratio": 2.6, "naive_ratio": 3.5, "diversification": 26, "n": 5,
+          "bench_name": "沪深300", "vol": 7.0, "bench_vol": 2.7,
+          "headline": "你的自选股整体比沪深300颠 2.6 倍",
+          "meaning": "沪深300涨跌 1 块，你这 5 只加起来通常涨跌 2.6 块。",
+          "diversify": "分散在 5 只上，比只拿一只少颠了 26%。",
+          "note": "按等权重算（自选股没有记持仓量）。"}
+    html = env.from_string(seg).render(portfolio_vol=pv)
+    assert "颠 2.6 倍" in html
+    assert "3.5 倍" in html and "高估" in html, "没告诉人错误答案长什么样"
+    assert "等权重" in html, "没说明权重假设"

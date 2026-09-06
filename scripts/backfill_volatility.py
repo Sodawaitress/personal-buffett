@@ -5,6 +5,7 @@
 **基准必须同市场。** 拿沪深300 去比美股，倍数没有意义
 （US-202 那一整族错误：跨语境套用）。
 """
+import json as _json
 import sys
 
 from sqlalchemy import text
@@ -65,7 +66,11 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
         try:
             if mkt not in bench_cache:
                 bench_cache[mkt] = _bench(mkt)
-            v = profile(_closes(code, mkt), bench_cache[mkt], mkt)
+            _cl = _closes(code, mkt)
+            v = profile(_cl, bench_cache[mkt], mkt)
+            if v:
+                from scripts.volatility_profile import weekly_returns
+                v["_series"] = [round(x, 5) for x in weekly_returns(_cl)]
             if not v:
                 stat["no_data"] += 1
                 print(f"  ⏭ {code}  历史不够，算不出波动")
@@ -85,8 +90,9 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
         with engine.begin() as conn:
             conn.execute(text(
                 "UPDATE stock_fundamentals SET vol_weekly=:v, vol_ratio=:r, "
-                "vol_pct=:p, vol_stable=:s WHERE code=:c"),
+                "vol_pct=:p, vol_stable=:s, vol_series=:q WHERE code=:c"),
                 {"v": v["vol"], "r": v["ratio"], "p": pct,
+                 "q": _json.dumps(v.get("_series") or []),
                  "s": None if v["stable"] is None else int(v["stable"]),
                  "c": code})
         stat["done"] += 1

@@ -806,6 +806,10 @@ def _migrate():
         ("stock_fundamentals", "vol_ratio",   "REAL"),
         ("stock_fundamentals", "vol_pct",     "INTEGER"),
         ("stock_fundamentals", "vol_stable",  "INTEGER"),
+        # US-209：周收益序列（JSON，约 100 个浮点 ≈ 1KB）。
+        # 组合波动**不能**由个股波动平均得出 —— 必须先合成组合的收益序列
+        # 再算标准差，相关性才会被正确算进去。存序列是为了让这件事能实时做。
+        ("stock_fundamentals", "vol_series",   "TEXT"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

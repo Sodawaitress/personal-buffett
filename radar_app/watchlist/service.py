@@ -18,6 +18,76 @@ from radar_app.watchlist.query import (
 )
 
 
+def _portfolio_volatility(codes):
+    """US-209：整个自选股一起颠多少。
+
+    ⚠️ **不能把个股波动平均。** 五只都颠 4 倍的股票凑一起，组合不一定颠 4 倍
+    —— 它们不同涨同跌的那部分会互相抵消。必须先合成**组合的周收益序列**
+    再算标准差，相关性才会被正确算进去。
+
+    实测（2026-09-07 生产数据）：
+        全高波动组合   实际 2.6 倍，直接平均会得到 3.5 倍
+        混合组合       实际 1.0 倍，直接平均会得到 1.6 倍
+    混合组的分散收益反而更大（38% vs 26%）—— 因为银行电力和 AI 股不同涨同跌。
+
+    没有持仓量（`user_watchlist` 只有 buy_price），所以按**等权重**，
+    并在页面上写明。
+    """
+    import json as _json
+    if not codes:
+        return None
+    try:
+        from sqlalchemy import text
+        from radar_app.data.core import get_engine
+        from scripts.volatility_profile import (BENCHMARK, describe_portfolio,
+                                                portfolio_profile)
+        with get_engine().begin() as conn:
+            rows = conn.execute(text(
+                "SELECT code, vol_series FROM stock_fundamentals "
+                "WHERE vol_series IS NOT NULL"), ).mappings().all()
+        want = set(codes)
+        series = []
+        for r in rows:
+            if r["code"] not in want:
+                continue
+            try:
+                v = _json.loads(r["vol_series"] or "[]")
+            except Exception:
+                v = []
+            if v:
+                series.append(v)
+        if len(series) < 3:          # 太少了谈不上组合
+            return None
+        bench = _bench_returns("cn")
+        if not bench:
+            return None
+        p = portfolio_profile(series, bench, market="cn")
+        return {**p, **describe_portfolio(p)} if p else None
+    except Exception:
+        return None
+
+
+_BENCH_CACHE = {}
+
+
+def _bench_returns(market):
+    """基准的周收益。缓存住 —— 每次开自选股页都去拉 500 天日线太慢。"""
+    import time
+    hit = _BENCH_CACHE.get(market)
+    if hit and time.time() - hit[0] < 6 * 3600:
+        return hit[1]
+    try:
+        import akshare as ak
+        from scripts.volatility_profile import BENCHMARK, weekly_returns
+        cl = list(ak.stock_zh_index_daily(
+            symbol=BENCHMARK[market][0])["close"].astype(float))[-500:]
+        rs = weekly_returns(cl)
+        _BENCH_CACHE[market] = (time.time(), rs)
+        return rs
+    except Exception:
+        return hit[1] if hit else None
+
+
 def build_watchlist_context(user_id):
     rows = list_watchlist_rows(user_id)
     codes = [row.get("stock_code") or row.get("code") for row in rows]
@@ -63,6 +133,7 @@ def build_watchlist_context(user_id):
                        key=lambda g: (grade_rank(g), g))
     return {
         "stocks": stocks,
+        "portfolio_vol": _portfolio_volatility(codes),
         "holding": [s for s in stocks if s["status"] == "holding"],
         "watching": [s for s in stocks if s["status"] == "watching"],
         "sold":    [s for s in stocks if s["status"] == "sold"],

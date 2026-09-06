@@ -186,3 +186,83 @@ def describe(p: dict, locale: str = "zh") -> dict:
         # 「比 100% 的股票更颠」听起来像口号，不像事实。
         "peers": _peer_phrase(p.get("pct"), "zh"),
     }
+
+
+# ── 组合层（US-209）────────────────────────────────────────────────────────
+#
+# ⚠️ **组合波动 ≠ 个股波动的平均。**
+#
+# 五只都颠 4 倍的股票凑一起，组合不一定颠 4 倍 —— 它们不同涨同跌的那部分
+# 会互相抵消。直接把个股波动平均，会**系统性高估**组合的颠簸程度，
+# 而且高估的幅度取决于相关性，不是一个固定的折扣。
+#
+# 正确做法只有一个：先把**组合每周的收益**算出来（成员收益按权重合成），
+# 再算这条序列的标准差。相关性就自动包含在里面了，不用单独估。
+#
+# 这也是「颠不颠」这件事在组合层最反直觉的地方，值得写在页面上：
+# **分散本身就是降波动的手段，不需要挑更稳的股票。**
+
+
+def portfolio_returns(series_list: list, weights: list = None) -> list:
+    """成员周收益序列 → 组合周收益序列。按最短的那条对齐。"""
+    series_list = [s for s in series_list if s]
+    if not series_list:
+        return []
+    n = min(len(s) for s in series_list)
+    if not n:
+        return []
+    k = len(series_list)
+    w = weights or [1.0 / k] * k
+    tot = sum(w) or 1.0
+    w = [x / tot for x in w]
+    return [sum(series_list[j][-n + i] * w[j] for j in range(k)) for i in range(n)]
+
+
+def portfolio_profile(series_list: list, bench_returns: list,
+                      weights: list = None, market: str = "cn") -> dict:
+    """返回 {} 或 {vol, bench_vol, ratio, n, naive_ratio, diversification}。
+
+    `naive_ratio` 是「直接平均个股波动」会得到的错误答案 ——
+    留着它是为了在页面上显示分散化到底省下了多少，
+    而不是让人以为组合波动本来就该这么低。
+    """
+    rs = portfolio_returns(series_list, weights)
+    if len(rs) < _MIN_WEEKS:
+        return {}
+    s, bs = _std(rs), _std(bench_returns or [])
+    if s is None or not bs:
+        return {}
+    vol, bench_vol = round(s * 100, 1), round(bs * 100, 1)
+    members = [_std(x) for x in series_list if x and _std(x)]
+    naive = (round(sum(members) / len(members) * 100 / bench_vol, 1)
+             if members else None)
+    ratio = round(vol / bench_vol, 1)
+    return {
+        "vol": vol, "bench_vol": bench_vol, "ratio": ratio,
+        "n": len([x for x in series_list if x]),
+        "bench_name": BENCHMARK.get(market, ("", "大盘"))[1],
+        "naive_ratio": naive,
+        # 分散化压下去了多少（百分比）。0 表示成员完全同涨同跌 —— 等于没分散。
+        "diversification": (round((1 - ratio / naive) * 100)
+                            if naive and naive > 0 else None),
+    }
+
+
+def describe_portfolio(p: dict, locale: str = "zh") -> dict:
+    if not p:
+        return {}
+    r, bn, n = p["ratio"], p["bench_name"], p["n"]
+    if locale == "en":
+        return {"headline": f"Your list moves {r}x the market",
+                "meaning": f"When {bn} moves 1, your {n} holdings together move {r}.",
+                "diversify": (f"Holding {n} names instead of one cuts the swing by "
+                              f"{p['diversification']}%." if p.get("diversification") else None)}
+    return {
+        "headline": f"你的自选股整体比{bn}颠 {r} 倍",
+        "meaning": f"{bn}涨跌 1 块，你这 {n} 只加起来通常涨跌 {r} 块。",
+        # 这句是重点：它解释了「为什么组合没有单只那么颠」，
+        # 顺带说明分散不是抽象的好话，是一个能量出来的数
+        "diversify": (f"分散在 {n} 只上，比只拿一只少颠了 {p['diversification']}%。"
+                      if p.get("diversification") else None),
+        "note": "按等权重算（自选股没有记持仓量）。",
+    }

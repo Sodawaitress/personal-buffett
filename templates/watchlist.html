@@ -4,6 +4,31 @@
 {% block content %}
 <div class="watchlist-wrap">
 
+  {# ══ US-209 整个自选股一起颠多少 —— 她的体感是组合层的，单只回答不了 ══ #}
+  {% if portfolio_vol %}
+  <div class="pvol pvol-{{ 'wild' if portfolio_vol.ratio >= 2 else ('calm' if portfolio_vol.ratio < 1 else 'mid') }}">
+    <div class="pvol-main">
+      <span class="pvol-head">{{ portfolio_vol.headline }}</span>
+      <span class="pvol-mean">{{ portfolio_vol.meaning }}</span>
+    </div>
+    {% if portfolio_vol.diversify %}
+    <div class="pvol-div">
+      <span class="pvol-div-num">−{{ portfolio_vol.diversification }}%</span>
+      <span class="pvol-div-text">{{ portfolio_vol.diversify }}</span>
+    </div>
+    {% endif %}
+    <details class="pvol-why">
+      <summary>这个数怎么来的</summary>
+      <p>把这 {{ portfolio_vol.n }} 只<b>每周的涨跌合起来</b>算，再和{{ portfolio_vol.bench_name }}比。
+        {{ portfolio_vol.note }}</p>
+      <p><b>不是把每只的波动平均</b> —— 那样会算出 {{ portfolio_vol.naive_ratio }} 倍，高估了。
+        因为它们不会同时涨、同时跌，抵消掉的那部分必须算进去。</p>
+      <p class="pvol-why-note">所以<b>分散本身就是降波动的手段</b>，不需要专门去挑更稳的股票。
+        多拿几只不相关的，比换成一只更稳的更有效。</p>
+    </details>
+  </div>
+  {% endif %}
+
   {# ── US-65 差评预警横幅 ── #}
   {% if notifications %}
   <div class="notif-banner" id="notif-banner">
