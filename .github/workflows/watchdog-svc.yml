@@ -40,11 +40,41 @@ jobs:
             echo "✅ 今天的快照已就位，链条正常"
           else
             echo "fresh=0" >> "$GITHUB_OUTPUT"
-            echo "🔴 今天还没有快照 —— 链条可能在中途断了"
+            echo "🟡 今天还没有快照"
           fi
 
+      # US-210：**「没有快照」和「链条断了」是两回事。**
+      #
+      # 本 watchdog 的判据原本只有「今天的快照 commit 了吗」，注释里写着
+      # 「链条正常时 digest 约 11:36 UTC 就完成了」。那个前提没了 ——
+      # GHA 定时事件现在每天固定晚约 4.75 小时放行（见 US-206），
+      # pipeline 12:08 才起跑、16:45 才结束。
+      #
+      # 于是 watchdog 每天在 13:00（它自己也被延迟）看到「今天没快照」，
+      # 判定链条断了，补跑一次 digest —— 而 pipeline 自己的 digest 正在排队。
+      # 后果实测：08-28 / 09-02 / 09-04 **每天生成两份快照**，
+      # 且 pipeline 的 digest 被判为 cancelled。
+      #
+      # 这正是 US-150「双跑 digest」那个 bug 从另一扇门回来。
+      # 修法沿用 US-149 给 Routine 定的那条区分：
+      # **先看上游是不是还在动，再判它是不是挂了。**
+      - name: Is the pipeline still running?
+        id: inflight
+        run: |
+          N=$(gh run list --workflow=pipeline.yml --repo "${{ github.repository }}" \
+                -L 5 --json status,createdAt \
+                -q "[.[] | select(.status==\"in_progress\" or .status==\"queued\")] | length")
+          echo "in_flight=$N" >> "$GITHUB_OUTPUT"
+          if [ "$N" != "0" ]; then
+            echo "🟢 pipeline 还在跑（$N 个在途）—— 慢一步，不是断了。不补跑。"
+          else
+            echo "🔴 pipeline 没有在途任务，且今天没有快照 —— 这才叫断了。"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Recover — dispatch digest-svc
-        if: steps.check.outputs.fresh == '0'
+        if: steps.check.outputs.fresh == '0' && steps.inflight.outputs.in_flight == '0'
         run: |
           gh workflow run digest-svc.yml --repo "${{ github.repository }}"
           echo "已补跑 digest-svc"
@@ -52,7 +82,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Alert
-        if: steps.check.outputs.fresh == '0'
+        if: steps.check.outputs.fresh == '0' && steps.inflight.outputs.in_flight == '0'
         run: |
           KEY="${{ secrets.SERVERCHAN_ADMIN_KEY || secrets.SERVERCHAN_KEY }}"
           if [ -n "$KEY" ]; then
