@@ -2936,3 +2936,33 @@
 .picks-empty { padding: 30px 0; }
 .picks-empty h1 { font-size: 20px; margin: 0 0 10px; }
 .picks-empty p { font-size: 13px; line-height: 1.8; color: var(--ink-muted); }
+
+/* ── US-208「颠不颠」：结构照 .chain（head + 内容 + details 渐进披露），
+   不引入新的视觉语言。条形图只有两条：它自己 vs 大盘，长度比 = 波动比。 ── */
+.vol {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 0 14px;
+  background: var(--paper);
+}
+.vol-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.vol-title { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
+.vol-story { font-size: 12px; color: var(--ink-muted); font-weight: 600; }
+.vol-wild .vol-story { color: var(--down); }
+.vol-calm .vol-story { color: var(--ink-muted); }
+.vol-mean { font-size: 12px; color: var(--ink-faint); margin: 0 0 8px; line-height: 1.6; }
+
+/* 两条：上面是大盘，下面是它自己。宽度差就是倍数差，不用读数字 */
+.vol-bar { display: flex; flex-direction: column; gap: 3px; margin: 0 0 8px; }
+.vol-bar-bench, .vol-bar-self { height: 4px; border-radius: 2px; display: block; }
+.vol-bar-bench { background: var(--rule); }
+.vol-bar-self { background: var(--ink-faint); }
+.vol-wild .vol-bar-self { background: var(--down); }
+
+.vol-facts { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--ink-faint); }
+.vol-peer { color: var(--ink-muted); }
+.vol-why { margin-top: 8px; }
+.vol-why summary { font-size: 11px; color: var(--ink-muted); cursor: pointer; }
+.vol-why ul { margin: 6px 0 0; padding-left: 16px; font-size: 11px; color: var(--ink-faint); line-height: 1.7; }
+.vol-why-note { font-size: 11px; color: var(--ink-faint); margin: 6px 0 0; }

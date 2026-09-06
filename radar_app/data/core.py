@@ -798,6 +798,14 @@ def _migrate():
         # 同一列装两种窗口而不记录是哪种，就是把受限的观测讲成不受限的结论。
         ("stock_fundamentals", "pe_pct_window_years", "REAL"),
         ("stock_fundamentals", "pe_pct_range",        "TEXT"),   # "20.8-44.7" 供页面显示区间
+        # US-208「颠不颠」：波动率是所有指标里**最难被修饰**的 ——
+        # 它直接来自成交价格，不经过任何人的手。
+        # vol_stable 存 0/1/NULL 三态：NULL = 历史不够长，判断不了。
+        # 两态会把「不知道」讲成「脾气变了」（第一版就是这么错的）。
+        ("stock_fundamentals", "vol_weekly",  "REAL"),
+        ("stock_fundamentals", "vol_ratio",   "REAL"),
+        ("stock_fundamentals", "vol_pct",     "INTEGER"),
+        ("stock_fundamentals", "vol_stable",  "INTEGER"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

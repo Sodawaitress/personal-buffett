@@ -94,6 +94,37 @@
     </div>
     {% endif %}
 
+    {# ══ US-208 颠不颠 —— 涨的时候和跌的时候，是同一个原因 ══ #}
+    {% if volatility %}
+    <div class="vol vol-{{ 'wild' if volatility.ratio >= 2 else ('calm' if volatility.ratio < 0.8 else 'mid') }}">
+      <div class="vol-head">
+        <span class="vol-title">颠不颠</span>
+        <span class="vol-story">{{ volatility.headline }}</span>
+      </div>
+      <p class="vol-mean">{{ volatility.meaning }}</p>
+      <div class="vol-bar" aria-hidden="true">
+        <span class="vol-bar-bench" style="width:{{ (100 / (volatility.ratio if volatility.ratio > 1 else 1)) | round }}%"></span>
+        <span class="vol-bar-self" style="width:100%"></span>
+      </div>
+      <div class="vol-facts">
+        <span>{{ volatility.stable }}</span>
+        {% if volatility.peers %}<span class="vol-peer">{{ volatility.peers }}</span>{% endif %}
+      </div>
+      <details class="vol-why">
+        <summary>「颠」能说明什么</summary>
+        <ul>
+          <li><b>能说的</b>：颠的还会继续颠。价格往哪走没规律，但<b>颠的幅度</b>有很强的延续性
+            —— 大波动后面跟着大波动。所以上面这个倍数，对<b>下个月</b>大概率还成立。</li>
+          <li><b>不能说的</b>：它<b>不预测涨跌方向</b>。「跌了这么多该反弹了」用的不是这个。</li>
+          <li><b>对你的用处</b>：知道这只平时颠几倍，就知道赚到的那部分有多少是留不住的。
+            涨得猛和跌得快，是同一件事的两面。</li>
+        </ul>
+        <p class="vol-why-note">周波动率 {{ volatility.vol }}%，{{ volatility.bench_name }} {{ volatility.bench_vol or '—' }}%。
+          按近两年的周收益算。</p>
+      </details>
+    </div>
+    {% endif %}
+
     {# ── US-119 层1：一句结论（与首页榜单同款措辞，点榜单进来讲同一个故事） ── #}
     {% if signal_conclusion %}
     <div class="sig-verdict sig-verdict-{{ signal_conclusion.direction }}{{ ' sig-verdict-lead' if signal_conclusion.lead }}">

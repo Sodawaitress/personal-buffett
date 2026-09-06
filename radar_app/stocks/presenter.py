@@ -785,6 +785,34 @@ def present_stock_page(bundle):
         except Exception:
             signal_chain = None
 
+    # US-208「颠不颠」—— 用户妈妈 8 月赚了钱、9 月「又被吃进去了」，
+    # 她以为是「突然战争了」。实际是中证1000 八月 +9.8%、8/19 单日 -5.4%：
+    # **赚的和赔的来自同一批股票**。
+    #
+    # 国内软件（同花顺/东财/雪球）只有「振幅」——当日最高最低之差，
+    # 回答「今天活跃吗」，不回答「平时颠成什么样、比大盘颠多少」。
+    #
+    # 措辞三段式借 Simply Wall St 的 "Volatility Over Time"，
+    # 但把「百分位」换成「**是大盘的几倍**」打头 ——
+    # 「高于 92% 的 A 股」没有体感，「颠 2.8 倍」有。
+    volatility = None
+    _f = bundle.get("fund") or {}
+    if _f.get("vol_ratio") is not None:
+        try:
+            from scripts.volatility_profile import BENCHMARK, describe
+            _st = _f.get("vol_stable")
+            _v, _r = _f.get("vol_weekly"), _f.get("vol_ratio")
+            _p = {"vol": _v, "ratio": _r,
+                  # 基准波动没单独存 —— 它等于 vol / ratio，反推即可，
+                  # 不必为一个派生值多加一列
+                  "bench_vol": (round(_v / _r, 1) if _v and _r else None),
+                  "pct": _f.get("vol_pct"),
+                  "bench_name": BENCHMARK.get(market, ("", "大盘"))[1],
+                  "stable": None if _st is None else bool(_st)}
+            volatility = {**_p, **describe(_p, locale)}
+        except Exception:
+            volatility = None
+
     # US-142 谁在卖自己公司的股票（A股，半年窗口）
     insider = None
     if market == "cn":
@@ -858,6 +886,7 @@ def present_stock_page(bundle):
         "position_insight": position_insight,
         "cheapness": cheapness,
         "signal_chain": signal_chain,
+        "volatility": volatility,
         "order_book": order_book,
         "pick_history": pick_history,
         "insider": insider,

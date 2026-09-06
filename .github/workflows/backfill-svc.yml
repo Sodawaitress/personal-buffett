@@ -51,6 +51,13 @@ jobs:
 
       # US-205：A股那半边。日常抓取里这一步每轮只跑 2 只（很重），
       # 222 只要一百多天才轮完 —— 等于没做。
+      # US-208「颠不颠」：波动率是所有指标里最难被修饰的 ——
+      # 它直接来自成交价格，不经过任何人的手。
+      - name: Backfill volatility profile (US-208)
+        run: python -m scripts.backfill_volatility ${{ github.event.inputs.limit || '40' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Backfill CN pretax/tax fields (US-205)
         run: python -m scripts.backfill_cn_pretax ${{ github.event.inputs.limit || '30' }}
         env:
