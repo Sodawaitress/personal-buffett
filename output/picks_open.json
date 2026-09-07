@@ -1,5 +1,75 @@
 [
   {
+    "code": "002602",
+    "name": "世纪华通",
+    "date": "2026-09-07",
+    "advice": "已持仓可继续不加仓；未持仓等回调¥14.5附近或融券方向翻转再看。融券+883% 极端放量+价格创阶段新高+无调研=多空分歧到摊牌关口，方向兑现前波动放大。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 82,
+      "short_change_pct": 883.8,
+      "survey_count_30d": 0,
+      "price": 15.73
+    }
+  },
+  {
+    "code": "000977",
+    "name": "浪潮信息",
+    "date": "2026-09-07",
+    "advice": "已持仓建议观察不加仓，等公司回应或Q3财报交叉验证；未持仓当前不是进场时机，别接飞刀。业绩+269%但市场怀疑囤货式增长，跌停成交137亿居A股首位。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 81,
+      "short_change_pct": 5.7,
+      "survey_count_30d": 0,
+      "price": 77.72
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-09-07",
+    "advice": "已持仓继续；未持仓可¥33.5–¥34.5分批建仓，止损¥31.5。30日3次特定对象调研（机构专门约的）+ROE13.1%+估值便宜=三层里最强信号形态。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 31.2,
+      "survey_count_30d": 4,
+      "price": 34.5
+    }
+  },
+  {
+    "code": "002956",
+    "name": "西麦食品",
+    "date": "2026-09-07",
+    "advice": "可¥16.5–¥17小仓位建仓（≤总仓3-5%），止损¥15。新入库A+燕麦龙头+中报净利+81.88%+估值便宜，消费防御补位。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 66,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 16.77
+    }
+  },
+  {
+    "code": "603162",
+    "name": "海通发展",
+    "date": "2026-09-07",
+    "advice": "已持仓继续；未持仓不建议追高，等回调¥13附近或下一批订单公告再看。中报预告+475%~+532%驱动涨停但估值偏贵，大众已在场。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 71,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 14.64
+    }
+  },
+  {
     "code": "300124",
     "name": "汇川技术",
     "date": "2026-09-04",
@@ -11,20 +81,6 @@
       "short_change_pct": -37.2,
       "survey_count_30d": 10,
       "price": 60.15
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-09-04",
-    "advice": "¥34-¥34.5 附近可小仓位建仓 5-8%（家庭仓位占比），跌破 ¥33 止损。慢慢加，不追。城商行 A 股旗手，估值分位便宜。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 20.7,
-      "survey_count_30d": 4,
-      "price": 34.4
     }
   },
   {
@@ -67,20 +123,6 @@
       "short_change_pct": -35.9,
       "survey_count_30d": 3,
       "price": 248.81
-    }
-  },
-  {
-    "code": "002602",
-    "name": "世纪华通",
-    "date": "2026-09-03",
-    "advice": "长线可¥13.80-¥14.20分批建仓20-30%、跌破¥13.20止损。短线不追。业绩兑现后的多空分歧期。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 82,
-      "short_change_pct": 115.7,
-      "survey_count_30d": 0,
-      "price": 14.03
     }
   },
   {
@@ -235,20 +277,6 @@
       "short_change_pct": -42.1,
       "survey_count_30d": 3,
       "price": 91.5
-    }
-  },
-  {
-    "code": "000977",
-    "name": "浪潮信息",
-    "date": "2026-09-01",
-    "advice": "涨停不追。明后天看龙虎榜资金结构：机构+北向净买入=可以关注；仍是游资唱主角=出货信号。已持仓可先减仓一半锁定利润。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 81,
-      "short_change_pct": 4.7,
-      "survey_count_30d": 0,
-      "price": 85.18
     }
   },
   {
