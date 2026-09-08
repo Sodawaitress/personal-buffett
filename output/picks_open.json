@@ -1,5 +1,75 @@
 [
   {
+    "code": "002444",
+    "name": "巨星科技",
+    "date": "2026-09-08",
+    "advice": "¥28.5-¥29.5 分批建仓 15-20%，跌破 ¥27 止损。别等 Q3 数据出来再进（那时价格已经反弹）。3Q 基数问题是账面的。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 76,
+      "short_change_pct": 29.1,
+      "survey_count_30d": 0,
+      "price": 29.3
+    }
+  },
+  {
+    "code": "300308",
+    "name": "中际旭创",
+    "date": "2026-09-08",
+    "advice": "不追今日 +10.38%。已持仓继续，未持仓等 ¥800 以下再看，跌破 ¥750 止损。警惕章建平 8-31 退出前十大股东。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 86,
+      "short_change_pct": 10.7,
+      "survey_count_30d": 1,
+      "price": 898.46
+    }
+  },
+  {
+    "code": "001314",
+    "name": "亿道信息",
+    "date": "2026-09-08",
+    "advice": "只做小仓位试探（≤总仓 3%），¥50 以下分批，跌破 ¥46 止损。别加仓直到经营现金流转正的三季报出来。",
+    "signals": {
+      "grade": "C+",
+      "conclusion": "观察",
+      "quant_score": 56,
+      "short_change_pct": null,
+      "survey_count_30d": 3,
+      "price": 51.43
+    }
+  },
+  {
+    "code": "688378",
+    "name": "奥来德",
+    "date": "2026-09-08",
+    "advice": "¥42-¥44 分批建仓 10-15%，跌破 ¥40 止损。不追今日 +6.68%。合理估值成长股，等回调更好；主要靠资金推动无强机构调研信号。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": 7.1,
+      "survey_count_30d": 0,
+      "price": 44.9
+    }
+  },
+  {
+    "code": "300684",
+    "name": "中石科技",
+    "date": "2026-09-08",
+    "advice": "追高风险大。已持仓可继续；未持仓等回调 ¥85-¥90 分批，跌破 ¥80 止损。中际旭创 ¥17.47亿战略入股是长期逻辑，慢下手。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 73,
+      "short_change_pct": 22.5,
+      "survey_count_30d": 1,
+      "price": 104.36
+    }
+  },
+  {
     "code": "002602",
     "name": "世纪华通",
     "date": "2026-09-07",
