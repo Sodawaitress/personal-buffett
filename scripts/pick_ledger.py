@@ -175,12 +175,44 @@ def _bench_between(c, d0: str, d1: str):
     return round(sum(float(r["a"] or 0) for r in rows), 2)
 
 
-def backfill() -> dict:
-    """回填收益。**纯代码，Claude 无权参与。**"""
+# 超过这么多**日历天**还没结清的，就地封存 —— 记下已有的，别再每天重查。
+#
+# US-211：`backfill()` 原本把所有 `resolved_20d = 0` 的行全捞出来重跑。
+# 问题是**结不掉的行永远留在集合里**：某只股票缺价格数据 → `all_done` 恒为
+# False → 它被每天重查一遍，直到永远。
+#
+# 2026-09-08 的 digest 日志里还在处理 **2026-07-05** 的推荐 —— 65 天前，
+# 早该在 20 个交易日内结清。这些死行把 digest 从 13 分钟拖到 21 分钟，
+# 撞上 `timeout-minutes: 20` 被杀 —— **每天都被杀，台账回填从没跑完过**。
+#
+# 45 天 ≈ 20 个交易日 + 充分的宽限。到这个点还补不上的数据，
+# 再等下去也不会有。
+_GIVE_UP_DAYS = 45
+
+
+def backfill(limit: int = 400) -> dict:
+    """回填收益。**纯代码，Claude 无权参与。**
+
+    `limit` 是每轮上限 —— 无界的批处理迟早会撞上某个超时，
+    而撞上的那天你只会看到「cancelled」，不会看到原因。
+    """
+    from datetime import date, datetime, timedelta
     done = {h: 0 for h in HORIZONS}
+    done["gave_up"] = 0
+    cutoff = (date.today() - timedelta(days=_GIVE_UP_DAYS)).isoformat()
     with _conn() as c:
+        # 先封存那些再等也等不到的，它们是拖慢整批的原因
+        stale = c.execute(
+            "SELECT id FROM pick_ledger WHERE resolved_20d = 0 AND pick_date < :d",
+            {"d": cutoff}).fetchall()
+        for r in stale:
+            c.execute("UPDATE pick_ledger SET resolved_20d=1, "
+                      "updated_at=CURRENT_TIMESTAMP WHERE id=:i", {"i": r["id"]})
+        done["gave_up"] = len(stale)
+
         rows = c.execute(
-            "SELECT * FROM pick_ledger WHERE resolved_20d = 0").fetchall()
+            "SELECT * FROM pick_ledger WHERE resolved_20d = 0 "
+            "ORDER BY pick_date ASC LIMIT :n", {"n": limit}).fetchall()
         for r in rows:
             code, d0 = r["code"], r["pick_date"]
             entry = r["entry_price"]

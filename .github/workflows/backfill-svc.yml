@@ -53,6 +53,13 @@ jobs:
       # 222 只要一百多天才轮完 —— 等于没做。
       # US-208「颠不颠」：波动率是所有指标里最难被修饰的 ——
       # 它直接来自成交价格，不经过任何人的手。
+      # US-211：五选台账回填。原本挂在 digest 里，把它拖过 20 分钟超时。
+      # 落账要快、回填可以慢 —— 这里是「可以慢」的地方。
+      - name: Backfill pick ledger returns (US-211)
+        run: python -c "from scripts.pick_ledger import backfill; print(backfill(600))"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Backfill volatility profile (US-208)
         run: python -m scripts.backfill_volatility ${{ github.event.inputs.limit || '40' }}
         env:

@@ -72,7 +72,16 @@ def main():
             from scripts.pick_ledger import seed_history
             seed_history()                       # 一次性灌历史，重复运行安全
             ing = ledger_ingest()
-            bf = ledger_backfill()
+            # US-211：**落账要快，回填可以慢。**
+            #
+            # 这两件事被绑在一起，于是慢的那件拖垮了快的那件：
+            # 回填每天重查所有未结清的行（含永远结不掉的死行），
+            # 把 digest 从 13 分钟拖到 21 分钟，撞上 `timeout-minutes: 20`。
+            # 2026-09-04 / 09-07 / 09-08 连续三天 digest 被杀 ——
+            # **快照已经提交了，被杀的是后面这段**，所以从产物上看不出来。
+            #
+            # 现在只在这里落账（几秒），回填交给 backfill-svc 并行跑。
+            bf = ledger_backfill(limit=80)        # 留一小批兜底，别让它归零
             run.tick()
             print(f"  ✅ 五选台账：落账 {ing.get('added', 0)} 条 · 回填 {bf}")
             # US-193：行业集中度 —— routine 里「不要五只同一行业」原本只是
