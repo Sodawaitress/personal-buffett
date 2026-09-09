@@ -1,44 +1,72 @@
 [
   {
-    "code": "002444",
-    "name": "巨星科技",
-    "date": "2026-09-08",
-    "advice": "¥28.5-¥29.5 分批建仓 15-20%，跌破 ¥27 止损。别等 Q3 数据出来再进（那时价格已经反弹）。3Q 基数问题是账面的。",
+    "code": "688235",
+    "name": "百济神州",
+    "date": "2026-09-09",
+    "advice": "已持仓继续；未持仓可 ¥255-¥262 分批建仓 15-20%，回调到 ¥245 加仓，跌破 ¥235 止损。别在医保国谈结果没出前一次买满。泽布替尼全球BTK第一。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
-      "quant_score": 76,
-      "short_change_pct": 29.1,
-      "survey_count_30d": 0,
-      "price": 29.3
+      "quant_score": 70,
+      "short_change_pct": 95.2,
+      "survey_count_30d": 2,
+      "price": 260.1
     }
   },
   {
-    "code": "300308",
-    "name": "中际旭创",
-    "date": "2026-09-08",
-    "advice": "不追今日 +10.38%。已持仓继续，未持仓等 ¥800 以下再看，跌破 ¥750 止损。警惕章建平 8-31 退出前十大股东。",
+    "code": "301087",
+    "name": "可孚医疗",
+    "date": "2026-09-09",
+    "advice": "可 ¥50-¥52 小仓位建仓 10-15%（≤总仓 5%，家用医疗小盘股波动大），跌破 ¥47 止损。密集回购+30日3次调研+今日全场pscore最高 5.87。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 41,
+      "short_change_pct": 30.2,
+      "survey_count_30d": 3,
+      "price": 51.73
+    }
+  },
+  {
+    "code": "002415",
+    "name": "海康威视",
+    "date": "2026-09-09",
+    "advice": "未持仓可 ¥33-¥34 分批建仓 30-40% 家庭仓位，回调到 ¥32.5 加仓；止损 ¥31。控股股东增持+特定对象调研+今日 -3.5%逢跌进场型。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 67,
+      "short_change_pct": 22.2,
+      "survey_count_30d": 2,
+      "price": 33.65
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-09-09",
+    "advice": "已持仓继续；未持仓可 ¥34.5-¥35.2 分批建仓 15-20% 家庭仓位，跌到 ¥33 加仓，止损 ¥31.5。3次特定对象+现场调研+ROE13.1%+估值便宜，防御压舱石。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 40.5,
+      "survey_count_30d": 4,
+      "price": 34.66
+    }
+  },
+  {
+    "code": "000680",
+    "name": "山推股份",
+    "date": "2026-09-09",
+    "advice": "可 ¥10.4-¥10.8 小仓位建仓 10%，回调到 ¥10 加仓；跌破 ¥9.6 止损。三季报现金流数据出来再决定是否加大仓位。融券+146%属对冲，非空头脱身。",
     "signals": {
       "grade": "B",
       "conclusion": "持有",
-      "quant_score": 86,
-      "short_change_pct": 10.7,
-      "survey_count_30d": 1,
-      "price": 898.46
-    }
-  },
-  {
-    "code": "001314",
-    "name": "亿道信息",
-    "date": "2026-09-08",
-    "advice": "只做小仓位试探（≤总仓 3%），¥50 以下分批，跌破 ¥46 止损。别加仓直到经营现金流转正的三季报出来。",
-    "signals": {
-      "grade": "C+",
-      "conclusion": "观察",
-      "quant_score": 56,
-      "short_change_pct": null,
+      "quant_score": 44,
+      "short_change_pct": 146.3,
       "survey_count_30d": 3,
-      "price": 51.43
+      "price": 10.73
     }
   },
   {
@@ -70,6 +98,76 @@
     }
   },
   {
+    "code": "300308",
+    "name": "中际旭创",
+    "date": "2026-09-08",
+    "advice": "不追今日 +10.38%。已持仓继续，未持仓等 ¥800 以下再看，跌破 ¥750 止损。警惕章建平 8-31 退出前十大股东。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 86,
+      "short_change_pct": 10.7,
+      "survey_count_30d": 1,
+      "price": 898.46
+    }
+  },
+  {
+    "code": "002444",
+    "name": "巨星科技",
+    "date": "2026-09-08",
+    "advice": "¥28.5-¥29.5 分批建仓 15-20%，跌破 ¥27 止损。别等 Q3 数据出来再进（那时价格已经反弹）。3Q 基数问题是账面的。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 76,
+      "short_change_pct": 29.1,
+      "survey_count_30d": 0,
+      "price": 29.3
+    }
+  },
+  {
+    "code": "001314",
+    "name": "亿道信息",
+    "date": "2026-09-08",
+    "advice": "只做小仓位试探（≤总仓 3%），¥50 以下分批，跌破 ¥46 止损。别加仓直到经营现金流转正的三季报出来。",
+    "signals": {
+      "grade": "C+",
+      "conclusion": "观察",
+      "quant_score": 56,
+      "short_change_pct": null,
+      "survey_count_30d": 3,
+      "price": 51.43
+    }
+  },
+  {
+    "code": "603162",
+    "name": "海通发展",
+    "date": "2026-09-07",
+    "advice": "已持仓继续；未持仓不建议追高，等回调¥13附近或下一批订单公告再看。中报预告+475%~+532%驱动涨停但估值偏贵，大众已在场。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 71,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 14.64
+    }
+  },
+  {
+    "code": "002956",
+    "name": "西麦食品",
+    "date": "2026-09-07",
+    "advice": "可¥16.5–¥17小仓位建仓（≤总仓3-5%），止损¥15。新入库A+燕麦龙头+中报净利+81.88%+估值便宜，消费防御补位。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 66,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 16.77
+    }
+  },
+  {
     "code": "002602",
     "name": "世纪华通",
     "date": "2026-09-07",
@@ -95,76 +193,6 @@
       "short_change_pct": 5.7,
       "survey_count_30d": 0,
       "price": 77.72
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-09-07",
-    "advice": "已持仓继续；未持仓可¥33.5–¥34.5分批建仓，止损¥31.5。30日3次特定对象调研（机构专门约的）+ROE13.1%+估值便宜=三层里最强信号形态。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 31.2,
-      "survey_count_30d": 4,
-      "price": 34.5
-    }
-  },
-  {
-    "code": "002956",
-    "name": "西麦食品",
-    "date": "2026-09-07",
-    "advice": "可¥16.5–¥17小仓位建仓（≤总仓3-5%），止损¥15。新入库A+燕麦龙头+中报净利+81.88%+估值便宜，消费防御补位。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 66,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 16.77
-    }
-  },
-  {
-    "code": "603162",
-    "name": "海通发展",
-    "date": "2026-09-07",
-    "advice": "已持仓继续；未持仓不建议追高，等回调¥13附近或下一批订单公告再看。中报预告+475%~+532%驱动涨停但估值偏贵，大众已在场。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 71,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 14.64
-    }
-  },
-  {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-09-04",
-    "advice": "¥58-¥60 分批建仓 20-25%，跌破 ¥56 止损。Q3 业绩若如管理层指引 +10-30%，即为催化。工控伺服 31% 市占率第一，但 H1 归母净利 -5.35%（汇兑+新能源汽车双压）。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": -37.2,
-      "survey_count_30d": 10,
-      "price": 60.15
-    }
-  },
-  {
-    "code": "002050",
-    "name": "三花智控",
-    "date": "2026-09-04",
-    "advice": "¥35.5-¥36.5 可分批建仓 15-20%，跌破 ¥34 止损。追高不建议，等回调。8-27 特定对象调研 201 家 + 公司回购 1.49 亿。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": 21.5,
-      "survey_count_30d": 2,
-      "price": 36.3
     }
   },
   {
@@ -196,31 +224,45 @@
     }
   },
   {
-    "code": "000001",
-    "name": "平安银行",
-    "date": "2026-09-03",
-    "advice": "¥11.90附近可小仓位建仓3-5%（占家庭仓位）、跌破¥11.30止损。防御型压舱石，慢慢加不要急。",
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-09-04",
+    "advice": "¥58-¥60 分批建仓 20-25%，跌破 ¥56 止损。Q3 业绩若如管理层指引 +10-30%，即为催化。工控伺服 31% 市占率第一，但 H1 归母净利 -5.35%（汇兑+新能源汽车双压）。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
-      "quant_score": 73,
-      "short_change_pct": 252.3,
-      "survey_count_30d": 2,
-      "price": 11.91
+      "quant_score": 78,
+      "short_change_pct": -37.2,
+      "survey_count_30d": 10,
+      "price": 60.15
     }
   },
   {
-    "code": "300012",
-    "name": "华测检测",
-    "date": "2026-09-03",
-    "advice": "¥14.50-¥14.80分批建仓20-30%、跌破¥13.80止损。若明后天继续跌反而更好。",
+    "code": "002050",
+    "name": "三花智控",
+    "date": "2026-09-04",
+    "advice": "¥35.5-¥36.5 可分批建仓 15-20%，跌破 ¥34 止损。追高不建议，等回调。8-27 特定对象调研 201 家 + 公司回购 1.49 亿。",
     "signals": {
-      "grade": "A",
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": 21.5,
+      "survey_count_30d": 2,
+      "price": 36.3
+    }
+  },
+  {
+    "code": "HBM",
+    "name": "Hudbay Minerals",
+    "date": "2026-09-03",
+    "advice": "US$25-$27分批建仓10-15%、止损US$23。9-8除息$0.01不为分红买。融资已解决扩产不稀释，中期买点。",
+    "signals": {
+      "grade": "B+",
       "conclusion": "买入",
-      "quant_score": 69,
-      "short_change_pct": -42.0,
-      "survey_count_30d": 1,
-      "price": 14.54
+      "quant_score": 65,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 27.02
     }
   },
   {
@@ -238,17 +280,31 @@
     }
   },
   {
-    "code": "HBM",
-    "name": "Hudbay Minerals",
+    "code": "300012",
+    "name": "华测检测",
     "date": "2026-09-03",
-    "advice": "US$25-$27分批建仓10-15%、止损US$23。9-8除息$0.01不为分红买。融资已解决扩产不稀释，中期买点。",
+    "advice": "¥14.50-¥14.80分批建仓20-30%、跌破¥13.80止损。若明后天继续跌反而更好。",
     "signals": {
-      "grade": "B+",
+      "grade": "A",
       "conclusion": "买入",
-      "quant_score": 65,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 27.02
+      "quant_score": 69,
+      "short_change_pct": -42.0,
+      "survey_count_30d": 1,
+      "price": 14.54
+    }
+  },
+  {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-09-03",
+    "advice": "¥11.90附近可小仓位建仓3-5%（占家庭仓位）、跌破¥11.30止损。防御型压舱石，慢慢加不要急。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 73,
+      "short_change_pct": 252.3,
+      "survey_count_30d": 2,
+      "price": 11.91
     }
   },
   {
@@ -294,20 +350,6 @@
     }
   },
   {
-    "code": "002415",
-    "name": "海康威视",
-    "date": "2026-09-02",
-    "advice": "未持仓可 ¥35.5–¥36.5 分批建 30%–40% 仓位，回调到 ¥34 加仓。本周五选里最建议建仓的一只（若只能选一个，就选它）。空头 -50% 平仓 + 203 家调研 + 13 家特定对象是建仓期典型信号。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 67,
-      "short_change_pct": -50.4,
-      "survey_count_30d": 2,
-      "price": 35.92
-    }
-  },
-  {
     "code": "688256",
     "name": "寒武纪",
     "date": "2026-09-01",
@@ -322,20 +364,6 @@
     }
   },
   {
-    "code": "688235",
-    "name": "百济神州",
-    "date": "2026-09-01",
-    "advice": "可关注建仓机会。当前 ¥269.86 分批建仓（先 30% 仓），等回调到 ¥250 附近加仓。已持仓可继续持有。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": 256.4,
-      "survey_count_30d": 2,
-      "price": 269.86
-    }
-  },
-  {
     "code": "300274",
     "name": "阳光电源",
     "date": "2026-09-01",
@@ -347,20 +375,6 @@
       "short_change_pct": -42.1,
       "survey_count_30d": 3,
       "price": 91.5
-    }
-  },
-  {
-    "code": "000680",
-    "name": "山推股份",
-    "date": "2026-09-01",
-    "advice": "¥10.51 可小仓位跟进（起 10% 仓）。回调到 ¥10 附近加仓。9 月看能否再来一次现场参观，出现就加仓。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 52,
-      "short_change_pct": 59.5,
-      "survey_count_30d": 3,
-      "price": 10.51
     }
   },
   {
