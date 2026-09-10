@@ -1,5 +1,75 @@
 [
   {
+    "code": "INTC",
+    "name": "Intel Corporation",
+    "date": "2026-09-10",
+    "advice": "不追单日大涨。已持仓若冲上 $115（分析师均值）附近减仓 30%。未持仓等回调至 $100 以下再评估。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 52,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 104.47
+    }
+  },
+  {
+    "code": "603162",
+    "name": "海通发展",
+    "date": "2026-09-10",
+    "advice": "不追涨。已持仓明日再冲高至 ¥16.5+ 减仓 30% 锁利。未持仓等回调至 ¥13 附近再评估。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 71,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 15.43
+    }
+  },
+  {
+    "code": "601009",
+    "name": "南京银行",
+    "date": "2026-09-10",
+    "advice": "已持仓继续；未持仓 ¥11.9-¥12.1 分批建仓 15-20% 家庭仓位，跌到 ¥11.5 加仓，止损 ¥10.8。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 74,
+      "short_change_pct": 72.2,
+      "survey_count_30d": 0,
+      "price": 12.02
+    }
+  },
+  {
+    "code": "600660",
+    "name": "福耀玻璃",
+    "date": "2026-09-10",
+    "advice": "已持仓可持有观察，融券余量若继续放大至 100 万股以上（top 3%）则减仓 30%。未持仓不追，等 ¥50 以下再考虑。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 75,
+      "short_change_pct": 184.2,
+      "survey_count_30d": 1,
+      "price": 55.14
+    }
+  },
+  {
+    "code": "002130",
+    "name": "沃尔核材",
+    "date": "2026-09-10",
+    "advice": "未持仓可 ¥17.0-¥17.6 分批建 15-20% 家庭仓位，跌到 ¥16 加仓；止损 ¥15.5。本周最建议建仓的一只。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 74,
+      "short_change_pct": -27.8,
+      "survey_count_30d": 1,
+      "price": 17.57
+    }
+  },
+  {
     "code": "688235",
     "name": "百济神州",
     "date": "2026-09-09",
@@ -137,20 +207,6 @@
       "short_change_pct": null,
       "survey_count_30d": 3,
       "price": 51.43
-    }
-  },
-  {
-    "code": "603162",
-    "name": "海通发展",
-    "date": "2026-09-07",
-    "advice": "已持仓继续；未持仓不建议追高，等回调¥13附近或下一批订单公告再看。中报预告+475%~+532%驱动涨停但估值偏贵，大众已在场。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 71,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 14.64
     }
   },
   {
@@ -308,20 +364,6 @@
     }
   },
   {
-    "code": "600660",
-    "name": "福耀玻璃",
-    "date": "2026-09-02",
-    "advice": "观察为主，不追今日反弹。等 ¥54 以下再考虑；或等第三季报确认利润转折方向。已持仓者可继续持有底仓 30%。半年报 -17.37%、汇率主因，注意评级下调风险。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 76,
-      "short_change_pct": 24.4,
-      "survey_count_30d": 1,
-      "price": 57.85
-    }
-  },
-  {
     "code": "301611",
     "name": "珂玛科技",
     "date": "2026-09-02",
@@ -431,20 +473,6 @@
       "short_change_pct": 24.1,
       "survey_count_30d": 5,
       "price": 263.05
-    }
-  },
-  {
-    "code": "002130",
-    "name": "沃尔核材",
-    "date": "2026-08-25",
-    "advice": "今日+7.44%已反应IPO情绪，未持仓不追；等分拆细节落地，回调到¥15.50附近再考虑。已持仓可小额减持锁定。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 74,
-      "short_change_pct": 5.4,
-      "survey_count_30d": 0,
-      "price": 17.05
     }
   }
 ]
