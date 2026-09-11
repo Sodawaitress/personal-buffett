@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-09-11",
+    "code": "002142",
+    "name": "宁波银行",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "pscore 4.0 + 30 日 4 次特定对象调研 + 银行 A 级 + 今日 +3.49% 启动信号",
+    "price_at_prediction": 35.87
+  },
+  {
+    "date": "2026-09-11",
+    "code": "600737",
+    "name": "中粮糖业",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "糖业概念两天上冲一天跌停回落，无机构信号，预期底部整理待糖价基本面确认",
+    "price_at_prediction": 17.82
+  }
+]
