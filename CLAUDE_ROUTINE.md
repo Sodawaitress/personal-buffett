@@ -543,6 +543,35 @@ git push origin HEAD:main
 
 ---
 
+## 新文章要在 daily_push 里提一句（US-215）
+
+站上写了 7 篇专栏，**一篇都没通知过读者**。微信推送只在
+`output/daily_push.txt` 变动时触发，而 daily_push 从来没提过文章 ——
+它们写完、部署、然后躺着等人自己发现。
+
+> **发布 ≠ 送达。**
+
+所以快照里多了一个字段 `new_articles`（同 US-166 的做法：**算好塞进快照，
+不靠你每天记得去翻**）。处理方式：
+
+```
+如果 snapshot["new_articles"] 非空：
+  1. 在 daily_push 正文**末尾**加一小段，每篇一行：
+       📖 新专栏《{title}》—— {subtitle}
+          personal-buffett.fly.dev/research/{slug}
+  2. 提完之后调用 scripts 里的 mark_announced([slug, ...])，
+     把它们记进 knowledge/announced_articles.txt
+```
+
+**为什么放末尾**：五选是读者来看的东西，文章是附带的。放前面会挤掉主线。
+
+**忘了 mark 会怎样**：第二天继续提同一篇。**烦，但看得见** ——
+比静默漏掉好。不要为了「不烦」去掉这个提醒。
+
+一次最多两篇（`_MAX_PER_PUSH`），攒了一堆时不刷屏。
+
+---
+
 ## 触发方式与运行环境（US-191 补记）
 
 **这不是一个对话框里的会话，是定时任务。** 从提交痕迹倒推确认：

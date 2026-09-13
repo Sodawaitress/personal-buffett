@@ -1,0 +1,10 @@
+# US-215：已在 daily_push 里通知过的专栏文章。
+# 下面 5 条是**补标**的 —— 它们其实从没通知过，
+# 但一次性推 7 篇会刷屏，所以只让最新一篇走推送。
+# 这是一个取舍，不是记录事实：旧文章靠专栏页自己被发现。
+insider-buying-2026
+signal-layers-2026
+cancer-vaccine-2026
+base-and-sprint-2026
+ai-chip-selloff-2026
+milk-tea-2026

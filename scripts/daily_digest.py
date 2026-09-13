@@ -73,6 +73,16 @@ def _load_open_picks() -> list:
         return []
 
 
+def _unannounced_articles():
+    try:
+        from radar_app.research.articles import unannounced
+        return [{"slug": a["slug"], "title": a["title"],
+                 "subtitle": a.get("subtitle"), "date": a["date"],
+                 "url": f"/research/{a['slug']}"} for a in unannounced()]
+    except Exception:
+        return []
+
+
 def _pick_reversals(stocks: list) -> list:
     """算出已推荐股票里信号反转的那些。任何异常都返回 [] —— 这是附加信息，
     不能让它把快照构建搞挂（快照没了，妈妈那封信就没了）。"""
@@ -250,6 +260,10 @@ def _build_snapshot() -> dict:
         # 事故：8/19 推荐小商品城「空头退场，最干净的信号组合」，
         # 8/22 融券翻转成 +118%，中间没有任何一封信提醒过。
         "pick_reversals": _pick_reversals(stocks),
+        # US-215：还没通知过读者的专栏文章。同 US-166 的理由 ——
+        # 算好塞进快照，不靠 Routine 每天记得去翻。
+        # 站上 7 篇文章一篇都没通知过，就是「靠自觉」的代价。
+        "new_articles": _unannounced_articles(),
         "stocks": stocks,
     }
 
