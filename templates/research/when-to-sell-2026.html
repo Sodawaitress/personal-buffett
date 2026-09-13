@@ -22,6 +22,15 @@
     font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
   .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
   .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  /* US-214：每一项研究都要标出它是哪个市场的。
+     用户看到「交易越多赚得越少」那一节问「这个是美国的研究吧」——
+     问得对：一到四节全是美股数据，但读起来像普世结论。
+     这正是本站反复在修的那族错误：把一个语境的事实用到另一个语境。 */
+  .flag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:9px;
+    margin-left:8px;vertical-align:middle;letter-spacing:.04em;font-weight:600;}
+  .flag-us{background:var(--gold-bg);color:var(--gold);}
+  .flag-cn{background:var(--verm-bg);color:var(--verm);}
+  .flag-both{background:var(--jade-bg);color:var(--jade);}
   .wrap{max-width:620px;margin:0 auto;padding:26px 18px 60px;}
   .backlink{display:inline-block;margin-bottom:18px;color:var(--ink2);text-decoration:none;font-size:13px;}
   .backlink:hover{color:var(--jade);}
@@ -131,13 +140,17 @@
 
   <div class="thesis">
     <p>涨了想落袋为安，跌了舍不得割 —— 这不是性格问题，是一个被研究了四十年的固定偏误，它有名字、有数据，也有边界。</p>
+    <p class="mono" style="font-size:12px;color:var(--ink2);border:1px dashed var(--line);padding:8px 10px;border-radius:6px;">
+      📍 本文每一项研究都标注了它来自哪个市场。
+      <b>标 🇺🇸 的不要默认适用于 A 股</b> —— 第五节专门讲哪些能搬、哪些不能。
+    </p>
     <p>但最该先说的是坏消息：<b>读完这篇文章，三个月后你还是会想卖。</b>下面有实验数据证明这一点。所以这篇的重点不在「让你懂」，在<b>让你不必每次都靠意志力</b>。</p>
   </div>
 
   <h2 class="song">一、那个冲动叫「处置效应」</h2>
 
   <div class="klesson">
-    <div class="kl-term">① 它的定义就是你现在的感觉</div>
+    <div class="kl-term">① 它的定义就是你现在的感觉<span class="flag flag-both">🇺🇸🇨🇳 两边都测过</span></div>
     <p><b>倾向于卖掉赚钱的，握住亏钱的。</b>1985 年由 Shefrin 和 Statman 命名。</p>
     <p>Odean 1998 年拿了一家券商 <b class="mono">10,000</b> 个账户、1987–1993 年的真实交易记录：</p>
     <div class="tailwind">
@@ -159,7 +172,7 @@
   </div>
 
   <div class="klesson">
-    <div class="kl-term">③ 交易越多，赚得越少</div>
+    <div class="kl-term">③ 交易越多，赚得越少<span class="flag flag-us">🇺🇸 美国数据</span></div>
     <p>Barber &amp; Odean 2000 年，<b class="mono">66,465</b> 个家庭，1991–1996：</p>
     <div class="tailwind">
       <div class="tw-row"><span>市场</span><span class="mono"><b>17.9%</b> 年化</span></div>
@@ -167,6 +180,22 @@
       <div class="tw-row"><span><b>交易最频繁的那批</b></span><span class="mono"><b>11.4%</b></span></div>
     </div>
     <p>交易最多的人比市场<b>少赚 6.5 个百分点／年</b>。平均换手率 75%／年。</p>
+  </div>
+
+  <div class="klesson">
+    <div class="kl-term">③b 那中国呢？测过，而且结论更狠<span class="flag flag-cn">🇨🇳 中国数据</span></div>
+    <p>这条不能只看美股。中国这边有对应的研究：</p>
+    <div class="tailwind">
+      <div class="tw-row"><span>清华五道口<br><span class="mono" style="font-size:11px">廖理 等 (2013)</span></span><span>《中国个人投资者的过度自信和过度交易研究》</span></div>
+      <div class="tw-row"><span>深交所全样本<br><span class="mono" style="font-size:11px">史永东 等</span></span><span>用<b>深交所全部投资者账户</b>的交易信息做的实证</span></div>
+    </div>
+    <p>结论方向一致，而且更极端：</p>
+    <div class="tailwind">
+      <div class="tw-row"><span>换手率越高的散户</span><span>投机偏好越重，<b>投资业绩越差</b></span></div>
+      <div class="tw-row"><span>持股不足三个月的</span><span>业绩<b>显著弱于市场平均</b></span></div>
+      <div class="tw-row"><span>小散户的净买入</span><span>与<b>次日收益显著负相关</b> —— 今天买的明天多半跌，今天卖的明天多半涨</span></div>
+    </div>
+    <p><span class="hl-j">所以「交易伤害收益」这一条，是两边都成立的少数几条之一。</span>下面第五节会讲哪些不成立。</p>
   </div>
 
   <div class="lesson">
@@ -179,7 +208,7 @@
   <h2 class="song">二、坏消息：知道自己有偏误，治不好偏误</h2>
 
   <div class="klesson">
-    <div class="kl-term">④ 有人专门做过实验</div>
+    <div class="kl-term">④ 有人专门做过实验<span class="flag flag-us">🇺🇸 美国数据</span></div>
     <p><i>Frontiers in Behavioral Economics</i>（2024）直接告诉受试者「你可能有处置效应，应该让盈利多跑一会、亏损早点止损」，然后测三次：</p>
     <div class="tailwind">
       <div class="tw-row"><span><b>当场</b></span><span>效果很强，实验组甚至<b>反过来了</b></span></div>
@@ -194,7 +223,7 @@
   <h2 class="song">三、真正有效的是结构，不是知识</h2>
 
   <div class="klesson">
-    <div class="kl-term">⑤ 证据最扎实的干预，全是结构性的</div>
+    <div class="kl-term">⑤ 证据最扎实的干预，全是结构性的<span class="flag flag-us">🇺🇸 美国数据</span></div>
     <p>Madrian &amp; Shea（2000）那个经典研究：退休金计划从「主动加入」改成「默认加入、可退出」，参与率立刻大涨，<b class="mono">75%</b> 的人就停在默认档位不动。</p>
     <p>Vanguard 2025 年的《Principles for Behavioral Design》讲得直白：</p>
     <p class="song" style="font-size:17px;margin:14px 0;padding-left:14px;border-left:3px solid var(--jade);">自动化的作用，是消灭掉那个「你未来的自己可以选择跳过」的时刻。</p>
@@ -234,14 +263,14 @@
   </div>
 
   <div class="klesson">
-    <div class="kl-term">⑦ 相同的一半：处置效应在 A 股更强</div>
+    <div class="kl-term">⑦ 相同的一半：处置效应在 A 股更强<span class="flag flag-cn">🇨🇳 中国数据</span></div>
     <p>用中国券商 <b class="mono">30,512</b> 个账户的真实记录做的研究，用的还是 Odean 那套指标 —— 处置效应确实存在，而且研究直接说明了原因：</p>
     <p class="song" style="font-size:16px;margin:12px 0;padding-left:14px;border-left:3px solid var(--gold);">中国股市以不成熟的个人投资者为主导，而越不成熟的投资者，处置效应越大。</p>
     <p>还有个细节：<b>入市时点会留下长期印记</b> —— 在低回报、低情绪、高波动或政策不确定性高的时期入市的人，处置效应显著更强。</p>
   </div>
 
   <div class="klesson">
-    <div class="kl-term">⑧ 相反的一半：「让盈利多跑」在 A 股没有依据</div>
+    <div class="kl-term">⑧ 相反的一半：「让盈利多跑」在 A 股没有依据<span class="flag flag-cn">🇨🇳 中国数据</span></div>
     <p>Odean 说「被过早卖掉的赢家继续跑赢」，这个结论<b>建立在美股有动量效应之上</b>。</p>
     <p>而中国市场的研究结论是：<b>短期（1–6 个月）和长期（3 年）都存在显著的反转效应，没有证据支持持久的动量效应。</b></p>
     <p><b>反转，不是动量。</b>但别急着反过来做 —— 这是统计层面的平均规律，不是可执行的策略；而且它不稳定，研究指出 2018 年前后随着机构投资者占比上升，反转开始让位给动量。</p>
@@ -249,7 +278,7 @@
   </div>
 
   <div class="klesson">
-    <div class="kl-term">⑨ 成本差异大到能改变结论</div>
+    <div class="kl-term">⑨ 成本差异大到能改变结论<span class="flag flag-cn">🇨🇳 中国数据</span></div>
     <div class="tailwind">
       <div class="tw-row"><span><b>A 股一进一出</b></span><span class="mono">约 0.056%（佣金 + 印花税 + 过户费）</span></div>
       <div class="tw-row"><span><b>部分海外券商</b></span><span class="mono">可达 4% 以上（含手续费与换汇）</span></div>
@@ -273,7 +302,7 @@
   </div>
 
   <div class="foot">
-    <p><b>本文引用的研究</b>：Shefrin &amp; Statman (1985) 处置效应命名 · Odean (1998)《Are Investors Reluctant to Realize Their Losses?》· Barber &amp; Odean (2000)《Trading Is Hazardous to Your Wealth》· Morningstar《Mind the Gap 2026》· Fulkerson, Jordan, Riley &amp; Yan，《Financial Analysts Journal》2026（对前者的质疑）· <i>Frontiers in Behavioral Economics</i> (2024) 去偏实验 · Madrian &amp; Shea (2000) 默认加入 · Vanguard《Principles for Behavioral Design》(2025) · CFA Institute 个人投资者 IPS 模板 · 中国市场：30,512 账户处置效应研究、中国动量与反转的函数型数据分析。</p>
+    <p><b>本文引用的研究</b>：Shefrin &amp; Statman (1985) 处置效应命名 · Odean (1998)《Are Investors Reluctant to Realize Their Losses?》· Barber &amp; Odean (2000)《Trading Is Hazardous to Your Wealth》· Morningstar《Mind the Gap 2026》· Fulkerson, Jordan, Riley &amp; Yan，《Financial Analysts Journal》2026（对前者的质疑）· <i>Frontiers in Behavioral Economics</i> (2024) 去偏实验 · Madrian &amp; Shea (2000) 默认加入 · Vanguard《Principles for Behavioral Design》(2025) · CFA Institute 个人投资者 IPS 模板 · 中国市场：廖理、贺裴菲、张伟强、沈红波（2013）《中国个人投资者的过度自信和过度交易研究》（清华大学五道口金融学院）· 史永东、李竹薇、陈炜《中国证券投资者交易行为的实证研究》（深交所全样本）· 30,512 账户处置效应研究 · 中国动量与反转的函数型数据分析。</p>
     <p><b>这篇不构成投资建议。</b>它讲的是一个决策的结构，不是某一只股票的判断。</p>
   </div>
 </div>

@@ -57,6 +57,10 @@ def register_auth_routes(app, bcrypt, oauth):
             errors=errors,
             form=form,
             google_enabled=bool(google_client_id),
+            # US-214：登录页太挤。这个站现在的用户全是认识的人，
+            # 没有「先试用再注册」这个场景 —— 入口藏起来，路由保留。
+            # 要放回来就设 SHOW_DEMO_ENTRY=1，不用改代码。
+            show_demo_entry=os.getenv("SHOW_DEMO_ENTRY") == "1",
         )
 
     @app.route("/register", methods=["GET", "POST"])

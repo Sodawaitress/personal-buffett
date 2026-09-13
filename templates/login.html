@@ -50,11 +50,17 @@
       {{ t.auth_new_here }} <strong>{{ t.auth_create_link }}</strong>
     </a>
 
+    {# US-214：Demo 入口先藏起来 —— 登录页对真正要用的人来说太挤了，
+       而这个站现在的用户全是认识的人，没有「先试用」这个场景。
+       路由 `demo_login` 保留，直接访问 /demo 仍然可用；
+       删路由会连带删掉一批依赖它的测试，得不偿失。 #}
+    {% if show_demo_entry %}
     <div class="auth-divider"><span>or</span></div>
 
     <a href="{{ url_for('demo_login') }}" class="btn-demo-access">
       <i class="bi bi-play-circle me-2"></i>Try the Demo — no sign-up needed
     </a>
+    {% endif %}
 
   </div>
 </div>

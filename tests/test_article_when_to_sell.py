@@ -74,3 +74,46 @@ def test_renders_without_template_errors():
     assert len(h) > 8000
     assert not re.search(r"{%[^%]*$", h), "有未闭合的 Jinja 标签"
     assert "</html>" in h
+
+
+# ── US-214：每一项研究必须标出它是哪个市场的 ──────────────────────────
+
+def test_every_study_says_which_market_it_came_from():
+    """用户看到「交易越多赚得越少」那一节就问「这个是美国的研究吧」。
+
+    问得对 —— 一到四节全是美股数据，但读起来像普世结论。
+    **这正是本站反复在修的那族错误：把一个语境的事实用到另一个语境。**
+
+    守法：每一个知识点标题（`kl-term`）要么带国别徽章，
+    要么是纯解释性的（不含具体研究和数字）。
+    """
+    import re
+    h = _html()
+    terms = re.findall(r'<div class="kl-term">(.*?)</div>', h, re.S)
+    assert len(terms) >= 8, f"知识点数量不对: {len(terms)}"
+    unflagged = [t for t in terms if "flag flag-" not in t]
+    # 只有「为什么会这样」「给卖的动作上结构」这两条是纯解释，没有数据来源
+    assert len(unflagged) <= 2, (
+        "这些知识点引了研究却没标市场:\n  " +
+        "\n  ".join(re.sub(r"<[^>]+>", "", t).strip() for t in unflagged))
+
+
+def test_has_chinese_counterpart_for_the_trading_frequency_claim():
+    """「交易越多赚得越少」不能只有美股证据 —— 这条恰好两边都测过，
+    而且中国的结论更极端。有就必须写上，否则读者会合理地怀疑整篇。"""
+    h = _html()
+    assert "廖理" in h or "五道口" in h, "缺中国的过度交易研究"
+    assert "深交所" in h, "缺深交所全样本的实证"
+    assert "次日收益显著负相关" in h, "缺中国散户净买入与次日收益的关系"
+
+
+def test_top_banner_warns_about_transferring_us_results():
+    h = _html()
+    assert "不要默认适用于 A 股" in h, "顶部没有提醒读者注意市场差异"
+
+
+def test_flags_are_visually_distinguishable():
+    """三种徽章要有各自的样式，否则标了等于没标。"""
+    h = _html()
+    for cls in ("flag-us", "flag-cn", "flag-both"):
+        assert f".{cls}{{" in h.replace(" ", ""), f"{cls} 没有样式定义"

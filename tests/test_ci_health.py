@@ -53,3 +53,20 @@ def test_suite_passes_on_a_blank_database():
         assert r.returncode == 0, (
             "空库上跑不过 —— CI 会红。\n"
             + r.stdout[-3000:])
+
+
+def test_login_page_demo_entry_is_gated():
+    """US-214：登录页太挤，Demo 入口藏起来。
+
+    **藏不是删** —— `demo_login` 路由保留（直接访问仍可用），
+    删路由会连带删掉一批依赖它的测试，得不偿失。
+    要放回来设环境变量 `SHOW_DEMO_ENTRY=1`，不用改代码。
+    """
+    from pathlib import Path
+    tpl = Path("templates/login.html").read_text(encoding="utf-8")
+    assert "{% if show_demo_entry %}" in tpl, "Demo 入口没有开关"
+    routes = Path("radar_app/auth/routes.py").read_text(encoding="utf-8")
+    assert "show_demo_entry=" in routes, "模板变量没有从路由传进去"
+    assert "SHOW_DEMO_ENTRY" in routes, "没有留开关，想放回来就得改代码"
+    assert "def demo_login" in routes or "demo_login" in routes, \
+        "路由被删了 —— 藏入口不该连路由一起删"
