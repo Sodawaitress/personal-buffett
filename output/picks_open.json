@@ -1,5 +1,75 @@
 [
   {
+    "code": "688111",
+    "name": "金山办公",
+    "date": "2026-09-15",
+    "advice": "¥220-¥228 分批建仓 15-20%，跌破 ¥210 止损。WPS AI 接入 MiMo（9-15 公告）是短期催化，但 AI 板块整体在回调。qs=100 质量最高档 + 便宜，等回调更好。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 100,
+      "short_change_pct": 1.1,
+      "survey_count_30d": 1,
+      "price": 228.59
+    }
+  },
+  {
+    "code": "000333",
+    "name": "美的集团",
+    "date": "2026-09-15",
+    "advice": "¥85-¥87 小仓位 10% 试探，跌破 ¥82 止损。融券余量突然 +85%（top 12%）说明有资金押注下跌或对冲，公司狂回购护盘是矛盾信号，宁可等 ¥83 以下更清楚。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 68,
+      "short_change_pct": 84.8,
+      "survey_count_30d": 1,
+      "price": 86.8
+    }
+  },
+  {
+    "code": "603259",
+    "name": "药明康德",
+    "date": "2026-09-15",
+    "advice": "不追今日 +5% 大涨。¥150-¥155 回调再分批 10%。药明合联大宗交易 31 亿元的税前利润是一次性投资收益，ROE 24% 里含这块，主营业务节奏需另看，别把一次性当经常性。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 87,
+      "short_change_pct": -3.7,
+      "survey_count_30d": 0,
+      "price": 158.86
+    }
+  },
+  {
+    "code": "300308",
+    "name": "中际旭创",
+    "date": "2026-09-15",
+    "advice": "未持仓等 ¥800 以下再观察。已持仓可持有（公司 4.9 亿元大额回购护盘 + FCC 靴子落地）。融券 +35% 有意义 + 22 天前电话会议 164 家（低质量调研）+ 价格贵，三层都提示分歧。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 86,
+      "short_change_pct": 35.6,
+      "survey_count_30d": 1,
+      "price": 873.0
+    }
+  },
+  {
+    "code": "002709",
+    "name": "天赐材料",
+    "date": "2026-09-15",
+    "advice": "¥32-¥33 分批建仓 15%，跌破 ¥29 止损。融券 -25%（空头认输）+ 8-21 90 家业绩说明会（24 天前中等偏低质量）+ 电解液价格上涨，中期看得。别追高。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 69,
+      "short_change_pct": -25.4,
+      "survey_count_30d": 1,
+      "price": 33.04
+    }
+  },
+  {
     "code": "INTC",
     "name": "Intel Corporation",
     "date": "2026-09-10",
@@ -165,20 +235,6 @@
       "short_change_pct": 22.5,
       "survey_count_30d": 1,
       "price": 104.36
-    }
-  },
-  {
-    "code": "300308",
-    "name": "中际旭创",
-    "date": "2026-09-08",
-    "advice": "不追今日 +10.38%。已持仓继续，未持仓等 ¥800 以下再看，跌破 ¥750 止损。警惕章建平 8-31 退出前十大股东。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 86,
-      "short_change_pct": 10.7,
-      "survey_count_30d": 1,
-      "price": 898.46
     }
   },
   {
