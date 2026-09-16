@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-09-16",
+    "code": "300124",
+    "name": "汇川技术",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "A/qs=78 估值便宜 + 30日3次特定对象/现场调研 + 融券-8.9%中性 + 今日-3.93%大跌非空头做出。改保守sideways偏上（因09-04同名up预言窗口已错，US-166修订建议27/28的教训适用）",
+    "price_at_prediction": 51.55
+  },
+  {
+    "date": "2026-09-16",
+    "code": "301087",
+    "name": "可孚医疗",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "pre=5.61 全库最高 + 8-28 特定对象+电话会议72家 + 飞利浦品牌7品类授权 + 回购¥1.3亿全部注销。但ROE 7.7%偏弱=仓位不重，方向不明朗下限有回购托底",
+    "price_at_prediction": 52.15
+  }
+]
