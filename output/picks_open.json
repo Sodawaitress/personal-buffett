@@ -210,20 +210,6 @@
     }
   },
   {
-    "code": "002956",
-    "name": "西麦食品",
-    "date": "2026-09-07",
-    "advice": "可¥16.5–¥17小仓位建仓（≤总仓3-5%），止损¥15。新入库A+燕麦龙头+中报净利+81.88%+估值便宜，消费防御补位。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 66,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 16.77
-    }
-  },
-  {
     "code": "001314",
     "name": "亿道信息",
     "date": "2026-09-08",
@@ -504,34 +490,6 @@
     }
   },
   {
-    "code": "301087",
-    "name": "可孚医疗",
-    "date": "2026-09-16",
-    "advice": "¥50-¥53小仓位分批建5-10%（ROE 7.7%弱=不重仓），跌破¥48止损。pre=5.61全库最高+飞利浦7品类+回购¥1.3亿注销。等Q3看飞利浦销售兑现。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 41,
-      "short_change_pct": 33.3,
-      "survey_count_30d": 3,
-      "price": 52.15
-    }
-  },
-  {
-    "code": "000975",
-    "name": "山金国际",
-    "date": "2026-09-17",
-    "advice": "¥25.5-¥27 附近分批建 5-8%（黄金股波动大不宜过重），止损 ¥23.8（-10%）或跟金价——伦敦金跌破 $4600/oz 就止损。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 89,
-      "short_change_pct": -38.6,
-      "survey_count_30d": 1,
-      "price": 26.52
-    }
-  },
-  {
     "code": "002602",
     "name": "世纪华通",
     "date": "2026-09-17",
@@ -585,6 +543,76 @@
       "short_change_pct": -9.5,
       "survey_count_30d": 1,
       "price": 352.6
+    }
+  },
+  {
+    "code": "000975",
+    "name": "山金国际",
+    "date": "2026-09-18",
+    "advice": "先小仓位试探（5-8%）在 ¥24.50-¥25.00 区间，跌破 ¥23 止损。别一次买满，等看有色板块企稳信号再加仓。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 89,
+      "short_change_pct": -25.4,
+      "survey_count_30d": 1,
+      "price": 25.02
+    }
+  },
+  {
+    "code": "002956",
+    "name": "西麦食品",
+    "date": "2026-09-18",
+    "advice": "¥16.80-¥17.30 区间可以正常仓位（20-25%）建仓，跌破 ¥16 止损。这只不需要追高，正常配置就好。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 66,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 17.29
+    }
+  },
+  {
+    "code": "301087",
+    "name": "可孚医疗",
+    "date": "2026-09-18",
+    "advice": "¥52-¥54 区间可小仓位（10%）建仓，跌破 ¥50 止损。别一次买满，等看后续机构调研有没有跟进。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 41,
+      "short_change_pct": 20.2,
+      "survey_count_30d": 2,
+      "price": 53.28
+    }
+  },
+  {
+    "code": "600026",
+    "name": "中远海能",
+    "date": "2026-09-18",
+    "advice": "不追高。等运价见顶回落或股价回调到 ¥20 以下再说。已持仓的可继续持有，但设 ¥19 移动止损。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 48,
+      "short_change_pct": null,
+      "survey_count_30d": 0,
+      "price": 22.09
+    }
+  },
+  {
+    "code": "688519",
+    "name": "南亚新材",
+    "date": "2026-09-18",
+    "advice": "先观察，不建仓。等半年报之后的三季报（10 月末）看现金流有没有转正。若现金流仍为负，即使股价再回落也别买。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 50,
+      "short_change_pct": 31.7,
+      "survey_count_30d": 1,
+      "price": 317.37
     }
   }
 ]

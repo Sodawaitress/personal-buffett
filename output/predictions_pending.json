@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-09-18",
+    "code": "600026",
+    "name": "中远海能",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "TD3C运价接近百万美元/日是一次性催化，油运周期股追高风险大；一旦运价见顶回落，情绪即掉头",
+    "price_at_prediction": 22.09
+  },
+  {
+    "date": "2026-09-18",
+    "code": "002956",
+    "name": "西麦食品",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "A级+估值便宜+半年报净利+82%业绩兑现+机构持仓54%集中度，防御性消费股节前存在资金追捧窗口",
+    "price_at_prediction": 17.29
+  }
+]
