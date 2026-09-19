@@ -127,7 +127,7 @@
 
     {# ══ US-216 海外收入占比 —— 只说敞口，不说涨跌 ══ #}
     {% if overseas %}
-    <div class="ovs ovs-{{ 'hi' if overseas.pct >= 40 else ('mid' if overseas.pct >= 15 else 'lo') }}">
+    <div class="ovs ovs-{{ 'hi' if overseas.pct >= 50 else ('mid' if overseas.pct >= 15 else 'lo') }}">
       <div class="ovs-head">
         <span class="ovs-title">钱从哪里赚</span>
         <span class="ovs-story">{{ overseas.headline }}</span>
@@ -136,8 +136,7 @@
         <span class="ovs-bar-out" style="width:{{ overseas.pct|round|int }}%"></span>
       </div>
       <div class="ovs-legend">
-        <span><b>{{ overseas.pct }}%</b> 海外</span>
-        <span>{{ (100 - overseas.pct)|round(1) }}% 国内</span>
+        <span>{{ overseas.figure }}</span>
         {% if overseas.asof %}<span class="ovs-asof">{{ overseas.asof }}</span>{% endif %}
       </div>
       <p class="ovs-mean">{{ overseas.meaning }}</p>

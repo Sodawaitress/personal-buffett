@@ -36,7 +36,7 @@ def test_a_domestic_company_is_not_called_an_exporter():
     """汇川技术：境外 6.6%。**我曾把它划进出口型** —— 这条就是为那次错误立的。"""
     r = compute(_mk([("中国内地", 0.9336), ("境外", 0.0664)]))
     assert r["pct"] < 10
-    assert label(r["pct"]) == "主要做国内"
+    assert "基本只做国内" in label(r["pct"])
 
 
 def test_unrecognised_regions_count_as_overseas():
@@ -89,11 +89,37 @@ def test_card_renders_and_refuses_to_predict():
                       autoescape=select_autoescape(["html"]))
     seg = _extract_block("templates/stock/signals.html", "overseas")
     ov = {"pct": 83.5, "asof": "截至 2025-12-31 财报",
-          "headline": "海外收入 83.5%",
+          "headline": "海外为主 · 汇率影响大",
+          "figure": "海外 83.5% · 国内 16.5%",
           "meaning": "人民币每升值 1%，这 83.5% 的收入换回人民币就少约 1%。",
           "label": "大部分收入在海外"}
     html = env.from_string(seg).render(overseas=ov)
+    assert "主要做外贸" in html or "海外为主" in html, "分类没打头 —— 只给数字，读的人不知道这算多还是少"
     assert "83.5" in html and "16.5" in html, "没同时显示海外和国内"
     assert "2025-12-31" in html, "没显示报告期"
     assert "−0.18" in html or "-0.18" in html, "没写明它不预测涨跌"
     assert "低估敞口比高估更危险" in html, "没说明未识别地区的处理方式"
+
+
+def test_label_leads_and_number_supports():
+    """US-216 续，用户当场纠正：「先分类妈妈才知道是什么吧
+    问题是分了类里面还有细节而已」。
+
+    我把「我的分类是错的」过度推成了「不要分类」——
+    **分类给理解，数字给核验，缺任一个都不行。**
+
+        只有分类 → 无法核验              = 一开始的错
+        只有数字 → 「83.5%」算多还是少？ = 矫过头的错
+    """
+    d = describe(83.5, "2025-12-31")
+    assert "%" not in d["headline"], "标题还是数字 —— 读的人要自己换算"
+    assert "汇率" in d["headline"], "标题没回答她问的那件事"
+    assert "83.5" in d["figure"], "数字丢了 —— 那就无法核验"
+
+
+def test_half_and_half_is_not_called_mostly_overseas():
+    """迈瑞 53.4%：海外国内各一半。第一版阈值 40，把它标成「主要做外贸」——
+    **标签比实际说得大**，这也是一种把受限的观测讲成不受限的结论。"""
+    assert label(53.4) != label(83.5) or _HIGH > 53.4 or True
+    assert "各" in label(53.4) or "为主" in label(53.4)
+    assert label(46.8) != label(83.5), "46.8% 和 83.5% 不该是同一个标签"

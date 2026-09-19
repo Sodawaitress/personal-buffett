@@ -6,11 +6,17 @@
 
 分组是我编的，结论就是假的。
 
-**所以这个模块不做分类。** 它只存一个数字：海外收入占比。
-需要标签时从数字派生，并且把阈值写出来。
+**但「所以不要分类」是矫枉过正** —— 用户当场纠正：
+「先分类妈妈才知道是什么吧 问题是分了类里面还有细节而已」。
 
-    ❌ 「出口型」          ← 谁定的？阈值多少？
-    ✅ 「海外收入 83.5%」  ← 可核验，来源是财报
+对。**分类给理解，数字给核验，缺任一个都不行**：
+
+    只有分类 → 无法核验                   = 我一开始犯的错（凭印象分组）
+    只有数字 → 「83.5%」是什么意思？       = 我矫过头的错
+    分类 + 数字 → 「大部分收入在海外 · 83.5% · 截至2025-12-31财报」
+
+真正的规矩不是「不分类」，是 **分类必须从测量派生，不能从记忆派生**，
+而且阈值要写出来、可以被质疑。
 
 ## 它说明什么，不说明什么
 
@@ -42,7 +48,11 @@ _DOMESTIC_KEYS = ("境内", "内地", "国内", "中国大陆", "大陆地区", 
 
 # 派生标签的阈值。**写在这里是为了它可以被质疑** ——
 # 任何分类都需要一个阈值，藏起来的阈值等于没有依据。
-_HIGH, _MID = 40.0, 15.0
+#
+# 三档，而且**每一档直接回答用户妈妈问的那个问题**（这只受不受汇率影响），
+# 不是泛泛地描述公司。第一版用 40/15 两档，53.4% 的迈瑞被标成
+# 「主要做外贸」—— 那其实是海外国内各一半，标签比实际说得大。
+_HIGH, _MID = 50.0, 15.0
 
 
 def _is_domestic(name: str) -> bool:
@@ -89,10 +99,14 @@ def label(pct, locale: str = "zh"):
     if pct is None:
         return None
     if locale == "en":
-        return ("mostly overseas" if pct >= _HIGH else
-                ("partly overseas" if pct >= _MID else "mostly domestic"))
-    return ("大部分收入在海外" if pct >= _HIGH else
-            ("有一部分海外收入" if pct >= _MID else "主要做国内"))
+        return ("mostly overseas — FX matters a lot" if pct >= _HIGH else
+                ("both, FX matters some" if pct >= _MID else
+                 "domestic — FX barely matters"))
+    # 措辞要让人一眼知道「这是哪类公司 + 对我问的那件事意味着什么」，
+    # 而不是给一个还要自己换算的比例
+    return ("海外为主 · 汇率影响大" if pct >= _HIGH else
+            ("内外都做 · 汇率有影响" if pct >= _MID else
+             "基本只做国内 · 汇率影响很小"))
 
 
 def describe(pct, asof=None, locale: str = "zh") -> dict:
@@ -100,12 +114,16 @@ def describe(pct, asof=None, locale: str = "zh") -> dict:
     if pct is None:
         return {}
     if locale == "en":
-        return {"headline": f"{pct}% of revenue is from overseas",
+        return {"headline": label(pct, "en"),
+                "figure": f"{pct}% overseas · {round(100 - pct, 1)}% domestic",
                 "meaning": (f"If the yuan strengthens 1%, that {pct}% converts back "
                             f"to about 1% less."),
                 "asof": f"as of {asof}" if asof else None}
     return {
-        "headline": f"海外收入 {pct}%",
+        # US-216 续：**分类打头**。第一版 headline 是「海外收入 83.5%」——
+        # 一个数字，读的人还要自己判断「这算多还是少」。
+        "headline": label(pct),
+        "figure": f"海外 {pct}% · 国内 {round(100 - pct, 1)}%",
         # 算术，不是预测
         "meaning": (f"人民币每升值 1%，这 {pct}% 的收入换回人民币就少约 1%。"
                     if pct >= _MID else
