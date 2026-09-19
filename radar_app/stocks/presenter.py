@@ -813,6 +813,20 @@ def present_stock_page(bundle):
         except Exception:
             volatility = None
 
+    # US-216 海外收入占比 —— 用户妈妈问「A 级票是不是因为做外贸受汇率影响」。
+    # 卡片只陈述**敞口**（算术），不预测涨跌：实测 12 只 A 级股，
+    # 海外占比与 12 个月超额收益 r = -0.18，几乎是噪音。
+    overseas = None
+    if market == "cn" and _f.get("overseas_pct") is not None:
+        try:
+            from scripts.overseas_exposure import describe as _ov_desc
+            overseas = {"pct": _f.get("overseas_pct"),
+                        "asof": _f.get("overseas_asof"),
+                        **_ov_desc(_f.get("overseas_pct"),
+                                   _f.get("overseas_asof"), locale)}
+        except Exception:
+            overseas = None
+
     # US-142 谁在卖自己公司的股票（A股，半年窗口）
     insider = None
     if market == "cn":
@@ -887,6 +901,7 @@ def present_stock_page(bundle):
         "cheapness": cheapness,
         "signal_chain": signal_chain,
         "volatility": volatility,
+        "overseas": overseas,
         "order_book": order_book,
         "pick_history": pick_history,
         "insider": insider,

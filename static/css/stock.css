@@ -2993,3 +2993,26 @@
 .pvol-why summary { font-size: 11px; color: var(--ink-muted); cursor: pointer; }
 .pvol-why p { font-size: 11px; color: var(--ink-faint); line-height: 1.7; margin: 6px 0 0; }
 .pvol-why-note { color: var(--ink-muted); }
+
+/* ── US-216「钱从哪里赚」：结构同 .vol（head + 内容 + details）。
+   一根横条，海外那段填色 —— 不用读数字就看得出比例。 ── */
+.ovs { border:1px solid var(--rule); border-radius:6px; padding:10px 12px;
+  margin:0 0 14px; background:var(--paper); }
+.ovs-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.ovs-title { font-size:12px; font-weight:600; color:var(--ink); letter-spacing:.02em; }
+.ovs-story { font-size:12px; font-weight:600; color:var(--ink-muted); }
+.ovs-hi .ovs-story { color:var(--accent, var(--ink)); }
+
+.ovs-bar { height:6px; border-radius:3px; background:var(--rule); overflow:hidden; margin-bottom:6px; }
+.ovs-bar-out { display:block; height:100%; background:var(--ink-faint); }
+.ovs-hi .ovs-bar-out { background:var(--accent, var(--ink-muted)); }
+
+.ovs-legend { display:flex; gap:10px; flex-wrap:wrap; font-size:11px;
+  color:var(--ink-faint); margin-bottom:6px; }
+.ovs-asof { margin-left:auto; }
+.ovs-mean { font-size:12px; color:var(--ink-faint); line-height:1.6; margin:0; }
+.ovs-why { margin-top:8px; }
+.ovs-why summary { font-size:11px; color:var(--ink-muted); cursor:pointer; }
+.ovs-why ul { margin:6px 0 0; padding-left:16px; font-size:11px;
+  color:var(--ink-faint); line-height:1.7; }
+.ovs-why-note { font-size:11px; color:var(--ink-faint); margin:6px 0 0; }

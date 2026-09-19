@@ -810,6 +810,12 @@ def _migrate():
         # 组合波动**不能**由个股波动平均得出 —— 必须先合成组合的收益序列
         # 再算标准差，相关性才会被正确算进去。存序列是为了让这件事能实时做。
         ("stock_fundamentals", "vol_series",   "TEXT"),
+        # US-216 海外收入占比。**存数字不存分类** ——
+        # 我第一轮按行业知识分组，把汇川技术（境外仅 6.6%）划进了「出口型」，
+        # 据此得出「出口组跑输 15 个百分点」。分组是编的，结论就是假的。
+        # asof 必须一起存：一个过期的占比比没有更误导。
+        ("stock_fundamentals", "overseas_pct",  "REAL"),
+        ("stock_fundamentals", "overseas_asof", "TEXT"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

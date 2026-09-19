@@ -60,6 +60,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # US-216 海外收入占比。拿不到就留空 —— 这条 US 的起点就是我猜错了一次。
+      - name: Backfill overseas revenue share (US-216)
+        run: python -m scripts.backfill_overseas ${{ github.event.inputs.limit || '40' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Backfill volatility profile (US-208)
         run: python -m scripts.backfill_volatility ${{ github.event.inputs.limit || '40' }}
         env:

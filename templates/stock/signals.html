@@ -125,6 +125,39 @@
     </div>
     {% endif %}
 
+    {# ══ US-216 海外收入占比 —— 只说敞口，不说涨跌 ══ #}
+    {% if overseas %}
+    <div class="ovs ovs-{{ 'hi' if overseas.pct >= 40 else ('mid' if overseas.pct >= 15 else 'lo') }}">
+      <div class="ovs-head">
+        <span class="ovs-title">钱从哪里赚</span>
+        <span class="ovs-story">{{ overseas.headline }}</span>
+      </div>
+      <div class="ovs-bar" aria-hidden="true">
+        <span class="ovs-bar-out" style="width:{{ overseas.pct|round|int }}%"></span>
+      </div>
+      <div class="ovs-legend">
+        <span><b>{{ overseas.pct }}%</b> 海外</span>
+        <span>{{ (100 - overseas.pct)|round(1) }}% 国内</span>
+        {% if overseas.asof %}<span class="ovs-asof">{{ overseas.asof }}</span>{% endif %}
+      </div>
+      <p class="ovs-mean">{{ overseas.meaning }}</p>
+      <details class="ovs-why">
+        <summary>这个数能说明什么</summary>
+        <ul>
+          <li><b>能说的</b>：汇率的<b>敞口</b>有多大。人民币每升值 1%，
+            海外那部分收入换回人民币就少约 1% —— 这是算术。</li>
+          <li><b>不能说的</b>：股价会怎么走。实测 12 只 A 级股，
+            海外收入占比和 12 个月超额收益的相关系数只有 <b>−0.18</b>，
+            方向对但几乎是噪音 —— <b>海外占比最高的那只反而是唯一跑赢的</b>。</li>
+          <li><b>为什么还要看</b>：因为它能挡住一个常见的误判 ——
+            把「这只跌了」归因成「它做外贸」。先看这个数，再说汇率。</li>
+        </ul>
+        <p class="ovs-why-note">来源：财报主营构成按地区拆分。
+          识别不出的地区算作海外 —— 低估敞口比高估更危险。</p>
+      </details>
+    </div>
+    {% endif %}
+
     {# ── US-119 层1：一句结论（与首页榜单同款措辞，点榜单进来讲同一个故事） ── #}
     {% if signal_conclusion %}
     <div class="sig-verdict sig-verdict-{{ signal_conclusion.direction }}{{ ' sig-verdict-lead' if signal_conclusion.lead }}">
