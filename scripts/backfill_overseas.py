@@ -55,7 +55,16 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
         try:
             sym = ("SH" if code[0] in "056" else "SZ") + code
             r = compute(ak.stock_zygc_em(symbol=sym))
-            sw = finance_swing(ak.stock_profit_sheet_by_report_em(symbol=sym))
+            _pf = ak.stock_profit_sheet_by_report_em(symbol=sym)
+            sw = finance_swing(_pf)
+            rev_yoy = None
+            try:
+                _c = _pf.iloc[0]
+                import math as _m
+                _v = float(_c["TOTAL_OPERATE_INCOME_YOY"])
+                rev_yoy = None if _m.isnan(_v) else round(_v, 1)
+            except Exception:
+                rev_yoy = None
             if not r and not sw:
                 stat["no_data"] += 1
                 print(f"  ⏭ {code}  地区拆分和财务费用都拿不到，留空")
@@ -64,12 +73,12 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
                 conn.execute(text(
                     "UPDATE stock_fundamentals SET overseas_pct=:p, overseas_asof=:a, "
                     "fin_exp_cur=:fc, fin_exp_prev=:fp, fin_exp_rev_pct=:fr, "
-                    "fin_exp_asof=:fa, fin_exp_kind=:fk, fx_change_pct=:fx WHERE code=:c"),
+                    "fin_exp_asof=:fa, fin_exp_kind=:fk, fx_change_pct=:fx, rev_yoy=:ry WHERE code=:c"),
                     {"p": (r or {}).get("pct"), "a": (r or {}).get("asof"),
                      "fc": (sw or {}).get("cur"), "fp": (sw or {}).get("prev"),
                      "fr": (sw or {}).get("delta_rev_pct"),
                      "fa": (sw or {}).get("asof"), "fk": (sw or {}).get("kind"),
-                     "fx": fx, "c": code})
+                     "fx": fx, "ry": rev_yoy, "c": code})
             stat["done"] += 1
             print(f"  ✅ {code}  海外 {(r or {}).get('pct')}%  "
                   f"财务费用增量/营收 {(sw or {}).get('delta_rev_pct')}%")

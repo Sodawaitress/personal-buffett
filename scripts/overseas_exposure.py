@@ -225,3 +225,105 @@ def describe_swing(sw: dict, fx_pct=None, locale: str = "zh") -> dict:
         "caveat": ("财务费用 = 利息 + 汇兑 + 手续费，**拆不开**。"
                    "单独的汇兑那一项，财报接口拿不到。"),
     }
+
+
+# ── 汇率影响的三层（US-218）────────────────────────────────────────────
+#
+# 用户问「影响的层次」。这正好是国际财务管理的标准分类，
+# 而且三层**按时间排序**：
+#
+#   ① 交易敞口 transaction  签约 → 收款之间汇率变了     数周~数月
+#   ② 折算敞口 translation  合并报表时的账面换算         每个报告期
+#   ③ 经济敞口 economic     人民币贵了，东西卖不动       数季度~数年
+#
+# 用户上一个问题「能不能按订单实时汇率算」问的正是 **① 层** ——
+# 现在能说清为什么拿不到：那是交易敞口，财报不披露。
+#
+# 而 ③ 层是**最大但最慢**的：它不进财务费用，它直接吃掉订单。
+#
+# ## 三层的展示规则（都有依据，不是拍的）
+#
+# **① 明确显示「算不出」，不要省略。** 那一层的缺失本身就是答案。
+#
+# **② 最醒目** —— 它是报出来的数。
+#
+# **③ 视觉上最淡。** 这条和直觉相反：我本来想把估算「标出来」让它更显眼，
+# 方向错了。可视化研究的规则是
+# 「对一个估算越没把握，就让它在视觉上越不突出，
+#   这样更确定的数据才会得到更多注意」。
+#
+# **来源标记融进显示本身**（【报出来的数】/〔估算〕），不做脚注 ——
+# 「数据来源的可视化应当无缝融进看板」。
+#
+# ## 不用瀑布图
+#
+# 收入桥/瀑布图是业界分解因果的标准画法，但对新手读者有两个**内在**障碍：
+# 正值从下往上读、负值从上往下读；中间分项没有共同基准轴。
+# 128 人的研究里参与者可视化熟悉度平均 2.09/5，瀑布图正是难点之一。
+# 本站主要读者是年长非专业的手机用户 —— 用现有的「横条 + 文字」。
+
+
+def constant_currency(rev_yoy, overseas_pct, fx_pct):
+    """恒定汇率下的营收增速（**估算**）。
+
+        恒定汇率增速 ≈ 报告增速 + 海外占比 × 汇率变动
+
+    业界标准做法是把本期数字按上期平均汇率重算一遍。我们没有分币种的
+    原币收入，只能用这个一阶近似 —— **所以它必须被标成估算**。
+
+    实测：浙江鼎力报告 +24.9%，恒定汇率下约 +29.4%
+    （汇率拿走约 4.5 个百分点，但它即使这样还是涨了 24.9%）。
+    阳光电源 −29.0% → −25.0%，**汇率解释不了它的下跌**。
+    """
+    if rev_yoy is None or overseas_pct is None or fx_pct is None:
+        return None
+    return round(rev_yoy + overseas_pct / 100 * fx_pct, 1)
+
+
+def fx_layers(overseas_pct=None, swing=None, rev_yoy=None, fx_pct=None,
+              locale: str = "zh") -> dict:
+    """三层装配。每层带 `certainty`：measured / estimated / unavailable。
+
+    `certainty` 直接驱动视觉层级 —— 越不确定越淡。
+    """
+    if fx_pct is None:
+        return {}
+    cc = constant_currency(rev_yoy, overseas_pct, fx_pct)
+    taken = (round(cc - rev_yoy, 1)
+             if cc is not None and rev_yoy is not None else None)
+    zh = locale != "en"
+    layers = [
+        {"n": 1, "certainty": "unavailable",
+         "name": "订单层" if zh else "Transaction",
+         "sub": "签约到收款之间" if zh else "contract → settlement",
+         "value": None,
+         "note": ("财报不披露 —— 这一层算不出" if zh
+                  else "not disclosed — cannot be computed")},
+    ]
+    if swing and swing.get("delta_rev_pct") is not None:
+        layers.append({
+            "n": 2, "certainty": "measured",
+            "name": "账面层" if zh else "Translation",
+            "sub": "合并报表换算" if zh else "consolidation",
+            "value": f"{swing['delta_rev_pct']:+.2f}%",
+            "detail": (f"财务费用 {swing['prev']}亿 → {swing['cur']}亿" if zh
+                       else f"finance cost {swing['prev']} → {swing['cur']}"),
+            "note": "增量相当于营收的比例" if zh else "as % of revenue",
+            "tag": "报出来的数" if zh else "reported",
+        })
+    if cc is not None:
+        layers.append({
+            "n": 3, "certainty": "estimated",
+            "name": "生意层" if zh else "Economic",
+            "sub": "东西贵了卖不动" if zh else "competitiveness",
+            "value": f"{cc:+.1f}%",
+            "detail": (f"营收 {rev_yoy:+.1f}%，剔掉汇率约 {cc:+.1f}%" if zh
+                       else f"revenue {rev_yoy:+.1f}%, ex-FX ≈ {cc:+.1f}%"),
+            "note": (f"汇率大约拿走 {abs(taken):.1f} 个百分点" if zh and taken
+                     else None),
+            "tag": "估算" if zh else "estimate",
+        })
+    return {"fx_pct": fx_pct, "layers": layers,
+            "fx_text": ((f"同期人民币升值 {fx_pct:.1f}%" if fx_pct > 0
+                         else f"同期人民币贬值 {abs(fx_pct):.1f}%") if zh
+                        else f"CNY {'+' if fx_pct > 0 else ''}{fx_pct:.1f}%")}

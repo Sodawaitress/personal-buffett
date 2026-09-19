@@ -186,3 +186,100 @@ def test_missing_data_returns_empty():
     assert finance_swing(None) == {}
     assert finance_swing(_profit_df([("2026-06-30", "中报", 1e8, 20e8)])) == {}, \
         "只有一期也给了结论"
+
+
+# ── US-218 汇率影响的三层 ────────────────────────────────────────────
+
+_SW = {"cur": 1.66, "prev": -2.9, "delta_rev_pct": 8.42,
+       "asof": "2026-06-30", "kind": "中报", "flipped": True}
+
+
+def test_all_three_layers_appear_including_the_unavailable_one():
+    """**① 算不出也要显示。** 那一层的缺失本身就是答案 ——
+    它解释了用户问的「为什么不能按订单实时汇率算」。
+    省略掉，那个问题就永远悬着。
+    """
+    from scripts.overseas_exposure import fx_layers
+    r = fx_layers(83.5, _SW, 24.9, 5.4)
+    assert [L["n"] for L in r["layers"]] == [1, 2, 3]
+    l1 = r["layers"][0]
+    assert l1["certainty"] == "unavailable"
+    assert "算不出" in l1["note"]
+
+
+def test_certainty_is_explicit_on_every_layer():
+    """视觉层级由 certainty 驱动，所以它必须是结构化字段，
+    不能靠模板自己猜。"""
+    from scripts.overseas_exposure import fx_layers
+    r = fx_layers(83.5, _SW, 24.9, 5.4)
+    kinds = [L["certainty"] for L in r["layers"]]
+    assert kinds == ["unavailable", "measured", "estimated"]
+
+
+def test_constant_currency_arithmetic():
+    """浙江鼎力：报告 +24.9%，海外 83.5%，人民币升值 5.4%
+    → 恒定汇率下约 +29.4%。**汇率拿走约 4.5 个百分点，
+    但它即使这样还是涨了 24.9%** —— 这才是回答「是不是因为汇率没涨」。"""
+    from scripts.overseas_exposure import constant_currency
+    assert constant_currency(24.9, 83.5, 5.4) == pytest.approx(29.4, abs=0.1)
+    # 阳光电源：-29.0% → -25.0%，汇率解释不了它的下跌
+    assert constant_currency(-29.0, 73.4, 5.4) == pytest.approx(-25.0, abs=0.2)
+    assert constant_currency(None, 83.5, 5.4) is None
+
+
+def test_estimated_layer_is_visually_recessive_not_highlighted():
+    """**这条和直觉相反。** 可视化研究：「对一个估算越没把握，
+    就让它在视觉上越不突出，这样更确定的数据才会得到更多注意」。
+
+    我原本打算把估算「标出来」让它更醒目 —— 方向错了。
+    """
+    css = open("static/css/stock.css", encoding="utf-8").read()
+    est = css[css.index(".fxl-estimated"):css.index(".fxl-unavailable")]
+    mea = css[css.index(".fxl-measured"):css.index(".fxl-estimated")]
+    assert "opacity:.72" in est.replace(" ", ""), "估算层没有退后"
+    assert "opacity" not in mea, "报出来的数被削弱了"
+    # 字号：measured 必须比 estimated 大
+    import re
+    f_m = int(re.search(r"font-size:(\d+)px", mea).group(1))
+    f_e = int(re.search(r"font-size:(\d+)px", est).group(1))
+    assert f_m > f_e, f"报出来的数({f_m}px)没有比估算({f_e}px)更醒目"
+
+
+def test_provenance_tag_is_inline_not_a_footnote():
+    """「数据来源的可视化应当无缝融进看板」—— 标记跟在每层旁边，不做脚注。"""
+    from scripts.overseas_exposure import fx_layers
+    r = fx_layers(83.5, _SW, 24.9, 5.4)
+    tags = {L["n"]: L.get("tag") for L in r["layers"]}
+    assert tags[2] == "报出来的数"
+    assert tags[3] == "估算"
+
+
+def test_no_waterfall_chart():
+    """收入桥/瀑布图是业界标准画法，但对新手有内在障碍：
+    正负读向相反、中间分项没有共同基准轴。128 人研究里
+    参与者可视化熟悉度平均 2.09/5，瀑布图正是难点。
+
+    本站主要读者是年长非专业的手机用户 —— 用现有的横条 + 文字。
+    """
+    tpl = open("templates/stock/signals.html", encoding="utf-8").read()
+    for bad in ("waterfall", "瀑布图", "<canvas", "<svg"):
+        assert bad not in tpl[tpl.index("US-218"):tpl.index("US-218") + 2500], \
+            f"引入了新的图表语言: {bad}"
+
+
+def test_card_renders_three_layers():
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from tests.test_volatility_profile import _extract_block
+    from scripts.overseas_exposure import fx_layers
+    env = Environment(loader=FileSystemLoader("templates"),
+                      autoescape=select_autoescape(["html"]))
+    seg = _extract_block("templates/stock/signals.html", "overseas")
+    ov = {"pct": 83.5, "asof": "截至 2026-06-30 财报",
+          "headline": "海外为主 · 汇率影响大",
+          "figure": "海外 83.5% · 国内 16.5%",
+          "meaning": "人民币每升值 1%…",
+          "fx": fx_layers(83.5, _SW, 24.9, 5.4)}
+    html = env.from_string(seg).render(overseas=ov)
+    assert "订单层" in html and "账面层" in html and "生意层" in html
+    assert "fxl-unavailable" in html and "fxl-measured" in html and "fxl-estimated" in html
+    assert "拆不开" in html

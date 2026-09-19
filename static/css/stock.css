@@ -3028,3 +3028,40 @@
 .ovs-swing-detail { font-size:11px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
 .ovs-swing-flipnote { font-size:11px; color:var(--down); margin-top:4px; }
 .ovs-swing-caveat { font-size:10px; color:var(--ink-faint); line-height:1.6; margin:6px 0 0; }
+
+/* ── US-218 汇率三层。**视觉突出度 = 确定性**（可视化研究的规则：
+   对一个估算越没把握，就让它越不突出，这样更确定的数据才会得到注意）。
+   不用瀑布图 —— 新手研究表明它有内在的理解障碍（正负读向相反、
+   中间分项没有共同基准轴）。 ── */
+.fxl { margin-top:10px; padding-top:9px; border-top:1px dashed var(--rule); }
+.fxl-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.fxl-title { font-size:11px; font-weight:600; color:var(--ink-muted); }
+.fxl-rate { font-size:11px; color:var(--ink-faint); margin-left:auto; }
+
+.fxl-row { display:flex; gap:8px; padding:6px 0; border-top:1px solid var(--rule); }
+.fxl-row:first-of-type { border-top:none; }
+.fxl-n { font-size:10px; color:var(--ink-faint); width:14px; flex:none;
+  text-align:center; line-height:1.9; }
+.fxl-body { flex:1; min-width:0; }
+.fxl-name { font-size:11px; color:var(--ink); font-weight:600; }
+.fxl-sub { font-weight:400; color:var(--ink-faint); margin-left:5px; }
+.fxl-tag { font-size:9px; padding:1px 5px; border-radius:7px; margin-left:6px;
+  background:var(--rule); color:var(--ink-faint); vertical-align:middle; }
+.fxl-val { font-variant-numeric:tabular-nums; margin:2px 0 1px; }
+.fxl-detail, .fxl-note { font-size:10px; color:var(--ink-faint); line-height:1.6; }
+
+/* ② 报出来的数 —— 最醒目 */
+.fxl-measured .fxl-val { font-size:16px; font-weight:700; color:var(--down); }
+.fxl-measured .fxl-tag { background:var(--down-bg, var(--rule)); color:var(--down); }
+
+/* ③ 估算 —— 最淡。不是标红，是退后 */
+.fxl-estimated { opacity:.72; }
+.fxl-estimated .fxl-val { font-size:12px; font-weight:600; color:var(--ink-muted); }
+
+/* ① 算不出 —— 显示出来，因为缺失本身就是答案 */
+.fxl-unavailable { opacity:.5; }
+.fxl-unavailable .fxl-name { font-weight:400; }
+.fxl-unavailable .fxl-note { font-style:italic; }
+
+.fxl-caveat { font-size:10px; color:var(--ink-faint); line-height:1.6;
+  margin:8px 0 0; padding-top:6px; border-top:1px dashed var(--rule); }

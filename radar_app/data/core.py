@@ -827,6 +827,8 @@ def _migrate():
         ("stock_fundamentals", "fin_exp_asof",    "TEXT"),
         ("stock_fundamentals", "fin_exp_kind",    "TEXT"),
         ("stock_fundamentals", "fx_change_pct",   "REAL"),
+        # US-218 第③层「生意层」要用：恒定汇率增速 ≈ 报告增速 + 海外占比×汇率变动
+        ("stock_fundamentals", "rev_yoy",          "REAL"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

@@ -141,21 +141,30 @@
       </div>
       <p class="ovs-mean">{{ overseas.meaning }}</p>
 
-      {# US-217：公司自己报的数，替掉估算。只说财务费用，不说汇兑损益 #}
-      {% if overseas.swing %}
-      <div class="ovs-swing{{ ' ovs-swing-flip' if overseas.swing.flipped }}">
-        <div class="ovs-swing-head">
-          <span class="ovs-swing-title">汇率打到账上多少</span>
-          {% if overseas.swing.fx %}<span class="ovs-swing-fx">{{ overseas.swing.fx }}</span>{% endif %}
+      {# ══ US-218 汇率影响的三层。① 算不出也要显示，② 最醒目，③ 最淡 ══ #}
+      {% if overseas.fx %}
+      <div class="fxl">
+        <div class="fxl-head">
+          <span class="fxl-title">汇率影响的三层</span>
+          <span class="fxl-rate">{{ overseas.fx.fx_text }}</span>
         </div>
-        <div class="ovs-swing-num">{{ overseas.swing.headline }}</div>
-        <div class="ovs-swing-detail">财务费用 {{ overseas.swing.detail }}</div>
-        {% if overseas.swing.flip %}
-        <div class="ovs-swing-flipnote">{{ overseas.swing.flip }}</div>
-        {% endif %}
-        <p class="ovs-swing-caveat">⚠️ {{ overseas.swing.caveat }}</p>
+        {% for L in overseas.fx.layers %}
+        <div class="fxl-row fxl-{{ L.certainty }}">
+          <span class="fxl-n">{{ L.n }}</span>
+          <div class="fxl-body">
+            <div class="fxl-name">{{ L.name }}<span class="fxl-sub">{{ L.sub }}</span>
+              {% if L.tag %}<span class="fxl-tag">{{ L.tag }}</span>{% endif %}</div>
+            {% if L.value %}<div class="fxl-val">{{ L.value }}</div>{% endif %}
+            {% if L.detail %}<div class="fxl-detail">{{ L.detail }}</div>{% endif %}
+            {% if L.note %}<div class="fxl-note">{{ L.note }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        <p class="fxl-caveat">⚠️ 第②层的财务费用 = 利息 + 汇兑 + 手续费，<b>拆不开</b>。
+          单独的汇兑那一项，财报接口拿不到。</p>
       </div>
       {% endif %}
+
       <details class="ovs-why">
         <summary>这个数能说明什么</summary>
         <ul>

@@ -837,6 +837,13 @@ def present_stock_page(bundle):
                                   <= (_f.get("fin_exp_cur") or 0)}
                 overseas["swing"] = {**_sw,
                                      **_sw_desc(_sw, _f.get("fx_change_pct"), locale)}
+            # US-218 三层。视觉层级由 certainty 驱动：越不确定越淡。
+            from scripts.overseas_exposure import fx_layers as _fx_layers
+            overseas["fx"] = _fx_layers(
+                _f.get("overseas_pct"),
+                overseas.get("swing"),
+                _f.get("rev_yoy"),
+                _f.get("fx_change_pct"), locale) or None
         except Exception:
             overseas = None
 
