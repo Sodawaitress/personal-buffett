@@ -3016,3 +3016,15 @@
 .ovs-why ul { margin:6px 0 0; padding-left:16px; font-size:11px;
   color:var(--ink-faint); line-height:1.7; }
 .ovs-why-note { font-size:11px; color:var(--ink-faint); margin:6px 0 0; }
+
+/* US-217 财务费用摆动：嵌在「钱从哪里赚」卡片里，不另开一张卡 ——
+   它回答的是同一个问题（汇率影响），只是从敞口进到了实际账面。 */
+.ovs-swing { margin-top:10px; padding-top:9px; border-top:1px dashed var(--rule); }
+.ovs-swing-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.ovs-swing-title { font-size:11px; font-weight:600; color:var(--ink-muted); }
+.ovs-swing-fx { font-size:11px; color:var(--ink-faint); }
+.ovs-swing-num { font-size:13px; font-weight:700; color:var(--ink); margin:4px 0 2px; }
+.ovs-swing-flip .ovs-swing-num { color:var(--down); }
+.ovs-swing-detail { font-size:11px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+.ovs-swing-flipnote { font-size:11px; color:var(--down); margin-top:4px; }
+.ovs-swing-caveat { font-size:10px; color:var(--ink-faint); line-height:1.6; margin:6px 0 0; }

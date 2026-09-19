@@ -816,6 +816,17 @@ def _migrate():
         # asof 必须一起存：一个过期的占比比没有更误导。
         ("stock_fundamentals", "overseas_pct",  "REAL"),
         ("stock_fundamentals", "overseas_asof", "TEXT"),
+        # US-217：财务费用的同口径摆动（含汇兑，但**拆不开**）。
+        # 用户问「能不能按订单实时汇率算」—— 不能，那是内部数据。
+        # 但公司自己报的这个数比估算准：浙江鼎力我估「营收拖累 4.5%」，
+        # 实际财务费用增量占营收 **8.42%**，差了快一倍。
+        # 因为估算只覆盖营收换算，汇率还打在应收账款和外币资产上。
+        ("stock_fundamentals", "fin_exp_cur",     "REAL"),
+        ("stock_fundamentals", "fin_exp_prev",    "REAL"),
+        ("stock_fundamentals", "fin_exp_rev_pct", "REAL"),
+        ("stock_fundamentals", "fin_exp_asof",    "TEXT"),
+        ("stock_fundamentals", "fin_exp_kind",    "TEXT"),
+        ("stock_fundamentals", "fx_change_pct",   "REAL"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).

@@ -123,3 +123,66 @@ def test_half_and_half_is_not_called_mostly_overseas():
     assert label(53.4) != label(83.5) or _HIGH > 53.4 or True
     assert "各" in label(53.4) or "为主" in label(53.4)
     assert label(46.8) != label(83.5), "46.8% 和 83.5% 不该是同一个标签"
+
+
+# ── US-217 财务费用摆动：用报出来的数替掉估算 ──────────────────────
+
+import pandas as _pd
+
+
+def _profit_df(rows):
+    """rows = [(report_date, report_type, finance_expense, revenue)]"""
+    return _pd.DataFrame([{"REPORT_DATE": d + " 00:00:00", "REPORT_TYPE": t,
+                           "FINANCE_EXPENSE": fe, "TOTAL_OPERATE_INCOME": rev}
+                          for d, t, fe, rev in rows])
+
+
+def test_compares_like_with_like():
+    """**必须同口径**：中报比中报。拿 2026 中报去比 2025 年报，
+    会把「半年 vs 全年」的差当成变化 —— 本仓那族错误的财务版。"""
+    from scripts.overseas_exposure import finance_swing
+    df = _profit_df([("2026-06-30", "中报", 1.66e8, 20e8),
+                     ("2025-12-31", "年报", 9.0e8, 50e8),     # 干扰项
+                     ("2025-06-30", "中报", -2.90e8, 18e8)])
+    sw = finance_swing(df)
+    assert sw["kind"] == "中报"
+    assert sw["prev_asof"] == "2025-06-30", "比错了期 —— 拿年报当上期"
+    assert sw["prev"] == -2.90
+
+
+def test_flip_from_earning_to_paying_is_flagged():
+    """财务费用是负数 = 这一项在赚钱。翻正是最该说出来的那个变化。"""
+    from scripts.overseas_exposure import finance_swing
+    sw = finance_swing(_profit_df([("2026-06-30", "中报", 1.66e8, 20e8),
+                                   ("2025-06-30", "中报", -2.90e8, 18e8)]))
+    assert sw["flipped"] is True
+    assert sw["delta_rev_pct"] == pytest.approx(22.8, abs=0.5)
+
+
+def test_still_negative_is_not_flagged_as_flip():
+    """茅台：-4.87亿 → -2.43亿，仍在净赚利息，不算翻正。"""
+    from scripts.overseas_exposure import finance_swing
+    sw = finance_swing(_profit_df([("2026-06-30", "中报", -2.43e8, 900e8),
+                                   ("2025-06-30", "中报", -4.87e8, 850e8)]))
+    assert sw["flipped"] is False
+
+
+def test_never_calls_it_fx_gain_loss():
+    """**财务费用 ≠ 汇兑损益。** 拆不开就不能那么叫。
+
+    实测单独的汇兑字段拿不到：新浪「汇兑收益」列全 NaN；
+    东财 EXCHANGE_INCOME 六家里一家有值且为 0。
+    """
+    from scripts.overseas_exposure import describe_swing
+    d = describe_swing({"cur": 1.66, "prev": -2.9, "delta_rev_pct": 8.42,
+                        "asof": "2026-06-30", "kind": "中报", "flipped": True}, 5.4)
+    assert "财务费用" in d["headline"] or "财务费用" in d["detail"]
+    assert "汇兑损益" not in d["headline"], "把不能拆的东西叫成了汇兑损益"
+    assert "拆不开" in d["caveat"], "没写明它拆不开"
+
+
+def test_missing_data_returns_empty():
+    from scripts.overseas_exposure import finance_swing
+    assert finance_swing(None) == {}
+    assert finance_swing(_profit_df([("2026-06-30", "中报", 1e8, 20e8)])) == {}, \
+        "只有一期也给了结论"

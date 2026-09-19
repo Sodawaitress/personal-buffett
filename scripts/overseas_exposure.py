@@ -131,3 +131,97 @@ def describe(pct, asof=None, locale: str = "zh") -> dict:
         "asof": f"截至 {asof} 财报" if asof else None,
         "label": label(pct),
     }
+
+
+# ── 财务费用的摆动（US-217）─────────────────────────────────────────────
+#
+# 用户问「能不能按订单的实时汇率算」。**不能** —— 那是公司内部数据，
+# 财报不披露，公开最细只到半年度分地区收入。
+#
+# **但不用估。** 公司每半年自己报一次财务费用，那个数比我推的准：
+#
+#     浙江鼎力  我估算「营收拖累 4.5%」
+#               实际财务费用增量占营收 **8.42%**   ← 差了快一倍
+#
+# 因为估算只覆盖**营收换算**，而汇率还打在应收账款和外币资产上，
+# 那部分直接进损益。
+#
+# ⚠️ **不能叫它「汇兑损益」。** 财务费用 = 利息 + 汇兑 + 手续费，拆不开。
+# 单独的汇兑字段实测拿不到：
+#     新浪利润表「汇兑收益」列          → 值全是 NaN
+#     东财 EXCHANGE_INCOME 字段        → 6 家里 1 家有值，且为 0.00 亿
+# 所以措辞只能是「财务费用变化（含汇兑）」。少这一步就是过度断言。
+
+_REV_KEYS = ("TOTAL_OPERATE_INCOME", "OPERATE_INCOME")
+
+
+def finance_swing(df) -> dict:
+    """东财利润表 → {cur, prev, delta_rev_pct, asof, kind} 或 {}。
+
+    **必须同口径比**：中报比中报、年报比年报。
+    拿 2026 中报去比 2025 年报，会把「半年 vs 全年」的差当成变化 ——
+    这是本仓反复栽的那族错误在财务数据上的版本。
+    """
+    if df is None or getattr(df, "empty", True):
+        return {}
+    try:
+        import math
+        d = df.copy()
+        d["_date"] = d["REPORT_DATE"].astype(str).str[:10]
+        d["_md"] = d["_date"].str[5:]
+        latest = d.iloc[0]
+        md = str(latest["_md"])
+        same = d[d["_md"] == md]           # 同口径：同样的月-日
+        if len(same) < 2:
+            return {}
+        cur, prev = same.iloc[0], same.iloc[1]
+
+        def _f(row, key):
+            try:
+                v = float(row[key])
+                return None if math.isnan(v) else v
+            except (TypeError, ValueError, KeyError):
+                return None
+
+        fe0, fe1 = _f(cur, "FINANCE_EXPENSE"), _f(prev, "FINANCE_EXPENSE")
+        if fe0 is None or fe1 is None:
+            return {}
+        rev = next((_f(cur, k) for k in _REV_KEYS if _f(cur, k)), None)
+        if not rev or rev <= 0:
+            return {}
+        return {
+            "cur": round(fe0 / 1e8, 2),
+            "prev": round(fe1 / 1e8, 2),
+            "delta_rev_pct": round((fe0 - fe1) / rev * 100, 2),
+            "asof": str(cur["_date"]),
+            "prev_asof": str(prev["_date"]),
+            "kind": str(cur.get("REPORT_TYPE") or ""),
+            # 从「赚钱」翻成「花钱」是最值得说出来的那个变化
+            "flipped": fe1 < 0 <= fe0,
+        }
+    except Exception:
+        return {}
+
+
+def describe_swing(sw: dict, fx_pct=None, locale: str = "zh") -> dict:
+    """人话。**只说财务费用，不说汇兑损益。**"""
+    if not sw:
+        return {}
+    if locale == "en":
+        head = (f"financial costs swung by {sw['delta_rev_pct']:+.2f}% of revenue")
+        return {"headline": head,
+                "detail": f"{sw['prev']}亿 → {sw['cur']}亿 ({sw['kind']})",
+                "caveat": ("Financial expense = interest + FX + fees; "
+                           "the FX line alone is not available.")}
+    flip = ("去年这一项在**赚钱**，今年变成了净支出。"
+            if sw.get("flipped") else "")
+    fx = (f"同期人民币升值 {fx_pct:.1f}%。" if fx_pct and fx_pct > 0 else
+          (f"同期人民币贬值 {abs(fx_pct):.1f}%。" if fx_pct else ""))
+    return {
+        "headline": f"财务费用增量相当于营收的 {sw['delta_rev_pct']:+.2f}%",
+        "detail": f"{sw['prev']}亿 → {sw['cur']}亿（{sw['kind']}，同口径比上年）",
+        "flip": flip,
+        "fx": fx,
+        "caveat": ("财务费用 = 利息 + 汇兑 + 手续费，**拆不开**。"
+                   "单独的汇兑那一项，财报接口拿不到。"),
+    }

@@ -817,13 +817,26 @@ def present_stock_page(bundle):
     # 卡片只陈述**敞口**（算术），不预测涨跌：实测 12 只 A 级股，
     # 海外占比与 12 个月超额收益 r = -0.18，几乎是噪音。
     overseas = None
-    if market == "cn" and _f.get("overseas_pct") is not None:
+    if market == "cn" and (_f.get("overseas_pct") is not None
+                           or _f.get("fin_exp_rev_pct") is not None):
         try:
             from scripts.overseas_exposure import describe as _ov_desc
             overseas = {"pct": _f.get("overseas_pct"),
                         "asof": _f.get("overseas_asof"),
                         **_ov_desc(_f.get("overseas_pct"),
                                    _f.get("overseas_asof"), locale)}
+            # US-217：公司自己报的财务费用摆动，比我的估算准 ——
+            # 估算只覆盖营收换算，而汇率还打在应收账款和外币资产上。
+            if _f.get("fin_exp_rev_pct") is not None:
+                from scripts.overseas_exposure import describe_swing as _sw_desc
+                _sw = {"cur": _f.get("fin_exp_cur"), "prev": _f.get("fin_exp_prev"),
+                       "delta_rev_pct": _f.get("fin_exp_rev_pct"),
+                       "asof": _f.get("fin_exp_asof"),
+                       "kind": _f.get("fin_exp_kind") or "",
+                       "flipped": (_f.get("fin_exp_prev") or 0) < 0
+                                  <= (_f.get("fin_exp_cur") or 0)}
+                overseas["swing"] = {**_sw,
+                                     **_sw_desc(_sw, _f.get("fx_change_pct"), locale)}
         except Exception:
             overseas = None
 

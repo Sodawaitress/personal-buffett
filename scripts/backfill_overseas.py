@@ -8,7 +8,31 @@ import sys
 from sqlalchemy import text
 
 from radar_app.data.core import get_engine
-from scripts.overseas_exposure import compute
+from scripts.overseas_exposure import compute, finance_swing
+
+
+def _fx_change():
+    """同口径的人民币变动：本期平均 vs 上期平均。
+
+    **营收换算要用期间平均，不是两个时点的即期汇率。**
+    实测 2025H1 平均 724.32 → 2026H1 平均 685.44，人民币升值 5.4%。
+    """
+    try:
+        import datetime as dt
+
+        import akshare as ak
+        df = ak.currency_boc_sina(symbol="美元", start_date="20250101",
+                                  end_date=dt.date.today().strftime("%Y%m%d"))
+        s = df.dropna(subset=["中行汇买价"]).set_index("日期")["中行汇买价"]
+        y = dt.date.today().year
+
+        def avg(y0, m0, y1, m1):
+            a = [v for d, v in s.items() if dt.date(y0, m0, 1) <= d < dt.date(y1, m1, 1)]
+            return sum(a) / len(a) if a else None
+        cur, prev = avg(y, 1, y, 7), avg(y - 1, 1, y - 1, 7)
+        return round((1 - cur / prev) * 100, 1) if cur and prev else None
+    except Exception:
+        return None
 
 
 def run(limit: int = 40, refresh: bool = False) -> dict:
@@ -21,6 +45,7 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
         rows = conn.execute(text(
             "SELECT code, overseas_pct FROM stock_fundamentals")).mappings().all()
 
+    fx = _fx_change()          # 市场级，一次算好给所有股票用
     todo = [r["code"] for r in rows
             if r["code"] and r["code"].isdigit() and len(r["code"]) == 6
             and (refresh or r["overseas_pct"] is None)]
@@ -30,17 +55,24 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
         try:
             sym = ("SH" if code[0] in "056" else "SZ") + code
             r = compute(ak.stock_zygc_em(symbol=sym))
-            if not r:
+            sw = finance_swing(ak.stock_profit_sheet_by_report_em(symbol=sym))
+            if not r and not sw:
                 stat["no_data"] += 1
-                print(f"  ⏭ {code}  没有地区拆分，留空")
+                print(f"  ⏭ {code}  地区拆分和财务费用都拿不到，留空")
                 continue
             with engine.begin() as conn:
                 conn.execute(text(
-                    "UPDATE stock_fundamentals SET overseas_pct=:p, "
-                    "overseas_asof=:a WHERE code=:c"),
-                    {"p": r["pct"], "a": r["asof"], "c": code})
+                    "UPDATE stock_fundamentals SET overseas_pct=:p, overseas_asof=:a, "
+                    "fin_exp_cur=:fc, fin_exp_prev=:fp, fin_exp_rev_pct=:fr, "
+                    "fin_exp_asof=:fa, fin_exp_kind=:fk, fx_change_pct=:fx WHERE code=:c"),
+                    {"p": (r or {}).get("pct"), "a": (r or {}).get("asof"),
+                     "fc": (sw or {}).get("cur"), "fp": (sw or {}).get("prev"),
+                     "fr": (sw or {}).get("delta_rev_pct"),
+                     "fa": (sw or {}).get("asof"), "fk": (sw or {}).get("kind"),
+                     "fx": fx, "c": code})
             stat["done"] += 1
-            print(f"  ✅ {code}  海外 {r['pct']}%  （{r['asof']}）")
+            print(f"  ✅ {code}  海外 {(r or {}).get('pct')}%  "
+                  f"财务费用增量/营收 {(sw or {}).get('delta_rev_pct')}%")
         except Exception as e:
             stat["failed"] += 1
             print(f"  ❌ {code}: {type(e).__name__}")

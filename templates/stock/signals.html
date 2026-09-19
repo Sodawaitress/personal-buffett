@@ -140,6 +140,22 @@
         {% if overseas.asof %}<span class="ovs-asof">{{ overseas.asof }}</span>{% endif %}
       </div>
       <p class="ovs-mean">{{ overseas.meaning }}</p>
+
+      {# US-217：公司自己报的数，替掉估算。只说财务费用，不说汇兑损益 #}
+      {% if overseas.swing %}
+      <div class="ovs-swing{{ ' ovs-swing-flip' if overseas.swing.flipped }}">
+        <div class="ovs-swing-head">
+          <span class="ovs-swing-title">汇率打到账上多少</span>
+          {% if overseas.swing.fx %}<span class="ovs-swing-fx">{{ overseas.swing.fx }}</span>{% endif %}
+        </div>
+        <div class="ovs-swing-num">{{ overseas.swing.headline }}</div>
+        <div class="ovs-swing-detail">财务费用 {{ overseas.swing.detail }}</div>
+        {% if overseas.swing.flip %}
+        <div class="ovs-swing-flipnote">{{ overseas.swing.flip }}</div>
+        {% endif %}
+        <p class="ovs-swing-caveat">⚠️ {{ overseas.swing.caveat }}</p>
+      </div>
+      {% endif %}
       <details class="ovs-why">
         <summary>这个数能说明什么</summary>
         <ul>
