@@ -381,3 +381,104 @@ def pending_layer(overseas_pct, fx_pending_pct, asof_label=None,
             "name": "This period", "sub": "not yet reported",
             "value": f"{drag:+.1f}%", "tag": "estimate",
             "detail": f"CNY {fx_pending_pct:+.1f}% × {overseas_pct}% overseas"}
+
+
+# ── 两个区：市场看过的 / 还没看到的（US-220）──────────────────────────
+#
+# 用户：「不讲 而是分区 一个区是消化掉的消息 一个区是没消化掉的
+#         没消化掉的按两个方式排 影响程度 和确信度」
+#
+# 比我提的方案好得多。我原本打算在估值卡旁边**加一句话解释**
+# 「它为什么看起来贵」—— 那还是把最重要的区分当成了脚注。
+#
+# **「市场看过没看过」应该是主轴。** 它直接回答用户前一个批评
+# （「你这些都是事后分析了，市场预期已经搞了」）：
+# 看过的那些，价值在于**解释现在的价格**；
+# 没看过的那些，才是还可能动价格的部分。
+#
+# ## 「已消化」的判据必须可观测
+#
+# 我们无法知道市场**是否正确定价**了一条消息。能观测的只有
+# **它有没有被公开、什么时候公开的**。所以分区判据是「已公布/未公布」，
+# 文案写「市场已经看过」而不是「市场已经消化」——
+# 后者是对市场行为的断言，我们没有证据。
+#
+# ## 没消化区的两个维度
+#
+#   影响程度  impact   占营收的百分比，可比
+#   确信度    conf     high=报出来的数 / mid=公开数据的算术 / low=需要行为假设
+#
+# 两个维度**分开存**，因为排序方式由用户选，不由我们定。
+
+_CONF_RANK = {"high": 3, "mid": 2, "low": 1}
+_CONF_ZH = {"high": "高", "mid": "中", "low": "低"}
+_CONF_EN = {"high": "high", "mid": "medium", "low": "low"}
+
+
+def fx_zones(overseas_pct=None, swing=None, rev_yoy=None, rev=None,
+             net_profit=None, fx_pending_pct=None, sort_by="impact",
+             locale="zh"):
+    """分两区返回。`sort_by` = "impact" | "conf"。"""
+    zh = locale != "en"
+    seen, unseen = [], []
+
+    if swing and swing.get("delta_rev_pct") is not None:
+        item = {"key": "fin_exp", "impact": abs(swing["delta_rev_pct"]),
+                "conf": "high",
+                "name": "财务费用恶化" if zh else "finance cost worsened",
+                "value": "占营收 %+.2f%%" % swing["delta_rev_pct"],
+                "when": swing.get("asof")}
+        # 利润被压低多少 —— 这是「为什么市盈率看起来高」的直接答案
+        if net_profit and swing.get("cur") is not None \
+                and swing.get("prev") is not None:
+            adj = net_profit + (swing["cur"] - swing["prev"])
+            if adj > 0:
+                item["profit_drag"] = round((1 - net_profit / adj) * 100, 1)
+        seen.append(item)
+
+    if rev_yoy is not None:
+        seen.append({"key": "rev", "impact": abs(rev_yoy), "conf": "high",
+                     "name": "营收同比" if zh else "revenue YoY",
+                     "value": "%+.1f%%" % rev_yoy,
+                     "when": (swing or {}).get("asof")})
+
+    if overseas_pct is not None and fx_pending_pct is not None:
+        unseen.append({
+            "key": "fx_pending",
+            "impact": round(abs(overseas_pct / 100 * fx_pending_pct), 1),
+            "conf": "mid",
+            "name": "本期至今汇率累积" if zh else "FX so far this period",
+            "value": "%+.1f%%" % (overseas_pct / 100 * fx_pending_pct),
+            "why": ("汇率公开可查，但落到损益是近似" if zh
+                    else "rate is public; P&L mapping is approximate")})
+
+    if overseas_pct is not None and overseas_pct >= _MID:
+        unseen.append({
+            "key": "economic", "impact": None, "conf": "low",
+            "name": "东西贵了卖不动" if zh else "competitiveness",
+            "value": "算不出" if zh else "n/a",
+            "why": ("要等订单反应，无法量化" if zh
+                    else "depends on order response; not quantifiable")})
+
+    def _sort(items):
+        if sort_by == "conf":
+            return sorted(items, key=lambda x: (-_CONF_RANK.get(x["conf"], 0),
+                                                -(x["impact"] or -1)))
+        return sorted(items, key=lambda x: (-(x["impact"] if x["impact"]
+                                              is not None else -1),
+                                            -_CONF_RANK.get(x["conf"], 0)))
+
+    if not seen and not unseen:
+        return {}
+    cmap = _CONF_ZH if zh else _CONF_EN
+    for it in seen + unseen:
+        it["conf_label"] = cmap[it["conf"]]
+    return {
+        "seen": _sort(seen), "unseen": _sort(unseen), "sort_by": sort_by,
+        # ⚠️ 措辞：「看过」可观测（它公布了），「消化」不可观测（那是市场行为）
+        "seen_title": "市场已经看过" if zh else "Market has seen this",
+        "unseen_title": "市场还没看到" if zh else "Not yet reported",
+        "seen_hint": (("%s 财报已公布" % (seen[0].get("when") or ""))
+                      if zh and seen else None),
+        "unseen_hint": "要等下一份财报" if zh else "awaits next report",
+    }

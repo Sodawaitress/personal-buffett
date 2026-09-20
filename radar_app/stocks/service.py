@@ -4,11 +4,11 @@ from radar_app.stocks.presenter import present_job_payload, present_letter_paylo
 from radar_app.stocks.query import get_job, get_job_analysis, get_latest_daily_analysis, get_stock_page_bundle
 
 
-def build_stock_page_context(code, user_id):
+def build_stock_page_context(code, user_id, fx_sort="impact"):
     bundle = get_stock_page_bundle(code, user_id)
     if not bundle:
         return None
-    return present_stock_page(bundle)
+    return present_stock_page(bundle, fx_sort=fx_sort)
 
 
 def get_letter_payload(code):

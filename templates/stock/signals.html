@@ -141,27 +141,53 @@
       </div>
       <p class="ovs-mean">{{ overseas.meaning }}</p>
 
-      {# ══ US-218 汇率影响的三层。① 算不出也要显示，② 最醒目，③ 最淡 ══ #}
-      {% if overseas.fx %}
-      <div class="fxl">
-        <div class="fxl-head">
-          <span class="fxl-title">汇率影响的三层</span>
-          <span class="fxl-rate">{{ overseas.fx.fx_text }}</span>
-        </div>
-        {% for L in overseas.fx.layers %}
-        <div class="fxl-row fxl-{{ L.certainty }}{{ ' fxl-pending' if L.pending }}">
-          <span class="fxl-n">{{ '•' if L.pending else L.n }}</span>
-          <div class="fxl-body">
-            <div class="fxl-name">{{ L.name }}<span class="fxl-sub">{{ L.sub }}</span>
-              {% if L.tag %}<span class="fxl-tag">{{ L.tag }}</span>{% endif %}</div>
-            {% if L.value %}<div class="fxl-val">{{ L.value }}</div>{% endif %}
-            {% if L.detail %}<div class="fxl-detail">{{ L.detail }}</div>{% endif %}
-            {% if L.note %}<div class="fxl-note">{{ L.note }}</div>{% endif %}
+      {# ══ US-220 分两区：市场看过的 / 还没看到的。
+           用户指出这应该是主轴不是脚注 —— 看过的解释现在的价格，
+           没看过的才可能动价格。 ══ #}
+      {% if overseas.zones %}
+      {% set Z = overseas.zones %}
+      <div class="zn">
+        {% if Z.seen %}
+        <div class="zn-block zn-seen">
+          <div class="zn-head">
+            <span class="zn-title">{{ Z.seen_title }}</span>
+            {% if Z.seen_hint %}<span class="zn-hint">{{ Z.seen_hint }}</span>{% endif %}
           </div>
+          {% for it in Z.seen %}
+          <div class="zn-row">
+            <span class="zn-name">{{ it.name }}</span>
+            <span class="zn-val">{{ it.value }}</span>
+            <span class="zn-conf zn-conf-{{ it.conf }}">确信{{ it.conf_label }}</span>
+          </div>
+          {% if it.profit_drag %}
+          <div class="zn-sub">利润被压低约 {{ it.profit_drag }}% —— 市盈率因此偏高</div>
+          {% endif %}
+          {% endfor %}
         </div>
-        {% endfor %}
-        <p class="fxl-caveat">⚠️ 第②层的财务费用 = 利息 + 汇兑 + 手续费，<b>拆不开</b>。
-          单独的汇兑那一项，财报接口拿不到。</p>
+        {% endif %}
+
+        {% if Z.unseen %}
+        <div class="zn-block zn-unseen">
+          <div class="zn-head">
+            <span class="zn-title">{{ Z.unseen_title }}</span>
+            <span class="zn-hint">{{ Z.unseen_hint }}</span>
+            <span class="zn-sort">
+              <a href="?fxsort=impact" class="{{ 'on' if Z.sort_by == 'impact' }}">按影响</a>
+              <a href="?fxsort=conf" class="{{ 'on' if Z.sort_by == 'conf' }}">按确信度</a>
+            </span>
+          </div>
+          {% for it in Z.unseen %}
+          <div class="zn-row">
+            <span class="zn-name">{{ it.name }}</span>
+            <span class="zn-val">{{ it.value }}</span>
+            <span class="zn-conf zn-conf-{{ it.conf }}">确信{{ it.conf_label }}</span>
+          </div>
+          {% if it.why %}<div class="zn-sub">{{ it.why }}</div>{% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+        <p class="zn-caveat">⚠️「看过」指的是<b>已经公布</b>，不是市场一定定价对了。
+          财务费用 = 利息 + 汇兑 + 手续费，拆不开。</p>
       </div>
       {% endif %}
 

@@ -40,8 +40,11 @@ def _demo_block():
 
 def register_stock_routes(app):
     def _stock_context(code):
-        context = build_stock_page_context(code, session['user_id'])
-        return context
+        # US-220：排序偏好走 query param，纯链接切换、不需要 JS ——
+        # 和本站其余部分的做法一致（渐进增强，手机上也稳）。
+        return build_stock_page_context(
+            code, session['user_id'],
+            fx_sort=request.args.get('fxsort', 'impact'))
 
     @app.route('/stock/<path:code>')
     @login_required

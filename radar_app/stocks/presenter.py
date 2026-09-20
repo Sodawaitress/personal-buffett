@@ -637,7 +637,13 @@ def _build_position_insight(watchlist_entry, price_52w, current_price):
     }
 
 
-def present_stock_page(bundle):
+def present_stock_page(bundle, fx_sort="impact"):
+    """`fx_sort` 由路由传入（US-220）。
+
+    **不在这里读 `request`** —— 那会把 presenter 绑上 Flask 上下文，
+    让它在测试里必须起一个 app context 才能跑。参数从外面传进来，
+    presenter 保持纯函数。
+    """
     fund = bundle["fund"]
     signals = fund.get("signals", {}) if fund else {}
     annual = fund.get("annual", []) if fund else []
@@ -838,15 +844,18 @@ def present_stock_page(bundle):
                 overseas["swing"] = {**_sw,
                                      **_sw_desc(_sw, _f.get("fx_change_pct"), locale)}
             # US-218 三层。视觉层级由 certainty 驱动：越不确定越淡。
-            from scripts.overseas_exposure import fx_layers as _fx_layers
-            overseas["fx"] = _fx_layers(
-                _f.get("overseas_pct"),
-                overseas.get("swing"),
-                _f.get("rev_yoy"),
-                _f.get("fx_change_pct"), locale,
+            # US-220 分两区：市场看过的 / 还没看到的。
+            # 用户指出「已消化 vs 没消化」应该是主轴，不是脚注 ——
+            # 看过的解释现在的价格，没看过的才可能动价格。
+            from scripts.overseas_exposure import fx_zones as _fx_zones
+            overseas["zones"] = _fx_zones(
+                _f.get("overseas_pct"), overseas.get("swing"),
+                _f.get("rev_yoy"), rev=_f.get("rev_h1"),
+                net_profit=_f.get("net_profit_h1"),
                 fx_pending_pct=_f.get("fx_pending_pct"),
-                pending_label=("年报明年 4 月才披露"
-                               if locale != "en" else None)) or None
+                sort_by=(fx_sort if fx_sort in ("impact", "conf")
+                         else "impact"),
+                locale=locale) or None
         except Exception:
             overseas = None
 

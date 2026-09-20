@@ -262,74 +262,90 @@ def test_no_waterfall_chart():
     本站主要读者是年长非专业的手机用户 —— 用现有的横条 + 文字。
     """
     tpl = open("templates/stock/signals.html", encoding="utf-8").read()
+    seg = tpl[tpl.index("US-220"):tpl.index("US-220") + 3000]
     for bad in ("waterfall", "瀑布图", "<canvas", "<svg"):
-        assert bad not in tpl[tpl.index("US-218"):tpl.index("US-218") + 2500], \
-            f"引入了新的图表语言: {bad}"
+        assert bad not in seg, f"引入了新的图表语言: {bad}"
 
 
-def test_card_renders_three_layers():
+def test_card_renders_two_zones():
+    """US-220：两个区都要渲染，而且排序切换是**纯链接**（不需要 JS）。"""
     from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from scripts.overseas_exposure import fx_zones
     from tests.test_volatility_profile import _extract_block
-    from scripts.overseas_exposure import fx_layers
     env = Environment(loader=FileSystemLoader("templates"),
                       autoescape=select_autoescape(["html"]))
     seg = _extract_block("templates/stock/signals.html", "overseas")
     ov = {"pct": 83.5, "asof": "截至 2026-06-30 财报",
           "headline": "海外为主 · 汇率影响大",
-          "figure": "海外 83.5% · 国内 16.5%",
-          "meaning": "人民币每升值 1%…",
-          "fx": fx_layers(83.5, _SW, 24.9, 5.4)}
+          "figure": "海外 83.5% · 国内 16.5%", "meaning": "…",
+          "zones": fx_zones(83.5, _SW, 24.9, rev=54.1, net_profit=9.90,
+                            fx_pending_pct=5.8)}
     html = env.from_string(seg).render(overseas=ov)
-    assert "订单层" in html and "账面层" in html and "生意层" in html
-    assert "fxl-unavailable" in html and "fxl-measured" in html and "fxl-estimated" in html
-    assert "拆不开" in html
+    assert "市场已经看过" in html and "市场还没看到" in html
+    assert "zn-seen" in html and "zn-unseen" in html
+    assert "?fxsort=impact" in html and "?fxsort=conf" in html
+    assert "利润被压低约 31.5%" in html, "没说明市盈率为什么看起来高"
+    assert "已经公布" in html, "「看过」没有被限定成可观测的意思"
 
 
-# ── US-219 本期至今：唯一不是事后分析的那一层 ──────────────────────
+# ── US-220 分区 ───────────────────────────────────────────────────
 
-def test_pending_layer_exists_and_is_first():
-    """用户的批评：「你这些都是事后分析了，已经涨了的，市场预期已经搞了」。
+def test_zones_split_by_published_not_by_priced():
+    """**「已消化」的判据必须可观测。**
 
-    **对。** 财务费用来自 2026 中报，8 月就公布了。
-    但汇率每天可观测，本期的账要等下一份财报 ——
-    这一段卡在「已经发生在账上」和「还没人报出来」之间。
+    我们无法知道市场是否**正确定价**了一条消息，能观测的只有
+    它有没有被公开。所以文案是「市场已经看过」（= 已公布），
+    不是「市场已经消化」—— 后者是对市场行为的断言，我们没有证据。
     """
-    from scripts.overseas_exposure import fx_layers
-    r = fx_layers(83.5, _SW, 24.9, 5.4, fx_pending_pct=5.8)
-    assert r["has_pending"]
-    first = r["layers"][0]
-    assert first["pending"] is True
-    assert first["n"] == 0, "没排在最前面 —— 最新的应该先看到"
+    from scripts.overseas_exposure import fx_zones
+    z = fx_zones(83.5, _SW, 24.9, net_profit=9.90, fx_pending_pct=5.8)
+    assert z["seen_title"] == "市场已经看过"
+    assert "消化" not in z["seen_title"], "断言了市场行为"
+    assert all(i["key"] in ("fin_exp", "rev") for i in z["seen"])
+    assert all(i["key"] in ("fx_pending", "economic") for i in z["unseen"])
 
 
-def test_pending_is_visually_as_faint_as_the_estimate():
-    """**位置编码时间，强度编码确定性。**
+def test_unseen_sorts_two_ways():
+    """排序方式由用户选，不由我们定 —— 所以两个维度分开存。"""
+    from scripts.overseas_exposure import fx_zones
+    by_i = fx_zones(83.5, _SW, 24.9, net_profit=9.9, fx_pending_pct=5.8,
+                    sort_by="impact")["unseen"]
+    by_c = fx_zones(83.5, _SW, 24.9, net_profit=9.9, fx_pending_pct=5.8,
+                    sort_by="conf")["unseen"]
+    assert [i["key"] for i in by_i][0] == "fx_pending"     # 影响最大
+    assert [i["key"] for i in by_c][0] == "fx_pending"     # 确信度也最高
+    for i in by_i:
+        assert "impact" in i and "conf" in i, "两个维度必须都在"
 
-    它最新，所以排最前；但它是估算，所以和第③层一样淡。
-    如果因为「最新」就让它醒目，读的人会把它当成信号 ——
-    而实测海外占比与 12 个月超额收益 r = −0.18，它不预测收益。
+
+def test_unquantifiable_item_sorts_last_not_dropped():
+    """「算不出」的那条要留着 —— 它的存在本身是信息（US-218 同一条原则），
+    但排序时不能假装它影响为 0。"""
+    from scripts.overseas_exposure import fx_zones
+    z = fx_zones(83.5, _SW, 24.9, net_profit=9.9, fx_pending_pct=5.8)
+    eco = [i for i in z["unseen"] if i["key"] == "economic"]
+    assert eco, "无法量化的那条被丢掉了"
+    assert eco[0]["impact"] is None
+    assert z["unseen"][-1]["key"] == "economic", "算不出的应该排最后"
+
+
+def test_profit_drag_explains_why_pe_looks_high():
+    """用户：「已经发生的…应该归到现在股价偏高不是吗」。
+
+    对：汇率打掉利润 → 同样股价 → 市盈率显得高。
+    这条数值要出现在「已经看过」区，因为它解释的是**当前价格**。
     """
-    from scripts.overseas_exposure import fx_layers
-    r = fx_layers(83.5, _SW, 24.9, 5.4, fx_pending_pct=5.8)
-    pending = r["layers"][0]
-    est = [L for L in r["layers"] if L["n"] == 3][0]
-    assert pending["certainty"] == est["certainty"] == "estimated"
-    assert pending["tag"] == "估算"
+    from scripts.overseas_exposure import fx_zones
+    z = fx_zones(83.5, _SW, 24.9, net_profit=9.90, fx_pending_pct=5.8)
+    fin = [i for i in z["seen"] if i["key"] == "fin_exp"][0]
+    assert fin["profit_drag"] == pytest.approx(31.5, abs=0.3)
 
 
-def test_pending_arithmetic():
-    from scripts.overseas_exposure import pending_layer
-    p = pending_layer(83.5, 5.8)
-    assert p["value"] == "+4.8%"          # 83.5% × 5.8%
-    assert pending_layer(83.5, None) is None
-    assert pending_layer(None, 5.8) is None
-
-
-def test_pending_compares_the_same_calendar_window():
-    """**必须对齐同一段日历窗口** —— 拿「今年 7-9 月」去比「去年 7-12 月」，
-    会把季节性当成汇率变动。本仓那族错误的又一个版本。"""
+def test_presenter_stays_pure():
+    """`fx_sort` 从路由传进来，**presenter 不读 request** ——
+    否则它会绑上 Flask 上下文，测试里必须起 app context 才能跑。"""
     import inspect
-    from scripts import backfill_overseas as b
-    src = inspect.getsource(b._fx_pending)
-    assert "today.replace(year=yy)" in src, "上期窗口没有对齐到同一天"
-    assert "m0 = 7 if today.month >= 7 else 1" in src, "报告期起点没有跟着半年走"
+    from radar_app.stocks import presenter
+    src = inspect.getsource(presenter.present_stock_page)
+    assert "fx_sort" in inspect.signature(presenter.present_stock_page).parameters
+    assert "request.args" not in src, "presenter 直接读了 request"

@@ -3074,3 +3074,29 @@
 .fxl-pending { border-left:2px dotted var(--ink-faint); padding-left:6px;
   margin-left:-8px; }
 .fxl-pending .fxl-n { color:var(--ink-muted); font-weight:700; }
+
+/* ── US-220 两个区：市场看过的 / 还没看到的。
+   用户指出这应该是主轴不是脚注。
+   「看过」区用实线左边（已定稿），「没看到」区用虚线（还在动）。 ── */
+.zn { margin-top:10px; padding-top:9px; border-top:1px dashed var(--rule); }
+.zn-block { margin-bottom:10px; padding-left:8px; }
+.zn-seen { border-left:2px solid var(--rule); }
+.zn-unseen { border-left:2px dotted var(--ink-faint); }
+.zn-head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:5px; }
+.zn-title { font-size:11px; font-weight:600; color:var(--ink); }
+.zn-unseen .zn-title { color:var(--ink-muted); }
+.zn-hint { font-size:10px; color:var(--ink-faint); }
+.zn-sort { margin-left:auto; font-size:10px; }
+.zn-sort a { color:var(--ink-faint); text-decoration:none; padding:0 4px; }
+.zn-sort a.on { color:var(--ink); font-weight:600; text-decoration:underline; }
+
+.zn-row { display:flex; align-items:baseline; gap:8px; font-size:11px; padding:2px 0; }
+.zn-name { color:var(--ink); }
+.zn-unseen .zn-name { color:var(--ink-muted); }
+.zn-val { margin-left:auto; font-variant-numeric:tabular-nums; font-weight:600; }
+.zn-conf { font-size:9px; padding:1px 5px; border-radius:7px; flex:none; }
+.zn-conf-high { background:var(--rule); color:var(--ink); }
+.zn-conf-mid  { background:var(--rule); color:var(--ink-muted); }
+.zn-conf-low  { background:transparent; color:var(--ink-faint); border:1px dotted var(--rule); }
+.zn-sub { font-size:10px; color:var(--ink-faint); line-height:1.6; padding-left:2px; margin-bottom:3px; }
+.zn-caveat { font-size:10px; color:var(--ink-faint); line-height:1.6; margin:6px 0 0; }
