@@ -3065,3 +3065,12 @@
 
 .fxl-caveat { font-size:10px; color:var(--ink-faint); line-height:1.6;
   margin:8px 0 0; padding-top:6px; border-top:1px dashed var(--rule); }
+
+/* US-219 本期至今（还没进财报）。
+   **位置 = 时间，视觉强度 = 确定性** —— 它排最前面（最新），
+   但和第③层一样淡（同样是估算）。两个维度两种编码，
+   否则「最新」会被读成「最重要」。
+   左侧虚线边表示「还在累积，没结算」。 */
+.fxl-pending { border-left:2px dotted var(--ink-faint); padding-left:6px;
+  margin-left:-8px; }
+.fxl-pending .fxl-n { color:var(--ink-muted); font-weight:700; }

@@ -35,6 +35,36 @@ def _fx_change():
         return None
 
 
+def _fx_pending():
+    """本期至今 vs 去年同一段日历窗口。
+
+    **必须对齐同一段日历窗口** —— 拿「今年 7-9 月」去比「去年 7-12 月」，
+    会把季节性当成汇率变动。本仓那族错误的又一个版本。
+    """
+    try:
+        import datetime as dt
+
+        import akshare as ak
+        today = dt.date.today()
+        df = ak.currency_boc_sina(symbol="美元", start_date="20250101",
+                                  end_date=today.strftime("%Y%m%d"))
+        s = df.dropna(subset=["中行汇买价"]).set_index("日期")["中行汇买价"]
+        m0 = 7 if today.month >= 7 else 1          # 本报告期起点
+        y = today.year
+
+        def avg(yy):
+            a = [v for d, v in s.items()
+                 if dt.date(yy, m0, 1) <= d <= today.replace(year=yy)]
+            return sum(a) / len(a) if a else None
+        cur, prev = avg(y), avg(y - 1)
+        if not cur or not prev:
+            return None, None
+        label = ("年报明年 4 月才披露" if m0 == 7 else "中报今年 8 月才披露")
+        return round((1 - cur / prev) * 100, 1), label
+    except Exception:
+        return None, None
+
+
 def run(limit: int = 40, refresh: bool = False) -> dict:
     import akshare as ak
 
@@ -46,6 +76,7 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
             "SELECT code, overseas_pct FROM stock_fundamentals")).mappings().all()
 
     fx = _fx_change()          # 市场级，一次算好给所有股票用
+    fx_pend, _ = _fx_pending()
     todo = [r["code"] for r in rows
             if r["code"] and r["code"].isdigit() and len(r["code"]) == 6
             and (refresh or r["overseas_pct"] is None)]
@@ -78,7 +109,7 @@ def run(limit: int = 40, refresh: bool = False) -> dict:
                      "fc": (sw or {}).get("cur"), "fp": (sw or {}).get("prev"),
                      "fr": (sw or {}).get("delta_rev_pct"),
                      "fa": (sw or {}).get("asof"), "fk": (sw or {}).get("kind"),
-                     "fx": fx, "ry": rev_yoy, "c": code})
+                     "fx": fx, "ry": rev_yoy, "fxp": fx_pend, "c": code})
             stat["done"] += 1
             print(f"  ✅ {code}  海外 {(r or {}).get('pct')}%  "
                   f"财务费用增量/营收 {(sw or {}).get('delta_rev_pct')}%")

@@ -281,7 +281,7 @@ def constant_currency(rev_yoy, overseas_pct, fx_pct):
 
 
 def fx_layers(overseas_pct=None, swing=None, rev_yoy=None, fx_pct=None,
-              locale: str = "zh") -> dict:
+              locale: str = "zh", fx_pending_pct=None, pending_label=None) -> dict:
     """三层装配。每层带 `certainty`：measured / estimated / unavailable。
 
     `certainty` 直接驱动视觉层级 —— 越不确定越淡。
@@ -292,7 +292,13 @@ def fx_layers(overseas_pct=None, swing=None, rev_yoy=None, fx_pct=None,
     taken = (round(cc - rev_yoy, 1)
              if cc is not None and rev_yoy is not None else None)
     zh = locale != "en"
-    layers = [
+    layers = []
+    # US-219：最新的排最前（位置 = 时间），但视觉上和第③层一样淡
+    # （强度 = 确定性）。两个维度两种编码，否则「最新」会被读成「最重要」。
+    _p = pending_layer(overseas_pct, fx_pending_pct, pending_label, locale)
+    if _p:
+        layers.append(_p)
+    layers += [
         {"n": 1, "certainty": "unavailable",
          "name": "订单层" if zh else "Transaction",
          "sub": "签约到收款之间" if zh else "contract → settlement",
@@ -324,6 +330,54 @@ def fx_layers(overseas_pct=None, swing=None, rev_yoy=None, fx_pct=None,
             "tag": "估算" if zh else "estimate",
         })
     return {"fx_pct": fx_pct, "layers": layers,
+            "has_pending": bool(_p),
             "fx_text": ((f"同期人民币升值 {fx_pct:.1f}%" if fx_pct > 0
                          else f"同期人民币贬值 {abs(fx_pct):.1f}%") if zh
                         else f"CNY {'+' if fx_pct > 0 else ''}{fx_pct:.1f}%")}
+
+
+def pending_layer(overseas_pct, fx_pending_pct, asof_label=None,
+                  locale: str = "zh"):
+    """本期至今、**还没进任何财报**的那一段（US-219）。
+
+    用户的批评：「你这些都是事后分析了，已经涨了的，市场预期已经搞了不是吗」。
+
+    **对。** 财务费用来自 2026 中报，8 月就公布了，市场早消化了。
+    但汇率是**每天可观测**的，而本期的账要等下一份财报才披露 ——
+    这一段卡在「已经发生在账上」和「还没人报出来」之间。
+
+    ## 但它不是买卖信号，三条限制必须跟着一起显示
+
+    ① 汇率是公开的，这个算术谁都能做，别假设市场没注意到
+    ② 实测海外占比与 12 个月超额收益 **r = −0.18**，几乎是噪音 ——
+       海外占比最高的浙江鼎力还是唯一跑赢的那只
+    ③ 它是估算，真实数字要等年报
+
+    **它防的不是「错过机会」，是「归错因」。** 归错因会让人抱着一个
+    坏理由继续持有 —— 比如以为阳光电源跌是因为汇率，等汇率转向就会涨，
+    而实际上剔掉汇率它还是 −25%。
+
+    ## 视觉编码：位置 = 时间，强度 = 确定性
+
+    它排在最前面（最新），但**和第③层一样淡**（同样是估算）。
+    两个维度用两种编码，互不干扰 —— 否则「最新」会被读成「最重要」。
+    """
+    if overseas_pct is None or fx_pending_pct is None:
+        return None
+    drag = round(overseas_pct / 100 * fx_pending_pct, 1)
+    zh = locale != "en"
+    if zh:
+        return {
+            "n": 0, "certainty": "estimated", "pending": True,
+            "name": "本期至今", "sub": "还没进财报",
+            "value": f"{drag:+.1f}%",
+            "detail": (f"人民币已{'升值' if fx_pending_pct > 0 else '贬值'} "
+                       f"{abs(fx_pending_pct):.1f}%，按海外 {overseas_pct}% 推算"),
+            "note": (f"约 {abs(drag):.1f}% 的{'拖累' if drag > 0 else '助力'}"
+                     f"正在累积" + (f"，{asof_label}" if asof_label else "")),
+            "tag": "估算",
+        }
+    return {"n": 0, "certainty": "estimated", "pending": True,
+            "name": "This period", "sub": "not yet reported",
+            "value": f"{drag:+.1f}%", "tag": "estimate",
+            "detail": f"CNY {fx_pending_pct:+.1f}% × {overseas_pct}% overseas"}

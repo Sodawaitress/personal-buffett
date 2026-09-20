@@ -149,8 +149,8 @@
           <span class="fxl-rate">{{ overseas.fx.fx_text }}</span>
         </div>
         {% for L in overseas.fx.layers %}
-        <div class="fxl-row fxl-{{ L.certainty }}">
-          <span class="fxl-n">{{ L.n }}</span>
+        <div class="fxl-row fxl-{{ L.certainty }}{{ ' fxl-pending' if L.pending }}">
+          <span class="fxl-n">{{ '•' if L.pending else L.n }}</span>
           <div class="fxl-body">
             <div class="fxl-name">{{ L.name }}<span class="fxl-sub">{{ L.sub }}</span>
               {% if L.tag %}<span class="fxl-tag">{{ L.tag }}</span>{% endif %}</div>

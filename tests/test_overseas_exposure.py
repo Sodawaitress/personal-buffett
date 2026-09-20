@@ -283,3 +283,53 @@ def test_card_renders_three_layers():
     assert "订单层" in html and "账面层" in html and "生意层" in html
     assert "fxl-unavailable" in html and "fxl-measured" in html and "fxl-estimated" in html
     assert "拆不开" in html
+
+
+# ── US-219 本期至今：唯一不是事后分析的那一层 ──────────────────────
+
+def test_pending_layer_exists_and_is_first():
+    """用户的批评：「你这些都是事后分析了，已经涨了的，市场预期已经搞了」。
+
+    **对。** 财务费用来自 2026 中报，8 月就公布了。
+    但汇率每天可观测，本期的账要等下一份财报 ——
+    这一段卡在「已经发生在账上」和「还没人报出来」之间。
+    """
+    from scripts.overseas_exposure import fx_layers
+    r = fx_layers(83.5, _SW, 24.9, 5.4, fx_pending_pct=5.8)
+    assert r["has_pending"]
+    first = r["layers"][0]
+    assert first["pending"] is True
+    assert first["n"] == 0, "没排在最前面 —— 最新的应该先看到"
+
+
+def test_pending_is_visually_as_faint_as_the_estimate():
+    """**位置编码时间，强度编码确定性。**
+
+    它最新，所以排最前；但它是估算，所以和第③层一样淡。
+    如果因为「最新」就让它醒目，读的人会把它当成信号 ——
+    而实测海外占比与 12 个月超额收益 r = −0.18，它不预测收益。
+    """
+    from scripts.overseas_exposure import fx_layers
+    r = fx_layers(83.5, _SW, 24.9, 5.4, fx_pending_pct=5.8)
+    pending = r["layers"][0]
+    est = [L for L in r["layers"] if L["n"] == 3][0]
+    assert pending["certainty"] == est["certainty"] == "estimated"
+    assert pending["tag"] == "估算"
+
+
+def test_pending_arithmetic():
+    from scripts.overseas_exposure import pending_layer
+    p = pending_layer(83.5, 5.8)
+    assert p["value"] == "+4.8%"          # 83.5% × 5.8%
+    assert pending_layer(83.5, None) is None
+    assert pending_layer(None, 5.8) is None
+
+
+def test_pending_compares_the_same_calendar_window():
+    """**必须对齐同一段日历窗口** —— 拿「今年 7-9 月」去比「去年 7-12 月」，
+    会把季节性当成汇率变动。本仓那族错误的又一个版本。"""
+    import inspect
+    from scripts import backfill_overseas as b
+    src = inspect.getsource(b._fx_pending)
+    assert "today.replace(year=yy)" in src, "上期窗口没有对齐到同一天"
+    assert "m0 = 7 if today.month >= 7 else 1" in src, "报告期起点没有跟着半年走"

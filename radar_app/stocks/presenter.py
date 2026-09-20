@@ -843,7 +843,10 @@ def present_stock_page(bundle):
                 _f.get("overseas_pct"),
                 overseas.get("swing"),
                 _f.get("rev_yoy"),
-                _f.get("fx_change_pct"), locale) or None
+                _f.get("fx_change_pct"), locale,
+                fx_pending_pct=_f.get("fx_pending_pct"),
+                pending_label=("年报明年 4 月才披露"
+                               if locale != "en" else None)) or None
         except Exception:
             overseas = None
 

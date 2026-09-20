@@ -829,6 +829,9 @@ def _migrate():
         ("stock_fundamentals", "fx_change_pct",   "REAL"),
         # US-218 第③层「生意层」要用：恒定汇率增速 ≈ 报告增速 + 海外占比×汇率变动
         ("stock_fundamentals", "rev_yoy",          "REAL"),
+        # US-219：本期至今、还没进任何财报的那一段汇率变动。
+        # 用户指出前面做的全是已公布财报的事后分解，市场早消化了。
+        ("stock_fundamentals", "fx_pending_pct",   "REAL"),
     ]
     # Each ALTER TABLE gets its own transaction so one failure doesn't abort the rest
     # (PostgreSQL aborts the whole transaction on error; SQLite does not).
