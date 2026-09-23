@@ -1,86 +1,72 @@
 [
   {
-    "code": "300476",
-    "name": "胜宏科技",
-    "date": "2026-08-28",
-    "advice": "现价不追。¥240–¥245分批建仓30%，止损¥228。5次现场参观（含深交所专场）+ 半年报净利+33.3% + 摩根大通瑞银新进十大股东——本轮最完整的机构信号组合。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 77,
-      "short_change_pct": 24.1,
-      "survey_count_30d": 5,
-      "price": 263.05
-    }
-  },
-  {
-    "code": "600111",
-    "name": "北方稀土",
-    "date": "2026-08-28",
-    "advice": "¥38.50–¥40附近可建仓20-30%，止损¥36。8次调研全场密度最强 + 半年报净利+120%，等出口配额/战略储备消息催化。别追¥42以上（现金流质量瑕疵限制估值上限）。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 47,
-      "short_change_pct": 4.0,
-      "survey_count_30d": 8,
-      "price": 40.91
-    }
-  },
-  {
     "code": "688008",
     "name": "澜起科技",
-    "date": "2026-08-28",
-    "advice": "不追高。涨停后2-3天有兑现节奏；未持仓等回调至¥200附近，已持仓可分批兑现锁利。上月249家调研已44天无跟进，机构主动加码信号不新鲜。",
+    "date": "2026-09-23",
+    "advice": "未持仓等回调到 ¥205-¥212 分批建仓 10-15%，跌破 ¥195 止损；已持仓继续持有但不追今日高位",
     "signals": {
       "grade": "B-",
       "conclusion": "观察",
       "quant_score": 84,
-      "short_change_pct": 7.8,
-      "survey_count_30d": 2,
-      "price": 221.22
-    }
-  },
-  {
-    "code": "688041",
-    "name": "海光信息",
-    "date": "2026-08-28",
-    "advice": "可¥235–¥240分批建仓30%，止损¥220。新入库质量最高（q93）国产CPU龙头，半年报净利+49.69% + 8-17特定对象调研20家 + 昨日杠杆资金净买入超亿。信创政策依赖限制仓位（≤总仓 5-8%）。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 93,
-      "short_change_pct": 9.7,
-      "survey_count_30d": 1,
-      "price": 245.97
-    }
-  },
-  {
-    "code": "300274",
-    "name": "阳光电源",
-    "date": "2026-09-01",
-    "advice": "不追跌。等 9 月是否有大机构现场调研公告（那才是真信号）。已持仓者可择机减半，等季度报再看。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": -42.1,
+      "short_change_pct": -2.8,
       "survey_count_30d": 3,
-      "price": 91.5
+      "price": 221.83
     }
   },
   {
-    "code": "688256",
-    "name": "寒武纪",
-    "date": "2026-09-01",
-    "advice": "¥1112 不追高。回调到 ¥900 以下再分批。已持仓可减仓 20%-30% 锁定利润。",
+    "code": "002594",
+    "name": "比亚迪",
+    "date": "2026-09-23",
+    "advice": "¥82-¥85 分批建仓 15-20%，跌破 ¥78 止损；已持仓可继续持有等待",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 41,
+      "short_change_pct": 10.2,
+      "survey_count_30d": 12,
+      "price": 86.58
+    }
+  },
+  {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-09-23",
+    "advice": "未持仓可 ¥11.4-¥11.6 小仓位试仓 10%，跌破 ¥11.0 止损；已持仓继续持有分红",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
-      "quant_score": 72,
-      "short_change_pct": 36.2,
-      "survey_count_30d": 0,
-      "price": 1112.18
+      "quant_score": 73,
+      "short_change_pct": 68.6,
+      "survey_count_30d": 3,
+      "price": 11.71
+    }
+  },
+  {
+    "code": "002415",
+    "name": "海康威视",
+    "date": "2026-09-23",
+    "advice": "未持仓可 ¥32-¥32.5 分批建仓 15-20%，跌破 ¥31 止损；已持仓继续持有",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 67,
+      "short_change_pct": -18.1,
+      "survey_count_30d": 2,
+      "price": 33.18
+    }
+  },
+  {
+    "code": "INTC",
+    "name": "Intel",
+    "date": "2026-09-23",
+    "advice": "⚠ 不追今日 +12%。等回调到 $105-$110 分批建仓 10-15%，跌破 $95 止损；已持仓可减仓 25-30% 锁利",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 52,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 121.78
     }
   },
   {
@@ -109,20 +95,6 @@
       "short_change_pct": 90.2,
       "survey_count_30d": 0,
       "price": 94.66
-    }
-  },
-  {
-    "code": "000001",
-    "name": "平安银行",
-    "date": "2026-09-03",
-    "advice": "¥11.90附近可小仓位建仓3-5%（占家庭仓位）、跌破¥11.30止损。防御型压舱石，慢慢加不要急。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 73,
-      "short_change_pct": 252.3,
-      "survey_count_30d": 2,
-      "price": 11.91
     }
   },
   {
@@ -266,20 +238,6 @@
     }
   },
   {
-    "code": "002415",
-    "name": "海康威视",
-    "date": "2026-09-09",
-    "advice": "未持仓可 ¥33-¥34 分批建仓 30-40% 家庭仓位，回调到 ¥32.5 加仓；止损 ¥31。控股股东增持+特定对象调研+今日 -3.5%逢跌进场型。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 67,
-      "short_change_pct": 22.2,
-      "survey_count_30d": 2,
-      "price": 33.65
-    }
-  },
-  {
     "code": "688235",
     "name": "百济神州",
     "date": "2026-09-09",
@@ -347,20 +305,6 @@
       "short_change_pct": null,
       "survey_count_30d": 1,
       "price": 15.43
-    }
-  },
-  {
-    "code": "INTC",
-    "name": "Intel Corporation",
-    "date": "2026-09-10",
-    "advice": "不追单日大涨。已持仓若冲上 $115（分析师均值）附近减仓 30%。未持仓等回调至 $100 以下再评估。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 52,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 104.47
     }
   },
   {
