@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-09-24",
+    "code": "300759",
+    "name": "康龙化成",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "融券余量单周暴增 +92.1%（10.5→20.2 万股）rank #7 top 5%；30 日仅 1 次调研；CDMO 新签订单虽增长但估值高位、空头集中押注",
+    "price_at_prediction": 45.02
+  },
+  {
+    "date": "2026-09-24",
+    "code": "002142",
+    "name": "宁波银行",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "全场最强前兆信号 5.16（3 次特定对象调研 + 融券同增 +25.9%多空同建仓多空博弈）+ A/80 便宜银行 ROE 13.1%",
+    "price_at_prediction": 34.72
+  }
+]

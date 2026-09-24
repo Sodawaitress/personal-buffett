@@ -1,5 +1,75 @@
 [
   {
+    "code": "600415",
+    "name": "小商品城",
+    "date": "2026-09-24",
+    "advice": "大跌 -8.78% 但仍 A/65 便宜；数据未见新利空；本次不建仓，观察下周止跌是否成型；若 ¥10.30 附近再跌 3-5% 且成交量放大则弃观察，¥10.60-¥10.80 反弹作试探小仓 5-8%。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 65,
+      "short_change_pct": 1.8,
+      "survey_count_30d": 0,
+      "price": 10.81
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-09-24",
+    "advice": "¥34-¥34.7 分批建仓 20-25%，回调到 ¥33.5 加仓，跌破 ¥32.5 止损。A/80 银行 + 便宜 + 最强前兆 5.16（3 次调研 + 融券同增看多空双向）。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 25.9,
+      "survey_count_30d": 3,
+      "price": 34.72
+    }
+  },
+  {
+    "code": "300759",
+    "name": "康龙化成",
+    "date": "2026-09-24",
+    "advice": "融券 top 5%（+92.1% rank #7），30 日仅 1 次调研；不建仓不加仓；已持仓可减 15-20% 锁利。CDMO 新签订单增长虽是长期利好，但短期空头集中押注需避风。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 69,
+      "short_change_pct": 92.1,
+      "survey_count_30d": 1,
+      "price": 45.02
+    }
+  },
+  {
+    "code": "2589.HK",
+    "name": "AUNTEA JENNY",
+    "date": "2026-09-24",
+    "advice": "不追高 +11.44%，等回调到 HK$70 以下再评估。港股茶饮竞争激烈，B+/80 是 4 年营收增速 27% 的成长股但估值数据不足，情绪追高风险大。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 80,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 77.95
+    }
+  },
+  {
+    "code": "SMCI",
+    "name": "Super Micro Computer, Inc.",
+    "date": "2026-09-24",
+    "advice": "未持仓可 $38-$40 分批建仓 10-15%，跌破 $36 止损。Vera Rubin 机架出货是硬催化 + AI 服务器需求真金；B+/77 质量合理估值合理。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 77,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 41.2
+    }
+  },
+  {
     "code": "688008",
     "name": "澜起科技",
     "date": "2026-09-23",
@@ -67,34 +137,6 @@
       "short_change_pct": null,
       "survey_count_30d": null,
       "price": 121.78
-    }
-  },
-  {
-    "code": "300760",
-    "name": "迈瑞医疗",
-    "date": "2026-09-02",
-    "advice": "未持仓可 ¥165–¥170 分批建 30% 底仓，跌到 ¥155 加仓。已持仓继续持有，别追高。不要把汇兑亏损当业务恶化。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 9.1,
-      "survey_count_30d": 1,
-      "price": 169.08
-    }
-  },
-  {
-    "code": "301611",
-    "name": "珂玛科技",
-    "date": "2026-09-02",
-    "advice": "回避。未持仓不建仓；已持仓者跌破 ¥90 严格止损。'高估值 + 空头累积 + 0 调研 + 散户杠杆'雏形，Q1 净利 -47.31%，站上自己都写'观察'。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 90,
-      "short_change_pct": 90.2,
-      "survey_count_30d": 0,
-      "price": 94.66
     }
   },
   {
@@ -389,20 +431,6 @@
       "short_change_pct": 241.5,
       "survey_count_30d": 2,
       "price": 9.92
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-09-16",
-    "advice": "¥34-¥36分批建仓15-20%，跌破¥33止损。A级+便宜+今日9-15刚有18家特定对象+电话会议调研，days_since_latest=0。防御型资金首选。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 36.8,
-      "survey_count_30d": 5,
-      "price": 35.16
     }
   },
   {
