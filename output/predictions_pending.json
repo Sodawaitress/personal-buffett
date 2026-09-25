@@ -1,20 +1,20 @@
 [
   {
-    "date": "2026-09-24",
+    "date": "2026-09-25",
+    "code": "002709",
+    "name": "天赐材料",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "业绩+968%但股价腰斩，机构空头 -42% 撤仓，PE 分位低—基本面/情绪明显背离，反弹概率大于继续跌",
+    "price_at_prediction": 31.76
+  },
+  {
+    "date": "2026-09-25",
     "code": "300759",
     "name": "康龙化成",
     "direction": "down",
     "horizon_days": 10,
-    "key_signal": "融券余量单周暴增 +92.1%（10.5→20.2 万股）rank #7 top 5%；30 日仅 1 次调研；CDMO 新签订单虽增长但估值高位、空头集中押注",
-    "price_at_prediction": 45.02
-  },
-  {
-    "date": "2026-09-24",
-    "code": "002142",
-    "name": "宁波银行",
-    "direction": "up",
-    "horizon_days": 10,
-    "key_signal": "全场最强前兆信号 5.16（3 次特定对象调研 + 融券同增 +25.9%多空同建仓多空博弈）+ A/80 便宜银行 ROE 13.1%",
-    "price_at_prediction": 34.72
+    "key_signal": "融券余量激增+92.1% 排前 4.2% 属真极端，同期调研仅 1 次；股价持续下跌中，空头扩仓 + 调研稀少组合不好",
+    "price_at_prediction": 43.5
   }
 ]
