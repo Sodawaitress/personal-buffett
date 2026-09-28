@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-09-28",
+    "code": "300308",
+    "name": "中际旭创",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "板块暴跌 -8.98% 但公司在密集回购护盘，情绪破坏但基本面未变，宽区间震荡",
+    "price_at_prediction": 815.40
+  },
+  {
+    "date": "2026-09-28",
+    "code": "603893",
+    "name": "瑞芯微",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "全 A 股最强前兆信号（8/1 现场参观 + 特定对象调研 + 融券 -64% 空头认输）× Q3 指引 +60~71%",
+    "price_at_prediction": 212.03
+  }
+]

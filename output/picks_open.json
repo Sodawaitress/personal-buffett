@@ -1,5 +1,75 @@
 [
   {
+    "code": "300308",
+    "name": "中际旭创",
+    "date": "2026-09-28",
+    "advice": "单日 -8.98% 不构成建仓信号，别接飞刀。已持仓可继续持有（回购托底）；未持仓等 ¥720-¥760 情绪出清再谈；跌破 ¥680 是趋势线破坏另议。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 86,
+      "short_change_pct": 15.7,
+      "survey_count_30d": 1,
+      "price": 815.4
+    }
+  },
+  {
+    "code": "600900",
+    "name": "长江电力",
+    "date": "2026-09-28",
+    "advice": "未持仓可 ¥28-¥28.8 分批建 15-20% 作为组合防御底仓，跌破 ¥27 止损。主要看股息（约 3.7%）不是股价。睡得着觉的股票，别指望翻倍。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 80,
+      "short_change_pct": -39.3,
+      "survey_count_30d": 0,
+      "price": 28.46
+    }
+  },
+  {
+    "code": "600406",
+    "name": "国电南瑞",
+    "date": "2026-09-28",
+    "advice": "未持仓可 ¥22-¥22.8 分批建 15%，跌破 ¥21 止损。AI 算力扩产 → 电网负荷压力 → 特高压/自动化设备的隐藏 β，涨得慢但确定性高。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 72,
+      "short_change_pct": -3.9,
+      "survey_count_30d": 0,
+      "price": 22.58
+    }
+  },
+  {
+    "code": "603893",
+    "name": "瑞芯微",
+    "date": "2026-09-28",
+    "advice": "未持仓可 ¥205-¥212 分批建 15% 试仓，跌破 ¥195 严格止损。已持仓继续持有。8/1 现场参观 + 融券 -64% + 涨停验证 = 全 A 股最强三层叠加。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": -64.4,
+      "survey_count_30d": 2,
+      "price": 212.03
+    }
+  },
+  {
+    "code": "002956",
+    "name": "西麦食品",
+    "date": "2026-09-28",
+    "advice": "未持仓可 ¥17.30-¥17.90 分批建 15-20%（正常仓位），跌破 ¥16 止损。家庭仓位的消费底仓，看行业增长稳定性和抗跌属性。（9/18 up 预言 Day 10 +3.18% 收官兑现）",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 66,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 17.84
+    }
+  },
+  {
     "code": "300759",
     "name": "康龙化成",
     "date": "2026-09-25",
@@ -210,20 +280,6 @@
     }
   },
   {
-    "code": "002956",
-    "name": "西麦食品",
-    "date": "2026-09-18",
-    "advice": "¥16.80-¥17.30 区间可以正常仓位（20-25%）建仓，跌破 ¥16 止损。这只不需要追高，正常配置就好。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 66,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 17.29
-    }
-  },
-  {
     "code": "000975",
     "name": "山金国际",
     "date": "2026-09-18",
@@ -361,20 +417,6 @@
       "short_change_pct": -3.7,
       "survey_count_30d": 0,
       "price": 158.86
-    }
-  },
-  {
-    "code": "300308",
-    "name": "中际旭创",
-    "date": "2026-09-15",
-    "advice": "未持仓等 ¥800 以下再观察。已持仓可持有（公司 4.9 亿元大额回购护盘 + FCC 靴子落地）。融券 +35% 有意义 + 22 天前电话会议 164 家（低质量调研）+ 价格贵，三层都提示分歧。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 86,
-      "short_change_pct": 35.6,
-      "survey_count_30d": 1,
-      "price": 873.0
     }
   },
   {
@@ -529,20 +571,6 @@
       "short_change_pct": 5.7,
       "survey_count_30d": 0,
       "price": 77.72
-    }
-  },
-  {
-    "code": "600885",
-    "name": "宏发股份",
-    "date": "2026-09-04",
-    "advice": "不追今日 +8.1% 涨幅。等回调 ¥33-¥34 再考虑建仓 10-15%。分析师 12mo 目标 ¥36.26 上行空间已不大。继电器全球第一 27% 市占率。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": 28.2,
-      "survey_count_30d": 1,
-      "price": 35.65
     }
   }
 ]
