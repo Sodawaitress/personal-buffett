@@ -10591,3 +10591,18 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 ### 顺带修掉一个耦合
 
 `present_stock_page` 原本打算直接读 `request.args` —— 那会把 presenter 绑上 Flask 上下文，测试里必须起 app context 才能跑。改成**从路由传参**，presenter 保持纯函数。守卫直接检查源码里没有 `request.args`。
+
+---
+
+## US-221 · 网站登不上：SQLAlchemy 2.1 悄悄换了 Postgres 默认驱动
+
+**症状**（2026-09-28 妈妈报告）：`personal-buffett.fly.dev` 全站超时；9-24、9-25 两次部署健康检查超时；pipeline 自 9-23 起没成功过。
+
+**根因**：`requirements.txt` 写的是 `sqlalchemy>=2.0`，没有上限。
+9-22 最后一次成功装的是 2.0.54，9-24 起装到 2.1.0 ——
+**2.1 把 `postgresql://` 的默认 DBAPI 从 psycopg2 换成了 psycopg（v3）**，
+我们只装了 `psycopg2-binary`，于是每个服务在 `db.init_db()` 就 `ModuleNotFoundError: No module named 'psycopg'`。
+
+**修法**：锁 `sqlalchemy>=2.0,<2.1`。一行，回到已验证版本。
+
+**教训**：没上限的 `>=` 等于把生产交给上游发版日程。要升 2.1 应当是一个有意识的 US（换 psycopg3 或连接串显式写 `postgresql+psycopg2://`），而不是某天 pip 自己决定。
