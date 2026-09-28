@@ -10596,6 +10596,8 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 
 ## US-221 · 网站登不上：SQLAlchemy 2.1 悄悄换了 Postgres 默认驱动
 
+**实现状态（2026-09-28）**：✅ 已发布（a599b54），部署通过，/login 200。
+
 **症状**（2026-09-28 妈妈报告）：`personal-buffett.fly.dev` 全站超时；9-24、9-25 两次部署健康检查超时；pipeline 自 9-23 起没成功过。
 
 **根因**：`requirements.txt` 写的是 `sqlalchemy>=2.0`，没有上限。
