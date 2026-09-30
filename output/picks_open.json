@@ -1,5 +1,75 @@
 [
   {
+    "code": "000612",
+    "name": "焦作万方",
+    "date": "2026-09-30",
+    "advice": "未持仓可 ¥10.2-¥10.6 分批 10-15%，跌破 ¥9.8 止损；已持仓继续持有。整合预期落空后估值锚回到主业本身，别期待重组行情。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 62,
+      "short_change_pct": 50.7,
+      "survey_count_30d": 1,
+      "price": 10.63
+    }
+  },
+  {
+    "code": "300750",
+    "name": "宁德时代",
+    "date": "2026-09-30",
+    "advice": "已持仓可继续持有（业绩+回购托底）；未持仓不建议 ¥286 追高，等回调到 ¥275 附近再看融资融券是否收敛。⚠ 融券异常必须写进正文（US-166）。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 87,
+      "short_change_pct": 210.1,
+      "survey_count_30d": 0,
+      "price": 286.8
+    }
+  },
+  {
+    "code": "002738",
+    "name": "中矿资源",
+    "date": "2026-09-30",
+    "advice": "未持仓不追高 ¥43.31，等回调到 ¥40 附近再考虑 10-15% 仓位；已持仓继续持有，重点看后续铜矿产量爬坡数据（Q4 财报的铜业务收入是关键验证）。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 60,
+      "short_change_pct": 37.7,
+      "survey_count_30d": 1,
+      "price": 43.31
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-09-30",
+    "advice": "未持仓可 ¥34-¥35 分批 15-20%，跌破 ¥32 止损；已持仓继续持有，看 Q3 息差和不良率是否维持行业最优。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 18.9,
+      "survey_count_30d": 3,
+      "price": 34.81
+    }
+  },
+  {
+    "code": "300760",
+    "name": "迈瑞医疗",
+    "date": "2026-09-30",
+    "advice": "未持仓可 ¥155-¥160 分批 15-20%，跌破 ¥148 止损；已持仓继续持有，看 Q3 单季净利是否延续同比+ 拐点。港股 IPO 落地是催化剂但别赌时点。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 1.8,
+      "survey_count_30d": 1,
+      "price": 159.01
+    }
+  },
+  {
     "code": "300394",
     "name": "天孚通信",
     "date": "2026-09-29",
@@ -39,20 +109,6 @@
       "short_change_pct": null,
       "survey_count_30d": 1,
       "price": 17.85
-    }
-  },
-  {
-    "code": "300750",
-    "name": "宁德时代",
-    "date": "2026-09-29",
-    "advice": "未持仓等融券回落 or ¥280 以下；已持仓减仓 20-30% 保留主仓。⚠ 融券 +223% top 3% 与 11 亿回购最强背离，基本面再好也不能忽视资金极端。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 87,
-      "short_change_pct": 223.8,
-      "survey_count_30d": 0,
-      "price": 291.99
     }
   },
   {
@@ -165,20 +221,6 @@
       "short_change_pct": 8.5,
       "survey_count_30d": 12,
       "price": 84.34
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-09-25",
-    "advice": "未持仓可 ¥34.5-¥35.5 分批建仓 10-15%，跌破 ¥33 止损；已持仓继续持有；慢股票、慢机会，拿三个月不是拿三天。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 25.5,
-      "survey_count_30d": 3,
-      "price": 34.91
     }
   },
   {
@@ -529,62 +571,6 @@
       "short_change_pct": 95.2,
       "survey_count_30d": 2,
       "price": 260.1
-    }
-  },
-  {
-    "code": "688378",
-    "name": "奥来德",
-    "date": "2026-09-08",
-    "advice": "¥42-¥44 分批建仓 10-15%，跌破 ¥40 止损。不追今日 +6.68%。合理估值成长股，等回调更好；主要靠资金推动无强机构调研信号。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": 7.1,
-      "survey_count_30d": 0,
-      "price": 44.9
-    }
-  },
-  {
-    "code": "300684",
-    "name": "中石科技",
-    "date": "2026-09-08",
-    "advice": "追高风险大。已持仓可继续；未持仓等回调 ¥85-¥90 分批，跌破 ¥80 止损。中际旭创 ¥17.47亿战略入股是长期逻辑，慢下手。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 73,
-      "short_change_pct": 22.5,
-      "survey_count_30d": 1,
-      "price": 104.36
-    }
-  },
-  {
-    "code": "002444",
-    "name": "巨星科技",
-    "date": "2026-09-08",
-    "advice": "¥28.5-¥29.5 分批建仓 15-20%，跌破 ¥27 止损。别等 Q3 数据出来再进（那时价格已经反弹）。3Q 基数问题是账面的。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 76,
-      "short_change_pct": 29.1,
-      "survey_count_30d": 0,
-      "price": 29.3
-    }
-  },
-  {
-    "code": "001314",
-    "name": "亿道信息",
-    "date": "2026-09-08",
-    "advice": "只做小仓位试探（≤总仓 3%），¥50 以下分批，跌破 ¥46 止损。别加仓直到经营现金流转正的三季报出来。",
-    "signals": {
-      "grade": "C+",
-      "conclusion": "观察",
-      "quant_score": 56,
-      "short_change_pct": null,
-      "survey_count_30d": 3,
-      "price": 51.43
     }
   }
 ]
