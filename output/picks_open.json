@@ -1,9 +1,37 @@
 [
   {
+    "code": "HBM",
+    "name": "Hudbay Minerals",
+    "date": "2026-10-02",
+    "advice": "$26.11 可小仓位（5-10%）启动，$25.5 加仓，止损 $24。10-28 业绩前别重仓。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 65,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 26.11
+    }
+  },
+  {
+    "code": "DUOL",
+    "name": "Duolingo",
+    "date": "2026-10-02",
+    "advice": "$145 以内可小仓位（3-5%）启动，$140 加仓，止损 $135。关注 2028 年 100M DAU 中期目标。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 86,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 144.97
+    }
+  },
+  {
     "code": "300124",
     "name": "汇川技术",
-    "date": "2026-10-01",
-    "advice": "未持仓可 ¥51-¥53 分批建仓 15-20%，跌破 ¥49 止损；已持仓继续持有。大股东增持 1.5-2 亿 + 调研密度全库最高（16/30 天）+ 节前板块轮动造成的技术性回调 = 节后反弹概率较高。",
+    "date": "2026-10-02",
+    "advice": "节后 10-08 开盘前的结构性保留；若 ¥50-51 可建仓 15-20%，若高开 >¥53 等 10-15 二次回调；止损 ¥48。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
@@ -11,6 +39,34 @@
       "short_change_pct": 36.0,
       "survey_count_30d": 16,
       "price": 51.9
+    }
+  },
+  {
+    "code": "2359.HK",
+    "name": "药明康德",
+    "date": "2026-10-02",
+    "advice": "HK$215 之上不追；HK$208-212 回调可建仓 10-15%，止损 HK$200。A 股 603259 持仓者可作 H 股补配。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 78,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 215.2
+    }
+  },
+  {
+    "code": "1364.HK",
+    "name": "古茗",
+    "date": "2026-10-02",
+    "advice": "HK$22.78 之上不追；HK$21-22 回调可建仓 10-15%，止损 HK$20。看二线下沉+咖啡双轮能否延续。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 82,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 22.78
     }
   },
   {
@@ -28,17 +84,17 @@
     }
   },
   {
-    "code": "002142",
-    "name": "宁波银行",
+    "code": "600415",
+    "name": "小商品城",
     "date": "2026-10-01",
-    "advice": "未持仓可 ¥34-¥36 分批建仓 15-20%，跌破 ¥32 止损；已持仓继续持有。节后看 10 月末 Q3 业绩预告（机构密集调研的核心验证点）。防御型底仓，不要重仓单押。",
+    "advice": "⚠️ 不要在 ¥11 以上追高；已持仓节前最后一天观察不加仓。节后 10-08 第一周重点看融券方向——若 10-15 前融券反向翻转（基数从 66.9 万回升到 85 万以上）就是空头趁高位脱身的信号，严格减仓止损 ¥10.4。US-166 第 3 行最危险组合复现。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 18.3,
-      "survey_count_30d": 4,
-      "price": 35.43
+      "quant_score": 65,
+      "short_change_pct": -19.1,
+      "survey_count_30d": 2,
+      "price": 11.08
     }
   },
   {
@@ -56,31 +112,31 @@
     }
   },
   {
-    "code": "600415",
-    "name": "小商品城",
+    "code": "002142",
+    "name": "宁波银行",
     "date": "2026-10-01",
-    "advice": "⚠️ 不要在 ¥11 以上追高；已持仓节前最后一天观察不加仓。节后 10-08 第一周重点看融券方向——若 10-15 前融券反向翻转（基数从 66.9 万回升到 85 万以上）就是空头趁高位脱身的信号，严格减仓止损 ¥10.4。US-166 第 3 行最危险组合复现。",
+    "advice": "未持仓可 ¥34-¥36 分批建仓 15-20%，跌破 ¥32 止损；已持仓继续持有。节后看 10 月末 Q3 业绩预告（机构密集调研的核心验证点）。防御型底仓，不要重仓单押。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
-      "quant_score": 65,
-      "short_change_pct": -19.1,
-      "survey_count_30d": 2,
-      "price": 11.08
+      "quant_score": 80,
+      "short_change_pct": 18.3,
+      "survey_count_30d": 4,
+      "price": 35.43
     }
   },
   {
-    "code": "000612",
-    "name": "焦作万方",
+    "code": "300760",
+    "name": "迈瑞医疗",
     "date": "2026-09-30",
-    "advice": "未持仓可 ¥10.2-¥10.6 分批 10-15%，跌破 ¥9.8 止损；已持仓继续持有。整合预期落空后估值锚回到主业本身，别期待重组行情。",
+    "advice": "未持仓可 ¥155-¥160 分批 15-20%，跌破 ¥148 止损；已持仓继续持有，看 Q3 单季净利是否延续同比+ 拐点。港股 IPO 落地是催化剂但别赌时点。",
     "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 62,
-      "short_change_pct": 50.7,
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 1.8,
       "survey_count_30d": 1,
-      "price": 10.63
+      "price": 159.01
     }
   },
   {
@@ -112,17 +168,31 @@
     }
   },
   {
-    "code": "300760",
-    "name": "迈瑞医疗",
+    "code": "000612",
+    "name": "焦作万方",
     "date": "2026-09-30",
-    "advice": "未持仓可 ¥155-¥160 分批 15-20%，跌破 ¥148 止损；已持仓继续持有，看 Q3 单季净利是否延续同比+ 拐点。港股 IPO 落地是催化剂但别赌时点。",
+    "advice": "未持仓可 ¥10.2-¥10.6 分批 10-15%，跌破 ¥9.8 止损；已持仓继续持有。整合预期落空后估值锚回到主业本身，别期待重组行情。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 62,
+      "short_change_pct": 50.7,
+      "survey_count_30d": 1,
+      "price": 10.63
+    }
+  },
+  {
+    "code": "600549",
+    "name": "厦门钨业",
+    "date": "2026-09-29",
+    "advice": "不追跌不建仓；已持仓减仓 30-50% 等仲裁进展。洛阳钼业断供 → 合资公司全面停产，网站 A 评级严重滞后事件冲击。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 1.8,
-      "survey_count_30d": 1,
-      "price": 159.01
+      "quant_score": 75,
+      "short_change_pct": -25.8,
+      "survey_count_30d": 0,
+      "price": 43.5
     }
   },
   {
@@ -154,31 +224,17 @@
     }
   },
   {
-    "code": "600549",
-    "name": "厦门钨业",
-    "date": "2026-09-29",
-    "advice": "不追跌不建仓；已持仓减仓 30-50% 等仲裁进展。洛阳钼业断供 → 合资公司全面停产，网站 A 评级严重滞后事件冲击。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 75,
-      "short_change_pct": -25.8,
-      "survey_count_30d": 0,
-      "price": 43.5
-    }
-  },
-  {
-    "code": "300308",
-    "name": "中际旭创",
+    "code": "603893",
+    "name": "瑞芯微",
     "date": "2026-09-28",
-    "advice": "单日 -8.98% 不构成建仓信号，别接飞刀。已持仓可继续持有（回购托底）；未持仓等 ¥720-¥760 情绪出清再谈；跌破 ¥680 是趋势线破坏另议。",
+    "advice": "未持仓可 ¥205-¥212 分批建 15% 试仓，跌破 ¥195 严格止损。已持仓继续持有。8/1 现场参观 + 融券 -64% + 涨停验证 = 全 A 股最强三层叠加。",
     "signals": {
-      "grade": "B",
+      "grade": "B+",
       "conclusion": "持有",
-      "quant_score": 86,
-      "short_change_pct": 15.7,
-      "survey_count_30d": 1,
-      "price": 815.4
+      "quant_score": 70,
+      "short_change_pct": -64.4,
+      "survey_count_30d": 2,
+      "price": 212.03
     }
   },
   {
@@ -210,17 +266,17 @@
     }
   },
   {
-    "code": "603893",
-    "name": "瑞芯微",
+    "code": "300308",
+    "name": "中际旭创",
     "date": "2026-09-28",
-    "advice": "未持仓可 ¥205-¥212 分批建 15% 试仓，跌破 ¥195 严格止损。已持仓继续持有。8/1 现场参观 + 融券 -64% + 涨停验证 = 全 A 股最强三层叠加。",
+    "advice": "单日 -8.98% 不构成建仓信号，别接飞刀。已持仓可继续持有（回购托底）；未持仓等 ¥720-¥760 情绪出清再谈；跌破 ¥680 是趋势线破坏另议。",
     "signals": {
-      "grade": "B+",
+      "grade": "B",
       "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": -64.4,
-      "survey_count_30d": 2,
-      "price": 212.03
+      "quant_score": 86,
+      "short_change_pct": 15.7,
+      "survey_count_30d": 1,
+      "price": 815.4
     }
   },
   {
@@ -515,62 +571,6 @@
       "short_change_pct": 84.8,
       "survey_count_30d": 1,
       "price": 86.8
-    }
-  },
-  {
-    "code": "603162",
-    "name": "海通发展",
-    "date": "2026-09-10",
-    "advice": "不追涨。已持仓明日再冲高至 ¥16.5+ 减仓 30% 锁利。未持仓等回调至 ¥13 附近再评估。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 71,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 15.43
-    }
-  },
-  {
-    "code": "601009",
-    "name": "南京银行",
-    "date": "2026-09-10",
-    "advice": "已持仓继续；未持仓 ¥11.9-¥12.1 分批建仓 15-20% 家庭仓位，跌到 ¥11.5 加仓，止损 ¥10.8。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 74,
-      "short_change_pct": 72.2,
-      "survey_count_30d": 0,
-      "price": 12.02
-    }
-  },
-  {
-    "code": "600660",
-    "name": "福耀玻璃",
-    "date": "2026-09-10",
-    "advice": "已持仓可持有观察，融券余量若继续放大至 100 万股以上（top 3%）则减仓 30%。未持仓不追，等 ¥50 以下再考虑。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 75,
-      "short_change_pct": 184.2,
-      "survey_count_30d": 1,
-      "price": 55.14
-    }
-  },
-  {
-    "code": "002130",
-    "name": "沃尔核材",
-    "date": "2026-09-10",
-    "advice": "未持仓可 ¥17.0-¥17.6 分批建 15-20% 家庭仓位，跌到 ¥16 加仓；止损 ¥15.5。本周最建议建仓的一只。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 74,
-      "short_change_pct": -27.8,
-      "survey_count_30d": 1,
-      "price": 17.57
     }
   }
 ]
