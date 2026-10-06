@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-05T21:29:35.229841Z",
+  "generated_at": "2026-10-06T19:06:15.064161Z",
   "scope": "all_users",
-  "price_snapshot_at": "2026-10-05T21:29:35.229861Z",
+  "price_snapshot_at": "2026-10-06T19:06:15.064180Z",
   "stocks_with_fresh_price": 290,
   "stocks_total": 291,
-  "price_signature": "baa0cb628bf422346d753bca735a75d1",
+  "price_signature": "2fdc4715acf1ab71d4efc44a35fe4c8b",
   "pick_reversals": [
     {
       "code": "002415",
       "name": "海康威视",
       "picked_date": "2026-09-23",
-      "days_since": 13,
+      "days_since": 14,
       "picked_advice": "未持仓可 ¥32-¥32.5 分批建仓 15-20%，跌破 ¥31 止损；已持仓继续持有",
       "reasons": [
         "评级下调：A → B+",
@@ -23,7 +23,7 @@
       "code": "300760",
       "name": "迈瑞医疗",
       "picked_date": "2026-09-30",
-      "days_since": 6,
+      "days_since": 7,
       "picked_advice": "未持仓可 ¥155-¥160 分批 15-20%，跌破 ¥148 止损；已持仓继续持有，看 Q3 单季净利是否延续同比+ 拐点。港股 IPO 落地是催化剂但别赌时点。",
       "reasons": [
         "评级下调：A → B+"
@@ -35,25 +35,13 @@
       "code": "688012",
       "name": "中微公司",
       "picked_date": "2026-09-17",
-      "days_since": 19,
+      "days_since": 20,
       "picked_advice": "不追高。等回调到 ¥325-¥335 再看。若确定要建仓，控制仓位 ≤ 5%，止损 ¥310。",
       "reasons": [
         "机构调研归零：30 日 1 次 → 0 次"
       ],
       "price_then": 352.6,
       "price_now": 318.55
-    },
-    {
-      "code": "000333",
-      "name": "美的集团",
-      "picked_date": "2026-09-15",
-      "days_since": 21,
-      "picked_advice": "¥85-¥87 小仓位 10% 试探，跌破 ¥82 止损。融券余量突然 +85%（top 12%）说明有资金押注下跌或对冲，公司狂回购护盘是矛盾信号，宁可等 ¥83 以下更清楚。",
-      "reasons": [
-        "评级下调：B+ → NR"
-      ],
-      "price_then": 86.8,
-      "price_now": 80.1
     }
   ],
   "new_articles": [],
@@ -79,9 +67,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 333.95,
-        "change_pct": 0.08,
-        "fetched_at": "2026-10-05 16:20:48"
+        "current": 333.72,
+        "change_pct": 0.25,
+        "fetched_at": "2026-10-06 14:27:12"
       },
       "news": [
         {
@@ -132,9 +120,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 236.19,
-        "change_pct": 0.96,
-        "fetched_at": "2026-10-05 16:20:49"
+        "current": 241.85,
+        "change_pct": 1.23,
+        "fetched_at": "2026-10-06 14:27:13"
       },
       "news": [
         {
@@ -185,9 +173,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 480.35,
-        "change_pct": 1.58,
-        "fetched_at": "2026-10-05 16:20:52"
+        "current": 487.24,
+        "change_pct": 0.87,
+        "fetched_at": "2026-10-06 14:27:16"
       },
       "news": [
         {
@@ -238,9 +226,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 92.51,
-        "change_pct": -2.06,
-        "fetched_at": "2026-10-05 16:20:50"
+        "current": 92.7,
+        "change_pct": -0.47,
+        "fetched_at": "2026-10-06 14:27:14"
       },
       "news": [
         {
@@ -291,9 +279,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 146.49,
-        "change_pct": 1.54,
-        "fetched_at": "2026-10-05 16:21:10"
+        "current": 146.93,
+        "change_pct": -0.12,
+        "fetched_at": "2026-10-06 14:27:31"
       },
       "news": [
         {
@@ -333,7 +321,7 @@
       "is_new": false,
       "watched_by": "1",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
         "moat": "—",
@@ -344,9 +332,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 70.93,
-        "change_pct": -2.53,
-        "fetched_at": "2026-10-05 16:20:51"
+        "current": 71.73,
+        "change_pct": 1.18,
+        "fetched_at": "2026-10-06 14:27:15"
       },
       "news": [
         {
@@ -386,10 +374,10 @@
       "is_new": false,
       "watched_by": "2,4,7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "54/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 54/100（ROE 11.2%（巴菲特线 15%）），估值合理（比自己历史）。普通公司，普通价。",
         "quant_score": 54,
         "data_incomplete": 0,
@@ -401,7 +389,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -422,7 +410,7 @@
       "price": {
         "current": 17.49,
         "change_pct": 2.52,
-        "fetched_at": "2026-10-05 16:18:52"
+        "fetched_at": "2026-10-06 14:24:39"
       },
       "news": [
         {
@@ -462,22 +450,22 @@
       "is_new": false,
       "watched_by": "2,4,7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "持有",
-        "moat": "70/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 70/100（营收 10年复合增速 35%），估值数据不足。好公司，价格合理（价格数据不足，先不下买入结论）。",
         "quant_score": 70,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -498,17 +486,17 @@
       "price": {
         "current": 82.49,
         "change_pct": -0.39,
-        "fetched_at": "2026-10-05 16:19:20"
+        "fetched_at": "2026-10-06 14:25:04"
       },
       "news": [
         {
           "title": "阳光电源控股股东曹仁贤部分股份解除质押及质押",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-28"
         },
         {
           "title": "金刚光伏的算电协同“生意经”",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-26"
         },
         {
@@ -548,12 +536,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -574,7 +562,7 @@
       "price": {
         "current": 9.07,
         "change_pct": 0.55,
-        "fetched_at": "2026-10-05 16:18:18"
+        "fetched_at": "2026-10-06 15:00:20"
       },
       "news": [
         {
@@ -629,7 +617,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 25,
+          "days_since_latest": 26,
           "events": [
             {
               "date": "2026-09-10",
@@ -650,7 +638,7 @@
       "price": {
         "current": 17.83,
         "change_pct": 1.77,
-        "fetched_at": "2026-10-05 16:19:39"
+        "fetched_at": "2026-10-06 14:25:20"
       },
       "news": [
         {
@@ -700,12 +688,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 1.2,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 33,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-09-02",
@@ -732,7 +720,7 @@
       "price": {
         "current": 32.31,
         "change_pct": 2.7,
-        "fetched_at": "2026-10-05 16:17:30"
+        "fetched_at": "2026-10-06 14:32:16"
       },
       "news": [
         {
@@ -772,7 +760,7 @@
       "is_new": false,
       "watched_by": "3,2,4,7",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "持有",
         "moat": "—",
@@ -782,7 +770,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 1.41,
         "is_active": false,
         "survey": {
@@ -801,7 +789,7 @@
       "price": {
         "current": 167.34,
         "change_pct": 4.16,
-        "fetched_at": "2026-10-05 16:18:51"
+        "fetched_at": "2026-10-06 14:24:38"
       },
       "news": [
         {
@@ -856,7 +844,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -877,7 +865,7 @@
       "price": {
         "current": 80.1,
         "change_pct": -1.91,
-        "fetched_at": "2026-10-05 16:19:30"
+        "fetched_at": "2026-10-06 14:25:13"
       },
       "news": [
         {
@@ -927,7 +915,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.2,
         "is_active": false,
         "survey": {
@@ -946,7 +934,7 @@
       "price": {
         "current": 16.37,
         "change_pct": 0.24,
-        "fetched_at": "2026-10-05 16:17:25"
+        "fetched_at": "2026-10-06 14:29:04"
       },
       "news": [
         {
@@ -996,12 +984,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 33,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-09-02",
@@ -1028,7 +1016,7 @@
       "price": {
         "current": 124.63,
         "change_pct": 0.65,
-        "fetched_at": "2026-10-05 16:43:49"
+        "fetched_at": "2026-10-06 14:26:43"
       },
       "news": [
         {
@@ -1078,7 +1066,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.46,
         "is_active": false,
         "survey": {
@@ -1097,7 +1085,7 @@
       "price": {
         "current": 26.84,
         "change_pct": 0.98,
-        "fetched_at": "2026-10-05 16:19:18"
+        "fetched_at": "2026-10-06 14:25:02"
       },
       "news": [
         {
@@ -1137,17 +1125,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "减持",
-        "moat": "37/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 37/100（ROE 1.9%（巴菲特线 15%）），估值偏贵（比自己历史）。质量弱又不便宜。",
         "quant_score": 37,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.14,
         "is_active": false,
         "survey": {
@@ -1166,27 +1154,27 @@
       "price": {
         "current": 14.23,
         "change_pct": 5.49,
-        "fetched_at": "2026-10-05 16:20:07"
+        "fetched_at": "2026-10-06 14:25:44"
       },
       "news": [
         {
           "title": "医药生物行业今日涨2.73%，主力资金净流入57.09亿元",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "11.07亿主力资金净流入，重组蛋白概念涨3.78%",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "生物疫苗概念涨2.95%，主力资金净流入这些股",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "创新药概念涨2.46%，主力资金净流入这些股",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
@@ -1216,7 +1204,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -1235,7 +1223,7 @@
       "price": {
         "current": 291.11,
         "change_pct": 1.5,
-        "fetched_at": "2026-10-05 16:19:07"
+        "fetched_at": "2026-10-06 14:24:51"
       },
       "news": [
         {
@@ -1285,12 +1273,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -1311,7 +1299,7 @@
       "price": {
         "current": 53.36,
         "change_pct": 1.52,
-        "fetched_at": "2026-10-05 16:19:48"
+        "fetched_at": "2026-10-06 14:25:28"
       },
       "news": [
         {
@@ -1366,7 +1354,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -1387,7 +1375,7 @@
       "price": {
         "current": 53.58,
         "change_pct": 1.09,
-        "fetched_at": "2026-10-05 16:38:45"
+        "fetched_at": "2026-10-06 14:26:36"
       },
       "news": [
         {
@@ -1442,7 +1430,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-09-08",
@@ -1463,7 +1451,7 @@
       "price": {
         "current": 11.72,
         "change_pct": 3.53,
-        "fetched_at": "2026-10-05 16:45:07"
+        "fetched_at": "2026-10-06 14:26:44"
       },
       "news": [
         {
@@ -1513,7 +1501,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -1532,7 +1520,7 @@
       "price": {
         "current": 44.11,
         "change_pct": 0.82,
-        "fetched_at": "2026-10-05 16:20:23"
+        "fetched_at": "2026-10-06 14:25:58"
       },
       "news": [
         {
@@ -1582,12 +1570,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -1608,9 +1596,14 @@
       "price": {
         "current": 202.31,
         "change_pct": -4.84,
-        "fetched_at": "2026-10-05 16:17:34"
+        "fetched_at": "2026-10-06 14:34:36"
       },
       "news": [
+        {
+          "title": "688008火了！491家机构扎堆调研，“盯上”这家龙头公司",
+          "sentiment": null,
+          "date": "2026-10-03"
+        },
         {
           "title": "澜起科技已回购209万股 金额4.1亿元",
           "sentiment": 1.0,
@@ -1630,11 +1623,6 @@
           "title": "688498，688008，大股东拟减持",
           "sentiment": -1.0,
           "date": "2026-09-25"
-        },
-        {
-          "title": "2600亿元市值芯片龙头，第三大股东要减持不超233万股 年内股价最高涨幅达183%",
-          "sentiment": -1.0,
-          "date": "2026-09-24"
         }
       ]
     },
@@ -1658,12 +1646,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 45,
+          "days_since_latest": 46,
           "events": [
             {
               "date": "2026-08-21",
@@ -1684,7 +1672,7 @@
       "price": {
         "current": 37.22,
         "change_pct": 0.05,
-        "fetched_at": "2026-10-05 16:17:40"
+        "fetched_at": "2026-10-06 14:38:15"
       },
       "news": [
         {
@@ -1734,12 +1722,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 17,
+          "days_since_latest": 18,
           "events": [
             {
               "date": "2026-09-18",
@@ -1766,7 +1754,7 @@
       "price": {
         "current": 210.3,
         "change_pct": -2.98,
-        "fetched_at": "2026-10-05 16:52:20"
+        "fetched_at": "2026-10-06 14:26:54"
       },
       "news": [
         {
@@ -1821,7 +1809,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 42,
+          "days_since_latest": 43,
           "events": [
             {
               "date": "2026-08-24",
@@ -1842,7 +1830,7 @@
       "price": {
         "current": 50.96,
         "change_pct": 3.62,
-        "fetched_at": "2026-10-05 16:17:46"
+        "fetched_at": "2026-10-06 14:41:45"
       },
       "news": [
         {
@@ -1892,7 +1880,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.6,
         "score": 0.04,
         "is_active": false,
         "survey": {
@@ -1911,7 +1899,7 @@
       "price": {
         "current": 60.36,
         "change_pct": -1.57,
-        "fetched_at": "2026-10-05 16:18:26"
+        "fetched_at": "2026-10-06 15:05:14"
       },
       "news": [
         {
@@ -1961,12 +1949,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.0,
+        "cache_age_hours": 21.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 41,
+          "days_since_latest": 42,
           "events": [
             {
               "date": "2026-08-25",
@@ -1993,7 +1981,7 @@
       "price": {
         "current": 37.1,
         "change_pct": 2.94,
-        "fetched_at": "2026-10-05 16:36:42"
+        "fetched_at": "2026-10-06 14:26:33"
       },
       "news": [
         {
@@ -2043,7 +2031,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2062,7 +2050,7 @@
       "price": {
         "current": 13.8,
         "change_pct": -0.58,
-        "fetched_at": "2026-10-05 16:34:04"
+        "fetched_at": "2026-10-06 14:26:30"
       },
       "news": [
         {
@@ -2131,7 +2119,7 @@
       "price": {
         "current": 9.15,
         "change_pct": 1.67,
-        "fetched_at": "2026-10-05 16:26:58"
+        "fetched_at": "2026-10-06 14:26:20"
       },
       "news": [
         {
@@ -2171,10 +2159,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "27/100",
+        "moat": "—",
         "reasoning": "按困境反转股的标准看：质量 27/100（恢复趋势：ROE 仍在恶化、利润率改善），估值贵（比自己历史）。又弱又贵。",
         "quant_score": 27,
         "data_incomplete": 0,
@@ -2200,7 +2188,7 @@
       "price": {
         "current": 24.54,
         "change_pct": -1.17,
-        "fetched_at": "2026-10-05 16:17:28"
+        "fetched_at": "2026-10-06 14:31:04"
       },
       "news": [
         {
@@ -2250,12 +2238,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 11,
+          "days_since_latest": 12,
           "events": [
             {
               "date": "2026-09-24",
@@ -2276,7 +2264,7 @@
       "price": {
         "current": 411.16,
         "change_pct": 0.79,
-        "fetched_at": "2026-10-05 16:17:50"
+        "fetched_at": "2026-10-06 14:44:14"
       },
       "news": [
         {
@@ -2326,7 +2314,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2345,7 +2333,7 @@
       "price": {
         "current": 54.86,
         "change_pct": -3.94,
-        "fetched_at": "2026-10-05 16:28:18"
+        "fetched_at": "2026-10-06 14:26:22"
       },
       "news": [
         {
@@ -2395,12 +2383,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.32,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 34,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-09-01",
@@ -2427,7 +2415,7 @@
       "price": {
         "current": 260.77,
         "change_pct": 1.87,
-        "fetched_at": "2026-10-05 16:19:42"
+        "fetched_at": "2026-10-06 14:25:23"
       },
       "news": [
         {
@@ -2477,7 +2465,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2496,7 +2484,7 @@
       "price": {
         "current": 11.0,
         "change_pct": 1.76,
-        "fetched_at": "2026-10-05 16:18:30"
+        "fetched_at": "2026-10-06 15:07:36"
       },
       "news": [
         {
@@ -2565,7 +2553,7 @@
       "price": {
         "current": 25.9,
         "change_pct": -0.88,
-        "fetched_at": "2026-10-05 16:45:47"
+        "fetched_at": "2026-10-06 14:26:45"
       },
       "news": [
         {
@@ -2615,7 +2603,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -2634,7 +2622,7 @@
       "price": {
         "current": 97.88,
         "change_pct": 4.12,
-        "fetched_at": "2026-10-05 16:20:01"
+        "fetched_at": "2026-10-06 14:25:39"
       },
       "news": [
         {
@@ -2684,12 +2672,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 43,
+          "days_since_latest": 44,
           "events": [
             {
               "date": "2026-08-23",
@@ -2710,7 +2698,7 @@
       "price": {
         "current": 808.44,
         "change_pct": -0.56,
-        "fetched_at": "2026-10-05 16:20:00"
+        "fetched_at": "2026-10-06 14:25:38"
       },
       "news": [
         {
@@ -2760,7 +2748,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -2779,7 +2767,7 @@
       "price": {
         "current": 22.13,
         "change_pct": -2.98,
-        "fetched_at": "2026-10-05 16:46:28"
+        "fetched_at": "2026-10-06 14:26:46"
       },
       "news": [
         {
@@ -2848,7 +2836,7 @@
       "price": {
         "current": 6.93,
         "change_pct": 1.02,
-        "fetched_at": "2026-10-05 16:18:22"
+        "fetched_at": "2026-10-06 15:02:52"
       },
       "news": [
         {
@@ -2898,12 +2886,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 11,
+          "days_since_latest": 12,
           "events": [
             {
               "date": "2026-09-24",
@@ -2924,9 +2912,14 @@
       "price": {
         "current": 39.1,
         "change_pct": 0.39,
-        "fetched_at": "2026-10-05 16:17:33"
+        "fetched_at": "2026-10-06 14:33:59"
       },
       "news": [
+        {
+          "title": "手持订单超5200亿元，A股造船龙头，最新发声！",
+          "sentiment": null,
+          "date": "2026-10-03"
+        },
         {
           "title": "13只个股大宗交易超千万元",
           "sentiment": null,
@@ -2946,11 +2939,6 @@
           "title": "中船系概念下跌2.12%，6股主力资金净流出超千万元",
           "sentiment": 0.0,
           "date": "2026-09-14"
-        },
-        {
-          "title": "25人遇难、5人受伤！中国船舶控股子公司北海造船厂检修突发火情，公司凌晨公告致歉",
-          "sentiment": 0.0,
-          "date": "2026-09-11"
         }
       ]
     },
@@ -2979,7 +2967,7 @@
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -3000,7 +2988,7 @@
       "price": {
         "current": 7.52,
         "change_pct": 2.17,
-        "fetched_at": "2026-10-05 16:18:13"
+        "fetched_at": "2026-10-06 14:57:22"
       },
       "news": [
         {
@@ -3050,7 +3038,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3069,7 +3057,7 @@
       "price": {
         "current": 13.09,
         "change_pct": 2.27,
-        "fetched_at": "2026-10-05 16:19:41"
+        "fetched_at": "2026-10-06 14:25:22"
       },
       "news": [
         {
@@ -3119,12 +3107,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 52,
+          "days_since_latest": 53,
           "events": [
             {
               "date": "2026-08-14",
@@ -3145,7 +3133,7 @@
       "price": {
         "current": 111.99,
         "change_pct": -4.7,
-        "fetched_at": "2026-10-05 16:55:01"
+        "fetched_at": "2026-10-06 14:26:57"
       },
       "news": [
         {
@@ -3195,7 +3183,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3214,7 +3202,7 @@
       "price": {
         "current": 11.18,
         "change_pct": -0.8,
-        "fetched_at": "2026-10-05 16:17:24"
+        "fetched_at": "2026-10-06 14:28:12"
       },
       "news": [
         {
@@ -3264,12 +3252,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 18,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
@@ -3290,7 +3278,7 @@
       "price": {
         "current": 71.9,
         "change_pct": 0.43,
-        "fetched_at": "2026-10-05 16:18:07"
+        "fetched_at": "2026-10-06 14:53:30"
       },
       "news": [
         {
@@ -3330,7 +3318,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "—",
@@ -3340,7 +3328,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 1.14,
         "is_active": false,
         "survey": {
@@ -3359,7 +3347,7 @@
       "price": {
         "current": 7.84,
         "change_pct": 6.81,
-        "fetched_at": "2026-10-05 16:17:32"
+        "fetched_at": "2026-10-06 14:33:24"
       },
       "news": [
         {
@@ -3409,7 +3397,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3428,7 +3416,7 @@
       "price": {
         "current": 29.76,
         "change_pct": -0.97,
-        "fetched_at": "2026-10-05 16:17:29"
+        "fetched_at": "2026-10-06 14:31:41"
       },
       "news": [
         {
@@ -3478,7 +3466,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -3497,7 +3485,7 @@
       "price": {
         "current": 39.36,
         "change_pct": -2.96,
-        "fetched_at": "2026-10-05 16:17:27"
+        "fetched_at": "2026-10-06 14:30:30"
       },
       "news": [
         {
@@ -3537,7 +3525,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
         "moat": "—",
@@ -3547,12 +3535,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-09-22",
@@ -3573,7 +3561,7 @@
       "price": {
         "current": 36.88,
         "change_pct": -4.33,
-        "fetched_at": "2026-10-05 16:26:19"
+        "fetched_at": "2026-10-06 14:26:19"
       },
       "news": [
         {
@@ -3628,7 +3616,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -3649,9 +3637,19 @@
       "price": {
         "current": 108.1,
         "change_pct": 0.67,
-        "fetched_at": "2026-10-05 16:17:26"
+        "fetched_at": "2026-10-06 14:29:56"
       },
       "news": [
+        {
+          "title": "中际旭创17亿入股落地 中石科技散热业务能否撑起翻倍估值",
+          "sentiment": null,
+          "date": "2026-10-04"
+        },
+        {
+          "title": "万亿CPO龙头收购A股公司股权有新进展！",
+          "sentiment": null,
+          "date": "2026-10-03"
+        },
         {
           "title": "本月股价创历史新高股一览",
           "sentiment": 1.0,
@@ -3666,16 +3664,6 @@
           "title": "中石科技：控股股东及一致行动人协议转让10.47%股份完成过户",
           "sentiment": 0.0,
           "date": "2026-09-30"
-        },
-        {
-          "title": "中石科技300684龙虎榜数据09-08",
-          "sentiment": 0.0,
-          "date": "2026-09-08"
-        },
-        {
-          "title": "中石科技300684龙虎榜数据09-07)",
-          "sentiment": 0.0,
-          "date": "2026-09-07"
         }
       ]
     },
@@ -3689,7 +3677,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
         "moat": "—",
@@ -3704,7 +3692,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 32,
+          "days_since_latest": 33,
           "events": [
             {
               "date": "2026-09-03",
@@ -3731,7 +3719,7 @@
       "price": {
         "current": 13.04,
         "change_pct": 2.52,
-        "fetched_at": "2026-10-05 16:19:55"
+        "fetched_at": "2026-10-06 14:25:34"
       },
       "news": [
         {
@@ -3771,7 +3759,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "—",
@@ -3781,12 +3769,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
-        "score": 0.0,
+        "cache_age_hours": 0.2,
+        "score": 0.05,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 34,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-09-01",
@@ -3813,7 +3801,7 @@
       "price": {
         "current": 71.35,
         "change_pct": 1.49,
-        "fetched_at": "2026-10-05 16:19:54"
+        "fetched_at": "2026-10-06 14:25:34"
       },
       "news": [
         {
@@ -3882,7 +3870,7 @@
       "price": {
         "current": 3.51,
         "change_pct": 1.15,
-        "fetched_at": "2026-10-05 16:17:41"
+        "fetched_at": "2026-10-06 14:38:48"
       },
       "news": [
         {
@@ -3951,7 +3939,7 @@
       "price": {
         "current": 9.89,
         "change_pct": 1.12,
-        "fetched_at": "2026-10-05 16:19:06"
+        "fetched_at": "2026-10-06 14:24:50"
       },
       "news": [
         {
@@ -3991,7 +3979,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "—",
@@ -4001,7 +3989,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4020,7 +4008,7 @@
       "price": {
         "current": 90.22,
         "change_pct": -3.55,
-        "fetched_at": "2026-10-05 16:50:20"
+        "fetched_at": "2026-10-06 14:26:51"
       },
       "news": [
         {
@@ -4070,12 +4058,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 0.7,
         "score": 1.78,
         "is_active": false,
         "survey": {
           "count_30d": 4,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-09-23",
@@ -4114,7 +4102,7 @@
       "price": {
         "current": 65.09,
         "change_pct": -0.9,
-        "fetched_at": "2026-10-05 16:55:39"
+        "fetched_at": "2026-10-06 14:26:58"
       },
       "news": [
         {
@@ -4164,12 +4152,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 0.7,
         "score": 0.12,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 52,
+          "days_since_latest": 53,
           "events": [
             {
               "date": "2026-08-14",
@@ -4190,7 +4178,7 @@
       "price": {
         "current": 24.1,
         "change_pct": 0.54,
-        "fetched_at": "2026-10-05 16:18:00"
+        "fetched_at": "2026-10-06 14:49:21"
       },
       "news": [
         {
@@ -4230,7 +4218,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "—",
@@ -4240,7 +4228,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4259,7 +4247,7 @@
       "price": {
         "current": 54.09,
         "change_pct": -4.77,
-        "fetched_at": "2026-10-05 16:17:45"
+        "fetched_at": "2026-10-06 14:41:12"
       },
       "news": [
         {
@@ -4328,7 +4316,7 @@
       "price": {
         "current": 6.44,
         "change_pct": 0.47,
-        "fetched_at": "2026-10-05 16:50:57"
+        "fetched_at": "2026-10-06 14:26:52"
       },
       "news": [
         {
@@ -4378,7 +4366,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.25,
         "is_active": false,
         "survey": {
@@ -4397,7 +4385,7 @@
       "price": {
         "current": 4.63,
         "change_pct": 1.98,
-        "fetched_at": "2026-10-05 16:17:44"
+        "fetched_at": "2026-10-06 14:40:34"
       },
       "news": [
         {
@@ -4452,7 +4440,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -4473,7 +4461,7 @@
       "price": {
         "current": 9.06,
         "change_pct": 2.72,
-        "fetched_at": "2026-10-05 16:19:56"
+        "fetched_at": "2026-10-06 14:25:35"
       },
       "news": [
         {
@@ -4542,7 +4530,7 @@
       "price": {
         "current": 14.96,
         "change_pct": -1.51,
-        "fetched_at": "2026-10-05 16:18:12"
+        "fetched_at": "2026-10-06 14:56:47"
       },
       "news": [
         {
@@ -4592,7 +4580,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4611,7 +4599,7 @@
       "price": {
         "current": 4.77,
         "change_pct": -3.64,
-        "fetched_at": "2026-10-05 16:17:49"
+        "fetched_at": "2026-10-06 14:43:37"
       },
       "news": [
         {
@@ -4661,12 +4649,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 45,
+          "days_since_latest": 46,
           "events": [
             {
               "date": "2026-08-21",
@@ -4687,7 +4675,7 @@
       "price": {
         "current": 64.28,
         "change_pct": -2.16,
-        "fetched_at": "2026-10-05 16:36:01"
+        "fetched_at": "2026-10-06 14:26:32"
       },
       "news": [
         {
@@ -4737,12 +4725,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
-        "score": 1.24,
+        "cache_age_hours": 0.5,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -4763,7 +4751,7 @@
       "price": {
         "current": 10.42,
         "change_pct": 1.66,
-        "fetched_at": "2026-10-05 16:19:45"
+        "fetched_at": "2026-10-06 14:25:26"
       },
       "news": [
         {
@@ -4832,7 +4820,7 @@
       "price": {
         "current": 17.22,
         "change_pct": -1.77,
-        "fetched_at": "2026-10-05 16:17:38"
+        "fetched_at": "2026-10-06 14:36:58"
       },
       "news": [
         {
@@ -4901,7 +4889,7 @@
       "price": {
         "current": 7.09,
         "change_pct": -0.14,
-        "fetched_at": "2026-10-05 16:19:37"
+        "fetched_at": "2026-10-06 14:25:19"
       },
       "news": [
         {
@@ -4951,7 +4939,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -4970,7 +4958,7 @@
       "price": {
         "current": 5.61,
         "change_pct": 0.54,
-        "fetched_at": "2026-10-05 16:17:31"
+        "fetched_at": "2026-10-06 14:32:50"
       },
       "news": [
         {
@@ -5024,8 +5012,8 @@
         "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 10,
-          "days_since_latest": 6,
+          "count_30d": 9,
+          "days_since_latest": 7,
           "events": [
             {
               "date": "2026-09-29",
@@ -5070,9 +5058,14 @@
       "price": {
         "current": 83.31,
         "change_pct": 1.57,
-        "fetched_at": "2026-10-05 16:18:04"
+        "fetched_at": "2026-10-06 14:51:39"
       },
       "news": [
+        {
+          "title": "12家上市车企前三季度成绩单：出口贡献超35%销量 年度销量目标完成率均低于67%",
+          "sentiment": null,
+          "date": "2026-10-04"
+        },
         {
           "title": "比亚迪完成董事会及核心高管换届，王传福兼任董事长与总裁",
           "sentiment": null,
@@ -5090,11 +5083,6 @@
         },
         {
           "title": "海外机构调研股名单 安克创新最受关注",
-          "sentiment": null,
-          "date": "2026-09-28"
-        },
-        {
-          "title": "汽车行业今日跌1.25%，主力资金净流入5.49亿元",
           "sentiment": null,
           "date": "2026-09-28"
         }
@@ -5120,7 +5108,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.4,
         "score": 0.87,
         "is_active": false,
         "survey": {
@@ -5139,7 +5127,7 @@
       "price": {
         "current": 4.34,
         "change_pct": 1.64,
-        "fetched_at": "2026-10-05 16:27:42"
+        "fetched_at": "2026-10-06 14:26:21"
       },
       "news": [
         {
@@ -5194,7 +5182,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -5215,7 +5203,7 @@
       "price": {
         "current": 21.76,
         "change_pct": -1.72,
-        "fetched_at": "2026-10-05 16:56:50"
+        "fetched_at": "2026-10-06 14:27:00"
       },
       "news": [
         {
@@ -5265,12 +5253,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 0.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-09-23",
@@ -5291,7 +5279,7 @@
       "price": {
         "current": 84.1,
         "change_pct": -4.52,
-        "fetched_at": "2026-10-05 16:34:42"
+        "fetched_at": "2026-10-06 14:26:30"
       },
       "news": [
         {
@@ -5360,7 +5348,7 @@
       "price": {
         "current": 25.43,
         "change_pct": 0.24,
-        "fetched_at": "2026-10-05 16:18:16"
+        "fetched_at": "2026-10-06 14:59:11"
       },
       "news": [
         {
@@ -5410,12 +5398,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 18,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
@@ -5436,7 +5424,7 @@
       "price": {
         "current": 67.45,
         "change_pct": -1.36,
-        "fetched_at": "2026-10-05 16:18:06"
+        "fetched_at": "2026-10-06 14:52:55"
       },
       "news": [
         {
@@ -5476,17 +5464,17 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "43/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 43/100（ROE 9.3%（巴菲特线 15%）），估值偏贵（比自己历史）。普通公司，偏贵。",
         "quant_score": 43,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -5505,7 +5493,7 @@
       "price": {
         "current": 34.88,
         "change_pct": -2.49,
-        "fetched_at": "2026-10-05 16:18:20"
+        "fetched_at": "2026-10-06 15:01:37"
       },
       "news": [
         {
@@ -5555,12 +5543,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -5581,7 +5569,7 @@
       "price": {
         "current": 110.21,
         "change_pct": -2.3,
-        "fetched_at": "2026-10-05 16:19:36"
+        "fetched_at": "2026-10-06 14:25:18"
       },
       "news": [
         {
@@ -5621,7 +5609,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "—",
@@ -5631,12 +5619,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -5657,7 +5645,7 @@
       "price": {
         "current": 114.32,
         "change_pct": -3.57,
-        "fetched_at": "2026-10-05 16:17:43"
+        "fetched_at": "2026-10-06 14:39:58"
       },
       "news": [
         {
@@ -5707,12 +5695,12 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 24,
+          "days_since_latest": 25,
           "events": [
             {
               "date": "2026-09-11",
@@ -5733,7 +5721,7 @@
       "price": {
         "current": 86.87,
         "change_pct": -0.33,
-        "fetched_at": "2026-10-05 16:18:17"
+        "fetched_at": "2026-10-06 14:59:46"
       },
       "news": [
         {
@@ -5783,12 +5771,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 11,
+          "days_since_latest": 12,
           "events": [
             {
               "date": "2026-09-24",
@@ -5809,7 +5797,7 @@
       "price": {
         "current": 7.92,
         "change_pct": -2.7,
-        "fetched_at": "2026-10-05 16:35:20"
+        "fetched_at": "2026-10-06 14:26:31"
       },
       "news": [
         {
@@ -5864,7 +5852,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 33,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-09-02",
@@ -5891,7 +5879,7 @@
       "price": {
         "current": 52.1,
         "change_pct": -0.04,
-        "fetched_at": "2026-10-05 16:28:58"
+        "fetched_at": "2026-10-06 14:26:23"
       },
       "news": [
         {
@@ -5946,7 +5934,7 @@
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 39,
+          "days_since_latest": 40,
           "events": [
             {
               "date": "2026-08-27",
@@ -5967,7 +5955,7 @@
       "price": {
         "current": 27.69,
         "change_pct": 3.13,
-        "fetched_at": "2026-10-05 16:19:35"
+        "fetched_at": "2026-10-06 14:25:17"
       },
       "news": [
         {
@@ -6022,7 +6010,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-09-23",
@@ -6049,7 +6037,7 @@
       "price": {
         "current": 11.56,
         "change_pct": 1.4,
-        "fetched_at": "2026-10-05 16:17:39"
+        "fetched_at": "2026-10-06 14:37:41"
       },
       "news": [
         {
@@ -6099,12 +6087,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.91,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -6125,7 +6113,7 @@
       "price": {
         "current": 43.43,
         "change_pct": 0.12,
-        "fetched_at": "2026-10-05 16:17:42"
+        "fetched_at": "2026-10-06 14:39:21"
       },
       "news": [
         {
@@ -6176,9 +6164,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 17.62,
-        "change_pct": -4.6,
-        "fetched_at": "2026-10-05 16:21:07"
+        "current": 19.17,
+        "change_pct": 6.09,
+        "fetched_at": "2026-10-06 14:27:28"
       },
       "news": [
         {
@@ -6229,9 +6217,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 1704.75,
-        "change_pct": -0.89,
-        "fetched_at": "2026-10-05 16:21:03"
+        "current": 1671.1,
+        "change_pct": -1.94,
+        "fetched_at": "2026-10-06 14:27:24"
       },
       "news": [
         {
@@ -6282,9 +6270,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 114.87,
-        "change_pct": -0.62,
-        "fetched_at": "2026-10-05 16:20:55"
+        "current": 127.71,
+        "change_pct": 5.05,
+        "fetched_at": "2026-10-06 14:27:18"
       },
       "news": [
         {
@@ -6335,9 +6323,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 166.91,
-        "change_pct": 5.0,
-        "fetched_at": "2026-10-05 16:20:45"
+        "current": 174.77,
+        "change_pct": 2.15,
+        "fetched_at": "2026-10-06 14:27:10"
       },
       "news": [
         {
@@ -6388,9 +6376,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 72.53,
-        "change_pct": -1.88,
-        "fetched_at": "2026-10-05 16:20:53"
+        "current": 76.23,
+        "change_pct": 4.4,
+        "fetched_at": "2026-10-06 14:27:17"
       },
       "news": [
         {
@@ -6430,10 +6418,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "观察",
-        "moat": "39/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 39/100（ROE 7.3%（巴菲特线 15%）），估值便宜（比自己历史）。便宜有便宜的道理，警惕价值陷阱。",
         "quant_score": 39,
         "data_incomplete": 0,
@@ -6445,7 +6433,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -6466,7 +6454,7 @@
       "price": {
         "current": 10.99,
         "change_pct": 1.2,
-        "fetched_at": "2026-10-05 16:18:19"
+        "fetched_at": "2026-10-06 15:00:56"
       },
       "news": [
         {
@@ -6535,7 +6523,7 @@
       "price": {
         "current": 23.49,
         "change_pct": -0.13,
-        "fetched_at": "2026-10-05 16:17:48"
+        "fetched_at": "2026-10-06 14:43:00"
       },
       "news": [
         {
@@ -6586,9 +6574,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 2.76,
-        "change_pct": 8.66,
-        "fetched_at": "2026-10-05 16:20:58"
+        "current": 2.7,
+        "change_pct": -5.92,
+        "fetched_at": "2026-10-06 14:27:21"
       },
       "news": [
         {
@@ -6639,9 +6627,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 208.49,
-        "change_pct": 0.55,
-        "fetched_at": "2026-10-05 16:20:57"
+        "current": 211.72,
+        "change_pct": 2.33,
+        "fetched_at": "2026-10-06 14:27:20"
       },
       "news": [
         {
@@ -6692,9 +6680,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 15.16,
-        "change_pct": -0.59,
-        "fetched_at": "2026-10-05 16:20:56"
+        "current": 15.36,
+        "change_pct": 1.39,
+        "fetched_at": "2026-10-06 14:27:19"
       },
       "news": [
         {
@@ -6745,9 +6733,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 271.43,
-        "change_pct": -0.32,
-        "fetched_at": "2026-10-05 16:20:59"
+        "current": 291.25,
+        "change_pct": 7.37,
+        "fetched_at": "2026-10-06 14:27:22"
       },
       "news": [
         {
@@ -6798,9 +6786,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 283.95,
-        "change_pct": 4.0,
-        "fetched_at": "2026-10-05 16:21:01"
+        "current": 281.6,
+        "change_pct": -4.12,
+        "fetched_at": "2026-10-06 14:27:23"
       },
       "news": [
         {
@@ -6851,9 +6839,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 1090.31,
-        "change_pct": 0.45,
-        "fetched_at": "2026-10-05 16:21:02"
+        "current": 1107.98,
+        "change_pct": 1.49,
+        "fetched_at": "2026-10-06 14:27:24"
       },
       "news": [
         {
@@ -6904,9 +6892,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 117.32,
-        "change_pct": -1.68,
-        "fetched_at": "2026-10-05 16:20:54"
+        "current": 115.09,
+        "change_pct": -0.95,
+        "fetched_at": "2026-10-06 14:27:17"
       },
       "news": [
         {
@@ -6961,7 +6949,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -6982,7 +6970,7 @@
       "price": {
         "current": 5.44,
         "change_pct": -4.39,
-        "fetched_at": "2026-10-05 16:43:15"
+        "fetched_at": "2026-10-06 14:26:42"
       },
       "news": [
         {
@@ -7037,7 +7025,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -7058,7 +7046,7 @@
       "price": {
         "current": 161.32,
         "change_pct": 1.45,
-        "fetched_at": "2026-10-05 16:20:04"
+        "fetched_at": "2026-10-06 14:25:41"
       },
       "news": [
         {
@@ -7108,7 +7096,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -7127,7 +7115,7 @@
       "price": {
         "current": 7.76,
         "change_pct": -1.9,
-        "fetched_at": "2026-10-05 16:58:06"
+        "fetched_at": "2026-10-06 14:27:02"
       },
       "news": [
         {
@@ -7177,12 +7165,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 2.0,
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -7203,7 +7191,7 @@
       "price": {
         "current": 15.64,
         "change_pct": 1.03,
-        "fetched_at": "2026-10-05 16:18:15"
+        "fetched_at": "2026-10-06 14:58:33"
       },
       "news": [
         {
@@ -7272,7 +7260,7 @@
       "price": {
         "current": 5.07,
         "change_pct": -1.17,
-        "fetched_at": "2026-10-05 16:18:21"
+        "fetched_at": "2026-10-06 15:02:11"
       },
       "news": [
         {
@@ -7327,7 +7315,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 7,
+          "days_since_latest": 8,
           "events": [
             {
               "date": "2026-09-28",
@@ -7348,7 +7336,7 @@
       "price": {
         "current": 5.32,
         "change_pct": 2.9,
-        "fetched_at": "2026-10-05 16:19:32"
+        "fetched_at": "2026-10-06 14:25:14"
       },
       "news": [
         {
@@ -7417,7 +7405,7 @@
       "price": {
         "current": 31.13,
         "change_pct": -0.64,
-        "fetched_at": "2026-10-05 16:17:53"
+        "fetched_at": "2026-10-06 14:45:57"
       },
       "news": [
         {
@@ -7457,7 +7445,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "—",
@@ -7472,7 +7460,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 32,
+          "days_since_latest": 33,
           "events": [
             {
               "date": "2026-09-03",
@@ -7493,12 +7481,12 @@
       "price": {
         "current": 79.52,
         "change_pct": -1.09,
-        "fetched_at": "2026-10-05 16:51:39"
+        "fetched_at": "2026-10-06 14:26:53"
       },
       "news": [
         {
           "title": "中原证券：国产芯片发布计划大幅提前 算力投入呈现加速趋势",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-10-03"
         },
         {
@@ -7562,7 +7550,7 @@
       "price": {
         "current": 28.01,
         "change_pct": 0.86,
-        "fetched_at": "2026-10-05 16:17:51"
+        "fetched_at": "2026-10-06 14:44:47"
       },
       "news": [
         {
@@ -7612,7 +7600,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.1,
+        "cache_age_hours": 21.7,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -7631,7 +7619,7 @@
       "price": {
         "current": 110.4,
         "change_pct": 0.36,
-        "fetched_at": "2026-10-05 16:58:45"
+        "fetched_at": "2026-10-06 14:27:03"
       },
       "news": [
         {
@@ -7681,7 +7669,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.4,
         "score": 0.71,
         "is_active": false,
         "survey": {
@@ -7700,7 +7688,7 @@
       "price": {
         "current": 10.08,
         "change_pct": 0.7,
-        "fetched_at": "2026-10-05 17:00:47"
+        "fetched_at": "2026-10-06 14:27:05"
       },
       "news": [
         {
@@ -7750,12 +7738,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.4,
         "score": 1.38,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-09-08",
@@ -7776,7 +7764,7 @@
       "price": {
         "current": 2.39,
         "change_pct": 0.84,
-        "fetched_at": "2026-10-05 16:17:36"
+        "fetched_at": "2026-10-06 14:35:45"
       },
       "news": [
         {
@@ -7826,7 +7814,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -7845,7 +7833,7 @@
       "price": {
         "current": 23.04,
         "change_pct": 0.3,
-        "fetched_at": "2026-10-05 16:18:11"
+        "fetched_at": "2026-10-06 14:56:08"
       },
       "news": [
         {
@@ -7914,7 +7902,7 @@
       "price": {
         "current": 7.04,
         "change_pct": 1.29,
-        "fetched_at": "2026-10-05 16:19:31"
+        "fetched_at": "2026-10-06 14:25:13"
       },
       "news": [
         {
@@ -7969,7 +7957,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 32,
+          "days_since_latest": 33,
           "events": [
             {
               "date": "2026-09-03",
@@ -7990,7 +7978,7 @@
       "price": {
         "current": 15.71,
         "change_pct": 0.32,
-        "fetched_at": "2026-10-05 16:18:29"
+        "fetched_at": "2026-10-06 15:06:59"
       },
       "news": [
         {
@@ -8040,12 +8028,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-09-08",
@@ -8066,7 +8054,7 @@
       "price": {
         "current": 5.93,
         "change_pct": 1.02,
-        "fetched_at": "2026-10-05 16:47:09"
+        "fetched_at": "2026-10-06 14:26:47"
       },
       "news": [
         {
@@ -8116,12 +8104,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -8142,7 +8130,7 @@
       "price": {
         "current": 4.23,
         "change_pct": 0.48,
-        "fetched_at": "2026-10-05 16:19:59"
+        "fetched_at": "2026-10-06 14:25:37"
       },
       "news": [
         {
@@ -8192,12 +8180,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.39,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 24,
+          "days_since_latest": 25,
           "events": [
             {
               "date": "2026-09-11",
@@ -8218,7 +8206,7 @@
       "price": {
         "current": 215.57,
         "change_pct": 1.24,
-        "fetched_at": "2026-10-05 16:19:21"
+        "fetched_at": "2026-10-06 14:25:05"
       },
       "news": [
         {
@@ -8268,20 +8256,13 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 1,
-          "days_since_latest": 60,
-          "events": [
-            {
-              "date": "2026-08-06",
-              "n_inst": 152,
-              "method": "",
-              "is_specific": true
-            }
-          ]
+          "count_30d": 0,
+          "days_since_latest": null,
+          "events": []
         },
         "short_selling": {
           "change_pct": null,
@@ -8294,7 +8275,7 @@
       "price": {
         "current": 264.41,
         "change_pct": 1.91,
-        "fetched_at": "2026-10-05 16:19:22"
+        "fetched_at": "2026-10-06 14:25:06"
       },
       "news": [
         {
@@ -8363,7 +8344,7 @@
       "price": {
         "current": 1.99,
         "change_pct": -0.5,
-        "fetched_at": "2026-10-05 16:44:29"
+        "fetched_at": "2026-10-06 14:26:44"
       },
       "news": [
         {
@@ -8413,7 +8394,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -8432,7 +8413,7 @@
       "price": {
         "current": 289.7,
         "change_pct": -2.43,
-        "fetched_at": "2026-10-05 17:00:09"
+        "fetched_at": "2026-10-06 14:27:05"
       },
       "news": [
         {
@@ -8472,17 +8453,17 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "40/100",
+        "moat": "—",
         "reasoning": "按困境反转股的标准看：质量 40/100（恢复趋势：ROE 回升），估值合理（比自己历史）。普通公司，普通价。",
         "quant_score": 40,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.62,
         "is_active": false,
         "survey": {
@@ -8501,7 +8482,7 @@
       "price": {
         "current": 8.96,
         "change_pct": 1.7,
-        "fetched_at": "2026-10-05 16:17:35"
+        "fetched_at": "2026-10-06 14:35:10"
       },
       "news": [
         {
@@ -8551,7 +8532,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -8570,7 +8551,7 @@
       "price": {
         "current": 6.5,
         "change_pct": 0.0,
-        "fetched_at": "2026-10-05 16:18:14"
+        "fetched_at": "2026-10-06 14:57:58"
       },
       "news": [
         {
@@ -8610,22 +8591,22 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "78/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 78/100（营收 10年复合增速 32%），估值便宜（比自己历史）。好公司 + 便宜，难得。",
         "quant_score": 78,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 11,
-          "days_since_latest": 6,
+          "days_since_latest": 7,
           "events": [
             {
               "date": "2026-09-29",
@@ -8670,7 +8651,7 @@
       "price": {
         "current": 51.9,
         "change_pct": -1.12,
-        "fetched_at": "2026-10-05 16:18:42"
+        "fetched_at": "2026-10-06 14:24:30"
       },
       "news": [
         {
@@ -8710,7 +8691,7 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "持有",
         "moat": "—",
@@ -8721,9 +8702,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 3.69,
-        "change_pct": -5.87,
-        "fetched_at": "2026-10-05 16:21:11"
+        "current": 3.9,
+        "change_pct": 5.41,
+        "fetched_at": "2026-10-06 14:27:31"
       },
       "news": [
         {
@@ -8774,9 +8755,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 40.28,
-        "change_pct": -3.54,
-        "fetched_at": "2026-10-05 16:21:04"
+        "current": 41.1,
+        "change_pct": 1.53,
+        "fetched_at": "2026-10-06 14:27:25"
       },
       "news": [
         {
@@ -8827,9 +8808,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 7.53,
-        "change_pct": -1.05,
-        "fetched_at": "2026-10-05 16:21:05"
+        "current": 8.02,
+        "change_pct": 4.84,
+        "fetched_at": "2026-10-06 14:27:26"
       },
       "news": [
         {
@@ -8880,9 +8861,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 85.38,
-        "change_pct": -0.57,
-        "fetched_at": "2026-10-05 16:21:06"
+        "current": 85.1,
+        "change_pct": -1.8,
+        "fetched_at": "2026-10-06 14:27:27"
       },
       "news": [
         {
@@ -8922,7 +8903,7 @@
       "is_new": false,
       "watched_by": "5",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "买入",
         "moat": "—",
@@ -8933,9 +8914,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 27.28,
-        "change_pct": 0.29,
-        "fetched_at": "2026-10-05 16:21:08"
+        "current": 26.61,
+        "change_pct": -2.38,
+        "fetched_at": "2026-10-06 14:27:29"
       },
       "news": [
         {
@@ -8986,9 +8967,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 43.64,
-        "change_pct": -0.11,
-        "fetched_at": "2026-10-05 16:21:09"
+        "current": 43.99,
+        "change_pct": 1.85,
+        "fetched_at": "2026-10-06 14:27:30"
       },
       "news": [
         {
@@ -9057,7 +9038,7 @@
       "price": {
         "current": 137.42,
         "change_pct": -2.33,
-        "fetched_at": "2026-10-05 16:19:28"
+        "fetched_at": "2026-10-06 14:25:11"
       },
       "news": [
         {
@@ -9107,7 +9088,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9126,7 +9107,7 @@
       "price": {
         "current": 14.23,
         "change_pct": 0.85,
-        "fetched_at": "2026-10-05 16:18:37"
+        "fetched_at": "2026-10-06 14:24:25"
       },
       "news": [
         {
@@ -9166,7 +9147,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
         "moat": "—",
@@ -9176,7 +9157,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -9195,7 +9176,7 @@
       "price": {
         "current": 318.55,
         "change_pct": -1.92,
-        "fetched_at": "2026-10-05 16:20:28"
+        "fetched_at": "2026-10-06 14:26:02"
       },
       "news": [
         {
@@ -9245,12 +9226,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 0.75,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 24,
+          "days_since_latest": 25,
           "events": [
             {
               "date": "2026-09-11",
@@ -9271,7 +9252,7 @@
       "price": {
         "current": 28.85,
         "change_pct": -3.38,
-        "fetched_at": "2026-10-05 16:56:14"
+        "fetched_at": "2026-10-06 14:26:59"
       },
       "news": [
         {
@@ -9321,12 +9302,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.9,
+        "cache_age_hours": 0.8,
         "score": 0.55,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 45,
+          "days_since_latest": 46,
           "events": [
             {
               "date": "2026-08-21",
@@ -9347,7 +9328,7 @@
       "price": {
         "current": 44.97,
         "change_pct": 4.63,
-        "fetched_at": "2026-10-05 16:19:34"
+        "fetched_at": "2026-10-06 14:25:16"
       },
       "news": [
         {
@@ -9397,24 +9378,18 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 18,
+          "count_30d": 1,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
               "n_inst": 14,
               "method": "路演活动,现场参观",
               "is_specific": true
-            },
-            {
-              "date": "2026-09-07",
-              "n_inst": 19,
-              "method": "路演活动,策略会",
-              "is_specific": false
             }
           ]
         },
@@ -9429,7 +9404,7 @@
       "price": {
         "current": 113.81,
         "change_pct": -3.33,
-        "fetched_at": "2026-10-05 16:18:27"
+        "fetched_at": "2026-10-06 15:05:48"
       },
       "news": [
         {
@@ -9483,19 +9458,13 @@
         "score": 1.19,
         "is_active": false,
         "survey": {
-          "count_30d": 2,
-          "days_since_latest": 20,
+          "count_30d": 1,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
               "n_inst": 14,
               "method": "特定对象调研,现场参观,电话会议",
-              "is_specific": true
-            },
-            {
-              "date": "2026-09-07",
-              "n_inst": 12,
-              "method": "特定对象调研,现场参观",
               "is_specific": true
             }
           ]
@@ -9511,7 +9480,7 @@
       "price": {
         "current": 25.1,
         "change_pct": 0.4,
-        "fetched_at": "2026-10-05 16:20:08"
+        "fetched_at": "2026-10-06 14:25:45"
       },
       "news": [
         {
@@ -9561,12 +9530,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -9587,7 +9556,7 @@
       "price": {
         "current": 30.81,
         "change_pct": -0.9,
-        "fetched_at": "2026-10-05 16:20:09"
+        "fetched_at": "2026-10-06 14:25:46"
       },
       "news": [
         {
@@ -9627,10 +9596,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "观察",
-        "moat": "81/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 81/100（营收 10年复合增速 61%），估值贵（比自己历史）。好公司，但贵了，等回调。",
         "quant_score": 81,
         "data_incomplete": 0,
@@ -9642,7 +9611,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 18,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
@@ -9663,17 +9632,17 @@
       "price": {
         "current": 153.24,
         "change_pct": -4.34,
-        "fetched_at": "2026-10-05 16:20:11"
+        "fetched_at": "2026-10-06 14:25:48"
       },
       "news": [
         {
           "title": "存储芯片概念下跌2.73%，26股主力资金净流出超亿元",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "深沪北百元股数量达213只，科创板股票占46.48%",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
@@ -9717,8 +9686,8 @@
         "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 3,
-          "days_since_latest": 19,
+          "count_30d": 2,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -9729,12 +9698,6 @@
             {
               "date": "2026-09-08",
               "n_inst": 5,
-              "method": "特定对象调研,现场参观",
-              "is_specific": true
-            },
-            {
-              "date": "2026-09-07",
-              "n_inst": 1,
               "method": "特定对象调研,现场参观",
               "is_specific": true
             }
@@ -9751,7 +9714,7 @@
       "price": {
         "current": 49.05,
         "change_pct": -3.24,
-        "fetched_at": "2026-10-05 16:20:12"
+        "fetched_at": "2026-10-06 14:25:48"
       },
       "news": [
         {
@@ -9820,7 +9783,7 @@
       "price": {
         "current": 6.17,
         "change_pct": 0.65,
-        "fetched_at": "2026-10-05 16:20:13"
+        "fetched_at": "2026-10-06 14:25:49"
       },
       "news": [
         {
@@ -9870,12 +9833,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 41,
+          "days_since_latest": 42,
           "events": [
             {
               "date": "2026-08-25",
@@ -9896,7 +9859,7 @@
       "price": {
         "current": 42.5,
         "change_pct": -1.87,
-        "fetched_at": "2026-10-05 16:20:14"
+        "fetched_at": "2026-10-06 14:25:50"
       },
       "news": [
         {
@@ -9951,7 +9914,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -9972,7 +9935,7 @@
       "price": {
         "current": 56.4,
         "change_pct": -1.0,
-        "fetched_at": "2026-10-05 16:20:38"
+        "fetched_at": "2026-10-06 14:26:11"
       },
       "news": [
         {
@@ -10041,7 +10004,7 @@
       "price": {
         "current": 29.49,
         "change_pct": -0.97,
-        "fetched_at": "2026-10-05 16:20:19"
+        "fetched_at": "2026-10-06 14:25:55"
       },
       "news": [
         {
@@ -10091,12 +10054,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -10117,7 +10080,7 @@
       "price": {
         "current": 13.98,
         "change_pct": -3.12,
-        "fetched_at": "2026-10-05 16:20:20"
+        "fetched_at": "2026-10-06 14:25:55"
       },
       "news": [
         {
@@ -10172,7 +10135,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 41,
+          "days_since_latest": 42,
           "events": [
             {
               "date": "2026-08-25",
@@ -10199,7 +10162,7 @@
       "price": {
         "current": 42.9,
         "change_pct": -2.7,
-        "fetched_at": "2026-10-05 16:20:27"
+        "fetched_at": "2026-10-06 14:26:02"
       },
       "news": [
         {
@@ -10254,7 +10217,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 25,
+          "days_since_latest": 26,
           "events": [
             {
               "date": "2026-09-10",
@@ -10275,7 +10238,7 @@
       "price": {
         "current": 5.22,
         "change_pct": 2.55,
-        "fetched_at": "2026-10-05 16:20:21"
+        "fetched_at": "2026-10-06 14:25:56"
       },
       "news": [
         {
@@ -10344,7 +10307,7 @@
       "price": {
         "current": 8.11,
         "change_pct": -1.82,
-        "fetched_at": "2026-10-05 16:20:22"
+        "fetched_at": "2026-10-06 14:25:57"
       },
       "news": [
         {
@@ -10399,7 +10362,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -10426,7 +10389,7 @@
       "price": {
         "current": 24.26,
         "change_pct": -1.82,
-        "fetched_at": "2026-10-05 16:20:29"
+        "fetched_at": "2026-10-06 14:26:03"
       },
       "news": [
         {
@@ -10481,7 +10444,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -10502,7 +10465,7 @@
       "price": {
         "current": 13.2,
         "change_pct": -3.79,
-        "fetched_at": "2026-10-05 16:20:30"
+        "fetched_at": "2026-10-06 14:26:04"
       },
       "news": [
         {
@@ -10552,7 +10515,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10571,7 +10534,7 @@
       "price": {
         "current": 19.05,
         "change_pct": -1.19,
-        "fetched_at": "2026-10-05 16:20:31"
+        "fetched_at": "2026-10-06 14:26:05"
       },
       "news": [
         {
@@ -10621,12 +10584,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 26,
+          "days_since_latest": 27,
           "events": [
             {
               "date": "2026-09-09",
@@ -10647,7 +10610,7 @@
       "price": {
         "current": 42.68,
         "change_pct": -2.02,
-        "fetched_at": "2026-10-05 16:20:32"
+        "fetched_at": "2026-10-06 14:26:06"
       },
       "news": [
         {
@@ -10687,10 +10650,10 @@
       "is_new": false,
       "watched_by": "2,7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "67/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 67/100（营收 10年复合增速 30%），估值便宜（比自己历史）。好公司 + 便宜，难得。",
         "quant_score": 67,
         "data_incomplete": 0,
@@ -10702,7 +10665,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 32,
           "events": [
             {
               "date": "2026-09-04",
@@ -10723,7 +10686,7 @@
       "price": {
         "current": 20.17,
         "change_pct": -0.49,
-        "fetched_at": "2026-10-05 16:19:49"
+        "fetched_at": "2026-10-06 14:25:29"
       },
       "news": [
         {
@@ -10763,7 +10726,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "观察",
         "moat": "—",
@@ -10773,12 +10736,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -10799,7 +10762,7 @@
       "price": {
         "current": 5.42,
         "change_pct": 0.56,
-        "fetched_at": "2026-10-05 16:20:33"
+        "fetched_at": "2026-10-06 14:26:07"
       },
       "news": [
         {
@@ -10868,7 +10831,7 @@
       "price": {
         "current": 20.56,
         "change_pct": 1.43,
-        "fetched_at": "2026-10-05 16:20:26"
+        "fetched_at": "2026-10-06 14:26:01"
       },
       "news": [
         {
@@ -10908,7 +10871,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "—",
@@ -10918,7 +10881,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -10937,7 +10900,7 @@
       "price": {
         "current": 32.73,
         "change_pct": -3.25,
-        "fetched_at": "2026-10-05 16:20:34"
+        "fetched_at": "2026-10-06 14:26:08"
       },
       "news": [
         {
@@ -10992,7 +10955,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 14,
+          "days_since_latest": 15,
           "events": [
             {
               "date": "2026-09-21",
@@ -11013,7 +10976,7 @@
       "price": {
         "current": 10.44,
         "change_pct": -1.79,
-        "fetched_at": "2026-10-05 16:19:27"
+        "fetched_at": "2026-10-06 14:25:10"
       },
       "news": [
         {
@@ -11082,7 +11045,7 @@
       "price": {
         "current": 68.9,
         "change_pct": 1.83,
-        "fetched_at": "2026-10-05 16:19:52"
+        "fetched_at": "2026-10-06 14:25:32"
       },
       "news": [
         {
@@ -11137,7 +11100,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 34,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-09-01",
@@ -11158,9 +11121,14 @@
       "price": {
         "current": 11.21,
         "change_pct": 2.94,
-        "fetched_at": "2026-10-05 16:18:28"
+        "fetched_at": "2026-10-06 15:06:24"
       },
       "news": [
+        {
+          "title": "光伏设备商打起“专利战”：连城数控和晶盛机电在美对垒",
+          "sentiment": null,
+          "date": "2026-10-03"
+        },
         {
           "title": "中国光伏设备商在美开打专利战",
           "sentiment": 0.0,
@@ -11180,11 +11148,6 @@
           "title": "光伏龙头高管频繁调整：从“拼扩产”转向“拼经营”？",
           "sentiment": 0.0,
           "date": "2026-09-22"
-        },
-        {
-          "title": "传统业务“流血”，永臻股份近6亿投向电池铝箔项目，寻第二增长曲线",
-          "sentiment": 0.0,
-          "date": "2026-09-21"
         }
       ]
     },
@@ -11198,10 +11161,10 @@
       "is_new": false,
       "watched_by": "2,7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "47/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 47/100（营收 10年复合增速 27%），估值便宜（比自己历史）。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的50%——赚的钱没真正进账户",
         "quant_score": 47,
         "data_incomplete": 0,
@@ -11213,7 +11176,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -11246,7 +11209,7 @@
       "price": {
         "current": 35.3,
         "change_pct": -0.31,
-        "fetched_at": "2026-10-05 16:19:50"
+        "fetched_at": "2026-10-06 14:25:30"
       },
       "news": [
         {
@@ -11286,7 +11249,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "观察",
         "moat": "—",
@@ -11296,7 +11259,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -11315,7 +11278,7 @@
       "price": {
         "current": 273.75,
         "change_pct": -0.67,
-        "fetched_at": "2026-10-05 16:20:02"
+        "fetched_at": "2026-10-06 14:25:40"
       },
       "news": [
         {
@@ -11384,7 +11347,7 @@
       "price": {
         "current": 222.78,
         "change_pct": -3.28,
-        "fetched_at": "2026-10-05 16:19:38"
+        "fetched_at": "2026-10-06 14:25:20"
       },
       "news": [
         {
@@ -11439,7 +11402,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 17,
+          "days_since_latest": 18,
           "events": [
             {
               "date": "2026-09-18",
@@ -11460,7 +11423,7 @@
       "price": {
         "current": 4.07,
         "change_pct": 1.24,
-        "fetched_at": "2026-10-05 16:17:52"
+        "fetched_at": "2026-10-06 14:45:23"
       },
       "news": [
         {
@@ -11500,10 +11463,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "58/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 58/100（ROE 10.6%（巴菲特线 15%）），估值贵（比自己历史）。普通公司，太贵。",
         "quant_score": 58,
         "data_incomplete": 0,
@@ -11515,7 +11478,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 45,
+          "days_since_latest": 46,
           "events": [
             {
               "date": "2026-08-21",
@@ -11536,12 +11499,12 @@
       "price": {
         "current": 39.41,
         "change_pct": -0.71,
-        "fetched_at": "2026-10-05 16:20:35"
+        "fetched_at": "2026-10-06 14:26:09"
       },
       "news": [
         {
           "title": "建筑材料行业今日净流出资金24.58亿元，中国巨石等5股净流出资金超亿元",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-28"
         },
         {
@@ -11576,22 +11539,22 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "45/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 45/100（营收 10年复合增速 30%），估值贵（比自己历史）。普通公司，太贵。",
         "quant_score": 45,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.15,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 42,
+          "days_since_latest": 43,
           "events": [
             {
               "date": "2026-08-24",
@@ -11612,22 +11575,22 @@
       "price": {
         "current": 35.88,
         "change_pct": -6.25,
-        "fetched_at": "2026-10-05 16:20:36"
+        "fetched_at": "2026-10-06 14:26:09"
       },
       "news": [
         {
           "title": "电力设备行业资金流入榜：宁德时代等5股净流入资金超亿元",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "培育钻石概念下跌1.82%，主力资金净流出12股",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
           "title": "晶盛机电在美销售的部分晶体生长设备专利权起争议，尚未收到正式诉讼文件",
-          "sentiment": null,
+          "sentiment": -1.0,
           "date": "2026-09-24"
         },
         {
@@ -11681,7 +11644,7 @@
       "price": {
         "current": 14.71,
         "change_pct": 0.62,
-        "fetched_at": "2026-10-05 16:20:37"
+        "fetched_at": "2026-10-06 14:26:10"
       },
       "news": [
         {
@@ -11736,7 +11699,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 26,
+          "days_since_latest": 27,
           "events": [
             {
               "date": "2026-09-09",
@@ -11757,7 +11720,7 @@
       "price": {
         "current": 6.19,
         "change_pct": 1.14,
-        "fetched_at": "2026-10-05 16:19:26"
+        "fetched_at": "2026-10-06 14:25:09"
       },
       "news": [
         {
@@ -11826,7 +11789,7 @@
       "price": {
         "current": 5.28,
         "change_pct": 1.93,
-        "fetched_at": "2026-10-05 16:20:39"
+        "fetched_at": "2026-10-06 14:26:12"
       },
       "news": [
         {
@@ -11881,7 +11844,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 39,
+          "days_since_latest": 40,
           "events": [
             {
               "date": "2026-08-27",
@@ -11902,7 +11865,7 @@
       "price": {
         "current": 35.71,
         "change_pct": 0.51,
-        "fetched_at": "2026-10-05 16:20:25"
+        "fetched_at": "2026-10-06 14:26:00"
       },
       "news": [
         {
@@ -11952,8 +11915,8 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
-        "score": 0.15,
+        "cache_age_hours": 1.1,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -11971,7 +11934,7 @@
       "price": {
         "current": 5.92,
         "change_pct": -0.5,
-        "fetched_at": "2026-10-05 16:20:40"
+        "fetched_at": "2026-10-06 14:26:13"
       },
       "news": [
         {
@@ -12011,10 +11974,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
-        "moat": "44/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 44/100（ROE 6.1%（巴菲特线 15%）），估值合理（比自己历史）。普通公司，普通价。",
         "quant_score": 44,
         "data_incomplete": 0,
@@ -12026,7 +11989,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 42,
+          "days_since_latest": 43,
           "events": [
             {
               "date": "2026-08-24",
@@ -12047,32 +12010,32 @@
       "price": {
         "current": 11.66,
         "change_pct": 2.37,
-        "fetched_at": "2026-10-05 16:20:24"
+        "fetched_at": "2026-10-06 14:25:59"
       },
       "news": [
         {
-          "title": "减肥药概念涨2.59%，主力资金净流入这些股",
-          "sentiment": null,
+          "title": "猴痘概念涨2.96%，主力资金净流入这些股",
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
-          "title": "猴痘概念涨2.96%，主力资金净流入这些股",
-          "sentiment": null,
+          "title": "减肥药概念涨2.59%，主力资金净流入这些股",
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "乐普医疗控股子公司MWN110注射液获美国FDA临床试验批准",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-28"
         },
         {
           "title": "乐普医疗：子公司MWN110注射液获得美国FDA药物临床试验批准",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-28"
         },
         {
           "title": "乐普医疗：子公司MWN110注射液获美国FDA临床试验批准",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-28"
         }
       ]
@@ -12097,7 +12060,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12116,7 +12079,7 @@
       "price": {
         "current": 24.61,
         "change_pct": -4.8,
-        "fetched_at": "2026-10-05 16:20:41"
+        "fetched_at": "2026-10-06 14:26:14"
       },
       "news": [
         {
@@ -12166,7 +12129,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12185,7 +12148,7 @@
       "price": {
         "current": 30.11,
         "change_pct": -1.15,
-        "fetched_at": "2026-10-05 16:20:42"
+        "fetched_at": "2026-10-06 14:26:15"
       },
       "news": [
         {
@@ -12235,7 +12198,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.34,
         "is_active": false,
         "survey": {
@@ -12254,7 +12217,7 @@
       "price": {
         "current": 32.46,
         "change_pct": 1.09,
-        "fetched_at": "2026-10-05 16:18:50"
+        "fetched_at": "2026-10-06 14:24:37"
       },
       "news": [
         {
@@ -12294,7 +12257,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
         "moat": "—",
@@ -12304,7 +12267,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -12323,7 +12286,7 @@
       "price": {
         "current": 31.25,
         "change_pct": 3.03,
-        "fetched_at": "2026-10-05 16:23:34"
+        "fetched_at": "2026-10-06 14:26:16"
       },
       "news": [
         {
@@ -12392,7 +12355,7 @@
       "price": {
         "current": 65.93,
         "change_pct": -1.86,
-        "fetched_at": "2026-10-05 16:18:05"
+        "fetched_at": "2026-10-06 14:52:15"
       },
       "news": [
         {
@@ -12442,12 +12405,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 1.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -12468,7 +12431,7 @@
       "price": {
         "current": 31.02,
         "change_pct": -1.62,
-        "fetched_at": "2026-10-05 16:52:57"
+        "fetched_at": "2026-10-06 14:26:55"
       },
       "news": [
         {
@@ -12537,7 +12500,7 @@
       "price": {
         "current": 67.01,
         "change_pct": -1.6,
-        "fetched_at": "2026-10-05 16:24:30"
+        "fetched_at": "2026-10-06 14:26:16"
       },
       "news": [
         {
@@ -12577,7 +12540,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
         "moat": "—",
@@ -12592,7 +12555,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 32,
           "events": [
             {
               "date": "2026-09-04",
@@ -12613,7 +12576,7 @@
       "price": {
         "current": 13.55,
         "change_pct": -0.81,
-        "fetched_at": "2026-10-05 16:25:06"
+        "fetched_at": "2026-10-06 14:26:17"
       },
       "news": [
         {
@@ -12664,9 +12627,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 11.16,
-        "change_pct": 1.64,
-        "fetched_at": "2026-10-05 16:20:46"
+        "current": 11.3,
+        "change_pct": 0.98,
+        "fetched_at": "2026-10-06 14:27:10"
       },
       "news": [
         {
@@ -12717,9 +12680,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 175.42,
-        "change_pct": -1.87,
-        "fetched_at": "2026-10-05 16:21:14"
+        "current": 171.7,
+        "change_pct": 0.41,
+        "fetched_at": "2026-10-06 14:27:34"
       },
       "news": [
         {
@@ -12759,10 +12722,10 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "持有",
-        "moat": "82/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 82/100（营收 4年复合增速 32%），估值数据不足，只知道股价处于中位。好公司，价格合理（价格数据不足，先不下买入结论）。",
         "quant_score": 82,
         "data_incomplete": 0,
@@ -12770,9 +12733,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 22.32,
-        "change_pct": -2.02,
-        "fetched_at": "2026-10-05 16:21:15"
+        "current": 22.3,
+        "change_pct": 0.27,
+        "fetched_at": "2026-10-06 14:27:35"
       },
       "news": [
         {
@@ -12812,10 +12775,10 @@
       "is_new": false,
       "watched_by": "4",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "持有",
-        "moat": "80/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 80/100（营收 4年复合增速 27%），估值数据不足，只知道股价处于偏低位置。好公司，价格合理（价格数据不足，先不下买入结论）。",
         "quant_score": 80,
         "data_incomplete": 0,
@@ -12823,9 +12786,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 67.55,
-        "change_pct": -0.73,
-        "fetched_at": "2026-10-05 16:21:16"
+        "current": 66.4,
+        "change_pct": -2.21,
+        "fetched_at": "2026-10-06 14:27:36"
       },
       "news": [
         {
@@ -12876,9 +12839,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 4.1,
-        "change_pct": -0.97,
-        "fetched_at": "2026-10-05 16:21:17"
+        "current": 4.18,
+        "change_pct": 3.72,
+        "fetched_at": "2026-10-06 14:27:37"
       },
       "news": [
         {
@@ -12930,8 +12893,8 @@
       "precursor": null,
       "price": {
         "current": 0.69,
-        "change_pct": -2.82,
-        "fetched_at": "2026-10-05 16:21:18"
+        "change_pct": 0.0,
+        "fetched_at": "2026-10-06 14:27:38"
       },
       "news": [
         {
@@ -12986,7 +12949,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -13007,7 +12970,7 @@
       "price": {
         "current": 57.88,
         "change_pct": -0.91,
-        "fetched_at": "2026-10-05 16:19:23"
+        "fetched_at": "2026-10-06 14:25:06"
       },
       "news": [
         {
@@ -13058,9 +13021,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 23.02,
+        "current": 22.84,
         "change_pct": -0.13,
-        "fetched_at": "2026-10-05 16:20:47"
+        "fetched_at": "2026-10-06 14:27:11"
       },
       "news": [
         {
@@ -13110,7 +13073,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -13174,7 +13137,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -13195,7 +13158,7 @@
       "price": {
         "current": 15.4,
         "change_pct": -1.66,
-        "fetched_at": "2026-10-05 16:25:42"
+        "fetched_at": "2026-10-06 14:26:18"
       },
       "news": [
         {
@@ -13246,9 +13209,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 149.2,
-        "change_pct": -2.23,
-        "fetched_at": "2026-10-05 16:21:19"
+        "current": 150.6,
+        "change_pct": 0.47,
+        "fetched_at": "2026-10-06 14:27:38"
       },
       "news": [
         {
@@ -13298,12 +13261,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.33,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 32,
           "events": [
             {
               "date": "2026-09-04",
@@ -13324,7 +13287,7 @@
       "price": {
         "current": 3.91,
         "change_pct": -0.76,
-        "fetched_at": "2026-10-05 16:18:24"
+        "fetched_at": "2026-10-06 15:04:00"
       },
       "news": [
         {
@@ -13374,12 +13337,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -13400,7 +13363,7 @@
       "price": {
         "current": 13.76,
         "change_pct": -4.24,
-        "fetched_at": "2026-10-05 16:18:25"
+        "fetched_at": "2026-10-06 15:04:36"
       },
       "news": [
         {
@@ -13440,10 +13403,10 @@
       "is_new": false,
       "watched_by": "2,7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "A",
         "conclusion": "买入",
-        "moat": "73/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 73/100（营收 10年复合增速 24%），估值便宜（比自己历史）。好公司 + 便宜，难得。\n⚠ 利润是正的，但经营现金流只有利润的-85%——赚的钱没真正进账户",
         "quant_score": 73,
         "data_incomplete": 0,
@@ -13469,7 +13432,7 @@
       "price": {
         "current": 17.79,
         "change_pct": 0.11,
-        "fetched_at": "2026-10-05 16:19:16"
+        "fetched_at": "2026-10-06 14:25:00"
       },
       "news": [
         {
@@ -13520,9 +13483,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 73.9,
-        "change_pct": -2.25,
-        "fetched_at": "2026-10-05 16:21:12"
+        "current": 75.0,
+        "change_pct": 1.21,
+        "fetched_at": "2026-10-06 14:27:32"
       },
       "news": [
         {
@@ -13572,12 +13535,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.46,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 34,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-09-01",
@@ -13598,7 +13561,7 @@
       "price": {
         "current": 218.8,
         "change_pct": 0.88,
-        "fetched_at": "2026-10-05 16:18:58"
+        "fetched_at": "2026-10-06 14:24:44"
       },
       "news": [
         {
@@ -13648,12 +13611,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 39,
+          "days_since_latest": 40,
           "events": [
             {
               "date": "2026-08-27",
@@ -13674,7 +13637,7 @@
       "price": {
         "current": 56.35,
         "change_pct": 0.73,
-        "fetched_at": "2026-10-05 16:18:10"
+        "fetched_at": "2026-10-06 14:55:19"
       },
       "news": [
         {
@@ -13724,7 +13687,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 1.2,
         "score": 0.29,
         "is_active": false,
         "survey": {
@@ -13743,7 +13706,7 @@
       "price": {
         "current": 3.98,
         "change_pct": 0.76,
-        "fetched_at": "2026-10-05 16:57:29"
+        "fetched_at": "2026-10-06 14:27:01"
       },
       "news": [
         {
@@ -13798,7 +13761,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 4,
-          "days_since_latest": 6,
+          "days_since_latest": 7,
           "events": [
             {
               "date": "2026-09-29",
@@ -13837,7 +13800,7 @@
       "price": {
         "current": 35.43,
         "change_pct": 1.78,
-        "fetched_at": "2026-10-05 16:32:07"
+        "fetched_at": "2026-10-06 14:26:27"
       },
       "news": [
         {
@@ -13906,7 +13869,7 @@
       "price": {
         "current": 2.44,
         "change_pct": 1.24,
-        "fetched_at": "2026-10-05 16:19:40"
+        "fetched_at": "2026-10-06 14:25:21"
       },
       "news": [
         {
@@ -13975,7 +13938,7 @@
       "price": {
         "current": 358.46,
         "change_pct": -3.69,
-        "fetched_at": "2026-10-05 16:20:17"
+        "fetched_at": "2026-10-06 14:25:53"
       },
       "news": [
         {
@@ -14025,12 +13988,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
-        "score": 0.14,
+        "cache_age_hours": 1.2,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 33,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-09-02",
@@ -14051,7 +14014,7 @@
       "price": {
         "current": 22.76,
         "change_pct": 2.2,
-        "fetched_at": "2026-10-05 16:20:15"
+        "fetched_at": "2026-10-06 14:25:51"
       },
       "news": [
         {
@@ -14106,7 +14069,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 11,
+          "days_since_latest": 12,
           "events": [
             {
               "date": "2026-09-24",
@@ -14127,7 +14090,7 @@
       "price": {
         "current": 11.08,
         "change_pct": 3.36,
-        "fetched_at": "2026-10-05 16:18:32"
+        "fetched_at": "2026-10-06 14:24:21"
       },
       "news": [
         {
@@ -14177,12 +14140,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 26,
+          "days_since_latest": 27,
           "events": [
             {
               "date": "2026-09-09",
@@ -14203,7 +14166,7 @@
       "price": {
         "current": 53.8,
         "change_pct": 0.58,
-        "fetched_at": "2026-10-05 16:19:44"
+        "fetched_at": "2026-10-06 14:25:25"
       },
       "news": [
         {
@@ -14243,7 +14206,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "A",
         "conclusion": "买入",
         "moat": "—",
@@ -14253,7 +14216,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.51,
         "is_active": false,
         "survey": {
@@ -14272,7 +14235,7 @@
       "price": {
         "current": 11.98,
         "change_pct": 1.61,
-        "fetched_at": "2026-10-05 16:20:16"
+        "fetched_at": "2026-10-06 14:25:52"
       },
       "news": [
         {
@@ -14341,7 +14304,7 @@
       "price": {
         "current": 9.26,
         "change_pct": -0.32,
-        "fetched_at": "2026-10-05 16:20:18"
+        "fetched_at": "2026-10-06 14:25:54"
       },
       "news": [
         {
@@ -14381,7 +14344,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
         "moat": "—",
@@ -14391,7 +14354,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14410,7 +14373,7 @@
       "price": {
         "current": 54.79,
         "change_pct": -1.37,
-        "fetched_at": "2026-10-05 16:20:10"
+        "fetched_at": "2026-10-06 14:25:47"
       },
       "news": [
         {
@@ -14464,8 +14427,8 @@
         "score": 0.7,
         "is_active": false,
         "survey": {
-          "count_30d": 4,
-          "days_since_latest": 13,
+          "count_30d": 3,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-09-22",
@@ -14484,12 +14447,6 @@
               "n_inst": 2,
               "method": "特定对象调研,路演活动",
               "is_specific": true
-            },
-            {
-              "date": "2026-09-07",
-              "n_inst": 1,
-              "method": "特定对象调研,路演活动,电话会议",
-              "is_specific": true
             }
           ]
         },
@@ -14504,7 +14461,7 @@
       "price": {
         "current": 8.38,
         "change_pct": 0.6,
-        "fetched_at": "2026-10-05 16:19:46"
+        "fetched_at": "2026-10-06 14:25:27"
       },
       "news": [
         {
@@ -14555,9 +14512,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 210.0,
-        "change_pct": -2.42,
-        "fetched_at": "2026-10-05 16:21:13"
+        "current": 218.6,
+        "change_pct": 2.92,
+        "fetched_at": "2026-10-06 14:27:33"
       },
       "news": [
         {
@@ -14626,7 +14583,7 @@
       "price": {
         "current": 4.59,
         "change_pct": -0.22,
-        "fetched_at": "2026-10-05 16:59:29"
+        "fetched_at": "2026-10-06 14:27:04"
       },
       "news": [
         {
@@ -14676,7 +14633,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.8,
+        "cache_age_hours": 0.7,
         "score": 0.16,
         "is_active": false,
         "survey": {
@@ -14695,7 +14652,7 @@
       "price": {
         "current": 11.46,
         "change_pct": -0.95,
-        "fetched_at": "2026-10-05 16:19:33"
+        "fetched_at": "2026-10-06 14:25:15"
       },
       "news": [
         {
@@ -14750,7 +14707,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -14771,7 +14728,7 @@
       "price": {
         "current": 11.57,
         "change_pct": 1.94,
-        "fetched_at": "2026-10-05 16:33:24"
+        "fetched_at": "2026-10-06 14:26:29"
       },
       "news": [
         {
@@ -14821,7 +14778,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -14840,7 +14797,7 @@
       "price": {
         "current": 28.54,
         "change_pct": -0.17,
-        "fetched_at": "2026-10-05 16:54:20"
+        "fetched_at": "2026-10-06 14:26:57"
       },
       "news": [
         {
@@ -14890,12 +14847,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.6,
         "score": 1.33,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -14922,7 +14879,7 @@
       "price": {
         "current": 34.07,
         "change_pct": 3.24,
-        "fetched_at": "2026-10-05 16:53:38"
+        "fetched_at": "2026-10-06 14:26:56"
       },
       "news": [
         {
@@ -15011,22 +14968,22 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "27/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 27/100（ROE 0.2%（巴菲特线 15%）），估值数据不足。质量偏弱。",
         "quant_score": 27,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 32,
+          "days_since_latest": 33,
           "events": [
             {
               "date": "2026-09-03",
@@ -15047,7 +15004,7 @@
       "price": {
         "current": 3.25,
         "change_pct": 1.88,
-        "fetched_at": "2026-10-05 16:18:31"
+        "fetched_at": "2026-10-06 14:24:20"
       },
       "news": [
         {
@@ -15097,7 +15054,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -15116,7 +15073,7 @@
       "price": {
         "current": 19.04,
         "change_pct": 9.99,
-        "fetched_at": "2026-10-05 16:18:33"
+        "fetched_at": "2026-10-06 14:24:22"
       },
       "news": [
         {
@@ -15171,7 +15128,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 24,
+          "days_since_latest": 25,
           "events": [
             {
               "date": "2026-09-11",
@@ -15198,7 +15155,7 @@
       "price": {
         "current": 15.7,
         "change_pct": -0.13,
-        "fetched_at": "2026-10-05 16:18:34"
+        "fetched_at": "2026-10-06 14:24:23"
       },
       "news": [
         {
@@ -15238,7 +15195,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
         "moat": "—",
@@ -15248,12 +15205,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -15274,7 +15231,7 @@
       "price": {
         "current": 27.05,
         "change_pct": -3.74,
-        "fetched_at": "2026-10-05 16:18:35"
+        "fetched_at": "2026-10-06 14:24:24"
       },
       "news": [
         {
@@ -15329,7 +15286,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 41,
+          "days_since_latest": 42,
           "events": [
             {
               "date": "2026-08-25",
@@ -15350,7 +15307,7 @@
       "price": {
         "current": 45.51,
         "change_pct": -0.18,
-        "fetched_at": "2026-10-05 16:18:36"
+        "fetched_at": "2026-10-06 14:24:25"
       },
       "news": [
         {
@@ -15405,7 +15362,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -15426,7 +15383,7 @@
       "price": {
         "current": 31.2,
         "change_pct": 0.39,
-        "fetched_at": "2026-10-05 16:42:39"
+        "fetched_at": "2026-10-06 14:26:41"
       },
       "news": [
         {
@@ -15481,7 +15438,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -15502,7 +15459,7 @@
       "price": {
         "current": 49.07,
         "change_pct": 3.02,
-        "fetched_at": "2026-10-05 16:19:47"
+        "fetched_at": "2026-10-06 14:25:27"
       },
       "news": [
         {
@@ -15542,10 +15499,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "44/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 44/100（营收 10年复合增速 33%），估值便宜（比自己历史）。普通公司，胜在便宜。\n⚠ 利润是正的，但经营现金流只有利润的-79%——赚的钱没真正进账户",
         "quant_score": 44,
         "data_incomplete": 0,
@@ -15571,7 +15528,7 @@
       "price": {
         "current": 49.09,
         "change_pct": 0.08,
-        "fetched_at": "2026-10-05 16:18:38"
+        "fetched_at": "2026-10-06 14:24:26"
       },
       "news": [
         {
@@ -15621,12 +15578,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -15647,7 +15604,7 @@
       "price": {
         "current": 40.25,
         "change_pct": -0.74,
-        "fetched_at": "2026-10-05 16:18:39"
+        "fetched_at": "2026-10-06 14:24:27"
       },
       "news": [
         {
@@ -15702,7 +15659,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-09-22",
@@ -15735,7 +15692,7 @@
       "price": {
         "current": 5.72,
         "change_pct": 0.18,
-        "fetched_at": "2026-10-05 16:18:40"
+        "fetched_at": "2026-10-06 14:24:28"
       },
       "news": [
         {
@@ -15775,7 +15732,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
         "moat": "—",
@@ -15785,12 +15742,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 17,
+          "days_since_latest": 18,
           "events": [
             {
               "date": "2026-09-18",
@@ -15811,7 +15768,7 @@
       "price": {
         "current": 111.5,
         "change_pct": -0.98,
-        "fetched_at": "2026-10-05 16:18:41"
+        "fetched_at": "2026-10-06 14:24:29"
       },
       "news": [
         {
@@ -15851,22 +15808,22 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "44/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 44/100（营收 10年复合增速 23%），估值偏贵（比自己历史）。普通公司，偏贵。",
         "quant_score": 44,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.0,
+        "cache_age_hours": 0.9,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -15887,7 +15844,7 @@
       "price": {
         "current": 36.17,
         "change_pct": -0.63,
-        "fetched_at": "2026-10-05 16:17:37"
+        "fetched_at": "2026-10-06 14:36:20"
       },
       "news": [
         {
@@ -15927,10 +15884,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C+",
         "conclusion": "观察",
-        "moat": "53/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 53/100（营收 8年复合增速 19%），估值偏贵（比自己历史）。普通公司，偏贵。\n⚠ 利润是正的，但经营现金流只有利润的22%——赚的钱没真正进账户",
         "quant_score": 53,
         "data_incomplete": 0,
@@ -15942,7 +15899,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 45,
+          "days_since_latest": 46,
           "events": [
             {
               "date": "2026-08-21",
@@ -15963,7 +15920,7 @@
       "price": {
         "current": 224.79,
         "change_pct": -2.65,
-        "fetched_at": "2026-10-05 16:18:43"
+        "fetched_at": "2026-10-06 14:24:31"
       },
       "news": [
         {
@@ -16013,7 +15970,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16032,7 +15989,7 @@
       "price": {
         "current": 40.94,
         "change_pct": -2.99,
-        "fetched_at": "2026-10-05 16:17:54"
+        "fetched_at": "2026-10-06 14:46:31"
       },
       "news": [
         {
@@ -16101,7 +16058,7 @@
       "price": {
         "current": 56.9,
         "change_pct": -5.73,
-        "fetched_at": "2026-10-05 16:18:44"
+        "fetched_at": "2026-10-06 14:24:32"
       },
       "news": [
         {
@@ -16141,7 +16098,7 @@
       "is_new": false,
       "watched_by": "2,7",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
         "moat": "—",
@@ -16151,7 +16108,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.1,
         "score": 0.38,
         "is_active": false,
         "survey": {
@@ -16170,7 +16127,7 @@
       "price": {
         "current": 45.1,
         "change_pct": -2.11,
-        "fetched_at": "2026-10-05 16:17:47"
+        "fetched_at": "2026-10-06 14:42:22"
       },
       "news": [
         {
@@ -16220,12 +16177,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 13,
+          "days_since_latest": 14,
           "events": [
             {
               "date": "2026-09-22",
@@ -16252,7 +16209,7 @@
       "price": {
         "current": 101.95,
         "change_pct": -0.1,
-        "fetched_at": "2026-10-05 16:18:45"
+        "fetched_at": "2026-10-06 14:24:32"
       },
       "news": [
         {
@@ -16292,7 +16249,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "C+",
         "conclusion": "观察",
         "moat": "—",
@@ -16302,7 +16259,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 1.11,
         "is_active": false,
         "survey": {
@@ -16321,7 +16278,7 @@
       "price": {
         "current": 16.98,
         "change_pct": 1.13,
-        "fetched_at": "2026-10-05 16:18:46"
+        "fetched_at": "2026-10-06 14:24:33"
       },
       "news": [
         {
@@ -16390,7 +16347,7 @@
       "price": {
         "current": 11.26,
         "change_pct": -0.44,
-        "fetched_at": "2026-10-05 16:18:03"
+        "fetched_at": "2026-10-06 14:51:05"
       },
       "news": [
         {
@@ -16430,10 +16387,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
-        "moat": "78/100",
+        "moat": "—",
         "reasoning": "按成长科技股的标准看：质量 78/100（营收 10年复合增速 35%），估值偏贵（比自己历史）。好公司，但价格不便宜。",
         "quant_score": 78,
         "data_incomplete": 0,
@@ -16441,7 +16398,7 @@
       },
       "precursor": {
         "cache_age_hours": 0.9,
-        "score": 0.21,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 0,
@@ -16459,22 +16416,22 @@
       "price": {
         "current": 251.16,
         "change_pct": 1.94,
-        "fetched_at": "2026-10-05 16:17:56"
+        "fetched_at": "2026-10-06 14:47:07"
       },
       "news": [
         {
           "title": "协创数据推出489万股股权激励计划 董事高管获授四分之一|速读公告",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "协创数据2026年限制性股票激励计划：拟授予489万股，首次授予价124.82元/股",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
           "title": "协创数据：拟推489.36万股限制性股票激励计划",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
@@ -16509,7 +16466,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 1.2,
         "is_active": false,
         "survey": {
@@ -16528,7 +16485,7 @@
       "price": {
         "current": 51.92,
         "change_pct": -4.03,
-        "fetched_at": "2026-10-05 16:18:47"
+        "fetched_at": "2026-10-06 14:24:34"
       },
       "news": [
         {
@@ -16568,10 +16525,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "18/100",
+        "moat": "—",
         "reasoning": "按困境反转股的标准看：质量 18/100（恢复趋势：ROE 仍在恶化），估值贵（比自己历史）。又弱又贵。",
         "quant_score": 18,
         "data_incomplete": 0,
@@ -16583,7 +16540,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 3,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-09-23",
@@ -16616,32 +16573,32 @@
       "price": {
         "current": 33.15,
         "change_pct": -1.63,
-        "fetched_at": "2026-10-05 16:18:48"
+        "fetched_at": "2026-10-06 14:24:35"
       },
       "news": [
         {
           "title": "算力业务再落大单！300209全资子公司、境外孙公司接连签单 合计金额超8亿元",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
           "title": "行云科技：全资子公司签订2.39亿元算力服务器销售合同",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
           "title": "行云科技孙公司获5.73亿元算力服务器订单",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
           "title": "行云科技：下属公司签署算力服务器销售合同",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
           "title": "行云科技：子公司签2.39亿元算力服务器销售订单",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         }
       ]
@@ -16666,7 +16623,7 @@
         "data_quality": "incomplete"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 1.4,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16685,7 +16642,7 @@
       "price": {
         "current": 16.3,
         "change_pct": 0.68,
-        "fetched_at": "2026-10-05 16:18:49"
+        "fetched_at": "2026-10-06 14:24:36"
       },
       "news": [
         {
@@ -16735,7 +16692,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -16754,7 +16711,7 @@
       "price": {
         "current": 95.96,
         "change_pct": -2.24,
-        "fetched_at": "2026-10-05 16:19:24"
+        "fetched_at": "2026-10-06 14:25:07"
       },
       "news": [
         {
@@ -16809,7 +16766,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 18,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
@@ -16830,7 +16787,7 @@
       "price": {
         "current": 36.26,
         "change_pct": -2.0,
-        "fetched_at": "2026-10-05 16:19:25"
+        "fetched_at": "2026-10-06 14:25:08"
       },
       "news": [
         {
@@ -16880,12 +16837,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.03,
         "is_active": false,
         "survey": {
           "count_30d": 7,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-09-23",
@@ -16930,7 +16887,7 @@
       "price": {
         "current": 13.76,
         "change_pct": 1.1,
-        "fetched_at": "2026-10-05 16:19:15"
+        "fetched_at": "2026-10-06 14:25:00"
       },
       "news": [
         {
@@ -16999,7 +16956,7 @@
       "price": {
         "current": 33.53,
         "change_pct": 0.15,
-        "fetched_at": "2026-10-05 16:19:51"
+        "fetched_at": "2026-10-06 14:25:31"
       },
       "news": [
         {
@@ -17049,12 +17006,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 0.82,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 17,
+          "days_since_latest": 18,
           "events": [
             {
               "date": "2026-09-18",
@@ -17075,7 +17032,7 @@
       "price": {
         "current": 328.49,
         "change_pct": -3.1,
-        "fetched_at": "2026-10-05 16:29:39"
+        "fetched_at": "2026-10-06 14:26:23"
       },
       "news": [
         {
@@ -17144,7 +17101,7 @@
       "price": {
         "current": 10.07,
         "change_pct": 0.2,
-        "fetched_at": "2026-10-05 16:30:16"
+        "fetched_at": "2026-10-06 14:26:24"
       },
       "news": [
         {
@@ -17199,7 +17156,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 18,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
@@ -17220,7 +17177,7 @@
       "price": {
         "current": 22.57,
         "change_pct": -1.61,
-        "fetched_at": "2026-10-05 16:30:53"
+        "fetched_at": "2026-10-06 14:26:25"
       },
       "news": [
         {
@@ -17270,7 +17227,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.25,
         "is_active": false,
         "survey": {
@@ -17289,7 +17246,7 @@
       "price": {
         "current": 1009.01,
         "change_pct": -3.54,
-        "fetched_at": "2026-10-05 16:42:02"
+        "fetched_at": "2026-10-06 14:26:40"
       },
       "news": [
         {
@@ -17339,12 +17296,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.2,
+        "cache_age_hours": 0.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-09-08",
@@ -17365,7 +17322,7 @@
       "price": {
         "current": 272.65,
         "change_pct": -1.26,
-        "fetched_at": "2026-10-05 16:31:29"
+        "fetched_at": "2026-10-06 14:26:26"
       },
       "news": [
         {
@@ -17405,7 +17362,7 @@
       "is_new": false,
       "watched_by": "2,7",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B",
         "conclusion": "持有",
         "moat": "—",
@@ -17415,12 +17372,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 49,
+          "days_since_latest": 50,
           "events": [
             {
               "date": "2026-08-17",
@@ -17441,7 +17398,7 @@
       "price": {
         "current": 226.8,
         "change_pct": -3.85,
-        "fetched_at": "2026-10-05 16:19:14"
+        "fetched_at": "2026-10-06 14:24:59"
       },
       "news": [
         {
@@ -17491,12 +17448,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 46,
+          "days_since_latest": 47,
           "events": [
             {
               "date": "2026-08-20",
@@ -17517,7 +17474,7 @@
       "price": {
         "current": 17.57,
         "change_pct": 0.69,
-        "fetched_at": "2026-10-05 16:17:58"
+        "fetched_at": "2026-10-06 14:48:13"
       },
       "news": [
         {
@@ -17572,7 +17529,7 @@
         "is_active": true,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 41,
+          "days_since_latest": 42,
           "events": [
             {
               "date": "2026-08-25",
@@ -17593,7 +17550,7 @@
       "price": {
         "current": 11.5,
         "change_pct": 1.5,
-        "fetched_at": "2026-10-05 16:18:01"
+        "fetched_at": "2026-10-06 14:49:56"
       },
       "news": [
         {
@@ -17633,10 +17590,10 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "32/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 32/100（ROE 8.2%（巴菲特线 15%）），估值合理（比自己历史）。质量偏弱。",
         "quant_score": 32,
         "data_incomplete": 0,
@@ -17662,7 +17619,7 @@
       "price": {
         "current": 14.66,
         "change_pct": 6.23,
-        "fetched_at": "2026-10-05 16:18:02"
+        "fetched_at": "2026-10-06 14:50:32"
       },
       "news": [
         {
@@ -17712,7 +17669,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.04,
         "is_active": false,
         "survey": {
@@ -17731,7 +17688,7 @@
       "price": {
         "current": 15.65,
         "change_pct": 3.16,
-        "fetched_at": "2026-10-05 16:47:47"
+        "fetched_at": "2026-10-06 14:26:48"
       },
       "news": [
         {
@@ -17785,13 +17742,25 @@
         "score": 0.0,
         "is_active": false,
         "survey": {
-          "count_30d": 1,
-          "days_since_latest": 28,
+          "count_30d": 3,
+          "days_since_latest": 29,
           "events": [
             {
               "date": "2026-09-07",
               "n_inst": 13,
-              "method": "特定对象调研,线上/线下调研",
+              "method": "",
+              "is_specific": true
+            },
+            {
+              "date": "2026-08-25",
+              "n_inst": 10,
+              "method": "",
+              "is_specific": true
+            },
+            {
+              "date": "2026-08-20",
+              "n_inst": 135,
+              "method": "",
               "is_specific": true
             }
           ]
@@ -17807,7 +17776,7 @@
       "price": {
         "current": 79.28,
         "change_pct": 0.04,
-        "fetched_at": "2026-10-05 16:48:27"
+        "fetched_at": "2026-10-06 14:26:49"
       },
       "news": [
         {
@@ -17857,7 +17826,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.1,
+        "cache_age_hours": 1.0,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -17876,7 +17845,7 @@
       "price": {
         "current": 17.51,
         "change_pct": -2.61,
-        "fetched_at": "2026-10-05 16:49:04"
+        "fetched_at": "2026-10-06 14:26:50"
       },
       "news": [
         {
@@ -17916,7 +17885,7 @@
       "is_new": false,
       "watched_by": "2",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "—",
@@ -17926,7 +17895,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.3,
+        "cache_age_hours": 0.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -17945,7 +17914,7 @@
       "price": {
         "current": 51.94,
         "change_pct": -0.35,
-        "fetched_at": "2026-10-05 16:49:42"
+        "fetched_at": "2026-10-06 14:26:51"
       },
       "news": [
         {
@@ -18000,7 +17969,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 33,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-09-02",
@@ -18021,7 +17990,7 @@
       "price": {
         "current": 13.14,
         "change_pct": -1.65,
-        "fetched_at": "2026-10-05 16:18:08"
+        "fetched_at": "2026-10-06 14:54:06"
       },
       "news": [
         {
@@ -18090,7 +18059,7 @@
       "price": {
         "current": 16.46,
         "change_pct": -3.29,
-        "fetched_at": "2026-10-05 16:18:09"
+        "fetched_at": "2026-10-06 14:54:40"
       },
       "news": [
         {
@@ -18140,7 +18109,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.3,
+        "cache_age_hours": 1.2,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -18159,7 +18128,7 @@
       "price": {
         "current": 10.12,
         "change_pct": -0.39,
-        "fetched_at": "2026-10-05 16:19:58"
+        "fetched_at": "2026-10-06 14:25:36"
       },
       "news": [
         {
@@ -18199,17 +18168,17 @@
       "is_new": false,
       "watched_by": "2,7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "27/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 27/100（ROE 1.4%（巴菲特线 15%）），估值贵（比自己历史）。又弱又贵。",
         "quant_score": 27,
         "data_incomplete": 0,
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -18228,7 +18197,7 @@
       "price": {
         "current": 17.65,
         "change_pct": -2.11,
-        "fetched_at": "2026-10-05 16:19:53"
+        "fetched_at": "2026-10-06 14:25:33"
       },
       "news": [
         {
@@ -18279,9 +18248,9 @@
       },
       "precursor": null,
       "price": {
-        "current": 0.74,
-        "change_pct": 1.37,
-        "fetched_at": "2026-10-05 16:21:20"
+        "current": 0.71,
+        "change_pct": -4.05,
+        "fetched_at": "2026-10-06 14:27:39"
       },
       "news": [
         {
@@ -18336,7 +18305,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 12,
+          "days_since_latest": 13,
           "events": [
             {
               "date": "2026-09-23",
@@ -18357,7 +18326,7 @@
       "price": {
         "current": 61.85,
         "change_pct": -1.04,
-        "fetched_at": "2026-10-05 16:17:57"
+        "fetched_at": "2026-10-06 14:47:41"
       },
       "news": [
         {
@@ -18407,12 +18376,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
+        "cache_age_hours": 1.1,
         "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 27,
+          "days_since_latest": 28,
           "events": [
             {
               "date": "2026-09-08",
@@ -18433,7 +18402,7 @@
       "price": {
         "current": 42.41,
         "change_pct": 1.1,
-        "fetched_at": "2026-10-05 16:19:43"
+        "fetched_at": "2026-10-06 14:25:24"
       },
       "news": [
         {
@@ -18473,10 +18442,10 @@
       "is_new": false,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "卖出",
-        "moat": "10/100",
+        "moat": "—",
         "reasoning": "按困境反转股的标准看：质量 10/100（恢复趋势：ROE 仍在恶化），估值贵（比自己历史）。又弱又贵。",
         "quant_score": 10,
         "data_incomplete": 0,
@@ -18502,12 +18471,12 @@
       "price": {
         "current": 18.88,
         "change_pct": -1.46,
-        "fetched_at": "2026-10-05 16:32:48"
+        "fetched_at": "2026-10-06 14:26:28"
       },
       "news": [
         {
           "title": "10.68亿元资金今日流出机械设备股",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-29"
         },
         {
@@ -18557,7 +18526,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 40,
+          "days_since_latest": 41,
           "events": [
             {
               "date": "2026-08-26",
@@ -18578,7 +18547,7 @@
       "price": {
         "current": 26.7,
         "change_pct": -4.06,
-        "fetched_at": "2026-10-05 16:19:19"
+        "fetched_at": "2026-10-06 14:25:03"
       },
       "news": [
         {
@@ -18628,12 +18597,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 1.2,
-        "score": 1.33,
+        "cache_age_hours": 1.1,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 20,
+          "days_since_latest": 21,
           "events": [
             {
               "date": "2026-09-15",
@@ -18654,7 +18623,7 @@
       "price": {
         "current": 4.84,
         "change_pct": 0.83,
-        "fetched_at": "2026-10-05 16:18:53"
+        "fetched_at": "2026-10-06 14:24:39"
       },
       "news": [
         {
@@ -18699,7 +18668,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 2,
-          "days_since_latest": 46,
+          "days_since_latest": 47,
           "events": [
             {
               "date": "2026-08-20",
@@ -18726,7 +18695,7 @@
       "price": {
         "current": 37.0,
         "change_pct": -0.96,
-        "fetched_at": "2026-10-05 16:18:54"
+        "fetched_at": "2026-10-06 14:24:40"
       },
       "news": [
         {
@@ -18776,12 +18745,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.4,
         "score": 0.44,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 47,
+          "days_since_latest": 48,
           "events": [
             {
               "date": "2026-08-19",
@@ -18802,7 +18771,7 @@
       "price": {
         "current": 32.9,
         "change_pct": 0.0,
-        "fetched_at": "2026-10-05 16:18:55"
+        "fetched_at": "2026-10-06 14:24:41"
       },
       "news": [
         {
@@ -18857,7 +18826,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 33,
+          "days_since_latest": 34,
           "events": [
             {
               "date": "2026-09-02",
@@ -18878,7 +18847,7 @@
       "price": {
         "current": 3.28,
         "change_pct": 0.31,
-        "fetched_at": "2026-10-05 16:18:56"
+        "fetched_at": "2026-10-06 14:24:42"
       },
       "news": [
         {
@@ -18933,7 +18902,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -18954,7 +18923,7 @@
       "price": {
         "current": 7.15,
         "change_pct": 1.27,
-        "fetched_at": "2026-10-05 16:18:57"
+        "fetched_at": "2026-10-06 14:24:43"
       },
       "news": [
         {
@@ -19023,7 +18992,7 @@
       "price": {
         "current": 5.21,
         "change_pct": 1.17,
-        "fetched_at": "2026-10-05 16:19:02"
+        "fetched_at": "2026-10-06 14:24:46"
       },
       "news": [
         {
@@ -19092,7 +19061,7 @@
       "price": {
         "current": 9.08,
         "change_pct": 1.0,
-        "fetched_at": "2026-10-05 16:19:03"
+        "fetched_at": "2026-10-06 14:24:47"
       },
       "news": [
         {
@@ -19132,7 +19101,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 38,
+          "days_since_latest": 39,
           "events": [
             {
               "date": "2026-08-28",
@@ -19153,7 +19122,7 @@
       "price": {
         "current": 36.67,
         "change_pct": 0.27,
-        "fetched_at": "2026-10-05 16:19:04"
+        "fetched_at": "2026-10-06 14:24:48"
       },
       "news": [
         {
@@ -19222,7 +19191,7 @@
       "price": {
         "current": 7.79,
         "change_pct": -3.83,
-        "fetched_at": "2026-10-05 16:19:05"
+        "fetched_at": "2026-10-06 14:24:49"
       },
       "news": [
         {
@@ -19277,7 +19246,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 35,
+          "days_since_latest": 36,
           "events": [
             {
               "date": "2026-08-31",
@@ -19298,7 +19267,7 @@
       "price": {
         "current": 120.46,
         "change_pct": -0.29,
-        "fetched_at": "2026-10-05 16:19:08"
+        "fetched_at": "2026-10-06 14:24:53"
       },
       "news": [
         {
@@ -19367,7 +19336,7 @@
       "price": {
         "current": 5.31,
         "change_pct": 1.14,
-        "fetched_at": "2026-10-05 16:19:09"
+        "fetched_at": "2026-10-06 14:24:53"
       },
       "news": [
         {
@@ -19422,12 +19391,12 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 28,
+          "days_since_latest": 29,
           "events": [
             {
               "date": "2026-09-07",
               "n_inst": 10,
-              "method": "业绩说明会",
+              "method": "",
               "is_specific": false
             }
           ]
@@ -19443,7 +19412,7 @@
       "price": {
         "current": 4.39,
         "change_pct": 1.39,
-        "fetched_at": "2026-10-05 16:19:10"
+        "fetched_at": "2026-10-06 14:24:54"
       },
       "news": [
         {
@@ -19512,7 +19481,7 @@
       "price": {
         "current": 9.92,
         "change_pct": -1.0,
-        "fetched_at": "2026-10-05 16:19:11"
+        "fetched_at": "2026-10-06 14:24:56"
       },
       "news": [
         {
@@ -19576,7 +19545,7 @@
       "price": {
         "current": 29.5,
         "change_pct": 2.86,
-        "fetched_at": "2026-10-05 16:19:12"
+        "fetched_at": "2026-10-06 14:24:57"
       },
       "news": [
         {
@@ -19631,7 +19600,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 18,
+          "days_since_latest": 19,
           "events": [
             {
               "date": "2026-09-17",
@@ -19652,7 +19621,7 @@
       "price": {
         "current": 13.25,
         "change_pct": 3.68,
-        "fetched_at": "2026-10-05 16:19:13"
+        "fetched_at": "2026-10-06 14:24:58"
       },
       "news": [
         {
@@ -19687,7 +19656,7 @@
       "is_new": false,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "B-",
         "conclusion": "持有",
         "moat": "—",
@@ -19697,12 +19666,12 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.4,
         "score": 0.02,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 6,
+          "days_since_latest": 7,
           "events": [
             {
               "date": "2026-09-29",
@@ -19723,7 +19692,7 @@
       "price": {
         "current": 50.18,
         "change_pct": -6.73,
-        "fetched_at": "2026-10-05 16:19:17"
+        "fetched_at": "2026-10-06 14:25:01"
       },
       "news": [
         {
@@ -19763,7 +19732,7 @@
       "is_new": false,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "NR",
         "conclusion": "数据不足，暂不评级",
         "moat": "—",
@@ -19792,7 +19761,7 @@
       "price": {
         "current": 24.02,
         "change_pct": 2.69,
-        "fetched_at": "2026-10-05 16:19:29"
+        "fetched_at": "2026-10-06 14:25:12"
       },
       "news": [
         {
@@ -19847,7 +19816,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 31,
+          "days_since_latest": 32,
           "events": [
             {
               "date": "2026-09-04",
@@ -19868,7 +19837,7 @@
       "price": {
         "current": 47.8,
         "change_pct": 1.06,
-        "fetched_at": "2026-10-05 16:37:22"
+        "fetched_at": "2026-10-06 14:26:34"
       },
       "news": [
         {
@@ -19918,7 +19887,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.6,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -19937,7 +19906,7 @@
       "price": {
         "current": 28.54,
         "change_pct": 0.56,
-        "fetched_at": "2026-10-05 16:38:03"
+        "fetched_at": "2026-10-06 14:26:35"
       },
       "news": [
         {
@@ -19987,7 +19956,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.7,
+        "cache_age_hours": 0.6,
         "score": 0.36,
         "is_active": false,
         "survey": {
@@ -20006,7 +19975,7 @@
       "price": {
         "current": 95.8,
         "change_pct": 1.0,
-        "fetched_at": "2026-10-05 16:39:25"
+        "fetched_at": "2026-10-06 14:26:37"
       },
       "news": [
         {
@@ -20057,11 +20026,11 @@
       },
       "precursor": {
         "cache_age_hours": 0.8,
-        "score": 1.21,
+        "score": 0.0,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 34,
+          "days_since_latest": 35,
           "events": [
             {
               "date": "2026-09-01",
@@ -20082,7 +20051,7 @@
       "price": {
         "current": 22.52,
         "change_pct": 1.4,
-        "fetched_at": "2026-10-05 16:20:06"
+        "fetched_at": "2026-10-06 14:25:43"
       },
       "news": [
         {
@@ -20151,7 +20120,7 @@
       "price": {
         "current": 4.76,
         "change_pct": 1.28,
-        "fetched_at": "2026-10-05 16:40:05"
+        "fetched_at": "2026-10-06 14:26:37"
       },
       "news": [
         {
@@ -20191,7 +20160,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.6,
+        "cache_age_hours": 0.5,
         "score": 0.0,
         "is_active": false,
         "survey": {
@@ -20210,7 +20179,7 @@
       "price": {
         "current": 29.79,
         "change_pct": 1.12,
-        "fetched_at": "2026-10-05 16:40:44"
+        "fetched_at": "2026-10-06 14:26:38"
       },
       "news": [
         {
@@ -20250,10 +20219,10 @@
       "is_new": false,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "B+",
         "conclusion": "持有",
-        "moat": "74/100",
+        "moat": "—",
         "reasoning": "按银行的标准看：质量 74/100（ROE 13.4%（巴菲特线 15%）），估值数据不足。好公司，价格合理（价格数据不足，先不下买入结论）。",
         "quant_score": 74,
         "data_incomplete": 0,
@@ -20279,22 +20248,22 @@
       "price": {
         "current": 41.26,
         "change_pct": 1.85,
-        "fetched_at": "2026-10-05 16:41:21"
+        "fetched_at": "2026-10-06 14:26:39"
       },
       "news": [
         {
           "title": "招商证券副总裁刘波升任总裁",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "顶流基金经理半年内三度“减负”：增聘共管后，再卸任一只基金",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
           "title": "跨境资金池“扩围” 中小跨国公司迎资金管理便利",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-26"
         },
         {
@@ -20316,7 +20285,7 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-09-28",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "7",
       "analysis": {
         "date": "2026-10-06",
@@ -20329,7 +20298,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.2,
         "score": 2.0,
         "is_active": true,
         "survey": {
@@ -20348,7 +20317,7 @@
       "price": {
         "current": 102.64,
         "change_pct": 20.0,
-        "fetched_at": "2026-10-05 16:20:03"
+        "fetched_at": "2026-10-06 14:25:41"
       },
       "news": [
         {
@@ -20385,13 +20354,13 @@
       "status": "watching",
       "entry_price": null,
       "added_at": "2026-09-28",
-      "is_new": true,
+      "is_new": false,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
-        "moat": "31/100",
+        "moat": "—",
         "reasoning": "按成熟价值股的标准看：质量 31/100（ROE 2.5%（巴菲特线 15%）），估值数据不足。质量偏弱。",
         "quant_score": 31,
         "data_incomplete": 0,
@@ -20399,11 +20368,11 @@
       },
       "precursor": {
         "cache_age_hours": 1.1,
-        "score": 0.0,
+        "score": 1.82,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -20424,12 +20393,12 @@
       "price": {
         "current": 16.43,
         "change_pct": 3.33,
-        "fetched_at": "2026-10-05 16:17:59"
+        "fetched_at": "2026-10-06 14:48:45"
       },
       "news": [
         {
           "title": "细胞免疫治疗概念涨3.45%，主力资金净流入这些股",
-          "sentiment": null,
+          "sentiment": 0.0,
           "date": "2026-09-30"
         },
         {
@@ -20464,7 +20433,7 @@
       "is_new": true,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-02",
+        "date": "2026-10-06",
         "grade": "D",
         "conclusion": "减持",
         "moat": "—",
@@ -20474,7 +20443,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.5,
+        "cache_age_hours": 0.4,
         "score": 1.46,
         "is_active": false,
         "survey": {
@@ -20493,7 +20462,7 @@
       "price": {
         "current": 44.74,
         "change_pct": 10.01,
-        "fetched_at": "2026-10-05 16:18:59"
+        "fetched_at": "2026-10-06 14:24:45"
       },
       "news": [
         {
@@ -20548,7 +20517,7 @@
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 17,
+          "days_since_latest": 18,
           "events": [
             {
               "date": "2026-09-18",
@@ -20569,7 +20538,7 @@
       "price": {
         "current": 7.7,
         "change_pct": -5.75,
-        "fetched_at": "2026-10-05 16:19:00"
+        "fetched_at": "2026-10-06 14:24:45"
       },
       "news": [
         {
@@ -20620,11 +20589,11 @@
       },
       "precursor": {
         "cache_age_hours": 1.0,
-        "score": 0.0,
+        "score": 1.71,
         "is_active": false,
         "survey": {
           "count_30d": 1,
-          "days_since_latest": 19,
+          "days_since_latest": 20,
           "events": [
             {
               "date": "2026-09-16",
@@ -20645,7 +20614,7 @@
       "price": {
         "current": 20.3,
         "change_pct": 13.41,
-        "fetched_at": "2026-10-05 16:20:05"
+        "fetched_at": "2026-10-06 14:25:42"
       },
       "news": [
         {
@@ -20685,7 +20654,7 @@
       "is_new": true,
       "watched_by": "7",
       "analysis": {
-        "date": "2026-10-01",
+        "date": "2026-10-06",
         "grade": "C",
         "conclusion": "减持",
         "moat": "—",
@@ -20695,7 +20664,7 @@
         "data_quality": "ok"
       },
       "precursor": {
-        "cache_age_hours": 0.4,
+        "cache_age_hours": 0.3,
         "score": 1.66,
         "is_active": false,
         "survey": {
@@ -20714,7 +20683,7 @@
       "price": {
         "current": 27.61,
         "change_pct": 12.51,
-        "fetched_at": "2026-10-05 16:18:23"
+        "fetched_at": "2026-10-06 15:03:26"
       },
       "news": [
         {
