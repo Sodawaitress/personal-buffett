@@ -1,5 +1,75 @@
 [
   {
+    "code": "688026",
+    "name": "洁特生物",
+    "date": "2026-10-09",
+    "advice": "新入库鉴定 C 减持，不建仓先观察。等 2027 年半导体过滤订单真的落地再评估。",
+    "signals": {
+      "grade": "C",
+      "conclusion": "减持",
+      "quant_score": 37,
+      "short_change_pct": null,
+      "survey_count_30d": 0,
+      "price": 29.25
+    }
+  },
+  {
+    "code": "603906",
+    "name": "龙蟠科技",
+    "date": "2026-10-09",
+    "advice": "已持仓继续持有；未持仓不追 ¥20.9，等回调到 ¥19 附近分批 5%。碳酸锂跌破 6 万元/吨重新评估。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 72,
+      "short_change_pct": null,
+      "survey_count_30d": 0,
+      "price": 20.94
+    }
+  },
+  {
+    "code": "600573",
+    "name": "惠泉啤酒",
+    "date": "2026-10-09",
+    "advice": "防御型压舱：¥10.5-¥11.1 分批小仓位 5-8%，跌破 ¥10 止损；已持仓继续持有。年报净利增速仍在 20% 以上是关键。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 50,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 11.11
+    }
+  },
+  {
+    "code": "600026",
+    "name": "中远海能",
+    "date": "2026-10-09",
+    "advice": "已持仓继续持有 ¥22.6 不加仓；未持仓等 ¥21 以下分批 5-10%，¥20 以下加码。TD3C 日租跌破 50 万美元/天警觉。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 48,
+      "short_change_pct": null,
+      "survey_count_30d": 0,
+      "price": 22.62
+    }
+  },
+  {
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-10-09",
+    "advice": "¥235 别追，等 ¥210-¥215 止跌企稳 + PB 回落到历史 70% 分位分批；已持仓持有不加仓，跌破 ¥210 止盈一部分。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 90,
+      "short_change_pct": null,
+      "survey_count_30d": 2,
+      "price": 235.07
+    }
+  },
+  {
     "code": "HBM",
     "name": "Hudbay Minerals",
     "date": "2026-10-02",
@@ -193,20 +263,6 @@
       "short_change_pct": -25.8,
       "survey_count_30d": 0,
       "price": 43.5
-    }
-  },
-  {
-    "code": "300394",
-    "name": "天孚通信",
-    "date": "2026-09-29",
-    "advice": "未持仓不接飞刀等 ¥225-¥235 板块企稳观察 3 日；已持仓 ¥240 跌破止损。板块 β 崩非个股 α，公司底好机构分歧。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 90,
-      "short_change_pct": 44.4,
-      "survey_count_30d": 2,
-      "price": 244.8
     }
   },
   {
@@ -434,20 +490,6 @@
     }
   },
   {
-    "code": "600026",
-    "name": "中远海能",
-    "date": "2026-09-18",
-    "advice": "不追高。等运价见顶回落或股价回调到 ¥20 以下再说。已持仓的可继续持有，但设 ¥19 移动止损。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 48,
-      "short_change_pct": null,
-      "survey_count_30d": 0,
-      "price": 22.09
-    }
-  },
-  {
     "code": "301087",
     "name": "可孚医疗",
     "date": "2026-09-18",
@@ -473,104 +515,6 @@
       "short_change_pct": -25.4,
       "survey_count_30d": 1,
       "price": 25.02
-    }
-  },
-  {
-    "code": "688012",
-    "name": "中微公司",
-    "date": "2026-09-17",
-    "advice": "不追高。等回调到 ¥325-¥335 再看。若确定要建仓，控制仓位 ≤ 5%，止损 ¥310。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 93,
-      "short_change_pct": -9.5,
-      "survey_count_30d": 1,
-      "price": 352.6
-    }
-  },
-  {
-    "code": "2097.HK",
-    "name": "MIXUE GROUP",
-    "date": "2026-09-17",
-    "advice": "已持仓者可继续持有，别追加。未持仓者 ¥170-¥178 才是安全买点（比现价再跌 5-10%）。此位置耐心等 Q3 业绩确认二次触底。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 96,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 188.2
-    }
-  },
-  {
-    "code": "002602",
-    "name": "世纪华通",
-    "date": "2026-09-17",
-    "advice": "⚠ 不建仓。网站评级 A 不等于现在是进场时机。等融券方向拐头 或 大股东减持窗口过后再看。已持仓者可减半仓避险。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 82,
-      "short_change_pct": 195.3,
-      "survey_count_30d": 0,
-      "price": 14.63
-    }
-  },
-  {
-    "code": "300054",
-    "name": "鼎龙股份",
-    "date": "2026-09-16",
-    "advice": "不建仓。多空对赌格局：机构3次调研看好国产替代 vs 融券+109%翻倍+董监高减持。等融券+200%股价跌破¥60的空头认输拐点。已持仓小仓位观察。",
-    "signals": {
-      "grade": "C",
-      "conclusion": "减持",
-      "quant_score": 58,
-      "short_change_pct": 109.9,
-      "survey_count_30d": 3,
-      "price": 68.02
-    }
-  },
-  {
-    "code": "000680",
-    "name": "山推股份",
-    "date": "2026-09-16",
-    "advice": "别追。融券+241%进入极端警戒区（US-166 top 3.5%）。等2周融券方向：破+400%或股价破¥9.5=真看空；回落到+100%以下=空头认输。已持仓可持有，未持仓等¥9.5-¥9.8试探10-15%。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 44,
-      "short_change_pct": 241.5,
-      "survey_count_30d": 2,
-      "price": 9.92
-    }
-  },
-  {
-    "code": "688111",
-    "name": "金山办公",
-    "date": "2026-09-15",
-    "advice": "¥220-¥228 分批建仓 15-20%，跌破 ¥210 止损。WPS AI 接入 MiMo（9-15 公告）是短期催化，但 AI 板块整体在回调。qs=100 质量最高档 + 便宜，等回调更好。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 100,
-      "short_change_pct": 1.1,
-      "survey_count_30d": 1,
-      "price": 228.59
-    }
-  },
-  {
-    "code": "000333",
-    "name": "美的集团",
-    "date": "2026-09-15",
-    "advice": "¥85-¥87 小仓位 10% 试探，跌破 ¥82 止损。融券余量突然 +85%（top 12%）说明有资金押注下跌或对冲，公司狂回购护盘是矛盾信号，宁可等 ¥83 以下更清楚。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 68,
-      "short_change_pct": 84.8,
-      "survey_count_30d": 1,
-      "price": 86.8
     }
   }
 ]
