@@ -9177,3 +9177,64 @@ if today_is_trading and yesterday_cst_was_holiday:
 **特别需要关注**：10-15 Day 10 到期时，600415 小商品城 down 预言是"事故学习闭环"的首个关键兑现——如果 ±5% 幅度放宽后判定成功，US-166 第 3 行的 down 判据权重将上升；如果仍判定失败（方向正确但未达 -4% 原始目标），需要重新审视"事故 → 预言"直接映射的转化率。
 
 ---
+
+## 2026-10-12 · 跳过（Gate ① FAIL · 周一 cron 完全未触发）
+
+### 触发的门控与证据
+
+- **Gate ①**：**FAIL**（即使在 Gate ② PASS 的 26h 宽通道下也 FAIL）
+  - `generated_at` = 2026-10-09T19:31:29Z
+  - now UTC = 2026-10-12T13:13Z
+  - **age = 65.69 小时** >> 26h 宽阈
+- **Gate ②**：**PASS**（签名 `46b7802f...` → `da239506...`，有变化）
+  - 签名有变化但 age 太大——签名变化来自 10-09 Routine 之后 Fly 侧的后续补写，并非今日新数据
+- **Gate ③**：**N/A**（五选不触发时不做实价抽检）
+
+### 上游诊断（US-206 "先修再跳过"）
+
+查 `gh run list --workflow=pipeline.yml`：
+- 10-12（今日 Monday UTC）**0 个 schedule 触发** —— cron 完全没点火
+- 10-09 Friday 最后一次 schedule 跑完是 19:35Z，conclusion `cancelled`，但 snapshot 仍写出了 10-09 数据
+- 10-10 Saturday / 10-11 Sunday：CN 市场休市，无 pipeline 运行属正常
+- 10-12 Monday：CN 市场开盘且已收盘（07:00Z），pipeline cron（07:23Z）应已触发——未触发 = 本次 FAIL 的真因
+
+**执行的修复**：通过 `mcp__github__actions_run_trigger run_workflow pipeline.yml` 手动触发，GitHub API 返回 `204 Queued`。预期 4h 后产出 10-12 新快照，明天（10-13）Routine 跑到新鲜数据——"一次自愈"模型。
+
+### Cron 准点率现状（`python -m scripts.cron_punctuality` 实测）
+
+- 样本 33 次中 **32 次结束时间晚于 Routine 触发时间（13:20 UTC）** —— 97% 的日子五选读的是前一天数据
+- 迟到中位数 **325 分钟** · 最差 711 分钟
+- 10-05 至 10-09 的 5 次 schedule 事件延迟都在 390-525 分钟区间（6-9 小时）
+- 10-12 今日：**schedule 事件根本没发生**，不是迟到问题，是彻底漏触发
+
+### 跳过范围（按 Routine 规范）
+
+- ✅ `output/daily_push.txt` = 只写"服务器数据未刷新，今日无分析。请以券商 APP 为准" + Gate FAIL 顶部警示
+- ✅ `output/predictions_pending.json` 保持上一次状态不覆盖
+- ✅ `output/picks_open.json` 保持上一次状态不覆盖（21 天窗口自然延续，服务端侧 pick_reversal 下次仍可比对）
+- ✅ `knowledge/last_price_signature.txt` 更新为 `da239506cd1124169380fd52a3fd383a`（即使 FAIL 也更新：避免下次 Routine 还把"今天漏触发"误读成"服务器空跑"）
+- ✅ `knowledge/announced_articles.txt` 无变动（`new_articles` = []）
+- ❌ 不做 Step 2.5 回访正文（Gate FAIL 时所有正文都不写）
+- ❌ 不做 Step 3 五选 / Step 3.5 对刀 / Step 4 三层分析
+- ❌ 不做 Run 2 深度对比（snapshot 价格仍是 10-09 收盘，与上次 Routine 对比零增量）
+
+### 核心反省（修订建议）
+
+**修订建议 #24 "schedule 双保险" 累积第 N 次反证**：10-12 的失败是**最硬的证据**——
+- 不是 cron 迟到（迟到还能被 US-206 "一次自愈" 吸收）
+- **是 schedule 事件完全没发生**（本次 Routine 自己手动拉起才有）
+- GitHub Actions schedule 可靠性 ≈ 97% 迟到率 + 偶发完全漏触发 ≈ 对日级 pipeline 来说不可用
+
+**P0 建议升级版**：pipeline.yml 应加 **多重 cron 冗余**（例如 `07:00`、`09:00`、`11:00` 三个 UTC 时间，workflow 内部用 skip-if-last-success-within-6h 的早期检查避免重复跑完整 pipeline），确保至少一次能触发。
+
+**连续周期判断**：10-08 节后首日 cron 也漏触发过（见 10-08 日志）——"节假日+周一组合特别容易漏"的假设得到第二次佐证。节后首日 + 周一两个窗口风险最高。
+
+### 签名与状态
+
+- `knowledge/last_price_signature.txt` = `da239506cd1124169380fd52a3fd383a`（已更新）
+- `output/daily_push.txt` = 跳过通知（会触发 wechat-push.yml 发给妈妈："今日无分析"）
+- `output/predictions_pending.json` = 无变动（上次 10-09 2 条已被 Fly backfill-svc 消费）
+- `output/picks_open.json` = 无变动（37 条 21 天窗口台账自然延续）
+- **本次 Routine 完成节点**：10-12 UTC 13:1x 触发 · **Gate ① FAIL 跳过 + 手动拉起 pipeline 自愈** · 关键发现：**schedule 周一完全漏触发**（修订建议 #24 升级为 P0 多重 cron 冗余）
+
+---
