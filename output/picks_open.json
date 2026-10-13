@@ -1,5 +1,75 @@
 [
   {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-10-13",
+    "advice": "未持仓可 ¥35.5-¥36.2 分批建仓 10-15%，跌破 ¥34.5 止损；已持仓继续持有",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": 3.9,
+      "survey_count_30d": 4,
+      "price": 36.12
+    }
+  },
+  {
+    "code": "688008",
+    "name": "澜起科技",
+    "date": "2026-10-13",
+    "advice": "未持仓可 ¥185-¥192 分批建仓 10-15%，跌破 ¥180 止损；已持仓等 Q3 季报不动",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 84,
+      "short_change_pct": 1.7,
+      "survey_count_30d": 3,
+      "price": 191.84
+    }
+  },
+  {
+    "code": "300274",
+    "name": "阳光电源",
+    "date": "2026-10-13",
+    "advice": "未持仓可 ¥80-¥83 分批建仓 10-15%，跌破 ¥77 止损；已持仓继续持有看三季报",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": -38.9,
+      "survey_count_30d": 1,
+      "price": 82.35
+    }
+  },
+  {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-10-13",
+    "advice": "未持仓先观察 2 周，¥48-¥50 可小仓位 5-10% 试水，跌破 ¥46 止损；已持仓继续持有",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": -14.2,
+      "survey_count_30d": 10,
+      "price": 50.45
+    }
+  },
+  {
+    "code": "300750",
+    "name": "宁德时代",
+    "date": "2026-10-13",
+    "advice": "未持仓本周先不动，等融券跌破 100 万股/Q3 净利 +40%/回落 ¥275-¥280 三者之一；跌破 ¥270 弃仓；已持仓严守 ¥280 止损",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 87,
+      "short_change_pct": 81.5,
+      "survey_count_30d": 0,
+      "price": 298.38
+    }
+  },
+  {
     "code": "688026",
     "name": "洁特生物",
     "date": "2026-10-09",
@@ -98,20 +168,6 @@
     }
   },
   {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-10-02",
-    "advice": "节后 10-08 开盘前的结构性保留；若 ¥50-51 可建仓 15-20%，若高开 >¥53 等 10-15 二次回调；止损 ¥48。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": 36.0,
-      "survey_count_30d": 16,
-      "price": 51.9
-    }
-  },
-  {
     "code": "2359.HK",
     "name": "药明康德",
     "date": "2026-10-02",
@@ -182,20 +238,6 @@
     }
   },
   {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-10-01",
-    "advice": "未持仓可 ¥34-¥36 分批建仓 15-20%，跌破 ¥32 止损；已持仓继续持有。节后看 10 月末 Q3 业绩预告（机构密集调研的核心验证点）。防御型底仓，不要重仓单押。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 18.3,
-      "survey_count_30d": 4,
-      "price": 35.43
-    }
-  },
-  {
     "code": "300760",
     "name": "迈瑞医疗",
     "date": "2026-09-30",
@@ -207,20 +249,6 @@
       "short_change_pct": 1.8,
       "survey_count_30d": 1,
       "price": 159.01
-    }
-  },
-  {
-    "code": "300750",
-    "name": "宁德时代",
-    "date": "2026-09-30",
-    "advice": "已持仓可继续持有（业绩+回购托底）；未持仓不建议 ¥286 追高，等回调到 ¥275 附近再看融资融券是否收敛。⚠ 融券异常必须写进正文（US-166）。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 87,
-      "short_change_pct": 210.1,
-      "survey_count_30d": 0,
-      "price": 286.8
     }
   },
   {
@@ -434,20 +462,6 @@
     }
   },
   {
-    "code": "688008",
-    "name": "澜起科技",
-    "date": "2026-09-23",
-    "advice": "未持仓等回调到 ¥205-¥212 分批建仓 10-15%，跌破 ¥195 止损；已持仓继续持有但不追今日高位",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 84,
-      "short_change_pct": -2.8,
-      "survey_count_30d": 3,
-      "price": 221.83
-    }
-  },
-  {
     "code": "002415",
     "name": "海康威视",
     "date": "2026-09-23",
@@ -473,48 +487,6 @@
       "short_change_pct": 68.6,
       "survey_count_30d": 3,
       "price": 11.71
-    }
-  },
-  {
-    "code": "688519",
-    "name": "南亚新材",
-    "date": "2026-09-18",
-    "advice": "先观察，不建仓。等半年报之后的三季报（10 月末）看现金流有没有转正。若现金流仍为负，即使股价再回落也别买。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 50,
-      "short_change_pct": 31.7,
-      "survey_count_30d": 1,
-      "price": 317.37
-    }
-  },
-  {
-    "code": "301087",
-    "name": "可孚医疗",
-    "date": "2026-09-18",
-    "advice": "¥52-¥54 区间可小仓位（10%）建仓，跌破 ¥50 止损。别一次买满，等看后续机构调研有没有跟进。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 41,
-      "short_change_pct": 20.2,
-      "survey_count_30d": 2,
-      "price": 53.28
-    }
-  },
-  {
-    "code": "000975",
-    "name": "山金国际",
-    "date": "2026-09-18",
-    "advice": "先小仓位试探（5-8%）在 ¥24.50-¥25.00 区间，跌破 ¥23 止损。别一次买满，等看有色板块企稳信号再加仓。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 89,
-      "short_change_pct": -25.4,
-      "survey_count_30d": 1,
-      "price": 25.02
     }
   }
 ]

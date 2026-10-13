@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-10-13",
+    "code": "300750",
+    "name": "宁德时代",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "回购 33 亿 vs 融券 +81.5% top 5% 的机构双向对抗 × 公司底强（ROE 25%+）× Q3 季报临近，10 天方向由季报决定",
+    "price_at_prediction": 298.38
+  },
+  {
+    "date": "2026-10-13",
+    "code": "300274",
+    "name": "阳光电源",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "融券 -38.9% + 累计回购 3.25 亿 + 业绩预告 +100%~+110% 三重正信号共振，prec 2.59 active",
+    "price_at_prediction": 82.35
+  }
+]
