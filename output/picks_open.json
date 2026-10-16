@@ -1,5 +1,75 @@
 [
   {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-10-16",
+    "advice": "未持仓可 ¥11.0-¥11.4 分批建仓 10-15%(股息收益保底),跌破 ¥10.5 止损;已持仓继续持有吃分红。公司底好+机构3次调研(含特定对象)+融券+59%在前20%分歧加大,是\"有耐心的买点\"。10月下旬银行三季报是关键催化",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 73,
+      "short_change_pct": 59.2,
+      "survey_count_30d": 3,
+      "price": 11.41
+    }
+  },
+  {
+    "code": "000975",
+    "name": "山金国际",
+    "date": "2026-10-16",
+    "advice": "未持仓可 ¥22-¥24 分批 10-15%(金价周期敏感仓位不宜重),跌破 ¥20 止损;已持仓继续持有,金价加速冲高到 ¥28+ 可减仓一半锁利。41家机构9-2大调研+融券+35%(前20%)+黄金央行连购23月叙事,趋势确认不是最早",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 89,
+      "short_change_pct": 35.5,
+      "survey_count_30d": 1,
+      "price": 23.75
+    }
+  },
+  {
+    "code": "601766",
+    "name": "中国中车",
+    "date": "2026-10-16",
+    "advice": "未持仓可 ¥6.2-¥6.5 分批 10-15%(防御型股息托底),跌破 ¥5.8 止损;已持仓继续持有等订单公告。30天2次悄悄调研+融券+48%(前20%)资金做空试探,是机构抢跑典型形态但情绪尚未转向。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 52,
+      "short_change_pct": 48.2,
+      "survey_count_30d": 2,
+      "price": 6.44
+    }
+  },
+  {
+    "code": "300475",
+    "name": "香农芯创",
+    "date": "2026-10-16",
+    "advice": "未持仓暂不建仓,等 ¥105 下方或 Q3 实际利润兑现再看;已持仓继续持有,看 ¥108-¥112 技术支撑,跌破 ¥100 严格止损。公司底好但估值贵+融券-49%空头认输+大众恐慌,\"情绪过度悲观+空头平仓\"组合可能是回调末端但估值需",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 81,
+      "short_change_pct": -49.8,
+      "survey_count_30d": 1,
+      "price": 112.6
+    }
+  },
+  {
+    "code": "600763",
+    "name": "通策医疗",
+    "date": "2026-10-16",
+    "advice": "未持仓可 ¥31-¥33 分批 10-15%(医疗消费防御型),跌破 ¥28 止损;已持仓继续持有等三季报。2次调研(含6家特定对象)+融券-54%空头认输=典型底部形态,但控股股东质押率66%是尾部风险。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 60,
+      "short_change_pct": -54.1,
+      "survey_count_30d": 2,
+      "price": 32.65
+    }
+  },
+  {
     "code": "603893",
     "name": "瑞芯微",
     "date": "2026-10-15",
@@ -67,20 +137,6 @@
       "short_change_pct": 10.1,
       "survey_count_30d": 1,
       "price": 229.0
-    }
-  },
-  {
-    "code": "000001",
-    "name": "平安银行",
-    "date": "2026-10-14",
-    "advice": "未持仓可 ¥11.3-¥11.6 分批建仓 10-15%，跌破 ¥10.8 止损；已持仓继续持有分红。09-16 1 家特定对象+实地调研 US-166 最高档，融券 +60.3% 按银行股常理解读为对冲性。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 73,
-      "short_change_pct": 60.3,
-      "survey_count_30d": 1,
-      "price": 11.57
     }
   },
   {
@@ -487,34 +543,6 @@
       "short_change_pct": 65.6,
       "survey_count_30d": 1,
       "price": 36.08
-    }
-  },
-  {
-    "code": "SMCI",
-    "name": "Super Micro Computer, Inc.",
-    "date": "2026-09-24",
-    "advice": "未持仓可 $38-$40 分批建仓 10-15%，跌破 $36 止损。Vera Rubin 机架出货是硬催化 + AI 服务器需求真金；B+/77 质量合理估值合理。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 77,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 41.2
-    }
-  },
-  {
-    "code": "2589.HK",
-    "name": "AUNTEA JENNY",
-    "date": "2026-09-24",
-    "advice": "不追高 +11.44%，等回调到 HK$70 以下再评估。港股茶饮竞争激烈，B+/80 是 4 年营收增速 27% 的成长股但估值数据不足，情绪追高风险大。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 80,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 77.95
     }
   }
 ]
