@@ -9907,3 +9907,83 @@ up:cyclical_momentum
 
 ---
 
+## 2026-10-19 · 今日五选 · Run 1 · Gate ① FAIL(周一 cron 完全漏触发,10-12 模式复现)
+
+### 快照门控
+
+- generated_at: 2026-10-16T17:17:40Z (Fri CST 10-17 01:17)
+- age_h: **67.97h** >> 26h 宽通道阈值 → **Gate ① FAIL**
+- price_signature: eef0ae9f5e21c18fcf3e50e42d00589f vs last b7f1b22fa539103d882ea91d07f08b58 → Gate ② PASS(新签名)
+  - 但 Gate ② PASS 不救场:签名变化来自 10-16 午盘 Routine 处理后、Fri 傍晚 pipeline 第二轮的收盘数据产出,而非 10-19 新数据
+- Gate ③ 未执行(Gate ① 已 FAIL,无需实价抽检)
+- **结论**:Gate ① FAIL,10-19 UTC pipeline.yml schedule 事件 0 次触发(cron 07:23 应点火、未点火)——同 10-12 的"完全漏触发"模式
+
+### 上游诊断(US-206 "一次自愈"路径)
+
+```
+最近 6 次 pipeline runs(含今日手动):
+#49 10-19 13:16Z workflow_dispatch · in_progress  ← 本 Routine 手动触发
+#48 10-16 12:28Z schedule         · success
+#47 10-15 12:41Z schedule         · cancelled
+#46 10-14 12:54Z schedule         · cancelled
+#45 10-13 15:05Z schedule         · success
+#44 10-12 16:46Z schedule         · cancelled(10-12 周一漏触发日)
+```
+
+**10-19 UTC schedule 事件记录为 0 次**——cron 没点火,不是迟到。这是 2026 年 10 月以来 **第 2 次** 周一完全漏触发(10-12 为第 1 次)。连续两次 Monday 都在 schedule 层面彻底失火,**US-206 "一次自愈"从救急手段升级为周一刚需**。
+
+### Mitigation 已执行
+
+```
+mcp__github actions_run_trigger · run_workflow pipeline.yml → 204 Queued
+run id 39258794267 · created 2026-10-19T13:16:48Z · 预计 UTC 17:2x 产出新快照
+```
+
+**今天的推送基于陈旧数据**,但明天的数据会是新的——Gate FAIL 从"静默跳过"变为"一次自愈"。
+
+### 跳过范围
+
+- `daily_push.txt` = Gate FAIL 警示 + "今日无分析,请以券商 APP 为准"
+- `predictions_pending.json` 保持不覆盖(10-16 的两条预言还未到期)
+- `picks_open.json` 保持不覆盖(10-16 五只仍在 21 天台账窗口内)
+- `last_price_signature.txt` 更新为 eef0ae9f(避免下次把"周一漏触发"误读为"服务器空跑")
+- `announced_articles.txt` 无变动(new_articles=[])
+- **Run 2 跳过深度验证**:快照仍停在 10-16 收盘,10-09 组 Day 10 到期窗口对应 10-19 价格快照不存在,无法新增兑现判定
+
+### 10-09 组 Day 10 到期预言的"延迟判定"候补
+
+虽然快照无 10-19 新价,但两条预言的 10-16 Day 7 状态在 10-16 Run 2 已记录,**本次 Routine 维持上次结论**(不改写、不升级):
+
+| 预言日 | 代码 | 名称 | 方向 | 起价 | 10-16 Day 7 现价 | 10-16 判定 |
+|---|---|---|---|---|---|---|
+| 10-09 | 600026 | 中远海能 | up | ¥22.62 | ¥20.93(-7.47%) | 已判 Miss(方向反向,Day 6 → Day 7 事件冲击) |
+| 10-09 | 300394 | 天孚通信 | sideways(10-14 升级版) | ¥235.07 | ¥229.00 | 维持 sideways 范围内(待 10-20 以后新价刷新才能定 Hit) |
+
+**真正的 Day 10 兑现判定延后至**:10-19 pipeline 手动触发产出新快照后,下次 Routine(10-20)读到 10-19 收盘价时集中补判。
+
+### 周一漏触发的累积证据(修订建议 #24 "schedule 双保险" 升级为 P0)
+
+| 日期 | 周几 | 10-19 UTC 之前 schedule 事件 | 处理 |
+|---|---|---|---|
+| 09-15 | 周一 | 1 次(12:42 启动) | 迟到但完成 |
+| 09-22 | 周一 | 1 次(12:38 启动) | 迟到但完成 |
+| 09-29 | 周一 | 1 次(14:06 启动) | 迟到被 cancelled |
+| 10-06 | 周一 | 1 次(14:14 启动) | 迟到被 cancelled |
+| 10-12 | 周一 | **0 次** | **完全漏触发** |
+| 10-19 | 周一 | **0 次** | **完全漏触发**(今日) |
+
+**10-12 和 10-19 两个周一完全漏触发**——间隔刚好 7 天,这不是巧合。
+GitHub Actions 对**周一 UTC 早晨 07:xx 整点槽位**的 schedule 投递明显不稳定。
+修订建议 #24 的 schedule 双保险(07:00/09:00/11:00 UTC 三 cron 冗余)
+**从"累积建议"升级为"证据充分的 P0"**。
+
+### 签名与状态
+
+- Gate FAIL 已记录,daily_push.txt 已写"今日无分析"
+- 新签名 eef0ae9f 已写回 last_price_signature.txt
+- 手动触发已完成,下次 Routine(10-20)将基于真正新鲜的 10-19 收盘数据运行
+- **本次教训**:连续两个周一的完全漏触发证明 GitHub Actions schedule 在周一不可靠,
+  修订建议 #24 "schedule 双保险" 必须尽快落地,不能再靠每周一手动触发救场
+
+---
+
