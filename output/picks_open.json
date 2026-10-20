@@ -1,5 +1,75 @@
 [
   {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-10-20",
+    "advice": "未持仓 ¥50-¥51 分批建仓 10-15%(分 2-3 批)，跌破 ¥48 止损；已持仓继续持有看 H 股上市落地。30 天 16 次调研 US-166 最强档。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": 0.7,
+      "survey_count_30d": 16,
+      "price": 50.79
+    }
+  },
+  {
+    "code": "689009",
+    "name": "九号公司",
+    "date": "2026-10-20",
+    "advice": "未持仓不追 +4.66%，等回调 ¥37-¥38 再分批 10%，跌破 ¥35.5 止损；已持仓继续持有，¥42 以上止盈一部分。1400 万台出货里程碑+板块情绪跟进。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": null,
+      "survey_count_30d": 1,
+      "price": 39.07
+    }
+  },
+  {
+    "code": "688111",
+    "name": "金山办公",
+    "date": "2026-10-20",
+    "advice": "未持仓 ¥225-¥232 分批建仓 10-15%(接近回购成交区间下沿)，跌破 ¥215 止损；已持仓继续持有看 Q3 业绩。质量 100/100+累计回购 1.15 亿。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 100,
+      "short_change_pct": 6.7,
+      "survey_count_30d": 1,
+      "price": 231.85
+    }
+  },
+  {
+    "code": "300476",
+    "name": "胜宏科技",
+    "date": "2026-10-20",
+    "advice": "未持仓耐心等 ¥170 下方分批 10%(接近 1.5 亿回购成本区间)，跌破 ¥160 止损；已持仓继续持有看回购实施。董事长 1.5-3 亿回购+融券-30.9%空头认输+3 次调研。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 77,
+      "short_change_pct": -30.9,
+      "survey_count_30d": 3,
+      "price": 176.85
+    }
+  },
+  {
+    "code": "000333",
+    "name": "美的集团",
+    "date": "2026-10-20",
+    "advice": "未持仓 ¥85-¥87 分批建仓 15-20% 作为组合防御底仓，跌破 ¥82 止损；已持仓继续持有收股息等 10 月下旬三季报。107 亿累计回购全部注销=EPS 直接提升。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 71,
+      "short_change_pct": 7.3,
+      "survey_count_30d": 1,
+      "price": 86.54
+    }
+  },
+  {
     "code": "000001",
     "name": "平安银行",
     "date": "2026-10-16",
@@ -207,20 +277,6 @@
       "short_change_pct": -38.9,
       "survey_count_30d": 1,
       "price": 82.35
-    }
-  },
-  {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-10-13",
-    "advice": "未持仓先观察 2 周，¥48-¥50 可小仓位 5-10% 试水，跌破 ¥46 止损；已持仓继续持有",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": -14.2,
-      "survey_count_30d": 10,
-      "price": 50.45
     }
   },
   {
@@ -445,104 +501,6 @@
       "short_change_pct": null,
       "survey_count_30d": 1,
       "price": 17.85
-    }
-  },
-  {
-    "code": "600900",
-    "name": "长江电力",
-    "date": "2026-09-28",
-    "advice": "未持仓可 ¥28-¥28.8 分批建 15-20% 作为组合防御底仓，跌破 ¥27 止损。主要看股息（约 3.7%）不是股价。睡得着觉的股票，别指望翻倍。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 80,
-      "short_change_pct": -39.3,
-      "survey_count_30d": 0,
-      "price": 28.46
-    }
-  },
-  {
-    "code": "600406",
-    "name": "国电南瑞",
-    "date": "2026-09-28",
-    "advice": "未持仓可 ¥22-¥22.8 分批建 15%，跌破 ¥21 止损。AI 算力扩产 → 电网负荷压力 → 特高压/自动化设备的隐藏 β，涨得慢但确定性高。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 72,
-      "short_change_pct": -3.9,
-      "survey_count_30d": 0,
-      "price": 22.58
-    }
-  },
-  {
-    "code": "300308",
-    "name": "中际旭创",
-    "date": "2026-09-28",
-    "advice": "单日 -8.98% 不构成建仓信号，别接飞刀。已持仓可继续持有（回购托底）；未持仓等 ¥720-¥760 情绪出清再谈；跌破 ¥680 是趋势线破坏另议。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 86,
-      "short_change_pct": 15.7,
-      "survey_count_30d": 1,
-      "price": 815.4
-    }
-  },
-  {
-    "code": "300759",
-    "name": "康龙化成",
-    "date": "2026-09-25",
-    "advice": "未持仓耐心等 ¥40 附近再看；已持仓建议减仓一半、留仓等 Q3 CRO 订单数据；跌破 ¥40 全部离场。融券排 top 5% 属真极端 + 调研仅 1 次，网站买入结论不敢照抄。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 69,
-      "short_change_pct": 92.1,
-      "survey_count_30d": 1,
-      "price": 43.5
-    }
-  },
-  {
-    "code": "002709",
-    "name": "天赐材料",
-    "date": "2026-09-25",
-    "advice": "未持仓可 ¥30-¥32 分批建仓 10-15%（周期股仓位不宜重），跌破 ¥28 止损；已持仓继续持有。业绩+968% 但股价腰斩，机构空头 -42% 撤仓，属公司底好+情绪恐慌组合但注意锂电周期属性。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 69,
-      "short_change_pct": -42.2,
-      "survey_count_30d": 2,
-      "price": 31.76
-    }
-  },
-  {
-    "code": "002594",
-    "name": "比亚迪",
-    "date": "2026-09-25",
-    "advice": "未持仓可 ¥83-¥85 分批建仓 15-20%，跌破 ¥80 止损；已持仓继续持有。30 天 12 次调研为自选股最高档，机构在验证第二曲线（外供+储能）。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 41,
-      "short_change_pct": 8.5,
-      "survey_count_30d": 12,
-      "price": 84.34
-    }
-  },
-  {
-    "code": "002050",
-    "name": "三花智控",
-    "date": "2026-09-25",
-    "advice": "未持仓不追高，等回调 ¥33-¥34 再看；已持仓继续持有但盯紧融券信号，若融券再上一个台阶考虑减仓一半。特斯拉审厂+Optimus 5000 台订单利好落地，同期融券 +65% 反映资金押注短期兑现即回落。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": 65.6,
-      "survey_count_30d": 1,
-      "price": 36.08
     }
   }
 ]
