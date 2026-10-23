@@ -1,16 +1,72 @@
 [
   {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-10-23",
+    "advice": "未持仓可 ¥33.5-¥34.5 分批建仓 15%，跌破 ¥32.5 止损；已持仓继续持有。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": -12.8,
+      "survey_count_30d": 7,
+      "price": 34.06
+    }
+  },
+  {
+    "code": "688008",
+    "name": "澜起科技",
+    "date": "2026-10-23",
+    "advice": "当前估值已反映 Q3 预增，等 Q3 正式财报或回落至 ¥160 下方再考虑；已持仓可继续持有。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 84,
+      "short_change_pct": -19.7,
+      "survey_count_30d": 3,
+      "price": 175.33
+    }
+  },
+  {
+    "code": "600406",
+    "name": "国电南瑞",
+    "date": "2026-10-23",
+    "advice": "未持仓可小仓位 ¥22.8-¥23.5 建仓 10%，跌破 ¥22 考虑止损；大盘情绪稳定前不追高。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 72,
+      "short_change_pct": 26.4,
+      "survey_count_30d": 1,
+      "price": 23.28
+    }
+  },
+  {
     "code": "300124",
     "name": "汇川技术",
-    "date": "2026-10-20",
-    "advice": "未持仓 ¥50-¥51 分批建仓 10-15%(分 2-3 批)，跌破 ¥48 止损；已持仓继续持有看 H 股上市落地。30 天 16 次调研 US-166 最强档。",
+    "date": "2026-10-23",
+    "advice": "未持仓可 ¥48.5-¥50 分批建仓 15%，跌破 ¥46 止损；已持仓继续持有。",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
       "quant_score": 78,
-      "short_change_pct": 0.7,
+      "short_change_pct": 5.1,
       "survey_count_30d": 16,
-      "price": 50.79
+      "price": 49.91
+    }
+  },
+  {
+    "code": "300012",
+    "name": "华测检测",
+    "date": "2026-10-23",
+    "advice": "观察为主不进场，等融券见顶回落 + 股价企稳 ¥14 上方才考虑；已持仓可继续持有但不加仓。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 69,
+      "short_change_pct": 73.5,
+      "survey_count_30d": 15,
+      "price": 14.94
     }
   },
   {
@@ -238,34 +294,6 @@
     }
   },
   {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-10-13",
-    "advice": "未持仓可 ¥35.5-¥36.2 分批建仓 10-15%，跌破 ¥34.5 止损；已持仓继续持有",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 3.9,
-      "survey_count_30d": 4,
-      "price": 36.12
-    }
-  },
-  {
-    "code": "688008",
-    "name": "澜起科技",
-    "date": "2026-10-13",
-    "advice": "未持仓可 ¥185-¥192 分批建仓 10-15%，跌破 ¥180 止损；已持仓等 Q3 季报不动",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 84,
-      "short_change_pct": 1.7,
-      "survey_count_30d": 3,
-      "price": 191.84
-    }
-  },
-  {
     "code": "300274",
     "name": "阳光电源",
     "date": "2026-10-13",
@@ -389,118 +417,6 @@
       "short_change_pct": null,
       "survey_count_30d": null,
       "price": 22.78
-    }
-  },
-  {
-    "code": "603259",
-    "name": "药明康德",
-    "date": "2026-10-01",
-    "advice": "未持仓不追 +4% 节前大涨，等节后 10-08 回调到 ¥160 附近再分批 10-15%，跌破 ¥152 止损；已持仓继续持有，Q3 看是否延续全年指引（585-605 亿，+35-39%）节奏。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 88,
-      "short_change_pct": 7.6,
-      "survey_count_30d": 0,
-      "price": 167.34
-    }
-  },
-  {
-    "code": "600415",
-    "name": "小商品城",
-    "date": "2026-10-01",
-    "advice": "⚠️ 不要在 ¥11 以上追高；已持仓节前最后一天观察不加仓。节后 10-08 第一周重点看融券方向——若 10-15 前融券反向翻转（基数从 66.9 万回升到 85 万以上）就是空头趁高位脱身的信号，严格减仓止损 ¥10.4。US-166 第 3 行最危险组合复现。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 65,
-      "short_change_pct": -19.1,
-      "survey_count_30d": 2,
-      "price": 11.08
-    }
-  },
-  {
-    "code": "002920",
-    "name": "德赛西威",
-    "date": "2026-10-01",
-    "advice": "未持仓可 ¥77-¥80 分批建仓 10-15%（海外故事待 Q3 兑现，仓位不宜重），跌破 ¥73 止损；已持仓继续持有，看 2027Q1 舱驾一体化海外量产节点是否按时。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 65,
-      "short_change_pct": -31.3,
-      "survey_count_30d": 3,
-      "price": 79.28
-    }
-  },
-  {
-    "code": "300760",
-    "name": "迈瑞医疗",
-    "date": "2026-09-30",
-    "advice": "未持仓可 ¥155-¥160 分批 15-20%，跌破 ¥148 止损；已持仓继续持有，看 Q3 单季净利是否延续同比+ 拐点。港股 IPO 落地是催化剂但别赌时点。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": 1.8,
-      "survey_count_30d": 1,
-      "price": 159.01
-    }
-  },
-  {
-    "code": "002738",
-    "name": "中矿资源",
-    "date": "2026-09-30",
-    "advice": "未持仓不追高 ¥43.31，等回调到 ¥40 附近再考虑 10-15% 仓位；已持仓继续持有，重点看后续铜矿产量爬坡数据（Q4 财报的铜业务收入是关键验证）。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 60,
-      "short_change_pct": 37.7,
-      "survey_count_30d": 1,
-      "price": 43.31
-    }
-  },
-  {
-    "code": "000612",
-    "name": "焦作万方",
-    "date": "2026-09-30",
-    "advice": "未持仓可 ¥10.2-¥10.6 分批 10-15%，跌破 ¥9.8 止损；已持仓继续持有。整合预期落空后估值锚回到主业本身，别期待重组行情。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 62,
-      "short_change_pct": 50.7,
-      "survey_count_30d": 1,
-      "price": 10.63
-    }
-  },
-  {
-    "code": "600549",
-    "name": "厦门钨业",
-    "date": "2026-09-29",
-    "advice": "不追跌不建仓；已持仓减仓 30-50% 等仲裁进展。洛阳钼业断供 → 合资公司全面停产，网站 A 评级严重滞后事件冲击。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 75,
-      "short_change_pct": -25.8,
-      "survey_count_30d": 0,
-      "price": 43.5
-    }
-  },
-  {
-    "code": "002956",
-    "name": "西麦食品",
-    "date": "2026-09-29",
-    "advice": "未持仓 ¥17.30-¥17.90 分批建 15-20%，跌破 ¥16.5 止损。防御派兑现续航（09-18 up 预言 Day 10 +3.18% 后 Day 11 再 +3%）。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 66,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 17.85
     }
   }
 ]
