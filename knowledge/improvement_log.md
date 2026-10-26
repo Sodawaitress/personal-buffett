@@ -10262,3 +10262,77 @@ GitHub Actions 对**周一 UTC 早晨 07:xx 整点槽位**的 schedule 投递明
 - 10-26(10-16 组 Day 10):000001 平安银行 up、300475 香农芯创 sideways
 
 ---
+
+## 2026-10-26 · skip · Gate ① FAIL + 周一流水线未触发（US-206 自愈）
+
+**门控结果**：
+
+- Gate ①（新鲜度）：snapshot `generated_at = 2026-10-23T17:53:13Z`，距今 **67.32 小时**，远超 26h 宽通道上限 → **FAIL**
+- Gate ②（价格签名）：snapshot 签名 `7678967c...` vs 本地上次签名 `bb50e55b...` → **PASS**（上次 Routine 后服务器确实又生成过一次，就是 10-23 那次）
+- Gate ③：Gate ① 已 FAIL，不再抽检实价
+
+**诊断（按 US-206 的规矩，先去看那件产出物到底是谁提交的、几点提交的）**：
+
+```
+pipeline.yml 最近 10 次：
+  2026-10-23 12:39 schedule success    ← 最后一次成功，这就是现在读到的 snapshot
+  2026-10-22 13:00 schedule cancelled
+  2026-10-21 12:58 schedule cancelled
+  2026-10-20 12:45 schedule cancelled
+  2026-10-19 14:43 schedule cancelled
+  2026-10-19 13:16 workflow_dispatch cancelled
+  2026-10-16 12:28 schedule success
+```
+
+**今日（10-26 Mon UTC）的 schedule 根本没触发过**。10-24/10-25 是周末 OK，
+但周一本该在 07:2x UTC 跑完的 cron 到 13:11 UTC 还没有一条记录。
+症状符合 US-206 记录的「GHA schedule 事件本身晚了/漂了」——不是 pipeline
+坏了，是 schedule 槽位的问题，与 2026-08-27 → 09-01 的那轮漂移同类。
+
+**修复动作（已执行）**：
+
+```
+POST /repos/Sodawaitress/personal-buffett/actions/workflows/pipeline.yml/dispatches
+→ run 40328654582, workflow_dispatch, in_progress（13:12:58 UTC）
+```
+
+按 US-206「触发之后不要等」执行：pipeline 跑满 ~4h，Routine 窗口（13:2x UTC）
+等不起。今天照常按陈旧数据处理 = **今天跳过**，明天读到的就是新的。
+把「静默跳过」变成「一次自愈」。
+
+**今天不写什么（刻意）**：
+
+- 五选：不写（数据已三日前，发出去就是误导）
+- predictions_pending.json：不写（不基于陈旧数据下预言）
+- last_price_signature.txt：**不更新**（今天没真正处理这份 snapshot；
+  明天拿到新数据时，签名自然会与本地的 `bb50e55b...` 不同，门控照常工作）
+
+**今天写什么**：
+
+- `output/daily_push.txt`：标准「服务器数据未刷新」告知（妈妈看到的就是这一句）
+- `output/picks_open.json`：顺手清掉 10-02 四条超 21 天的旧条目
+  （HBM Hudbay、DUOL Duolingo、2359.HK 药明康德、1364.HK 古茗），
+  剩 26 条留给明天回访用
+- 本改进日志：这段
+
+**连续 skip 的追踪**：
+
+今日是本次 FAIL 的第 1 天。按 US-206 规则「连续两天 Gate FAIL 且两天都没
+触发过修复，说明这一步没被执行 —— 那是 Routine 自己的问题，不是上游的」。
+今天已触发修复，明天若 pipeline 仍无产出需再排查（可能是 cron.yml 的
+schedule 表达式本身出了问题，而不仅仅是单次漂移）。
+
+**到期预言的处理**：
+
+10-16 组今天本是 Day 10 兑现日（000001 up、300475 sideways），但没有新鲜
+价格无法 scoring，推迟到明天（基于明天的新 snapshot）回填。10-24/10-25
+两天本应在当天完成的 Day-10 scoring（10-14/10-15 组）也顺延。
+
+```bash
+python -m scripts.cron_punctuality
+```
+
+明天若 pipeline 恢复，先跑一次这个脚本看最近一周有几次「结束时间晚于 13:20 UTC」
+—— 那个数直接等于五选读旧数据的天数，是本周 Gate FAIL 修订的验收数字。
+
+---
