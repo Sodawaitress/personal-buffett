@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-10-28",
+    "code": "603338",
+    "name": "浙江鼎力",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "A评级+普跌中逆势+0.42%+调研1家+融券+36.5%meaningful，10-30三季报在预言窗口内，波动可控但不确定方向",
+    "price_at_prediction": 52.0
+  },
+  {
+    "date": "2026-10-28",
+    "code": "000729",
+    "name": "燕京啤酒",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "跌停+Q3+10.2%增速低于2025全年+37%+融券+147%空头大规模建仓+base21.8→54万股meaningful+板块共振，典型利好出尽剧本",
+    "price_at_prediction": 10.05
+  }
+]

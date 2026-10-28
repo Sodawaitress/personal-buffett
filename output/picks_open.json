@@ -1,5 +1,75 @@
 [
   {
+    "code": "603338",
+    "name": "浙江鼎力",
+    "date": "2026-10-28",
+    "advice": "未持仓 ¥50-¥52 分批 10%（防御型配置），跌破 ¥48 止损；已持仓继续持有过三季报，¥55 以上止盈一部分。10-30 三季报在窗口内，EPS+15%以上可加仓。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 70,
+      "short_change_pct": 36.5,
+      "survey_count_30d": 1,
+      "price": 52.0
+    }
+  },
+  {
+    "code": "000729",
+    "name": "燕京啤酒",
+    "date": "2026-10-28",
+    "advice": "不建仓。已持仓 ¥10 下方严格止损，¥9.5 下方清仓；未持仓等融券回落 base 25 万股以下、股价企稳 ¥9.5 上方 2 周后再评估。警示案例。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 49,
+      "short_change_pct": 147.4,
+      "survey_count_30d": 0,
+      "price": 10.05
+    }
+  },
+  {
+    "code": "603893",
+    "name": "瑞芯微",
+    "date": "2026-10-28",
+    "advice": "不复仓（第三次反转）。已持仓严守 ¥180 止损不放，¥210 上方反抽止盈剩余仓位；未持仓完全回避至下一轮调研补齐+融券 base 回落到 3 万股以下。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": 397.6,
+      "survey_count_30d": 2,
+      "price": 193.0
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-10-28",
+    "advice": "延续 10-23/10-27 建议 ¥33.5-¥34.0 分批 15%，跌破 ¥32.5 止损；已持仓继续持有看 Q3 和中期分红到账（10 股派 4 元）。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": -15.0,
+      "survey_count_30d": 4,
+      "price": 34.0
+    }
+  },
+  {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-10-28",
+    "advice": "未持仓 ¥51-¥53 分批 10-15%，跌破 ¥48 止损；已持仓继续持有看三季报。三季报若扣非增速再转正（H1 +3.15%）可加仓。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": 37.1,
+      "survey_count_30d": 1,
+      "price": 53.31
+    }
+  },
+  {
     "code": "688236",
     "name": "春立医疗",
     "date": "2026-10-27",
@@ -42,20 +112,6 @@
     }
   },
   {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-10-27",
-    "advice": "延续 10-23 建议 ¥33.5-¥34.5 分批 15%，跌破 ¥32.5 止损；已持仓继续持有看 11 月初 Q3。30 天 7 次调研+融券-13.3% 空头在撤+普跌中抗跌 = 持续建仓窗口未关。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": -13.3,
-      "survey_count_30d": 7,
-      "price": 34.0
-    }
-  },
-  {
     "code": "688008",
     "name": "澜起科技",
     "date": "2026-10-27",
@@ -81,20 +137,6 @@
       "short_change_pct": 26.4,
       "survey_count_30d": 1,
       "price": 23.28
-    }
-  },
-  {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-10-23",
-    "advice": "未持仓可 ¥48.5-¥50 分批建仓 15%，跌破 ¥46 止损；已持仓继续持有。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": 5.1,
-      "survey_count_30d": 16,
-      "price": 49.91
     }
   },
   {
@@ -235,20 +277,6 @@
       "short_change_pct": -54.1,
       "survey_count_30d": 2,
       "price": 32.65
-    }
-  },
-  {
-    "code": "603893",
-    "name": "瑞芯微",
-    "date": "2026-10-15",
-    "advice": "未持仓可 ¥193-¥198 分批建仓 15-20%，跌破 ¥180 严格止损；已持仓继续持有。09-01 82家特定对象调研(US-166高档) + 融券-51.8%(3.1→1.5万股)空头大幅撤退 + 大众未追，三层最干净的进场组合。短期目标 ¥210-¥220。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": -51.8,
-      "survey_count_30d": 2,
-      "price": 195.5
     }
   },
   {
