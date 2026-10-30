@@ -1,5 +1,75 @@
 [
   {
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-10-30",
+    "advice": "不急进场，等板块情绪企稳 + 收盘站稳 ¥145 以上再分批 5%，跌破 ¥135 严格止损；已持仓的若未止损，¥160 盘整可观望一两天再决定，若跌破 ¥135 果断离场。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 90,
+      "short_change_pct": -17.4,
+      "survey_count_30d": 6,
+      "price": 161.60
+    }
+  },
+  {
+    "code": "002594",
+    "name": "比亚迪",
+    "date": "2026-10-30",
+    "advice": "未持仓 ¥80-¥83 分批建仓 15%，跌破 ¥77 严格止损；已持仓继续持有，¥90 以上止盈一部分。关键观察：11 月上旬 Q3 披露 + 阿布扎比 RTC 项目兑现（阳光 + 比亚迪拿下 98.8%）。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 41,
+      "short_change_pct": -8.9,
+      "survey_count_30d": 13,
+      "price": 82.50
+    }
+  },
+  {
+    "code": "300750",
+    "name": "宁德时代",
+    "date": "2026-10-30",
+    "advice": "未持仓 ¥220-¥230 分批建仓 10%（防御型底仓），跌破 ¥210 止损；已持仓继续持有。阿布扎比项目丢失是提醒，若 Q4 国内连续丢单考虑减仓一半。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "持有",
+      "quant_score": 87,
+      "short_change_pct": -11.3,
+      "survey_count_30d": 1,
+      "price": 229.07
+    }
+  },
+  {
+    "code": "603259",
+    "name": "药明康德",
+    "date": "2026-10-30",
+    "advice": "未持仓等 ¥138 下方分批 10%，跌破 ¥130 止损；已持仓继续持有，¥155 上方止盈一部分。关键观察：Q4 新签订单 260 亿能否持续 + 创新药出海关税政策变化。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "持有",
+      "quant_score": 87,
+      "short_change_pct": 0.3,
+      "survey_count_30d": 0,
+      "price": 142.89
+    }
+  },
+  {
+    "code": "ANET",
+    "name": "Arista Networks",
+    "date": "2026-10-30",
+    "advice": "未持仓等 Q3 earnings 披露后再分批建仓 5-10%（AI 波动大，仓位控制），跌破 $170 止损；已持仓继续持有看 Q3 披露。关键观察：Q3 earnings 时间点（10 月末/11 月初）+ hyperscale 客户采购承诺更新。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 95,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 186.04
+    }
+  },
+  {
     "code": "300124",
     "name": "汇川技术",
     "date": "2026-10-29",
@@ -333,34 +403,6 @@
       "short_change_pct": 55.4,
       "survey_count_30d": 0,
       "price": 10.53
-    }
-  },
-  {
-    "code": "300394",
-    "name": "天孚通信",
-    "date": "2026-10-15",
-    "advice": "未持仓耐心等 ¥210 以下再谈 5-10%，跌破 ¥200 严格止损；已持仓继续持有但 ¥225 下方止盈一部分。今日 -7.17% 验证 10-14 的 sideways 升级(预言反转升级机制首个被兑现样本)。机构面空档，没有新高质量调研就只是'好公司高位震荡'。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 90,
-      "short_change_pct": 10.1,
-      "survey_count_30d": 1,
-      "price": 229.0
-    }
-  },
-  {
-    "code": "300750",
-    "name": "宁德时代",
-    "date": "2026-10-14",
-    "advice": "未持仓本周先不动，等融券回落到 100 万股以下或 Q3 净利确认；¥285 以下小仓位 5-10% 博弈回购底部可接受，跌破 ¥275 弃仓；已持仓严守 ¥280 止损。回购 33 亿 vs 融券 +75%（83→145 万股）博弈，调研 0 + 下跌中 + 融券大增 = US-166 真看空雏形。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 87,
-      "short_change_pct": 75.0,
-      "survey_count_30d": 0,
-      "price": 289.1
     }
   },
   {
