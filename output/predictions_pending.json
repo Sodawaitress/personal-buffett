@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-03",
+    "code": "002602",
+    "name": "世纪华通",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "传媒板块主力资金 58.38 亿净流入抢筹 + 评级 A + 估值便宜，Q4 游戏新品窗口",
+    "price_at_prediction": 12.42
+  },
+  {
+    "date": "2026-11-03",
+    "code": "002142",
+    "name": "宁波银行",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "Q3 净利 +12.05% 已兑现，总资产破 4 万亿，防御型银行回调反而是机会，但 Q4 板块资金尚未重新定价",
+    "price_at_prediction": 34.01
+  }
+]
