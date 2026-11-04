@@ -1,5 +1,75 @@
 [
   {
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-11-04",
+    "advice": "未持仓分 3 次等 ¥115-¥120 试探 5%，跌破 ¥110 严格止损；已持仓不恐慌但不加仓。关键观察：11 月中旬有无新一轮高质量调研补上 + CPO 产业链有无订单/澄清公告。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 90,
+      "short_change_pct": -34.6,
+      "survey_count_30d": 5,
+      "price": 123.61
+    }
+  },
+  {
+    "code": "688256",
+    "name": "寒武纪",
+    "date": "2026-11-04",
+    "advice": "已持仓不恐慌但不加仓，¥700 下方严格止损；未持仓不急进场，等经营现金流改善迹象再评估。关键观察：11 月有无 Q4 订单公告 + 融资融券数据有无突然恶化。注意现金流瑕疵。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 72,
+      "short_change_pct": 4.4,
+      "survey_count_30d": 0,
+      "price": 767.93
+    }
+  },
+  {
+    "code": "603893",
+    "name": "瑞芯微",
+    "date": "2026-11-04",
+    "advice": "未持仓不追，等 ¥165-¥170 回落再分批 5%（基数小仓位必克制），跌破 ¥155 止损；已持仓继续持有看 Q4 业绩兑现。US-166：融券+324.8% 前 5%，但 base 1.3→5.7 万股基数极小，谨慎解读。关键观察：PCB 物料恢复 + 新机构调研。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": 324.8,
+      "survey_count_30d": 1,
+      "price": 180.01
+    }
+  },
+  {
+    "code": "002594",
+    "name": "比亚迪",
+    "date": "2026-11-04",
+    "advice": "延续 10-30 建议，未持仓 ¥82-¥84 分批建仓 15%，跌破 ¥77 严格止损；已持仓继续持有，¥90 以上止盈一部分。关键观察：11 月末北京车展新品 + 阿布扎比 RTC 项目兑现进度。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 41,
+      "short_change_pct": 2.0,
+      "survey_count_30d": 10,
+      "price": 84.95
+    }
+  },
+  {
+    "code": "600900",
+    "name": "长江电力",
+    "date": "2026-11-04",
+    "advice": "未持仓 ¥28-¥29 分批建仓 10%（防御底仓，不贪涨），跌破 ¥27 止损；已持仓继续持有赚稳定分红。关键观察：11 月枯水期发电量数据 + Q4 来水情况。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 78,
+      "short_change_pct": 40.0,
+      "survey_count_30d": 0,
+      "price": 29.86
+    }
+  },
+  {
     "code": "002602",
     "name": "世纪华通",
     "date": "2026-11-03",
@@ -67,34 +137,6 @@
       "short_change_pct": null,
       "survey_count_30d": 0,
       "price": 12.85
-    }
-  },
-  {
-    "code": "300394",
-    "name": "天孚通信",
-    "date": "2026-10-30",
-    "advice": "不急进场，等板块情绪企稳 + 收盘站稳 ¥145 以上再分批 5%，跌破 ¥135 严格止损；已持仓的若未止损，¥160 盘整可观望一两天再决定，若跌破 ¥135 果断离场。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "持有",
-      "quant_score": 90,
-      "short_change_pct": -17.4,
-      "survey_count_30d": 6,
-      "price": 161.6
-    }
-  },
-  {
-    "code": "002594",
-    "name": "比亚迪",
-    "date": "2026-10-30",
-    "advice": "未持仓 ¥80-¥83 分批建仓 15%，跌破 ¥77 严格止损；已持仓继续持有，¥90 以上止盈一部分。关键观察：11 月上旬 Q3 披露 + 阿布扎比 RTC 项目兑现（阳光 + 比亚迪拿下 98.8%）。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 41,
-      "short_change_pct": -8.9,
-      "survey_count_30d": 13,
-      "price": 82.5
     }
   },
   {
@@ -207,20 +249,6 @@
       "short_change_pct": 147.4,
       "survey_count_30d": 0,
       "price": 10.05
-    }
-  },
-  {
-    "code": "603893",
-    "name": "瑞芯微",
-    "date": "2026-10-28",
-    "advice": "不复仓（第三次反转）。已持仓严守 ¥180 止损不放，¥210 上方反抽止盈剩余仓位；未持仓完全回避至下一轮调研补齐+融券 base 回落到 3 万股以下。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": 397.6,
-      "survey_count_30d": 2,
-      "price": 193.0
     }
   },
   {
@@ -417,20 +445,6 @@
       "short_change_pct": 55.4,
       "survey_count_30d": 0,
       "price": 10.53
-    }
-  },
-  {
-    "code": "300274",
-    "name": "阳光电源",
-    "date": "2026-10-13",
-    "advice": "未持仓可 ¥80-¥83 分批建仓 10-15%，跌破 ¥77 止损；已持仓继续持有看三季报",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": -38.9,
-      "survey_count_30d": 1,
-      "price": 82.35
     }
   }
 ]
