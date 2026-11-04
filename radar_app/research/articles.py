@@ -12,7 +12,7 @@ ARTICLES = [
         # 每个数字都拿交易所日线 / 统计局 / 三部门通稿对过。
         "slug": "stock-crash-2026-01",
         "title": "股灾两周：政府出了三招，市场怎么读",
-        "subtitle": "股灾系列 · 一 · 谁出来说 · 哪天落地 · 减少供给",
+        "subtitle": "股灾系列 · 一 · 谁出来说 · 工具与导火索 · 减少供给",
         "cover": "🏛️",
         "date": "2026-11-05",
         "template": "research/stock-crash-2026-01.html",

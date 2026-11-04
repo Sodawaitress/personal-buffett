@@ -42,6 +42,17 @@ def test_verified_facts_match_the_record():
     assert "5 月 7 日" in h and "副职" in h and "正职" in h   # 2025-05-07 国新办发布会
 
 
+def test_rally_cause_matches_intraday_data():
+    """11-05 更正：11-04 上午政策落地时市场没动，拉升紧跟美国选举结果。
+    不许再把那天大涨主要归给「政策落地」，也不许用早期报道的「24 家 / 400 亿」。"""
+    h = _html()
+    assert "1 点 15 分" in h and "美国" in h
+    assert "1000 亿" in h
+    for bad in ("24 家", "400 亿", "宣布了，不等于落地了"):
+        assert bad not in h, f"已更正的说法又回来了: {bad}"
+    assert "11 月 5 日更新" in h, "改了已发布的文章，要告诉读者"
+
+
 def test_anonymous_source_is_labelled():
     h = _html()
     assert "金融时报" in h and "匿名消息源" in h
