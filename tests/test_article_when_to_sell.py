@@ -23,10 +23,11 @@ def _html():
     return open("templates/" + a["template"], encoding="utf-8").read()
 
 
-def test_article_is_registered_and_newest():
+def test_article_is_registered():
+    # US-222 起已不是最新一篇（股灾系列在它之后），只检查它还在专栏里
     a = get_article(SLUG)
     assert a, "文章没注册，专栏页上看不到"
-    assert list_articles()[0]["slug"] == SLUG, "不是最新一篇，会被压在下面"
+    assert SLUG in [x["slug"] for x in list_articles()]
 
 
 def test_keeps_the_rebuttal_to_morningstar():

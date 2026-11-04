@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>股灾两周：政府出了三招，市场怎么读</title>
+<style>
+  :root{
+    --paper:#EBE3D2; --paper2:#F4EEDF; --card:#FBF7EC; --ink:#2C2A22; --ink2:#6C6450; --line:#DDD3BB;
+    --jade:#3F7E56; --jade-bg:#E4EEDF; --gold:#B4882A; --gold-bg:#F3E8C8; --verm:#B0442E; --verm-bg:#F3DDD3;
+    --seal:#B0442E;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --paper:#0E1512; --paper2:#141C18; --card:#182019; --ink:#EAE4D4; --ink2:#9AA091; --line:#26302A;
+    --jade:#6DB587; --jade-bg:#17251C; --gold:#DCB259; --gold-bg:#241E12; --verm:#DE7157; --verm-bg:#26170F;
+    --seal:#DE7157;
+  }}
+  :root[data-theme="dark"]{--paper:#0E1512;--paper2:#141C18;--card:#182019;--ink:#EAE4D4;--ink2:#9AA091;--line:#26302A;--jade:#6DB587;--jade-bg:#17251C;--gold:#DCB259;--gold-bg:#241E12;--verm:#DE7157;--verm-bg:#26170F;--seal:#DE7157;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);line-height:1.75;
+    font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+  .song{font-family:"Songti SC","STSong",Songti,"SimSun",Georgia,serif;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:620px;margin:0 auto;padding:26px 18px 60px;}
+  .backlink{display:inline-block;margin-bottom:18px;color:var(--ink2);text-decoration:none;font-size:13px;}
+  .backlink:hover{color:var(--jade);}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:8px;}
+  .mh-l .kick{font-size:11px;letter-spacing:.28em;color:var(--ink2);}
+  .mh-l h1{font-size:25px;margin:4px 0 0;line-height:1.3;text-wrap:balance;}
+  .seal{font-family:"Songti SC","STSong",serif;color:#fff;background:var(--seal);border-radius:5px;
+    padding:6px 8px;font-size:12px;line-height:1.2;text-align:center;letter-spacing:.1em;white-space:nowrap;}
+  .date{font-size:12px;color:var(--ink2);margin:8px 0 22px;}
+
+  p{font-size:15.5px;margin:0 0 12px;}
+  b{color:var(--ink);}
+  h2.song{font-size:21px;margin:36px 0 14px;text-wrap:balance;}
+  .lead p{font-size:16.5px;}
+
+  /* 开头的观点框 */
+  .thesis{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--verm);border-radius:12px;padding:16px 18px;margin:18px 0 8px;}
+  .thesis .tag{font-size:11px;letter-spacing:.2em;color:var(--verm);font-weight:700;margin-bottom:6px;}
+  .thesis p{font-size:17px;margin:0;line-height:1.7;}
+  .thesis .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .thesis .pair div{border-radius:9px;padding:10px 12px;font-size:14px;line-height:1.5;}
+  .pair .hi{background:var(--jade-bg);} .pair .lo{background:var(--gold-bg);}
+  .pair .k{display:block;font-weight:800;font-size:15px;margin-bottom:2px;}
+  .pair .hi .k{color:var(--jade);} .pair .lo .k{color:var(--gold);}
+
+  /* 大部队 / 突击队 */
+  .army{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 18px;}
+  @media(max-width:520px){.army{grid-template-columns:1fr;}}
+  .unit{border:1px solid var(--line);border-radius:12px;padding:14px 15px;}
+  .unit-big{background:var(--jade-bg);border-left:4px solid var(--jade);}
+  .unit-fast{background:var(--verm-bg);border-left:4px solid var(--verm);}
+  .unit .h{font-size:17px;font-weight:800;}
+  .unit-big .h{color:var(--jade);} .unit-fast .h{color:var(--verm);}
+  .unit .s{font-size:12.5px;color:var(--ink2);margin:1px 0 8px;}
+  .unit p{font-size:14px;margin:0 0 6px;line-height:1.6;}
+  .unit .motto{font-size:14px;font-weight:700;margin:8px 0 0;}
+
+  /* 时间线 */
+  .timeline{border:1px solid var(--line);border-radius:12px;padding:4px 16px 6px;background:var(--card);margin:14px 0;}
+  .tl-row{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line);}
+  .tl-row:last-child{border-bottom:0;}
+  .tl-date{flex:0 0 58px;text-align:right;}
+  .tl-date .d{font-size:16px;font-weight:800;} .tl-date .w{font-size:11px;color:var(--ink2);}
+  .tl-body{flex:1;font-size:14.5px;line-height:1.65;}
+  .tl-body .co{font-weight:700;display:block;margin-bottom:2px;}
+  .tl-row.up .co{color:var(--jade);} .tl-row.down .co{color:var(--verm);}
+
+  /* 100 块变 77 块 */
+  .money{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+  .m{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;background:var(--card);}
+  .m .lab{font-size:12.5px;color:var(--ink2);}
+  .m .num{font-size:30px;font-weight:800;line-height:1.2;margin:4px 0;}
+  .m .from{font-size:12px;color:var(--ink2);}
+  .m.fast .num{color:var(--verm);} .m.big .num{color:var(--jade);}
+
+  /* 知识卡 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;}
+  .card .no{font-size:11px;letter-spacing:.2em;color:var(--ink2);}
+  .card h3{font-size:18px;margin:2px 0 10px;line-height:1.4;}
+  .card p{font-size:15px;}
+  .card p:last-child{margin-bottom:0;}
+  .vs{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0;}
+  .vs-row{display:flex;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.55;background:var(--paper2);}
+  .vs-row:last-child{border-bottom:0;}
+  .vs-row .when{flex:0 0 64px;font-weight:800;font-size:15px;line-height:1.3;}
+  .vs-row .when small{display:block;font-weight:400;font-size:11.5px;color:var(--ink2);margin-top:2px;}
+  .vs-row.hi .when{color:var(--jade);} .vs-row.lo .when{color:var(--gold);}
+  .tool{border-left:3px solid var(--jade);padding:2px 0 2px 13px;margin:14px 0;}
+  .tool .name{font-weight:800;font-size:15.5px;color:var(--jade);margin-bottom:4px;}
+  .tool p{font-size:14.5px;margin-bottom:8px;}
+  .hook{background:var(--jade-bg);border-radius:8px;padding:9px 12px;font-size:14.5px;margin-top:6px;}
+  ul.facts{margin:10px 0 12px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:7px;}
+  ul.facts li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.6;}
+  ul.facts li::before{content:"✓";position:absolute;left:0;color:var(--jade);font-weight:800;}
+
+  /* 记者观察 */
+  .obs{background:var(--gold-bg);border-left:4px solid var(--gold);border-radius:8px;padding:12px 15px;margin:14px 0 4px;font-size:15px;line-height:1.7;}
+  .obs .t{font-weight:800;color:var(--gold);margin-right:4px;}
+
+  /* 反思 */
+  ol.advice{list-style:none;counter-reset:a;padding:0;margin:0;}
+  ol.advice li{counter-increment:a;position:relative;padding:14px 0 14px 44px;border-bottom:1px solid var(--line);}
+  ol.advice li:last-child{border-bottom:0;}
+  ol.advice li::before{content:counter(a);position:absolute;left:0;top:14px;width:28px;height:28px;border-radius:50%;
+    background:var(--jade);color:#fff;font-family:"Songti SC",serif;font-size:15px;display:grid;place-items:center;font-weight:700;}
+  ol.advice .t{font-size:16.5px;font-weight:800;margin-bottom:4px;}
+  ol.advice p{font-size:14.5px;margin:0 0 6px;}
+  ol.advice p:last-child{margin-bottom:0;}
+  .key{color:var(--verm);font-weight:700;}
+
+  /* 接下来盯着的 */
+  .watch{background:var(--jade-bg);border:1px solid var(--jade);border-radius:12px;padding:15px 18px;margin-top:14px;}
+  .watch ul{margin:0 0 10px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .watch li{font-size:14.5px;line-height:1.55;padding-left:22px;position:relative;}
+  .watch li::before{content:"→";position:absolute;left:0;color:var(--verm);font-weight:800;}
+  .watch p{font-size:14px;margin:0;color:var(--ink2);}
+
+  .sign{margin-top:30px;text-align:right;font-size:14px;color:var(--ink2);}
+  .foot{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);line-height:1.6;}
+  .foot p{font-size:11.5px;margin:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="backlink" href="/research">← 回到专栏</a>
+
+  <div class="masthead">
+    <div class="mh-l">
+      <div class="kick song">私人巴菲特 · 股灾系列 · 一</div>
+      <h1 class="song">股灾两周：政府出了三招，市场怎么读</h1>
+    </div>
+    <div class="seal song">股灾<br>系列</div>
+  </div>
+  <div class="date mono">2026-11-05 · 谁出来说 · 哪天落地 · 减少供给</div>
+
+  <div class="lead">
+    <p>10 月最后两周，A 股跌得很凶。11 月 4 日，又猛地弹了回来。</p>
+    <p>这两周里，政府先后出了好几招。有的招一出，市场只高兴了一天；有的招真正落地那天，市场才大涨。</p>
+  </div>
+
+  <div class="thesis">
+    <div class="tag">记者观察</div>
+    <p>在 A 股，<b>「谁出来说」本身就是信息。</b></p>
+    <div class="pair">
+      <div class="hi"><span class="k">正职 · 发布会</span>决心大，拿出来的东西多</div>
+      <div class="lo"><span class="k">副职 · 座谈会</span>多半是在修补已有的工具</div>
+    </div>
+  </div>
+
+  <h2 class="song">一、这两周发生了什么</h2>
+
+  <p>先认识新闻里天天说的三个名字。把股市想成一支军队：</p>
+
+  <div class="army">
+    <div class="unit unit-big">
+      <div class="h">大部队</div>
+      <div class="s">上证指数</div>
+      <p>上海交易所全部股票合在一起。大银行、大国企分量最重。新闻说「大盘」，一般就是说它。</p>
+      <p class="motto">走得慢，也稳。</p>
+    </div>
+    <div class="unit unit-fast">
+      <div class="h">突击队</div>
+      <div class="s">创业板指 · 科创50</div>
+      <p>创业板是深圳那边的成长型公司，科技、新能源居多；科创50 是上海科创板最大的 50 家科技公司，做芯片、做人工智能的。</p>
+      <p class="motto">冲得快，摔得也狠。</p>
+    </div>
+  </div>
+
+  <p><b>10 月下旬，科技股一路往下掉。</b>10 月 26 日那一周，几乎天天跌。到 10 月 30 号，上证跌破 3600 点。</p>
+  <p>3600 点有什么特别的？没什么特别的，就是个整数。但大家心里看重它，一破，心里就慌了。</p>
+
+  <p><b>整个 10 月算下来跌了多少？</b>你想一下：10 月初你在创业板放了 100 块钱，到月底剩多少？</p>
+
+  <div class="money">
+    <div class="m fast"><div class="lab">突击队 · 创业板</div><div class="num mono">77 块</div><div class="from">10 月初放进 100 块</div></div>
+    <div class="m big"><div class="lab">大部队 · 上证</div><div class="num mono">94 块</div><div class="from">10 月初放进 100 块</div></div>
+  </div>
+  <p>一个月，100 块变 77 块。突击队摔得比大部队狠多了。</p>
+
+  <div class="timeline">
+    <div class="tl-row down">
+      <div class="tl-date"><div class="d mono">10-31</div><div class="w">周六</div></div>
+      <div class="tl-body"><span class="co">又来一个坏消息</span>统计局公布 10 月的 PMI 是 49.3。PMI 是每个月去问一大批工厂：这个月订单、生产是多了还是少了。<b>50 是分界线</b>：高于 50，工厂的生意整体在变好；低于 50，整体在变差。10 月是 49.3，工厂的生意在变差。</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date"><div class="d mono">11-02</div><div class="w">周一</div></div>
+      <div class="tl-body"><span class="co">政府出手</span>管钱的三个部门（人民银行、金融监管总局、证监会）开会，宣布了两个救市的办法（第三节细讲）。当天股市涨了一点，第二天又跌了回去。</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date"><div class="d mono">11-03</div><div class="w">周二</div></div>
+      <div class="tl-body"><span class="co">又传出消息</span>证监会让新股先暂停上市。</div>
+    </div>
+    <div class="tl-row up">
+      <div class="tl-date"><div class="d mono">11-04</div><div class="w">周三</div></div>
+      <div class="tl-body"><span class="co">股市突然大涨</span>科创50 一天涨了将近 10%，平时很少见。</div>
+    </div>
+  </div>
+
+  <h2 class="song">二、指数跌得少，不等于你跌得少</h2>
+
+  <p>同样是 10 月，上证只跌 6%，创业板却跌了 23%。差这么多，是因为两个指数里装的东西不一样。</p>
+  <p>这一轮跌得最狠的，是之前涨得最猛的人工智能、芯片、光模块这类科技股，它们主要在创业板和科创板，就是突击队。而大部队上证里，大银行这类大公司占的分量很重，跌得少。</p>
+  <div class="obs">新闻说「大盘只跌了一点」，说的是大部队。<b>你手里拿的如果是突击队，那就是另一回事了。</b></div>
+
+  <h2 class="song">三、政府的三招，怎么读</h2>
+
+  <div class="card">
+    <div class="no">第一招</div>
+    <h3 class="song">看「规格」：谁出面，怎么开会</h3>
+    <div class="vs">
+      <div class="vs-row lo"><span class="when">这次<small>11 月 2 日</small></span><span>三个部门的<b>副职</b>出面，闭门座谈，会后发一篇通稿</span></div>
+      <div class="vs-row hi"><span class="when">去年<small>5 月 7 日</small></span><span>国务院新闻办开<b>发布会</b>，央行行长、金融监管总局局长、证监会主席三位<b>正职</b>一起答记者问，一口气推出降准、降息等一揽子政策</span></div>
+    </div>
+    <p>评论员王剑在 11 月 3 日的节目里，就是用这个对比，判断这次措施「低于预期」。事实对得上，市场也印证了：11-02 涨了一天，11-03 就跌了回去。</p>
+  </div>
+
+  <div class="card">
+    <div class="no">第二招</div>
+    <h3 class="song">宣布了，不等于落地了</h3>
+    <p>11 月 2 日宣布了两个办法。名字很长，听着吓人，其实不难。</p>
+
+    <div class="tool">
+      <div class="name">股票回购增持再贷款</div>
+      <p>什么意思？央行把便宜的钱借给银行，银行再借给上市公司和大股东，让他们<b>拿去买自家的股票</b>。</p>
+      <p>为啥要这样？你想一下，老板都敢借钱买自家股票，说明什么？说明他觉得自家股票便宜了。这是给市场打气。</p>
+      <p>这次利率从 1.25% 降到 1%，借钱更便宜了，而且从临时的办法改成了<b>长期的制度</b>。</p>
+    </div>
+
+    <div class="tool">
+      <div class="name">互换便利</div>
+      <p>券商、基金、保险公司手里有一堆资产，一时变不成现钱。央行说：拿来押给我，我换给你国债、央票。国债就跟现金差不多，拿着它马上就能借到钱，再拿去买股票。这次是再做一轮。</p>
+      <div class="hook">就像<b>拿家里的金镯子押出去，换来现金先用</b>。镯子还是你的，到期了再换回来。</div>
+    </div>
+
+    <p>宣布那天涨，第二天跌。真正的大涨在 11 月 4 日：</p>
+    <ul class="facts">
+      <li>降息那天<b>正式执行</b>，银行报上来的贷款申请超过 2000 亿</li>
+      <li>第三批互换便利，24 家券商中标，超过 400 亿</li>
+      <li>同一天中午，美国中期选举的结果也明朗了</li>
+    </ul>
+    <div class="obs"><span class="t">记者观察</span>同样一项政策，宣布那天和钱真正到账那天，市场的反应完全不同。看到「出台措施」的新闻，多问一句：<b>哪天开始执行？钱什么时候真的进场？</b></div>
+  </div>
+
+  <div class="card">
+    <div class="no">第三招</div>
+    <h3 class="song">减少「供给」：暂停新股，限制大股东卖</h3>
+    <p>据英国《金融时报》引述三位知情人：证监会这几天口头要求投行<b>暂缓新股上市</b>，并且在市场回暖之前，<b>不让大股东大规模卖股票</b>。官方没有回应，所以这是匿名消息源。</p>
+    <div class="hook">你想一下菜市场。买菜的人少了，菜价要跌。怎么办？让卖菜的人也少一点：<b>新摊位先别开</b>（暂停新股），<b>老摊主也先别往外甩货</b>（限制大股东卖）。卖的人少了，价格就没那么容易往下掉。</div>
+    <p style="margin-top:12px">2015 年股灾的时候，也用过这一招：暂停新股、禁止大股东减持，到那年 11 月才恢复。</p>
+  </div>
+
+  <h2 class="song">四、我们的反思</h2>
+
+  <ol class="advice">
+    <li>
+      <div class="t">好消息不一定涨</div>
+      <p>中际旭创三季度利润比去年同期涨了 174%，财报前后几天股价照样跌。</p>
+      <p>为啥？你想一下，一个回回考 100 分的孩子，这次考了 98，家长高兴吗？不高兴。它之前涨得太多，大家的期待已经装进价格里了。</p>
+      <p class="key">期待太高的时候，「好」还不够，得「比大家想的更好」。</p>
+    </li>
+    <li>
+      <div class="t">成交额是体温计</div>
+      <p>10-26、10-30、11-02 这几天，沪深两市每天成交在 1.6 到 1.8 万亿之间；11-04 重回 2 万亿。成交额上来，说明有新钱进场。</p>
+      <p class="key">但一天不算数，要看能不能站稳。</p>
+    </li>
+    <li>
+      <div class="t">政策市，先看规格，再看落地日</div>
+      <p>看到利好新闻，先问三句：<b>谁出面？拿出多少真金白银？哪天开始执行？</b></p>
+    </li>
+    <li>
+      <div class="t">一天的大涨，不代表股灾结束</div>
+      <p>11-04 的反弹，是政策落地、科技股跌太多之后的修复、外部不确定性解除，几件事叠在一起。接下来还要看它能不能持续。</p>
+    </li>
+  </ol>
+
+  <h2 class="song">五、接下来我们会盯着的</h2>
+  <div class="watch">
+    <ul>
+      <li>成交额能不能<b>稳定在 2 万亿以上</b></li>
+      <li>两融余额（借钱炒股的规模）是继续减少，还是回升</li>
+      <li>每月新开户数：新的人还愿不愿意进来</li>
+    </ul>
+    <p>下一篇，我们会回头看这几个数，也看看这两周各路分析，哪些说对了。</p>
+  </div>
+
+  <div class="sign song">财经新闻记者的观察与思考，以及我们的反思。</div>
+
+  <div class="foot">
+    <p>数据来源：交易所日线（新浪 / 东方财富）· 国家统计局 · 中国人民银行、金融监管总局、证监会座谈会通稿（经新京报、21 世纪经济报道等转述）· 英国《金融时报》（经路透社转述）· 美联社 2015 年报道 · 公司三季报。不构成投资建议。</p>
+  </div>
+</div>
+</body>
+</html>

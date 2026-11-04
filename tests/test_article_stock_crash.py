@@ -1,0 +1,63 @@
+"""US-222：股灾系列第一篇《股灾两周：政府出了三招，市场怎么读》。
+
+这篇守的规矩：
+
+1. 评论员（王剑）**只在核实过的地方出现**。他说错的数字（外汇存款准备金
+   率说成 5%，实际 6%）、口径不对的比较（8000 亿额度）、传闻，一律不进文章。
+2. 事实都对过：交易所日线、统计局 PMI、三部门座谈会出席名单。
+3. 匿名消息源要说明是匿名的。
+"""
+import re
+
+from radar_app.research.articles import get_article, list_articles
+
+SLUG = "stock-crash-2026-01"
+
+
+def _html():
+    a = get_article(SLUG)
+    return open("templates/" + a["template"], encoding="utf-8").read()
+
+
+def test_article_is_registered_and_newest():
+    a = get_article(SLUG)
+    assert a, "文章没注册，专栏页上看不到"
+    assert list_articles()[0]["slug"] == SLUG, "不是最新一篇，会被压在下面"
+
+
+def test_commentator_errors_and_rumours_stay_out():
+    """王剑说错的、没核实的、传闻，都不许进文章。"""
+    h = _html()
+    # 「外汇存款准备金」：他把 6% 说成 5%，整条不进文章（不能只禁「5%」—— 会误伤「1.25%」）
+    for bad in ("外汇存款准备金", "8000 亿", "8000亿", "国家队", "何立峰", "丁向群", "骗局", "割韭菜"):
+        assert bad not in h, f"未核实或错误的内容进了文章: {bad}"
+    assert h.count("王剑") == 1, "王剑只该出现在核实过的那一处（会议规格）"
+
+
+def test_verified_facts_match_the_record():
+    h = _html()
+    assert "49.3" in h                      # 统计局 10 月 PMI
+    assert "1.25% 降到 1%" in h              # 再贷款利率
+    assert "77 块" in h and "94 块" in h      # 创业板 10 月 −23.02%，上证 −6.33%
+    assert "5 月 7 日" in h and "副职" in h and "正职" in h   # 2025-05-07 国新办发布会
+
+
+def test_anonymous_source_is_labelled():
+    h = _html()
+    assert "金融时报" in h and "匿名消息源" in h
+
+
+def test_no_personalisation():
+    """站上不止一位读者：不许出现具体的人。"""
+    h = _html()
+    for bad in ("妈妈", "小刚", "周宇"):
+        assert bad not in h, f"文章被写成针对特定某个人的了: {bad}"
+
+
+def test_renders_without_template_errors():
+    from jinja2 import Environment, FileSystemLoader
+    env = Environment(loader=FileSystemLoader("templates"))
+    h = env.get_template(get_article(SLUG)["template"]).render()
+    assert len(h) > 8000
+    assert not re.search(r"{%[^%]*$", h), "有未闭合的 Jinja 标签"
+    assert "</html>" in h
