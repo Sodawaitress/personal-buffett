@@ -77,7 +77,7 @@
         <div class="more-wrap" id="more-wrap-{{ stock.code }}">
           <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('{{ stock.code }}')" title="More">⋯</button>
           <div class="more-menu" id="more-menu-{{ stock.code }}">
-            <button onclick="exportBundle('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">📋 导出分析包</button>
+            <button onclick="exportBundle('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">📋 {{ t.btn_export_bundle }}</button>
             {% if session.role == 'admin' %}
             <hr style="margin:4px 0;border-color:var(--rule-light)">
             <button onclick="triggerQuantOnly('{{ stock.code }}');closeMoreMenu('{{ stock.code }}')">⚡ {{ t.btn_quant_quick }}</button>
@@ -105,12 +105,12 @@
     {% if price %}
       {% if price.pe_ratio %}<span class="stat-item"><span class="stat-label">PE</span> {{ "%.1f"|format(price.pe_ratio) }}x</span>{% endif %}
       {% if price.pb_ratio %}<span class="stat-item"><span class="stat-label">PB</span> {{ "%.2f"|format(price.pb_ratio) }}x</span>{% endif %}
-      {% if price.market_cap %}<span class="stat-item"><span class="stat-label">{{ t.lbl_market_cap }}</span> {{ "%.0f"|format(price.market_cap / 1e8) }}亿</span>{% endif %}
+      {% if price.market_cap %}<span class="stat-item"><span class="stat-label">{{ t.lbl_market_cap }}</span> {{ price.market_cap | compact_amount(locale, currency) }}</span>{% endif %}
     {% endif %}
     {% if fund_flow and fund_flow.main_net is not none %}
     <span class="stat-item">
       <span class="stat-label">{{ t.lbl_main_flow_short }}</span>
-      <span class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">{{ "%+.2f"|format(fund_flow.main_net) }}亿</span>
+      <span class="{{ 'up' if fund_flow.main_net >= 0 else 'down' }}">{{ (fund_flow.main_net * 1e8) | compact_amount(locale, currency, signed=True, zh_decimals=2) }}</span>
     </span>
     {% endif %}
   </div>

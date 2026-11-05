@@ -229,6 +229,41 @@ def test_home_date_uses_viewer_region():
             assert now_label()[:13] == viewer_now_label(region)[:13]
 
 
+# ── ⑦ 金额 ─────────────────────────────────────────────
+
+def test_compact_amount_zh_unchanged_en_uses_b_m():
+    from radar_app.shared.market import compact_amount
+    # 中文：和改之前逐字一样（原来是 "%.0f亿" / "%+.2f亿"）
+    assert compact_amount(4.1e9) == "41亿"
+    assert compact_amount(1.23e8, signed=True, zh_decimals=2) == "+1.23亿"
+    assert compact_amount(-5e7, signed=True, zh_decimals=2) == "-0.50亿"
+    # 英文：货币 + K/M/B/T
+    assert compact_amount(4.1e9, "en", "NZ$") == "NZ$4.1B"
+    assert compact_amount(8.5e8, "en", "NZ$") == "NZ$850M"
+    assert compact_amount(3.0e12, "en", "US$") == "US$3T"
+    assert compact_amount(1.23e8, "en", "¥", signed=True) == "+¥123M"
+    assert compact_amount(-5e7, "en", "¥", signed=True) == "−¥50M"
+    assert compact_amount(None, "en") == "—"
+
+
+def test_us_currency_is_explicit():
+    from radar_app.shared.market import MARKET_CURRENCY
+    assert MARKET_CURRENCY["us"] == "US$" and MARKET_CURRENCY["nz"] == "NZ$"
+
+
+def test_stock_head_has_no_hardcoded_yi_or_export_label():
+    head = _read("templates/stock/_head.html")
+    assert "亿" not in head and "导出分析包" not in head
+    assert "compact_amount" in head
+    assert "导出分析包" not in _read("static/js/stock-common.js")
+
+
+def test_compact_amount_filter_registered():
+    from radar_app import create_app
+    app = create_app()
+    assert "compact_amount" in app.jinja_env.filters
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)

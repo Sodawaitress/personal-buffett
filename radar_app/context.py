@@ -6,7 +6,7 @@ import json
 from flask import request, session
 
 from radar_app.shared.i18n import load_strings
-from radar_app.shared.market import MARKET_CURRENCY
+from radar_app.shared.market import MARKET_CURRENCY, compact_amount
 
 # 國家代碼 → (locale, region)
 _COUNTRY_MAP = {
@@ -37,6 +37,8 @@ def _get_real_ip() -> str:
 
 
 def register_context_processors(app):
+    app.jinja_env.filters["compact_amount"] = compact_amount
+
     @app.before_request
     def auto_detect_locale():
         """Detect locale from IP geolocation on the very first visit."""

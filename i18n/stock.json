@@ -83,6 +83,26 @@
     "en": "News",
     "zh": "新闻"
   },
+  "btn_export_bundle": {
+    "en": "Export analysis pack",
+    "zh": "导出分析包"
+  },
+  "export_working": {
+    "en": "Preparing…",
+    "zh": "生成中…"
+  },
+  "export_copied": {
+    "en": "Copied!",
+    "zh": "已复制！"
+  },
+  "export_failed": {
+    "en": "Export failed: ",
+    "zh": "导出失败："
+  },
+  "export_close": {
+    "en": "Close",
+    "zh": "关闭"
+  },
   "btn_quant_quick": {
     "en": "Quick data refresh",
     "zh": "定量快刷"
