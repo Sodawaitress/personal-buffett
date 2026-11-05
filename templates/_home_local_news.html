@@ -1,0 +1,34 @@
+{# 首页「本地」新闻栏（US-224 抽出）：中文首页在折叠的信息流里，英文首页放在专栏位。
+   跟所在地区（region）走，不跟语言走。 #}
+    <div class="news-col">
+      <div class="col-header">
+        <span class="section-label">{{ t.tab_local }}</span>
+        <span class="col-subhead">{% if user_region in ('cn', 'hk', 'tw') %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
+      </div>
+      <hr class="section-rule">
+      {% if local_news %}
+        {% for n in local_news %}
+        <div class="news-article {{ 'news-article-rbnz' if n.section == 'RBNZ' else '' }}">
+          {% if n.section == 'RBNZ' %}<div class="news-kicker">RBNZ</div>{% endif %}
+          {% if n.link %}<a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
+          {% else %}<div class="news-headline-plain">{{ n.title }}</div>{% endif %}
+          <div class="news-byline">{{ n.source }}{% if n.time %} · {{ n.time | news_date(locale) }}{% endif %}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty-state">{{ t.local_col_empty }}</p>
+      {% endif %}
+      {% if market.nz_sectors and locale != 'zh' %}
+      <div style="margin-top:24px">
+        <span class="section-label" style="font-size:10px">NZX SECTORS</span>
+        <hr class="section-rule">
+        {% for sector in market.nz_sectors %}
+        <div class="sector-row">
+          <span>{{ sector.emoji }}</span><strong>{{ sector.name }}</strong>
+          <span class="sector-desc">{{ sector.desc }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+

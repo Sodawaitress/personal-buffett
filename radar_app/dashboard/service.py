@@ -63,7 +63,7 @@ def build_dashboard_context(user_id, region, locale="en"):
         "has_cn_stocks": any(s.get("market") == "cn" and s.get("status") in ("holding", "watching") for s in stocks),
         "local_stocks": [stock for stock in stocks if stock["market"] == region],
         "intl_stocks": [stock for stock in stocks if stock["market"] != region],
-        "local_news": get_local_news("cn" if locale == "zh" else "nz"),
+        "local_news": get_local_news("cn" if region in ("cn", "hk", "tw") else "nz"),   # US-224：跟所在地区走，不跟语言走
         "intl_news": present_intl_news(intl_news, market),
         "market": market,
         "portfolio_brief": present_portfolio_brief(get_portfolio_brief(user_id, date=today)),

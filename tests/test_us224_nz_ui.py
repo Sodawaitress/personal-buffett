@@ -340,6 +340,62 @@ def test_letter_template_runs_dims_through_filter():
     assert "val | dim_value(locale)" in _read("templates/stock/letter.html")
 
 
+# ── ⑩ 首页本地新闻：英文放专栏位；跟地区走 ─────────────────
+
+_FAKE_NEWS = [{"title": "Full year profit dips at BNZ", "link": "https://example.test/a",
+               "source": "RNZ Business", "time": "Thu, 05 Nov 2026", "section": "Market"},
+              {"title": "OCR held", "link": "https://example.test/b",
+               "source": "RBNZ", "time": "2026-11-04", "section": "RBNZ"}]
+
+
+def _home(monkeypatch, locale, region):
+    import radar_app.dashboard.service as svc
+    seen = {}
+    def fake(r="nz"):
+        seen["region"] = r
+        return list(_FAKE_NEWS)
+    monkeypatch.setattr(svc, "get_local_news", fake)
+    monkeypatch.setattr(svc, "_latest_research", lambda: {"slug": "stock-crash-2026-01", "title": "x"})
+    import uuid
+    from radar_app import create_app
+    from radar_app.data.users import create_user, get_user_by_email
+    app = create_app()
+    email = f"us224-home-{uuid.uuid4().hex[:8]}@example.test"
+    create_user(email)
+    uid = get_user_by_email(email)["id"]
+    with app.test_client() as c:
+        with c.session_transaction() as s:
+            s.update(user_id=uid, locale=locale, region=region, role="member")
+        r = c.get("/")
+        assert r.status_code == 200
+        return r.get_data(as_text=True), seen.get("region")
+
+
+def test_english_home_puts_local_news_in_article_slot(monkeypatch):
+    html, _ = _home(monkeypatch, "en", "nz")
+    assert "home-local-top" in html and "research-preview" not in html
+    top = html.index("home-local-top")
+    assert html.index("Full year profit dips at BNZ") > top
+    assert html.count("Full year profit dips at BNZ") == 1, "折叠信息流里不应再出现一次"
+    assert "&amp;amp;" not in html and "Markets & Economy" in html.replace("&amp;", "&")
+    assert "· 5 Nov" in html and "Thu, 05 No<" not in html
+    assert '<div class="news-kicker">Market</div>' not in html
+    assert '<div class="news-kicker">RBNZ</div>' in html
+
+
+def test_chinese_home_unchanged(monkeypatch):
+    html, _ = _home(monkeypatch, "zh", "cn")
+    assert "research-preview" in html and "home-local-top" not in html
+    assert html.count("Full year profit dips at BNZ") == 1   # 仍在折叠信息流里
+    assert "· 11-05" in html
+
+
+def test_local_news_follows_region_not_language(monkeypatch):
+    assert _home(monkeypatch, "zh", "nz")[1] == "nz"
+    assert _home(monkeypatch, "en", "cn")[1] == "cn"
+    assert _home(monkeypatch, "zh", "cn")[1] == "cn"
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)

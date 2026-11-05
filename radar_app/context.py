@@ -6,7 +6,7 @@ import json
 from flask import request, session
 
 from radar_app.shared.i18n import load_strings
-from radar_app.shared.display import dim_value
+from radar_app.shared.display import dim_value, news_date
 from radar_app.shared.market import MARKET_CURRENCY, compact_amount
 
 # 國家代碼 → (locale, region)
@@ -40,6 +40,7 @@ def _get_real_ip() -> str:
 def register_context_processors(app):
     app.jinja_env.filters["compact_amount"] = compact_amount
     app.jinja_env.filters["dim_value"] = dim_value
+    app.jinja_env.filters["news_date"] = news_date
 
     @app.before_request
     def auto_detect_locale():
