@@ -143,6 +143,29 @@ def test_picks_nav_hidden_in_english_shown_in_chinese():
     assert 'href="/picks"' in zh and "今日五选" in zh
 
 
+# ── ④ 语言和所在地分开 ─────────────────────────────────
+
+def test_switching_language_keeps_region():
+    """切中文不许把 nz 改成 cn（原来会，而且切回英文不恢复）。"""
+    from radar_app import create_app
+    app = create_app()
+    with app.test_client() as c:
+        with c.session_transaction() as s:
+            s["locale"] = "en"
+            s["region"] = "nz"
+        c.post("/set-locale", data={"locale": "zh"})
+        with c.session_transaction() as s:
+            assert s["locale"] == "zh" and s["region"] == "nz"
+        c.post("/set-locale", data={"locale": "en"})
+        with c.session_transaction() as s:
+            assert s["locale"] == "en" and s["region"] == "nz"
+        with c.session_transaction() as s:
+            s["region"] = "cn"
+        c.post("/set-locale", data={"locale": "en"})
+        with c.session_transaction() as s:
+            assert s["region"] == "cn", "在中国读英文的人也不该被挪到 nz"
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
