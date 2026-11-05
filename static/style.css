@@ -7,7 +7,7 @@
   --ink:        #1a1a1a;
   --ink-2:      #333;
   --ink-muted:  #666;
-  --ink-faint:  #999;
+  --ink-faint:  #707070;   /* US-224：#999 在纸色上只有 2.6:1；#707070 = 4.5:1（WCAG AA 正文下限） */
   --paper:      #f7f4ef;   /* warm newsprint */
   --paper-2:    #ffffff;
   --rule:       #1a1a1a;

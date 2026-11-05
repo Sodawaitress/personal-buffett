@@ -264,6 +264,33 @@ def test_compact_amount_filter_registered():
     assert "compact_amount" in app.jinja_env.filters
 
 
+# ── ⑧ 对比度（NZ 政府网站标准 = WCAG 2.2 AA，正文 ≥4.5:1） ─────
+
+def _contrast(a, b):
+    def lum(h):
+        h = h.lstrip("#")
+        h = "".join(c * 2 for c in h) if len(h) == 3 else h
+        rgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        rgb = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in rgb]
+        return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
+    la, lb = lum(a), lum(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+def test_text_greys_meet_wcag_aa_on_paper_and_white():
+    css = _read("static/style.css")
+    tok = lambda name: re.search(rf"--{name}:\s*(#[0-9a-fA-F]{{3,6}})", css).group(1)
+    for fg in ("ink-faint", "ink-muted"):
+        for bg in ("paper", "paper-2"):
+            r = _contrast(tok(fg), tok(bg))
+            assert r >= 4.5, f"--{fg} on --{bg} = {r:.2f}:1 < 4.5"
+
+
+def test_no_low_contrast_grey_text_in_stock_css():
+    css = _read("static/css/stock.css")
+    assert not re.search(r"(?<![-\w])color:\s*#9ca3af", css), "#9ca3af 只有 2.3:1，正文请用 var(--ink-faint)"
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
