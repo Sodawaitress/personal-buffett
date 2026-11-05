@@ -166,6 +166,32 @@ def test_switching_language_keeps_region():
             assert s["region"] == "cn", "在中国读英文的人也不该被挪到 nz"
 
 
+# ── ⑤ 语言切换：小地球 + 目标语言 ───────────────────────
+
+def test_language_toggle_shows_target_language_with_globe():
+    from radar_app import create_app
+    app = create_app()
+    for loc, label, target in (("en", "中文", "zh"), ("zh", "EN", "en")):
+        with app.test_client() as c:
+            with c.session_transaction() as s:
+                s["locale"] = loc
+                s["region"] = "nz"
+            html = c.get("/login").get_data(as_text=True)
+            i = html.index('class="lang-form"')
+            form = html[i:html.index("</form>", i)]
+            assert "bi-globe2" in form
+            assert f'name="locale" value="{target}"' in form
+            assert f'<span class="btn-lang-label" lang="{target}">{label}</span>' in form, \
+                f"{loc} 页面应显示目标语言 {label}"
+            assert 'aria-label="' in form and "[lang_switch_aria]" not in form
+
+
+def test_toggle_label_hidden_on_phones_only():
+    css = _read("static/style.css")
+    i = css.index(".btn-lang-label { display: none; }")
+    assert "@media (max-width: 600px)" in css[i - 80:i]
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)

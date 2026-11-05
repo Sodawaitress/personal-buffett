@@ -1,0 +1,9 @@
+{# US-224 语言切换：小地球 + 「点了会切到的」语言（中文页显示 EN，英文页显示 中文）。
+   原来显示的是当前语言，英文页上的「EN」读起来像「点我切到 EN」。手机上只留地球。 #}
+{% set _target = 'zh' if locale == 'en' else 'en' %}
+<form method="post" action="{{ url_for('set_locale') }}" class="lang-form">
+  <input type="hidden" name="locale" value="{{ _target }}">
+  <button type="submit" class="btn-lang" aria-label="{{ t.lang_switch_aria }}" title="{{ t.lang_switch_aria }}">
+    <i class="bi bi-globe2" aria-hidden="true"></i><span class="btn-lang-label" lang="{{ _target }}">{{ 'EN' if _target == 'en' else '中文' }}</span>
+  </button>
+</form>

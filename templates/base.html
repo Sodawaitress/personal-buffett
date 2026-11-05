@@ -42,11 +42,7 @@
           </a>
           {% endif %}
 
-          {# Language toggle — label shows current language #}
-          <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
-            <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
-            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'en' else '中文' }}</button>
-          </form>
+          {% include '_lang_toggle.html' %}
 
           {# Avatar dropdown #}
           <div class="nav-avatar-wrap">
@@ -68,10 +64,7 @@
           </div>
 
         {% else %}
-          <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
-            <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
-            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'en' else '中文' }}</button>
-          </form>
+          {% include '_lang_toggle.html' %}
           <a href="{{ url_for('about') }}">About</a>
           <a href="{{ url_for('login') }}">{{ t.nav_login }}</a>
           <a href="{{ url_for('register') }}" style="font-weight:700">{{ t.nav_get_started }}</a>

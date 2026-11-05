@@ -183,6 +183,10 @@
     "en": "My Watchlist",
     "zh": "我的选股"
   },
+  "lang_switch_aria": {
+    "en": "Language: switch to Chinese (中文)",
+    "zh": "语言：切换到英文（English）"
+  },
   "nav_picks": {
     "en": "Today's five picks",
     "zh": "今日五选"
