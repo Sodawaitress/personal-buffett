@@ -10709,7 +10709,10 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 > 起因：朋友的妈妈（新西兰本地人，读英文，懂银行）要用这个站，她的伴侣负责家里投资、会挑错。US-223 写文章 + 专栏分语言；本 US 管**整个界面**对英文 / 新西兰读者是否读得对。
 > US-223 第 3 件事（小地球切换）、第 4 件事（添加搜索的市场按钮、`_head.html` 亿 / 导出分析包）**挪到本 US**。
 
-**实现状态（2026-11-05）**：📝 审计完成，设计待 Yu 确认，未动代码。
+**实现状态（2026-11-05）**：🔄 P0 + P1 已在分支 `claude/confident-stonebraker-0490b5` 完成（未推 main）；P2 未做。
+- ✅ 涨跌色（颜色跟语言走）· ✅ 今日五选英文隐藏 · ✅ 添加搜索高亮同步（Yu 截图 AIR.NZ 搜不到的根因）
+- ✅ set_locale 不改地区 · ✅ 小地球切换 · ✅ 显示时间按地区时区 · ✅ 金额 B/M + US$ · ✅ 浅灰对比度
+- 更正：第 7 项「焦点框」复查后不成立 —— 12 处 outline:none 都是输入框且有边框变色焦点态，按钮/链接保留浏览器焦点环
 
 **总原则（Reinecke & Bernstein：文化 ≠ 国家）**：语言（locale）和所在地（region）分开、互不牵动。
 - **跟语言走**：文字、涨跌颜色（看的人的习惯）、日期写法、数字单位（亿 vs B/M）
@@ -10734,6 +10737,12 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 9. 添加搜索的市场按钮（`_add_search.html:7-13`）：**行为其实已正确**（英文默认 Global），只是文字没走 `t[]` → 改 i18n，不改行为。
 10. 零散硬编码：`watchlist.html:21-27` 波动解释、`:1120` 已在自选 toast、`report.html:9-10`「准确率」；`settings.html:82-85` Server酱（微信推送，新西兰用不了）→ 只在中文界面显示；`flash("Settings saved.")` 中文用户看到英文。
 11. 拼写：英文已基本是 NZ/UK（analyse / personalise），剩 `stock.json` 里 `Behavioral` / `behavior` 两处 → behavioural / behaviour。
+
+**修 P0/P1 时新发现（2026-11-05，用 AIR.NZ 实测）**
+12. 详情页（她打开第一只股票就看到）：评级卡写「减持」；「操作参数」整块中文（`compute_trading_params` 渲染时生成，zh-only，见 `knowledge/i18n_todo.md`）；评分卡显示 **`None/30`、`安全性 None/20`** —— 缺分时把 None 原样打出来，中英都错
+13. 反方向：中文页上评级理由是英文（"As turnaround: quality 27/100 …"）
+14. 手机宽度导航挤爆：英文页头像被裁掉、中文页品牌名被挤成一字一行（改动前就有，小地球比原按钮更窄，没变坏）
+15. Yahoo 给的名字难看：「Air New Zealand Limited (NS) Or」—— 应优先 longName / 去掉 (NS) Or 后缀
 
 **记录但不在本 US**
 - `signals.html`「市场」tab 约 100 行硬编码中文，其中三栏信号地图（内部人 / 情绪 / 结构）、预测框、波动解释对 **NZ / 美股也会渲染** —— 她点开 NZ 股票第二个 tab 就会看到。量大，建议单独一个 US（US-148 延伸）
