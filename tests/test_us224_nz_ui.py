@@ -111,6 +111,38 @@ def test_add_search_highlight_synced_with_stored_type():
         "页面加载时应按 _addType 找到对应按钮并高亮"
 
 
+# ── ③ 导航「今日五选」 ─────────────────────────────────
+
+def _logged_in_page(locale, path="/settings"):
+    import uuid
+    from radar_app import create_app
+    from radar_app.data.users import create_user, get_user_by_email
+    app = create_app()
+    email = f"us224-{uuid.uuid4().hex[:8]}@example.test"
+    create_user(email)
+    uid = get_user_by_email(email)["id"]
+    with app.test_client() as c:
+        with c.session_transaction() as s:
+            s["user_id"] = uid
+            s["locale"] = locale
+            s["region"] = "nz"
+            s["role"] = "member"
+        r = c.get(path)
+        assert r.status_code == 200, (path, r.status_code)
+        return r.get_data(as_text=True)
+
+
+def test_picks_nav_hidden_in_english_shown_in_chinese():
+    """五选是 A 股、内容只有中文：英文界面不放入口；中文界面不变。"""
+    en = _logged_in_page("en")
+    zh = _logged_in_page("zh")
+    # 先确认真的是登录态的导航，否则「没有 /picks」会空转通过
+    assert 'href="/watchlist"' in en and 'href="/watchlist"' in zh
+    assert 'href="/picks"' not in en
+    assert "今日五选" not in en
+    assert 'href="/picks"' in zh and "今日五选" in zh
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
