@@ -192,6 +192,43 @@ def test_toggle_label_hidden_on_phones_only():
     assert "@media (max-width: 600px)" in css[i - 80:i]
 
 
+# ── ⑥ 显示时间跟所在地区走 ─────────────────────────────
+
+def test_viewer_time_follows_region_and_falls_back_to_beijing():
+    from datetime import datetime, timedelta
+    from radar_app.shared.viewer_time import to_viewer, tz_abbr, viewer_now, viewer_tz
+    from radar_app.shared.runtime import CN_TZ
+    # 没请求上下文、没地区 → 北京时间（定时任务行为不变）
+    assert viewer_tz() is CN_TZ
+    assert viewer_tz("xx") is CN_TZ
+    assert tz_abbr("nz") in ("NZDT", "NZST")
+    assert tz_abbr("cn") == "CST"
+    nz, cn = viewer_now("nz"), viewer_now("cn")
+    diff = (nz.replace(tzinfo=None) - cn.replace(tzinfo=None)).total_seconds() / 3600
+    assert round(diff) in (4, 5), "新西兰比北京快 4–5 小时"
+    # 库里不带时区的时间按北京时间理解
+    stored = datetime(2026, 11, 5, 20, 0)          # 北京 20:00
+    assert to_viewer(stored, "nz").strftime("%m-%d %H:%M") == "11-06 01:00"   # NZDT +13
+    assert to_viewer(stored, "cn").strftime("%H:%M") == "20:00"
+
+
+def test_no_hardcoded_cst_labels_in_templates():
+    for rel in ("templates/brief.html", "templates/report.html"):
+        assert " CST<" not in _read(rel) and "}} CST" not in _read(rel), rel
+
+
+def test_home_date_uses_viewer_region():
+    from radar_app import create_app
+    from radar_app.dashboard.presenter import now_label
+    from radar_app.shared.viewer_time import viewer_now_label
+    app = create_app()
+    for region in ("nz", "cn"):
+        with app.test_request_context():
+            from flask import session
+            session["region"] = region
+            assert now_label()[:13] == viewer_now_label(region)[:13]
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)

@@ -6,6 +6,7 @@ import db
 from radar_app.legacy.pipeline import classify_stock_code, start_pipeline_job
 from radar_app.shared.market import detect_market
 from radar_app.shared.runtime import CN_TZ
+from radar_app.shared.viewer_time import viewer_now, viewer_now_label
 from radar_app.watchlist.presenter import calc_judgment_growth, calc_performance_stats, present_performance_row, present_watchlist_stock
 from radar_app.data.analysis import get_leaderboard
 from radar_app.data.stocks import get_news_sentiment_map, get_upcoming_events_for_user
@@ -143,8 +144,8 @@ def build_watchlist_context(user_id):
         "wl_grades": wl_grades,
         "notifications": get_active_notifications(user_id),
         "upcoming_events": get_upcoming_events_for_user(user_id, days_ahead=7),
-        "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
-        "now_date": datetime.now(CN_TZ).strftime("%Y-%m-%d"),
+        "now": viewer_now_label(),
+        "now_date": viewer_now().strftime("%Y-%m-%d"),   # 买入/卖出日期默认值 = 看的人的「今天」
     }
 
 
@@ -208,5 +209,5 @@ def build_performance_context(user_id):
         "sold":            sold,
         "stats":           calc_performance_stats(all_rows),
         "judgment_growth": calc_judgment_growth(all_rows),
-        "now":             datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+        "now":             viewer_now_label(),
     }

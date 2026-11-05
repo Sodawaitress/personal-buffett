@@ -14,3 +14,4 @@ pdfplumber>=0.11
 pytest>=8.0
 pytrends
 psycopg2-binary
+tzdata

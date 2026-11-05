@@ -1,6 +1,5 @@
 """System-level service helpers."""
 
-from datetime import datetime
 import json
 import os
 import ssl
@@ -9,7 +8,7 @@ import sys
 import urllib.request
 
 import db
-from radar_app.shared.runtime import CN_TZ
+from radar_app.shared.viewer_time import tz_abbr, viewer_now_label
 
 
 def build_report_context(date=None, period="daily"):
@@ -26,14 +25,16 @@ def build_report_context(date=None, period="daily"):
     return {
         "report": report,
         "reports": reports,
-        "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+        "now": viewer_now_label(),
+        "now_tz": tz_abbr(),
     }
 
 
 def build_accuracy_context():
     return {
         "stats": db.get_accuracy_stats(),
-        "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
+        "now": viewer_now_label(),
+        "now_tz": tz_abbr(),
     }
 
 

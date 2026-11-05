@@ -85,7 +85,7 @@
     {% if portfolio_brief and portfolio_brief.buffett_summary %}
     <p class="brief-buffett-text">{{ portfolio_brief.buffett_summary }}</p>
     {% if portfolio_brief.created_at_cst %}
-    <p class="brief-buffett-time">{{ t.brief_page_title }} · {{ portfolio_brief.created_at_cst }} CST</p>
+    <p class="brief-buffett-time">{{ t.brief_page_title }} · {{ portfolio_brief.created_at_local }} {{ portfolio_brief.created_at_tz }}</p>
     {% endif %}
     {% else %}
     <p class="brief-buffett-placeholder">{{ t.brief_no_brief }}</p>

@@ -1,10 +1,10 @@
 """Dashboard presentation helpers."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 from radar_app.shared.i18n import load_strings
 from radar_app.shared.market import MARKET_CURRENCY, detect_market
-from radar_app.shared.runtime import CN_TZ
+from radar_app.shared.viewer_time import tz_abbr, viewer_now_label, viewer_tz
 
 
 def present_portfolio_brief(portfolio_brief):
@@ -13,10 +13,14 @@ def present_portfolio_brief(portfolio_brief):
     try:
         utc_time = datetime.strptime(portfolio_brief["created_at"][:16], "%Y-%m-%d %H:%M")
         portfolio_brief = dict(portfolio_brief)
-        portfolio_brief["created_at_cst"] = (utc_time + timedelta(hours=8)).strftime("%H:%M")
+        # 库里存的是 UTC；按看的人所在地区显示（US-224）
+        local = utc_time.replace(tzinfo=timezone.utc).astimezone(viewer_tz())
+        portfolio_brief["created_at_local"] = local.strftime("%H:%M")
+        portfolio_brief["created_at_tz"] = local.tzname() or ""
     except Exception:
         portfolio_brief = dict(portfolio_brief)
-        portfolio_brief["created_at_cst"] = ""
+        portfolio_brief["created_at_local"] = ""
+        portfolio_brief["created_at_tz"] = ""
     return portfolio_brief
 
 
@@ -121,4 +125,4 @@ def present_intl_news(intl_news, market):
 
 
 def now_label():
-    return datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M")
+    return viewer_now_label()
