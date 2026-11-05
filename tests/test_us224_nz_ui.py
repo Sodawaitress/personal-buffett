@@ -400,6 +400,76 @@ def test_local_news_follows_language_so_no_other_language_shows(monkeypatch):
     assert "New Zealand · Markets & Economy" in html.replace("&amp;", "&")
 
 
+# ── ⑪ 评级词 + 操作参数双语 ─────────────────────────────
+
+def test_every_conclusion_the_code_can_produce_has_english():
+    """扫所有产生 conclusion 的代码里的中文字面量，每个都要有英文 —— 不然英文页上露中文。"""
+    import glob
+    from radar_app.shared.display import CONCLUSION_EN
+    found = set()
+    pat = re.compile(r"""conclusion["']?\s*[:=]\s*["']([\u4e00-\u9fff][^"']*)["']""")
+    for f in glob.glob(os.path.join(ROOT, "scripts", "*.py")) + glob.glob(os.path.join(ROOT, "radar_app", "**", "*.py"), recursive=True):
+        found |= set(pat.findall(open(f, encoding="utf-8").read()))
+    assert {"买入", "持有", "减持", "卖出", "观察"} <= found, found
+    missing = sorted(c for c in found if c not in CONCLUSION_EN)
+    assert not missing, f"这些评级结论没有英文：{missing}"
+
+
+def test_conclusion_label_by_locale():
+    from radar_app.shared.display import conclusion_label
+    assert conclusion_label("减持", "en") == "Reduce"
+    assert conclusion_label("减持", "zh") == "减持"
+    assert conclusion_label("", "en") == "" and conclusion_label(None, "en") == ""
+
+
+def test_conclusion_shown_through_filter_everywhere():
+    letter = _read("templates/stock/letter.html")
+    wl = _read("templates/watchlist.html")
+    # 显示出来的文字必须走过滤器；CSS 类名 wl-dir-{{ s.conclusion }} 用原始键是对的
+    assert ">{{ analysis.conclusion }}<" not in letter
+    assert ">{{ s.conclusion }}<" not in wl
+    assert "conclusion_label" in _read("radar_app/stocks/presenter.py")
+
+
+def _tp(locale, **sig):
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, "scripts"))
+    import pipeline_analysis as pa
+    return pa._compute_trading_params({"price": 0.61}, sig, market="nz", locale=locale)
+
+
+def test_trading_params_chinese_unchanged():
+    """中文逐字和改之前一样（4000 组随机输入对拍过；这里钉两条代表）。"""
+    zh = _tp("zh", technicals={}, week_52_low=0.5, week_52_high=0.63)
+    assert zh["position_label"] == "当前价NZ$0.61处于52周区间高位（85%分位），接近年高NZ$0.63，不是理想进场时机"
+    assert zh["stop_loss_label"] == "NZ$0.47（52周低点下方7%，跌破则趋势可能进一步恶化）"
+
+
+def test_trading_params_english_has_no_chinese():
+    cjk = re.compile(r"[\u4e00-\u9fff]")
+    cases = [dict(technicals={}, week_52_low=0.5, week_52_high=0.63),     # 高位
+             dict(technicals={}, week_52_low=0.55, week_52_high=1.2),     # 极低位
+             dict(technicals={}, week_52_low=0.4, week_52_high=0.9),      # 中段
+             dict(technicals={"ma20": 0.5, "ma60": 0.5, "ma250": 0.45}),  # 高于所有均线
+             dict(technicals={"ma20": 0.7, "ma60": 0.72, "ma250": 0.8}),  # 跌破止损
+             dict(technicals={"ma20": 0.6, "ma60": 0.58, "ma250": 0.65})] # 年线下
+    for sig in cases:
+        en = _tp("en", **sig)
+        assert en, sig
+        for k, v in en.items():
+            if isinstance(v, str):
+                assert not cjk.search(v), (k, v)
+                assert not re.search(r"\d(th|st|nd|rd) percentile", v), (k, v)   # 「92th」这类错
+
+
+def test_us_dollar_explicit_in_english_trading_params():
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, "scripts"))
+    import pipeline_analysis as pa
+    en = pa._compute_trading_params({"price": 100}, {"technicals": {}, "week_52_low": 80, "week_52_high": 140}, market="us", locale="en")
+    assert en["stop_loss_label"].startswith("US$")
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)

@@ -110,11 +110,64 @@ def _analyze_earnings_quality(annual: list) -> list:
     return flags
 
 
-def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> dict:
+# US-224：操作参数文字双语。数字逻辑不变，只按语言选文字（US-141 姿势：生成时带 locale）。
+# 默认 zh —— pipeline 写进 LLM prompt 的仍是中文，行为不变；只有详情页按读者语言传 en。
+_TP_TEXT = {
+    "zh": {
+        "e1_ma60":    "{cur}{lo:.2f}–{hi:.2f}（季线MA60附近，回调首选入场区）",
+        "e2_ma250":   "{cur}{lo:.2f}–{hi:.2f}（年线MA250附近，强支撑区）",
+        "stop_ma250": "{cur}{v:.2f}（年线MA250下方8%，跌破则基本面需重评）",
+        "pos_above":  "当前价{cur}{p:.2f}高于所有均线（比MA60高{pct:.1f}%），不是理想进场时机，建议等回调",
+        "reduce_ma60": "{cur}{lo:.2f}–{hi:.2f}（MA60上方10-25%，可分批减仓）",
+        "pos_broken": "当前价{cur}{p:.2f}已跌破止损位{cur}{stop:.2f}（年线MA250下方8%），技术面破位，暂不建议入场",
+        "e1_resist":  "{cur}{lo:.2f}–{hi:.2f}（MA60附近，反弹阻力目标）",
+        "e2_resist":  "{cur}{lo:.2f}–{hi:.2f}（年线MA250附近，反弹阻力目标）",
+        "pos_below_year": "当前价{cur}{p:.2f}低于年线{cur}{ma250:.2f}，需确认基本面是否变化",
+        "pos_between": "当前价{cur}{p:.2f}处于MA60({cur}{ma60:.2f})与MA250({cur}{ma250:.2f})之间，可分批介入",
+        "e1_w52":     "{cur}{lo:.2f}–{hi:.2f}（52周区间20-35%分位，历史价值区）",
+        "e2_w52":     "{cur}{lo:.2f}–{hi:.2f}（52周低点附近，强支撑区）",
+        "stop_w52":   "{cur}{v:.2f}（52周低点下方7%，跌破则趋势可能进一步恶化）",
+        "pos_w52_high": "当前价{cur}{p:.2f}处于52周区间高位（{pct:.0f}%分位），接近年高{cur}{hi:.2f}，不是理想进场时机",
+        "reduce_w52": "{cur}{lo:.2f}–{hi:.2f}（52周85-100%分位，持仓者可分批减仓）",
+        "ref_only":   "（当前价远高于此，仅供参考）",
+        "pos_w52_vlow": "当前价{cur}{p:.2f}处于52周极低位（{pct:.0f}%分位），已低于历史价值区（{cur}{lo:.2f}–{hi:.2f}），当前即为买入机会",
+        "e1_near":    "{cur}{lo:.2f}–{hi:.2f}（现价附近±3%，已低于52周价值区，性价比高）",
+        "pos_w52_low": "当前价{cur}{p:.2f}处于52周低位区间（{pct:.0f}%分位），年低{cur}{lo:.2f}，可关注分批建仓机会",
+        "pos_w52_mid": "当前价{cur}{p:.2f}处于52周区间中段（{pct:.0f}%分位），年低{cur}{lo:.2f}，年高{cur}{hi:.2f}",
+    },
+    "en": {
+        "e1_ma60":    "{cur}{lo:.2f}–{hi:.2f} (around the 60-day average; first pullback zone)",
+        "e2_ma250":   "{cur}{lo:.2f}–{hi:.2f} (around the 250-day average; strong support)",
+        "stop_ma250": "{cur}{v:.2f} (8% below the 250-day average; below this, recheck the fundamentals)",
+        "pos_above":  "Price {cur}{p:.2f} is above all moving averages ({pct:.1f}% above the 60-day). Not an ideal entry; a pullback would be better",
+        "reduce_ma60": "{cur}{lo:.2f}–{hi:.2f} (10–25% above the 60-day average; holders could trim in stages)",
+        "pos_broken": "Price {cur}{p:.2f} has fallen below the stop level {cur}{stop:.2f} (8% under the 250-day average). The chart has broken down; not a time to enter",
+        "e1_resist":  "{cur}{lo:.2f}–{hi:.2f} (around the 60-day average; resistance on any rebound)",
+        "e2_resist":  "{cur}{lo:.2f}–{hi:.2f} (around the 250-day average; resistance on any rebound)",
+        "pos_below_year": "Price {cur}{p:.2f} is below the 250-day average ({cur}{ma250:.2f}). Check whether the fundamentals have changed",
+        "pos_between": "Price {cur}{p:.2f} is between the 60-day ({cur}{ma60:.2f}) and 250-day ({cur}{ma250:.2f}) averages. Buying in stages is reasonable",
+        "e1_w52":     "{cur}{lo:.2f}–{hi:.2f} (20–35% up the 52-week range; historically good value)",
+        "e2_w52":     "{cur}{lo:.2f}–{hi:.2f} (near the 52-week low; strong support)",
+        "stop_w52":   "{cur}{v:.2f} (7% below the 52-week low; below this the trend may worsen)",
+        "pos_w52_high": "Price {cur}{p:.2f} is {pct:.0f}% of the way up its 52-week range, close to the year high of {cur}{hi:.2f}. Not an ideal entry",
+        "reduce_w52": "{cur}{lo:.2f}–{hi:.2f} (top 15% of the 52-week range; holders could trim in stages)",
+        "ref_only":   " (current price is well above this; for reference only)",
+        "pos_w52_vlow": "Price {cur}{p:.2f} is only {pct:.0f}% of the way up its 52-week range, below the historical value zone ({cur}{lo:.2f}–{hi:.2f}). This is a buying opportunity",
+        "e1_near":    "{cur}{lo:.2f}–{hi:.2f} (within 3% of today's price; already below the 52-week value zone)",
+        "pos_w52_low": "Price {cur}{p:.2f} is {pct:.0f}% of the way up its 52-week range; year low {cur}{lo:.2f}. Worth watching for a staged entry",
+        "pos_w52_mid": "Price {cur}{p:.2f} is {pct:.0f}% of the way up its 52-week range; year low {cur}{lo:.2f}, year high {cur}{hi:.2f}",
+    },
+}
+
+
+def _compute_trading_params(price: dict, signals: dict, market: str = "cn", locale: str = "zh") -> dict:
     if not price or not signals:
         return {}
 
+    T = _TP_TEXT.get(locale, _TP_TEXT["zh"])
     cur = _MARKET_CURRENCY.get(market, "$")
+    if locale == "en" and cur == "$":
+        cur = "US$"   # US-224：新西兰读者读 $ = 新西兰元
     tech = signals.get("technicals", {}) if signals else {}
     current = price.get("price")
     if not current:
@@ -130,14 +183,14 @@ def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> d
         if ma60:
             params["entry_1_low"] = round(ma60 * 0.98, 2)
             params["entry_1_high"] = round(ma60 * 1.02, 2)
-            params["entry_1_label"] = f"{cur}{ma60 * 0.98:.2f}–{ma60 * 1.02:.2f}（季线MA60附近，回调首选入场区）"
+            params["entry_1_label"] = T["e1_ma60"].format(cur=cur, lo=ma60 * 0.98, hi=ma60 * 1.02)
 
         if ma250:
             params["entry_2_low"] = round(ma250 * 0.98, 2)
             params["entry_2_high"] = round(ma250 * 1.02, 2)
-            params["entry_2_label"] = f"{cur}{ma250 * 0.98:.2f}–{ma250 * 1.02:.2f}（年线MA250附近，强支撑区）"
+            params["entry_2_label"] = T["e2_ma250"].format(cur=cur, lo=ma250 * 0.98, hi=ma250 * 1.02)
             params["stop_loss"] = round(ma250 * 0.92, 2)
-            params["stop_loss_label"] = f"{cur}{ma250 * 0.92:.2f}（年线MA250下方8%，跌破则基本面需重评）"
+            params["stop_loss_label"] = T["stop_ma250"].format(cur=cur, v=ma250 * 0.92)
 
         if ma20 and ma60 and ma250:
             above_all = current > ma20 and current > ma60 and current > ma250
@@ -146,31 +199,23 @@ def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> d
 
             if above_all:
                 pct_above_ma60 = (current - ma60) / ma60 * 100
-                params["position_label"] = (
-                    f"当前价{cur}{current:.2f}高于所有均线（比MA60高{pct_above_ma60:.1f}%），"
-                    f"不是理想进场时机，建议等回调"
-                )
+                params["position_label"] = T["pos_above"].format(cur=cur, p=current, pct=pct_above_ma60)
                 if pct_above_ma60 >= 10:
                     reduce_low = round(ma60 * 1.10, 2)
                     reduce_high = round(ma60 * 1.25, 2)
-                    params["reduce_label"] = f"{cur}{reduce_low:.2f}–{reduce_high:.2f}（MA60上方10-25%，可分批减仓）"
+                    params["reduce_label"] = T["reduce_ma60"].format(cur=cur, lo=reduce_low, hi=reduce_high)
             elif below_stop:
-                params["position_label"] = (
-                    f"当前价{cur}{current:.2f}已跌破止损位{cur}{params['stop_loss']:.2f}（年线MA250下方8%），"
-                    f"技术面破位，暂不建议入场"
-                )
+                params["position_label"] = T["pos_broken"].format(cur=cur, p=current, stop=params["stop_loss"])
                 if params.get("entry_1_label"):
-                    params["entry_1_label"] = f"{cur}{params['entry_1_low']:.2f}–{params['entry_1_high']:.2f}（MA60附近，反弹阻力目标）"
+                    params["entry_1_label"] = T["e1_resist"].format(cur=cur, lo=params["entry_1_low"], hi=params["entry_1_high"])
                 if params.get("entry_2_label"):
-                    params["entry_2_label"] = f"{cur}{params['entry_2_low']:.2f}–{params['entry_2_high']:.2f}（年线MA250附近，反弹阻力目标）"
+                    params["entry_2_label"] = T["e2_resist"].format(cur=cur, lo=params["entry_2_low"], hi=params["entry_2_high"])
                 params["entry_1_is_resistance"] = True
                 params["entry_2_is_resistance"] = True
             elif below_year:
-                params["position_label"] = f"当前价{cur}{current:.2f}低于年线{cur}{ma250:.2f}，需确认基本面是否变化"
+                params["position_label"] = T["pos_below_year"].format(cur=cur, p=current, ma250=ma250)
             else:
-                params["position_label"] = (
-                    f"当前价{cur}{current:.2f}处于MA60({cur}{ma60:.2f})与MA250({cur}{ma250:.2f})之间，可分批介入"
-                )
+                params["position_label"] = T["pos_between"].format(cur=cur, p=current, ma60=ma60, ma250=ma250)
 
         return params
 
@@ -191,44 +236,32 @@ def _compute_trading_params(price: dict, signals: dict, market: str = "cn") -> d
         "current": current,
         "entry_1_low": entry_1_low,
         "entry_1_high": entry_1_high,
-        "entry_1_label": f"{cur}{entry_1_low:.2f}–{entry_1_high:.2f}（52周区间20-35%分位，历史价值区）",
+        "entry_1_label": T["e1_w52"].format(cur=cur, lo=entry_1_low, hi=entry_1_high),
         "entry_2_low": entry_2_low,
         "entry_2_high": entry_2_high,
-        "entry_2_label": f"{cur}{entry_2_low:.2f}–{entry_2_high:.2f}（52周低点附近，强支撑区）",
+        "entry_2_label": T["e2_w52"].format(cur=cur, lo=entry_2_low, hi=entry_2_high),
         "stop_loss": stop_loss,
-        "stop_loss_label": f"{cur}{stop_loss:.2f}（52周低点下方7%，跌破则趋势可能进一步恶化）",
+        "stop_loss_label": T["stop_w52"].format(cur=cur, v=stop_loss),
     }
 
     if pos_pct >= 80:
-        params["position_label"] = (
-            f"当前价{cur}{current:.2f}处于52周区间高位（{pos_pct:.0f}%分位），"
-            f"接近年高{cur}{w52_high:.2f}，不是理想进场时机"
-        )
+        params["position_label"] = T["pos_w52_high"].format(cur=cur, p=current, pct=pos_pct, hi=w52_high)
         reduce_low = round(w52_low + rng * 0.85, 2)
         reduce_high = round(w52_high, 2)
-        params["reduce_label"] = f"{cur}{reduce_low:.2f}–{reduce_high:.2f}（52周85-100%分位，持仓者可分批减仓）"
-        params["entry_1_label"] += "（当前价远高于此，仅供参考）"
-        params["entry_2_label"] += "（当前价远高于此，仅供参考）"
+        params["reduce_label"] = T["reduce_w52"].format(cur=cur, lo=reduce_low, hi=reduce_high)
+        params["entry_1_label"] += T["ref_only"]
+        params["entry_2_label"] += T["ref_only"]
     elif pos_pct <= 20:
         near_low = round(current * 0.97, 2)
         near_high = round(current * 1.03, 2)
-        params["position_label"] = (
-            f"当前价{cur}{current:.2f}处于52周极低位（{pos_pct:.0f}%分位），"
-            f"已低于历史价值区（{cur}{entry_1_low:.2f}–{entry_1_high:.2f}），当前即为买入机会"
-        )
+        params["position_label"] = T["pos_w52_vlow"].format(cur=cur, p=current, pct=pos_pct, lo=entry_1_low, hi=entry_1_high)
         params["entry_1_low"] = near_low
         params["entry_1_high"] = near_high
-        params["entry_1_label"] = f"{cur}{near_low:.2f}–{near_high:.2f}（现价附近±3%，已低于52周价值区，性价比高）"
+        params["entry_1_label"] = T["e1_near"].format(cur=cur, lo=near_low, hi=near_high)
     elif pos_pct <= 25:
-        params["position_label"] = (
-            f"当前价{cur}{current:.2f}处于52周低位区间（{pos_pct:.0f}%分位），"
-            f"年低{cur}{w52_low:.2f}，可关注分批建仓机会"
-        )
+        params["position_label"] = T["pos_w52_low"].format(cur=cur, p=current, pct=pos_pct, lo=w52_low)
     else:
-        params["position_label"] = (
-            f"当前价{cur}{current:.2f}处于52周区间中段（{pos_pct:.0f}%分位），"
-            f"年低{cur}{w52_low:.2f}，年高{cur}{w52_high:.2f}"
-        )
+        params["position_label"] = T["pos_w52_mid"].format(cur=cur, p=current, pct=pos_pct, lo=w52_low, hi=w52_high)
 
     return params
 

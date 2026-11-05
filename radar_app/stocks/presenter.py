@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from radar_app.data.market import get_precursor_cache
 from radar_app.data.signal_events import _calc_divergence, _SIGNALS_MAX_AGE_H
 from radar_app.legacy.pipeline import compute_trading_params
+from radar_app.shared.display import conclusion_label, current_locale
 from radar_app.shared.market import MARKET_CURRENCY
 from radar_app.shared.metric_hints import compute_metric_hints
 from radar_app.shared.runtime import CN_TZ
@@ -906,7 +907,8 @@ def present_stock_page(bundle, fx_sort="impact"):
         "material_events": bundle.get("material_events", []),
         "currency": MARKET_CURRENCY.get(market, "$"),
         "now": datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M"),
-        "trading_params": compute_trading_params(bundle["price"], signals, market=market),
+        "trading_params": compute_trading_params(bundle["price"], signals, market=market,
+                                                 locale=current_locale("zh")),   # US-224：按读者语言
         "data_freshness": {
             "price": age_label(bundle["price"].get("fetched_at") if bundle["price"] else None, now_utc),
             "finance": age_label(fund.get("updated_at") if fund else None, now_utc),
@@ -957,7 +959,7 @@ def present_letter_payload(analysis):
     return {
         "letter": analysis.get("letter_html", ""),
         "grade": analysis.get("grade"),
-        "conclusion": analysis.get("conclusion"),
+        "conclusion": conclusion_label(analysis.get("conclusion")),
         "date": analysis.get("analysis_date"),
     }
 
@@ -967,7 +969,7 @@ def present_job_payload(job, result):
     if result:
         analysis = {
             "grade": result.get("grade"),
-            "conclusion": result.get("conclusion"),
+            "conclusion": conclusion_label(result.get("conclusion")),
             "reasoning": result.get("reasoning", "")[:150],
             "letter": result.get("letter_html", ""),
         }

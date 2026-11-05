@@ -95,14 +95,10 @@ def analyze_stock(name: str, code: str, news: list, fund_flow: dict, quote: dict
 _MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩"}
 
 
-_CONCLUSION_EN = {
-    "买入": "Buy", "持有": "Hold", "观察": "Watch", "减持": "Reduce", "卖出": "Sell",
-    "博弈介入": "Speculative Play", "观望等待": "Wait and See", "坚决回避": "Avoid",
-    "高风险持有": "High-Risk Hold", "回避": "Avoid",
-    "适合定投": "Dollar-Cost Average", "适合一次性买入": "Lump Sum Buy",
-    "当前估值偏高建议等待": "Overvalued — Wait", "行业过于集中风险偏高": "High Sector Concentration Risk",
-    "基金模式": "Fund Mode",
-}
+try:   # US-224：唯一一份映射在 radar_app/shared/display.py
+    from radar_app.shared.display import CONCLUSION_EN as _CONCLUSION_EN
+except Exception:   # 脚本单独跑、radar_app 不在路径上
+    _CONCLUSION_EN = {}
 
 
 def analyze_stock_v3(code: str, name: str, market: str,

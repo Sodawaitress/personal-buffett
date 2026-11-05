@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 
+from radar_app.shared.display import conclusion_label
 from radar_app.shared.i18n import load_strings
 from radar_app.shared.market import MARKET_CURRENCY, detect_market
 from radar_app.shared.viewer_time import tz_abbr, viewer_now_label, viewer_tz
@@ -33,7 +34,7 @@ def index_alert(stock, t):
         return "warn", t["alert_warn_outflow"].format(net=net)
     conclusion = stock.get("conclusion") or ""
     if conclusion in ("卖出", "减持", "Sell", "Reduce"):
-        return "warn", t["alert_warn_conclusion"].format(conclusion=conclusion)
+        return "warn", t["alert_warn_conclusion"].format(conclusion=conclusion_label(conclusion))
     reasoning = (stock.get("reasoning") or "")[:45]
     return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
@@ -47,7 +48,7 @@ def brief_alert(stock, t):
         return "warn", t["alert_warn_outflow"].format(net=net)
     conclusion = stock.get("conclusion", "")
     if conclusion in ("卖出", "减持", "Sell", "Reduce"):
-        return "warn", conclusion
+        return "warn", conclusion_label(conclusion)
     reasoning = (stock.get("reasoning") or "")[:60]
     return "ok", (reasoning + "…") if reasoning else t["alert_ok_fallback"]
 
