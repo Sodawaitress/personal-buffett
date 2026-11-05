@@ -168,10 +168,12 @@ def test_switching_language_keeps_region():
 
 # ── ⑤ 语言切换：小地球 + 目标语言 ───────────────────────
 
-def test_language_toggle_shows_target_language_with_globe():
+def test_language_toggle_is_globe_only_no_other_language():
+    """小地球的意义：页面上不出现另一种语言（Yu）。英文页不许有「中文」，中文页不许有 EN/English。"""
     from radar_app import create_app
     app = create_app()
-    for loc, label, target in (("en", "中文", "zh"), ("zh", "EN", "en")):
+    cjk = re.compile(r"[\u4e00-\u9fff]")
+    for loc, target in (("en", "zh"), ("zh", "en")):
         with app.test_client() as c:
             with c.session_transaction() as s:
                 s["locale"] = loc
@@ -181,15 +183,12 @@ def test_language_toggle_shows_target_language_with_globe():
             form = html[i:html.index("</form>", i)]
             assert "bi-globe2" in form
             assert f'name="locale" value="{target}"' in form
-            assert f'<span class="btn-lang-label" lang="{target}">{label}</span>' in form, \
-                f"{loc} 页面应显示目标语言 {label}"
-            assert 'aria-label="' in form and "[lang_switch_aria]" not in form
-
-
-def test_toggle_label_hidden_on_phones_only():
-    css = _read("static/style.css")
-    i = css.index(".btn-lang-label { display: none; }")
-    assert "@media (max-width: 600px)" in css[i - 80:i]
+            assert "btn-lang-label" not in form
+            if loc == "en":
+                assert not cjk.search(form), form
+            else:
+                assert "EN" not in form and "English" not in form, form
+            assert "[lang_switch_aria]" not in form
 
 
 # ── ⑥ 显示时间跟所在地区走 ─────────────────────────────

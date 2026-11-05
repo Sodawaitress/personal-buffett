@@ -1075,9 +1075,7 @@ hr.magic-rule, .magic-rule {
 }
 .btn-lang:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
 .btn-lang .bi { font-size: 14px; line-height: 1; }
-@media (max-width: 600px) {
-  .btn-lang-label { display: none; }   /* 手机只留地球，aria-label 仍读出目标语言 */
-}
+
 
 /* ═══════════════════════════════════════════════
    持仓简报区
