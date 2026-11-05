@@ -156,6 +156,7 @@ def analyze_stock_v3(code: str, name: str, market: str,
     conclusion_display = _CONCLUSION_EN.get(conclusion, conclusion) if locale == "en" else conclusion
     _na = "No data" if locale == "en" else "数据不足"
     _red = "Red flags" if locale == "en" else "红旗"
+    _safety = "Safety" if locale == "en" else "安全性"
 
     def _sc(val, denom):
         """US-156：缺项渲染成「—」，不能渲染成 0/满分（会被读成「得 0 分」）。"""
@@ -287,9 +288,9 @@ Write a 150–250 word analysis letter.
             "framework_used":    framework_name,
             "trade_block":       None,
             "moat":              _sc(moat_sc, 35),
-            "management":        f"{growth_sc}/30",
-            "valuation":         f"{val_sc}/15",
-            "fund_flow_summary": f"安全性 {safety_sc}/20",
+            "management":        _sc(growth_sc, 30),      # US-224：原来 f"{growth_sc}/30" → 缺分时显示「None/30」
+            "valuation":         _sc(val_sc, 15),
+            "fund_flow_summary": f"{_safety} {_sc(safety_sc, 20)}",
             "behavioral":        "—",
             "macro_sensitivity": "—",
         }
@@ -306,9 +307,9 @@ Write a 150–250 word analysis letter.
         "framework_used":    framework_name,
         "trade_block":       trade_block,
         "moat":              f"{_sc(moat_sc, 35)}：{'; '.join(moat_reasons) or '—'}",
-        "management":        f"{growth_sc}/30：{'; '.join(growth_reasons) or '—'}",
-        "valuation":         f"{val_sc}/15：{'; '.join(val_reasons) or '—'}",
-        "fund_flow_summary": f"安全性 {_sc(safety_sc, 20)}：{'; '.join(safety_reasons) or '—'}",
+        "management":        f"{_sc(growth_sc, 30)}：{'; '.join(growth_reasons) or '—'}",
+        "valuation":         f"{_sc(val_sc, 15)}：{'; '.join(val_reasons) or '—'}",
+        "fund_flow_summary": f"{_safety} {_sc(safety_sc, 20)}：{'; '.join(safety_reasons) or '—'}",
         "behavioral":        "—",
         "macro_sensitivity": "—",
     }

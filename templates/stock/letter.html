@@ -94,7 +94,7 @@
       {% for label, val in has_dims %}
       <div class="dim-pill">
         <span class="dim-pill-label">{{ label }}</span>
-        <span class="dim-pill-val">{{ val }}</span>
+        <span class="dim-pill-val">{{ val | dim_value(locale) }}</span>
       </div>
       {% endfor %}
     </div>

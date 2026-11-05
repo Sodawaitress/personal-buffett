@@ -290,10 +290,60 @@ def test_no_low_contrast_grey_text_in_stock_css():
     assert not re.search(r"(?<![-\w])color:\s*#9ca3af", css), "#9ca3af 只有 2.3:1，正文请用 var(--ink-faint)"
 
 
+# ── ⑨ 缺分不显示 None（详情页「None/30」） ─────────────────
+
+def _run_v3(monkeypatch, llm_reply, locale):
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, "scripts"))
+    import buffett_analyst as ba
+    monkeypatch.setattr(ba, "_call_groq", lambda *a, **k: llm_reply)
+    # 新版类型感知评级：没有 growth_management / safety / valuation 这些键（US-156 的场景）
+    quant = {"score": 27, "grade": "C", "conclusion": "减持",
+             "components": {"quality": [20, []], "value": [7, []]}, "reasoning": "r"}
+    return ba.analyze_stock_v3("AIR.NZ", "Air New Zealand", "nz", quant, {}, [], {},
+                               {"price": 0.61}, {}, locale=locale)
+
+
+def test_missing_scores_never_render_none_fallback_path(monkeypatch):
+    """LLM 没回（走备用路径）——生产 AIR.NZ 就是这条：None/30、安全性 None/20。"""
+    for loc in ("zh", "en"):
+        r = _run_v3(monkeypatch, "", loc)
+        for k in ("moat", "management", "valuation", "fund_flow_summary"):
+            assert "None" not in r[k], (loc, k, r[k])
+        assert r["management"] == "—" and r["valuation"] == "—"
+    assert _run_v3(monkeypatch, "", "en")["fund_flow_summary"] == "Safety —"
+    assert _run_v3(monkeypatch, "", "zh")["fund_flow_summary"] == "安全性 —"
+
+
+def test_missing_scores_never_render_none_llm_path(monkeypatch):
+    r = _run_v3(monkeypatch, "Dear shareholder, a short letter.", "en")
+    for k in ("moat", "management", "valuation", "fund_flow_summary"):
+        assert "None" not in r[k], (k, r[k])
+    assert r["fund_flow_summary"].startswith("Safety ")
+
+
+def test_dim_value_cleans_rows_already_in_the_database():
+    """库里已有的旧分析存着 None/30 —— 显示层兜住，不用等重跑。"""
+    from radar_app.shared.display import dim_value
+    assert dim_value("None/30") == "—"
+    assert dim_value("安全性 None/20", "zh") == "安全性 —"
+    assert dim_value("安全性 None/20", "en") == "Safety —"
+    assert dim_value("None/15：估值偏高") == "—：估值偏高"
+    assert dim_value(None) == "—" and dim_value("None") == "—"
+    # 真分数、真 0 分照常
+    assert dim_value("0/35") == "0/35"
+    assert dim_value("25/30：ROE 稳定") == "25/30：ROE 稳定"
+    assert dim_value("安全性 18/20", "zh") == "安全性 18/20"
+
+
+def test_letter_template_runs_dims_through_filter():
+    assert "val | dim_value(locale)" in _read("templates/stock/letter.html")
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
     for name, fn in list(globals().items()):
-        if name.startswith("test_"):
+        if name.startswith("test_") and fn.__code__.co_argcount == 0:   # 要 fixture 的交给 pytest
             fn()
             print("✓", name)
