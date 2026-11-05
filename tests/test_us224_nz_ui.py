@@ -100,6 +100,17 @@ def test_rendered_lang_follows_session_locale():
             assert f'<html lang="{loc}">' in html, loc
 
 
+# ── ② 添加搜索高亮 ──────────────────────────────────────
+
+def test_add_search_highlight_synced_with_stored_type():
+    """localStorage 记着上次的市场（如 cn）；模板按语言预设高亮（英文=Global）。
+    不同步 → 亮着 Global、实际搜 A 股 → 「AIR.NZ」No results found。"""
+    js = _read("templates/stock/_add_search.html")
+    init = js[js.index("DOMContentLoaded"):]
+    assert re.search(r"seg-btn\[data-type=\"' \+ _addType \+ '\"\]", init), \
+        "页面加载时应按 _addType 找到对应按钮并高亮"
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
