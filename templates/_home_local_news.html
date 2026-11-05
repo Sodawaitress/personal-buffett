@@ -1,9 +1,9 @@
 {# 首页「本地」新闻栏（US-224 抽出）：中文首页在折叠的信息流里，英文首页放在专栏位。
-   跟所在地区（region）走，不跟语言走。 #}
+   跟语言走：新闻标题本身有语言，英文页上不能出现中文新闻（Yu，2026-11-05）。 #}
     <div class="news-col">
       <div class="col-header">
         <span class="section-label">{{ t.tab_local }}</span>
-        <span class="col-subhead">{% if user_region in ('cn', 'hk', 'tw') %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
+        <span class="col-subhead">{% if locale == 'zh' %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
       </div>
       <hr class="section-rule">
       {% if local_news %}

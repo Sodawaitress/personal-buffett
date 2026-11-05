@@ -390,10 +390,14 @@ def test_chinese_home_unchanged(monkeypatch):
     assert "· 11-05" in html
 
 
-def test_local_news_follows_region_not_language(monkeypatch):
-    assert _home(monkeypatch, "zh", "nz")[1] == "nz"
-    assert _home(monkeypatch, "en", "cn")[1] == "cn"
+def test_local_news_follows_language_so_no_other_language_shows(monkeypatch):
+    """新闻标题本身有语言：英文页不许出现中文新闻，哪怕地区设的是中国（Yu 生产上踩到）。"""
+    assert _home(monkeypatch, "en", "cn")[1] == "nz"
+    assert _home(monkeypatch, "en", "nz")[1] == "nz"
     assert _home(monkeypatch, "zh", "cn")[1] == "cn"
+    assert _home(monkeypatch, "zh", "nz")[1] == "cn"
+    html, _ = _home(monkeypatch, "en", "cn")
+    assert "New Zealand · Markets & Economy" in html.replace("&amp;", "&")
 
 
 if __name__ == "__main__":
