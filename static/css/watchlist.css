@@ -374,8 +374,8 @@
   line-height: 1.1;
 }
 
-.perf-stat-val.up  { color: var(--green); }
-.perf-stat-val.down { color: var(--red); }
+.perf-stat-val.up  { color: var(--up); }
+.perf-stat-val.down { color: var(--down); }
 
 .perf-stat-label {
   font-size: 12px;
@@ -2910,8 +2910,8 @@ body.wl-rank-on .rank-badge  { display: flex; }
 .rank-badge-medal { font-weight: 700; }
 .rank-badge-score { font-variant-numeric: tabular-nums; color: var(--ink); }
 .rank-badge-chg   { font-size: .72rem; font-variant-numeric: tabular-nums; }
-.rank-badge-chg.up   { color: var(--up, #c0392b); }
-.rank-badge-chg.down { color: var(--down, #27865c); }
+.rank-badge-chg.up   { color: var(--up); }
+.rank-badge-chg.down { color: var(--down); }
 
 /* 陈旧标记：这只股票的分不是最新那天算的 —— 跨股票比较时必须看得见 */
 .rank-badge-stale {

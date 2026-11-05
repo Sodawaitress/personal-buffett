@@ -1,0 +1,109 @@
+"""US-224：新西兰英文读者的界面。
+
+① 涨跌色跟阅读语言走：中文红涨绿跌，英文绿涨红跌，只在一个地方定义。
+   西方读者把红读成「亏」—— 颜色反了，结论就反了。
+② 添加搜索：高亮的市场按钮必须是实际在搜的那个。
+"""
+import os
+import re
+
+ROOT = os.path.join(os.path.dirname(__file__), "..")
+
+
+def _read(rel):
+    with open(os.path.join(ROOT, rel), encoding="utf-8") as f:
+        return f.read()
+
+
+def _rule(css, selector):
+    """返回某个选择器的声明体（选择器必须唯一出现）。"""
+    m = re.findall(re.escape(selector) + r"\s*\{([^}]*)\}", css)
+    assert len(m) == 1, f"{selector!r} 应恰好出现一次，实际 {len(m)}"
+    return m[0]
+
+
+# ── ① 涨跌色 ────────────────────────────────────────────
+
+def test_tokens_defined_once_and_flip_for_english():
+    css = _read("static/style.css")
+    root = css[css.index(":root {"):css.index("}", css.index(":root {"))]
+    assert re.search(r"--up:\s*var\(--red\)", root), "中文默认：红涨"
+    assert re.search(r"--down:\s*var\(--green\)", root), "中文默认：绿跌"
+    en = _rule(css, 'html[lang="en"]')
+    assert re.search(r"--up:\s*var\(--green\)", en), "英文：绿涨"
+    assert re.search(r"--down:\s*var\(--red\)", en), "英文：红跌"
+    # 只在 style.css 定义，别处不许另起一套
+    for rel in ("static/css/stock.css", "static/css/watchlist.css"):
+        assert not re.search(r"--(up|down)\s*:", _read(rel)), f"{rel} 不应重新定义 --up/--down"
+
+
+# 价格方向 / 盈亏 / 超额 / 同比 / 资金净额 —— 必须走变量
+DIRECTION_RULES = {
+    "static/style.css": [
+        ".stock-change.up", ".stock-change.down",
+        ".stock-change-big.up", ".stock-change-big.down",
+    ],
+    "static/css/stock.css": [
+        ".data-table .up", ".data-table .down",
+        ".signal-val.up", ".signal-val.down",
+        ".srow-val.up", ".srow-val.down",
+        ".inst-holder-change.up", ".inst-holder-change.down",
+        ".pnl-pos", ".pnl-neg",
+        ".industry-signal-change.up", ".industry-signal-change.down",
+        ".obook-val.up", ".obook-val.down",
+        ".pickhist-avg.up", ".pickhist-avg.down",
+        ".pickhist-res .up", ".pickhist-res .down",
+        ".pick-chg.up", ".pick-chg.down",
+        ".pick-record .up", ".pick-record .down",
+        ".picks-arch-e .up", ".picks-arch-e .down",
+        ".svft-out-followed_up", ".svft-out-followed_down",
+    ],
+    "static/css/watchlist.css": [
+        ".perf-stat-val.up", ".perf-stat-val.down",
+        ".rank-badge-chg.up", ".rank-badge-chg.down",
+    ],
+}
+
+
+def test_direction_rules_use_tokens_not_hardcoded_colours():
+    for rel, sels in DIRECTION_RULES.items():
+        css = _read(rel)
+        for sel in sels:
+            body = _rule(css, sel)
+            want = "var(--down)" if sel.endswith(("down", "neg")) else "var(--up)"
+            assert want in body, f"{rel} {sel} 应使用 {want}，实际：{body.strip()}"
+            assert not re.search(r"#[0-9a-fA-F]{3,6}|var\(--(red|green)\)", body), \
+                f"{rel} {sel} 不应写死红绿：{body.strip()}"
+
+
+def test_non_direction_rules_do_not_borrow_updown_tokens():
+    """「颠不颠」是波动警示，不是涨跌 —— 借用 --down 会在中文里变成绿色（=涨）。"""
+    css = _read("static/css/stock.css")
+    for sel in (".vol-wild .vol-story", ".pvol-wild", ".pvol-wild .pvol-head", ".pvol-div-num"):
+        assert "var(--up)" not in _rule(css, sel) and "var(--down)" not in _rule(css, sel), sel
+
+
+def test_base_template_sets_lang_from_locale():
+    """变量靠 <html lang> 切换，base.html 必须按 locale 写 lang。"""
+    assert '<html lang="{{ locale }}">' in _read("templates/base.html")
+
+
+def test_rendered_lang_follows_session_locale():
+    from radar_app import create_app
+    app = create_app()
+    for loc in ("en", "zh"):
+        with app.test_client() as c:
+            with c.session_transaction() as s:
+                s["locale"] = loc
+                s["region"] = "nz"
+            html = c.get("/login").get_data(as_text=True)
+            assert f'<html lang="{loc}">' in html, loc
+
+
+if __name__ == "__main__":
+    import sys
+    sys.path.insert(0, ROOT)
+    for name, fn in list(globals().items()):
+        if name.startswith("test_"):
+            fn()
+            print("✓", name)

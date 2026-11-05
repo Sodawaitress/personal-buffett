@@ -15,6 +15,11 @@
   --gold:       #b8952a;
   --red:        #c0392b;
   --green:      #2d7a2d;
+  /* US-224 涨跌色：跟阅读语言走（中文红涨绿跌，英文绿涨红跌），只在这里定义。
+     只管「数值变化」（涨跌幅、盈亏、超额、同比、资金净额）；
+     看多/看空信号卡一直是绿=看多，对所有语言都一样，不走这对变量。 */
+  --up:         var(--red);
+  --down:       var(--green);
   --col-gap:    40px;
 
   /* 预言家日报 identity */
@@ -23,6 +28,10 @@
   --prophet-amber: #c8781a;
   --prophet-paper: #f7f5f1;
   --prophet-rule:  #d4cfc7;
+}
+html[lang="en"] {
+  --up:   var(--green);
+  --down: var(--red);
 }
 
 /* ── US-75 预言家日报组件 ────────────────────────────────── */
@@ -689,8 +698,8 @@ nav.navbar {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.stock-change.up   { color: var(--red); }    /* red = up in Chinese market convention */
-.stock-change.down { color: var(--green); }
+.stock-change.up   { color: var(--up); }
+.stock-change.down { color: var(--down); }
 
 .stock-lede {
   font-family: Georgia, serif;
@@ -1906,8 +1915,8 @@ footer small {
   font-variant-numeric: tabular-nums;
   margin-bottom: 10px;
 }
-.stock-change-big.up   { color: var(--red); }
-.stock-change-big.down { color: var(--green); }
+.stock-change-big.up   { color: var(--up); }
+.stock-change-big.down { color: var(--down); }
 
 .stock-header-actions {
   display: flex;
