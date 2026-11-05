@@ -10743,6 +10743,8 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 13. 反方向：中文页上评级理由是英文（"As turnaround: quality 27/100 …"）
 14. 手机宽度导航挤爆：英文页头像被裁掉、中文页品牌名被挤成一字一行（改动前就有，小地球比原按钮更窄，没变坏）
 15. Yahoo 给的名字难看：「Air New Zealand Limited (NS) Or」—— 应优先 longName / 去掉 (NS) Or 后缀
+16. （主会话在生产英文界面实测，2026-11-05）库里没有的股票打开 `/stock/AIR.NZ` → 跳回首页「Stock not found. Add it to your watchlist first.」—— 读者顺着链接来就是死路
+17. 自选股卡片的一句话理由是中文（每股只存一份、按触发者语言，US-148）—— 英文读者第一眼看到的；评级词已修（conclusion_label），理由文字未修
 
 ### 修剩下的之前：学界 + 业界做法（2026-11-05 研究，Yu 要求「先研究再修」）
 
