@@ -119,7 +119,11 @@ def test_each_pick_links_to_the_stock_page():
 
 def test_nav_has_an_entry():
     base = open(os.path.join(ROOT, 'templates', 'base.html'), encoding='utf-8').read()
-    assert '/picks' in base and '今日五选' in base
+    assert '/picks' in base and 't.nav_picks' in base
+    # US-224：文字走 i18n；中文界面仍显示「今日五选」
+    import json
+    common = json.load(open(os.path.join(ROOT, 'i18n', 'common.json'), encoding='utf-8'))
+    assert common['nav_picks']['zh'] == '今日五选'
 
 
 # ── 集中度也带到这一页 ──────────────────────────────────

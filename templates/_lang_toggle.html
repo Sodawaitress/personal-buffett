@@ -1,0 +1,9 @@
+{# US-224 语言切换：只放小地球。小地球的意义就是页面上不出现另一种语言的文字（Yu）。
+   提示文字（title / aria-label）用当前语言写。 #}
+{% set _target = 'zh' if locale == 'en' else 'en' %}
+<form method="post" action="{{ url_for('set_locale') }}" class="lang-form">
+  <input type="hidden" name="locale" value="{{ _target }}">
+  <button type="submit" class="btn-lang" aria-label="{{ t.lang_switch_aria }}" title="{{ t.lang_switch_aria }}">
+    <i class="bi bi-globe2" aria-hidden="true"></i>
+  </button>
+</form>

@@ -173,7 +173,7 @@ function _markLetterReady(code, btn) {
         <button class="btn-outline-ink btn-sm" onclick="toggleMoreMenu('${code}')" title="More">⋯</button>
         <div class="more-menu" id="more-menu-${code}">
           <button onclick="triggerNewsRefresh('${code}');closeMoreMenu('${code}')">${window._t.refresh_news}</button>
-          <button onclick="exportBundle('${code}');closeMoreMenu('${code}')">📋 导出分析包</button>
+          <button onclick="exportBundle('${code}');closeMoreMenu('${code}')">📋 ${window._t.export_bundle}</button>
           ${adminMenu}
         </div>
       </div>`;
@@ -267,14 +267,14 @@ async function triggerLetterGeneration(code) {
 /* ── Export bundle ──────────────────────────────────────────────────── */
 async function exportBundle(code) {
   const btn = document.querySelector(`button[onclick*="exportBundle('${code}')"]`);
-  if (btn) btn.textContent = '⏳ 生成中…';
+  if (btn) btn.textContent = '⏳ ' + window._t.export_working;
   try {
     const resp = await fetch(`/api/stock/${code}/bundle`);
     const data = await resp.json();
-    if (data.error) { alert('导出失败：' + data.error); return; }
+    if (data.error) { alert(window._t.export_failed + data.error); return; }
     await navigator.clipboard.writeText(data.markdown);
-    if (btn) btn.textContent = '✅ 已复制！';
-    setTimeout(() => { if (btn) btn.textContent = '📋 导出分析包'; }, 2500);
+    if (btn) btn.textContent = '✅ ' + window._t.export_copied;
+    setTimeout(() => { if (btn) btn.textContent = '📋 ' + window._t.export_bundle; }, 2500);
   } catch (e) {
     const resp = await fetch(`/api/stock/${code}/bundle`);
     const data = await resp.json();
@@ -284,11 +284,11 @@ async function exportBundle(code) {
     document.body.appendChild(ta);
     ta.select();
     const close = document.createElement('button');
-    close.textContent = '✕ 关闭';
+    close.textContent = '✕ ' + window._t.export_close;
     close.style.cssText = 'position:fixed;top:8%;right:6%;z-index:10000;padding:6px 14px';
     close.onclick = () => { ta.remove(); close.remove(); };
     document.body.appendChild(close);
-    if (btn) btn.textContent = '📋 导出分析包';
+    if (btn) btn.textContent = '📋 ' + window._t.export_bundle;
   }
 }
 

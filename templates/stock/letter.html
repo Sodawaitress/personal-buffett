@@ -31,7 +31,7 @@
         {% elif data_incomplete %}
         <div class="verdict-conclusion" style="color:#b45309">{{ t.verdict_incomplete }}</div>
         {% else %}
-        <div class="verdict-conclusion">{{ analysis.conclusion }}</div>
+        <div class="verdict-conclusion">{{ analysis.conclusion | conclusion_label(locale) }}</div>
         {% endif %}
         <div class="verdict-date">{{ analysis.analysis_date }}</div>
       </div>
@@ -94,7 +94,7 @@
       {% for label, val in has_dims %}
       <div class="dim-pill">
         <span class="dim-pill-label">{{ label }}</span>
-        <span class="dim-pill-val">{{ val }}</span>
+        <span class="dim-pill-val">{{ val | dim_value(locale) }}</span>
       </div>
       {% endfor %}
     </div>
@@ -212,7 +212,7 @@ function showLetter() {
       <div class="letter-sig">{{ t.letter_sig }}<br><span class="letter-sig-line">～～～～～～～～～～</span></div>
       <div class="letter-grade">
         <span class="grade-tag grade-{{ (analysis.grade or 'c') | lower | replace('+','-plus') | replace('-','-minus') }}">{{ analysis.grade or '—' }}</span>
-        <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion }}</span>
+        <span style="margin-left:8px;font-size:13px">{{ analysis.conclusion | conclusion_label(locale) }}</span>
       </div>
       <div class="letter-footer">{{ t.letter_data_as_of }} {{ analysis.analysis_date }} · {{ t.letter_disclaimer }}</div>
     </div>`;

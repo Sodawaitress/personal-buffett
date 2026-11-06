@@ -7,7 +7,7 @@
   --ink:        #1a1a1a;
   --ink-2:      #333;
   --ink-muted:  #666;
-  --ink-faint:  #999;
+  --ink-faint:  #707070;   /* US-224：#999 在纸色上只有 2.6:1；#707070 = 4.5:1（WCAG AA 正文下限） */
   --paper:      #f7f4ef;   /* warm newsprint */
   --paper-2:    #ffffff;
   --rule:       #1a1a1a;
@@ -15,6 +15,11 @@
   --gold:       #b8952a;
   --red:        #c0392b;
   --green:      #2d7a2d;
+  /* US-224 涨跌色：跟阅读语言走（中文红涨绿跌，英文绿涨红跌），只在这里定义。
+     只管「数值变化」（涨跌幅、盈亏、超额、同比、资金净额）；
+     看多/看空信号卡一直是绿=看多，对所有语言都一样，不走这对变量。 */
+  --up:         var(--red);
+  --down:       var(--green);
   --col-gap:    40px;
 
   /* 预言家日报 identity */
@@ -23,6 +28,10 @@
   --prophet-amber: #c8781a;
   --prophet-paper: #f7f5f1;
   --prophet-rule:  #d4cfc7;
+}
+html[lang="en"] {
+  --up:   var(--green);
+  --down: var(--red);
 }
 
 /* ── US-75 预言家日报组件 ────────────────────────────────── */
@@ -689,8 +698,8 @@ nav.navbar {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.stock-change.up   { color: var(--red); }    /* red = up in Chinese market convention */
-.stock-change.down { color: var(--green); }
+.stock-change.up   { color: var(--up); }
+.stock-change.down { color: var(--down); }
 
 .stock-lede {
   font-family: Georgia, serif;
@@ -1043,21 +1052,30 @@ hr.magic-rule, .magic-rule {
 }
 .btn-outline-ink:hover { background: var(--ink); color: #fff; text-decoration: none; }
 
+.lang-form { display: inline; margin-left: 8px; }
 .btn-lang {
   font-family: -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.5px;
   background: transparent;
   border: 1px solid var(--ink-muted);
   color: var(--ink-muted);
   padding: 2px 8px;
+  min-height: 28px;               /* WCAG 2.5.8：点按目标 ≥24px */
+  min-width: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   border-radius: 3px;
   cursor: pointer;
   transition: all .15s;
   line-height: 1.4;
 }
 .btn-lang:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn-lang .bi { font-size: 14px; line-height: 1; }
+
 
 /* ═══════════════════════════════════════════════
    持仓简报区
@@ -1906,8 +1924,8 @@ footer small {
   font-variant-numeric: tabular-nums;
   margin-bottom: 10px;
 }
-.stock-change-big.up   { color: var(--red); }
-.stock-change-big.down { color: var(--green); }
+.stock-change-big.up   { color: var(--up); }
+.stock-change-big.down { color: var(--down); }
 
 .stock-header-actions {
   display: flex;

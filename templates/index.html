@@ -58,8 +58,13 @@
   {# 添加股票：正文第一块（US-126/128）。统一搜索组件 #}
   {% include 'stock/_add_search.html' %}
 
+  {# US-224：英文首页在这个位置放「本地」新闻（新西兰市场与经济）—— 专栏文章目前只有中文 #}
+  {% if locale == 'en' %}
+  <div class="news-section-wrap home-local-top">
+    {% include '_home_local_news.html' %}
+  </div>
   {# 行业分析专栏 · 预览（US-127）：嵌真文章显示一半，底部渐隐 + 阅读全文 #}
-  {% if featured_research %}
+  {% elif featured_research %}
   <div class="research-preview">
     <iframe src="{{ url_for('research_article', slug=featured_research.slug) }}?embed=1" class="rp-frame" scrolling="no" tabindex="-1" loading="lazy" title="{{ featured_research.title }}"></iframe>
     <a href="{{ url_for('research_article', slug=featured_research.slug) }}" class="rp-overlay" aria-label="{{ t.research_read }}">
@@ -88,38 +93,8 @@
   <div class="news-section-wrap">
   <div class="news-columns">
 
-    {# 本地栏 #}
-    <div class="news-col">
-      <div class="col-header">
-        <span class="section-label">{{ t.tab_local }}</span>
-        <span class="col-subhead">{% if locale == 'zh' %}{{ t.local_col_cn }}{% else %}{{ t.local_col_nz }}{% endif %}</span>
-      </div>
-      <hr class="section-rule">
-      {% if local_news %}
-        {% for n in local_news %}
-        <div class="news-article {{ 'news-article-rbnz' if n.section == 'RBNZ' else '' }}">
-          <div class="news-kicker">{{ n.section }}</div>
-          {% if n.link %}<a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
-          {% else %}<div class="news-headline-plain">{{ n.title }}</div>{% endif %}
-          <div class="news-byline">{{ n.source }}{% if n.time %} · {{ n.time[:10] }}{% endif %}</div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <p class="empty-state">{{ t.local_col_empty }}</p>
-      {% endif %}
-      {% if market.nz_sectors and locale != 'zh' %}
-      <div style="margin-top:24px">
-        <span class="section-label" style="font-size:10px">NZX SECTORS</span>
-        <hr class="section-rule">
-        {% for sector in market.nz_sectors %}
-        <div class="sector-row">
-          <span>{{ sector.emoji }}</span><strong>{{ sector.name }}</strong>
-          <span class="sector-desc">{{ sector.desc }}</span>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
+    {# 本地栏：英文首页已提到上面（专栏位），这里不重复（US-224） #}
+    {% if locale != 'en' %}{% include '_home_local_news.html' %}{% endif %}
 
     {# 国际栏 #}
     <div class="news-col">
@@ -174,7 +149,7 @@
           <div class="news-kicker">{{ n.section }}</div>
           {% if n.link %}<a href="{{ n.link }}" target="_blank" class="news-headline">{{ n.title }}</a>
           {% else %}<div class="news-headline-plain">{{ n.title }}</div>{% endif %}
-          <div class="news-byline">{{ n.source }}{% if n.time %} · {{ n.time[:10] }}{% endif %}</div>
+          <div class="news-byline">{{ n.source }}{% if n.time %} · {{ n.time | news_date(locale) }}{% endif %}</div>
         </div>
         {% endfor %}
       {% else %}

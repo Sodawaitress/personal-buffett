@@ -95,14 +95,10 @@ def analyze_stock(name: str, code: str, news: list, fund_flow: dict, quote: dict
 _MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩"}
 
 
-_CONCLUSION_EN = {
-    "买入": "Buy", "持有": "Hold", "观察": "Watch", "减持": "Reduce", "卖出": "Sell",
-    "博弈介入": "Speculative Play", "观望等待": "Wait and See", "坚决回避": "Avoid",
-    "高风险持有": "High-Risk Hold", "回避": "Avoid",
-    "适合定投": "Dollar-Cost Average", "适合一次性买入": "Lump Sum Buy",
-    "当前估值偏高建议等待": "Overvalued — Wait", "行业过于集中风险偏高": "High Sector Concentration Risk",
-    "基金模式": "Fund Mode",
-}
+try:   # US-224：唯一一份映射在 radar_app/shared/display.py
+    from radar_app.shared.display import CONCLUSION_EN as _CONCLUSION_EN
+except Exception:   # 脚本单独跑、radar_app 不在路径上
+    _CONCLUSION_EN = {}
 
 
 def analyze_stock_v3(code: str, name: str, market: str,
@@ -156,6 +152,7 @@ def analyze_stock_v3(code: str, name: str, market: str,
     conclusion_display = _CONCLUSION_EN.get(conclusion, conclusion) if locale == "en" else conclusion
     _na = "No data" if locale == "en" else "数据不足"
     _red = "Red flags" if locale == "en" else "红旗"
+    _safety = "Safety" if locale == "en" else "安全性"
 
     def _sc(val, denom):
         """US-156：缺项渲染成「—」，不能渲染成 0/满分（会被读成「得 0 分」）。"""
@@ -287,9 +284,9 @@ Write a 150–250 word analysis letter.
             "framework_used":    framework_name,
             "trade_block":       None,
             "moat":              _sc(moat_sc, 35),
-            "management":        f"{growth_sc}/30",
-            "valuation":         f"{val_sc}/15",
-            "fund_flow_summary": f"安全性 {safety_sc}/20",
+            "management":        _sc(growth_sc, 30),      # US-224：原来 f"{growth_sc}/30" → 缺分时显示「None/30」
+            "valuation":         _sc(val_sc, 15),
+            "fund_flow_summary": f"{_safety} {_sc(safety_sc, 20)}",
             "behavioral":        "—",
             "macro_sensitivity": "—",
         }
@@ -306,9 +303,9 @@ Write a 150–250 word analysis letter.
         "framework_used":    framework_name,
         "trade_block":       trade_block,
         "moat":              f"{_sc(moat_sc, 35)}：{'; '.join(moat_reasons) or '—'}",
-        "management":        f"{growth_sc}/30：{'; '.join(growth_reasons) or '—'}",
-        "valuation":         f"{val_sc}/15：{'; '.join(val_reasons) or '—'}",
-        "fund_flow_summary": f"安全性 {_sc(safety_sc, 20)}：{'; '.join(safety_reasons) or '—'}",
+        "management":        f"{_sc(growth_sc, 30)}：{'; '.join(growth_reasons) or '—'}",
+        "valuation":         f"{_sc(val_sc, 15)}：{'; '.join(val_reasons) or '—'}",
+        "fund_flow_summary": f"{_safety} {_sc(safety_sc, 20)}：{'; '.join(safety_reasons) or '—'}",
         "behavioral":        "—",
         "macro_sensitivity": "—",
     }

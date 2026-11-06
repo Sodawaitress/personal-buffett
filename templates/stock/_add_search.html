@@ -72,6 +72,10 @@
       }).catch(function(){});
   }
   document.addEventListener('DOMContentLoaded', function(){
+    // 高亮必须跟实际搜索的类型一致：localStorage 记着上次的选择（比如切过 A股），
+    // 而模板按语言预设高亮 —— 不同步就会「亮着 Global、实际搜 A 股」，AIR.NZ 搜不到（US-224）
+    var cur = document.querySelector('#as-type-seg .seg-btn[data-type="' + _addType + '"]');
+    if (cur) document.querySelectorAll('#as-type-seg .seg-btn').forEach(function(b){ b.classList.toggle('active', b===cur); });
     var inp = document.getElementById('as-search');
     if (!inp || typeof SearchWidget === 'undefined') return;
     inp.addEventListener('focus', function(){

@@ -28,10 +28,13 @@
           </a>
 
           {# US-196：五选原本只活在微信推送里，一刷就过去了、回头找不着。
-             给它一个能回头翻的入口。 #}
+             给它一个能回头翻的入口。
+             US-224：五选是 A 股、内容只有中文 → 英文界面不显示入口（等内容有英文版再放出来）。 #}
+          {% if locale == 'zh' %}
           <a href="/picks" {% if request.endpoint == 'picks_today' %}class="active"{% endif %}>
-            今日五选
+            {{ t.nav_picks }}
           </a>
+          {% endif %}
 
           {% if session.get('role') == 'admin' %}
           <a href="{{ url_for('admin_users') }}" {% if request.endpoint in ('admin_users','admin_user_detail') %}class="active"{% endif %} style="color:#b8860b;font-weight:600">
@@ -39,11 +42,7 @@
           </a>
           {% endif %}
 
-          {# Language toggle — label shows current language #}
-          <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
-            <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
-            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'en' else '中文' }}</button>
-          </form>
+          {% include '_lang_toggle.html' %}
 
           {# Avatar dropdown #}
           <div class="nav-avatar-wrap">
@@ -65,10 +64,7 @@
           </div>
 
         {% else %}
-          <form method="post" action="{{ url_for('set_locale') }}" style="display:inline;margin-left:8px">
-            <input type="hidden" name="locale" value="{{ 'zh' if locale == 'en' else 'en' }}">
-            <button type="submit" class="btn-lang">{{ 'EN' if locale == 'en' else '中文' }}</button>
-          </form>
+          {% include '_lang_toggle.html' %}
           <a href="{{ url_for('about') }}">About</a>
           <a href="{{ url_for('login') }}">{{ t.nav_login }}</a>
           <a href="{{ url_for('register') }}" style="font-weight:700">{{ t.nav_get_started }}</a>

@@ -293,11 +293,9 @@ def register_system_routes(app):
         if locale not in ("en", "zh"):
             locale = "en"
         session["locale"] = locale
-        # Auto-set home market to CN when switching to Chinese (if still on NZ default)
+        # US-224：语言和所在地互不牵动（文化 ≠ 国家）。在新西兰读中文的人仍在新西兰；
+        # 要换首页市场去设置页选「所在地区」。原来切中文会把 nz 改成 cn 且切回不恢复。
         current_region = session.get("region", "nz")
-        if locale == "zh" and current_region == "nz":
-            session["region"] = "cn"
-            current_region = "cn"
         update_locale_preference(session.get("user_id"), current_region, locale)
         clear_i18n_cache()
         return redirect(request.referrer or url_for("index"))

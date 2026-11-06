@@ -223,7 +223,7 @@
         <span class="wax-seal grade-{{ s.grade | lower | replace('+','-plus') | replace('-','-minus') if s.grade not in ('—','') else 'c' }}">
           {{ s.grade }}
         </span>
-        <span class="holding-conclusion">{{ s.conclusion }}</span>
+        <span class="holding-conclusion">{{ s.conclusion | conclusion_label(locale) }}</span>
       </div>
       <p class="holding-reasoning">{{ s.reasoning }}</p>
       {% else %}
@@ -379,7 +379,7 @@
           </td>
           <td>
             {% if s.conclusion %}
-            <span class="wl-list-conclusion wl-dir-{{ s.conclusion }}">{{ s.conclusion }}</span>
+            <span class="wl-list-conclusion wl-dir-{{ s.conclusion }}">{{ s.conclusion | conclusion_label(locale) }}</span>
             {% else %}<span style="color:var(--ink-faint);font-size:11px">—</span>{% endif %}
           </td>
           <td style="font-size:11px;color:var(--ink-muted)">{{ (s.analysis_date or '')[-5:] }}</td>
