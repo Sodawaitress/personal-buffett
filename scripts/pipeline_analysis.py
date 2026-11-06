@@ -134,6 +134,7 @@ _TP_TEXT = {
         "e1_near":    "{cur}{lo:.2f}–{hi:.2f}（现价附近±3%，已低于52周价值区，性价比高）",
         "pos_w52_low": "当前价{cur}{p:.2f}处于52周低位区间（{pct:.0f}%分位），年低{cur}{lo:.2f}，可关注分批建仓机会",
         "pos_w52_mid": "当前价{cur}{p:.2f}处于52周区间中段（{pct:.0f}%分位），年低{cur}{lo:.2f}，年高{cur}{hi:.2f}",
+        "pos_weak":   "当前价{cur}{p:.2f}。评级是 {grade}，价格低本身不是买入的理由，所以这里不给买入区间",
     },
     "en": {
         "e1_ma60":    "{cur}{lo:.2f}–{hi:.2f} (around the 60-day average; first pullback zone)",
@@ -156,11 +157,42 @@ _TP_TEXT = {
         "e1_near":    "{cur}{lo:.2f}–{hi:.2f} (within 3% of today's price; already below the 52-week value zone)",
         "pos_w52_low": "Price {cur}{p:.2f} is {pct:.0f}% of the way up its 52-week range; year low {cur}{lo:.2f}. Worth watching for a staged entry",
         "pos_w52_mid": "Price {cur}{p:.2f} is {pct:.0f}% of the way up its 52-week range; year low {cur}{lo:.2f}, year high {cur}{hi:.2f}",
+        "pos_weak":   "Price {cur}{p:.2f}. The rating is {grade}, and a low price on its own isn't a reason to buy, so no buying range is given here",
     },
 }
 
 
-def _compute_trading_params(price: dict, signals: dict, market: str = "cn", locale: str = "zh") -> dict:
+def _is_weak_grade(grade) -> bool:
+    """US-225：C 及以下（C / C- / D… ；C+ 不算）。"""
+    g = (grade or "").strip().upper()
+    return g in ("C", "C-") or (g[:1] in ("D", "E", "F"))
+
+
+def _compute_trading_params(price: dict, signals: dict, market: str = "cn", locale: str = "zh",
+                            grade: str = None) -> dict:
+    """US-225：交易参数服从评级。
+
+    原来只看价格在 52 周区间 / 均线里的位置 —— 价格 ≤ 20% 分位就固定写「当前即为
+    买入机会」。于是一只在亏损、评级减持的股票（AIR.NZ，C · Reduce），同一页被告知
+    「现在就是买入机会」。评级 C 及以下时，去掉所有买入区间，位置说明只陈述事实。
+    减仓区间、止损位保留 —— 对已经持有的人仍然有用。
+    """
+    params = _compute_trading_params_raw(price, signals, market=market, locale=locale)
+    if not params or not _is_weak_grade(grade):
+        return params
+    T = _TP_TEXT.get(locale, _TP_TEXT["zh"])
+    cur = _MARKET_CURRENCY.get(market, "$")
+    if locale == "en" and cur == "$":
+        cur = "US$"
+    for k in ("entry_1_low", "entry_1_high", "entry_1_label", "entry_1_is_resistance",
+              "entry_2_low", "entry_2_high", "entry_2_label", "entry_2_is_resistance"):
+        params.pop(k, None)
+    params["position_label"] = T["pos_weak"].format(cur=cur, p=params["current"], grade=grade.strip())
+    params["buy_suppressed"] = True
+    return params
+
+
+def _compute_trading_params_raw(price: dict, signals: dict, market: str = "cn", locale: str = "zh") -> dict:
     if not price or not signals:
         return {}
 
@@ -445,7 +477,8 @@ def _run_layer2(code, market, log, user_id=None, locale="zh"):
     )
     log(f"       量化评级: {quant_result['grade']} {quant_result['score']}/100 · {quant_result['conclusion']}")
 
-    trading_params = _compute_trading_params(price, _signals, market=market)
+    trading_params = _compute_trading_params(price, _signals, market=market,
+                                             grade=quant_result.get("grade"))
     if trading_params.get("entry_1_label"):
         log(f"       买入区间1: {trading_params['entry_1_label'][:50]}")
 

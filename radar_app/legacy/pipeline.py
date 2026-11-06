@@ -26,9 +26,9 @@ def run_pipeline_job(job_id, code, market, force=False):
     return run_pipeline(job_id, code, market, force=force)
 
 
-def compute_trading_params(price, signals, market, locale="zh"):
+def compute_trading_params(price, signals, market, locale="zh", grade=None):
     from scripts.pipeline import _compute_trading_params
-    return _compute_trading_params(price, signals, market=market, locale=locale)
+    return _compute_trading_params(price, signals, market=market, locale=locale, grade=grade)
 
 
 def classify_stock_code(code):
