@@ -2515,6 +2515,7 @@
 .cheap-cheap_flat, .cheap-neutral { border-left-color: var(--rule); }
 /* US-173：数据不足也要显示，用最淡的边框表示「这里没有结论」 */
 .cheap-unknown { border-left-color: var(--rule); opacity: .82; }
+.cheap-loss_making { border-left-color: #b45309; }   /* US-225 */
 .cheap-why { margin-top: 8px; font-size: 13px; }
 .cheap-why summary {
   cursor: pointer; color: var(--ink-muted);
