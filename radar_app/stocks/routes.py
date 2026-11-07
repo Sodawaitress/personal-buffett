@@ -39,6 +39,23 @@ def _demo_block():
 
 
 def register_stock_routes(app):
+    def _not_tracked(code):
+        """US-224：库里还没有这只股票时，不再跳回首页（顺着文章链接来的读者原来走进死路）。
+        显示「还不在你的列表里」页 + 一个「加入并分析」按钮；什么都不自动写入。"""
+        match = _resolve_ticker(code)
+        return render_template("stock/not_tracked.html", code=code, match=match), (200 if match else 404)
+
+    def _resolve_ticker(code):
+        try:
+            import stock_search
+            kind = "cn" if code.isdigit() and len(code) == 6 else "intl"
+            for r in stock_search.search_typed(code, search_type=kind, limit=5) or []:
+                if (r.get("code") or "").upper() == code:
+                    return r
+        except Exception:
+            pass
+        return None
+
     def _stock_context(code):
         # US-220：排序偏好走 query param，纯链接切换、不需要 JS ——
         # 和本站其余部分的做法一致（渐进增强，手机上也稳）。
@@ -51,8 +68,7 @@ def register_stock_routes(app):
     def stock_page(code):
         context = _stock_context(code.upper())
         if not context:
-            flash('Stock not found. Add it to your watchlist first.', 'warning')
-            return redirect(url_for('index'))
+            return _not_tracked(code.upper())
         return render_template('stock/letter.html', **context)
 
     @app.route('/stock/<path:code>/signals')
@@ -60,8 +76,7 @@ def register_stock_routes(app):
     def stock_signals(code):
         context = _stock_context(code.upper())
         if not context:
-            flash('Stock not found.', 'warning')
-            return redirect(url_for('index'))
+            return _not_tracked(code.upper())
         return render_template('stock/signals.html', **context)
 
     @app.route('/stock/<path:code>/lifecycle')
@@ -69,8 +84,7 @@ def register_stock_routes(app):
     def stock_lifecycle(code):
         context = _stock_context(code.upper())
         if not context:
-            flash('Stock not found.', 'warning')
-            return redirect(url_for('index'))
+            return _not_tracked(code.upper())
         from radar_app.stocks.lifecycle import build_lifecycle
         try:
             context['lc'] = build_lifecycle(code.upper())
@@ -84,8 +98,7 @@ def register_stock_routes(app):
     def stock_archive(code):
         context = _stock_context(code.upper())
         if not context:
-            flash('Stock not found.', 'warning')
-            return redirect(url_for('index'))
+            return _not_tracked(code.upper())
         return render_template('stock/archive.html', **context)
 
     @app.route('/stock/<path:code>/supply-chain')
@@ -93,8 +106,7 @@ def register_stock_routes(app):
     def stock_supply_chain_page(code):
         context = _stock_context(code.upper())
         if not context:
-            flash('Stock not found.', 'warning')
-            return redirect(url_for('index'))
+            return _not_tracked(code.upper())
         if context.get('market') not in ('us', 'cn'):
             return redirect(url_for('stock_page', code=code.upper()))
         return render_template('stock/supply_chain.html', **context)
@@ -104,8 +116,7 @@ def register_stock_routes(app):
     def stock_events_page(code):
         context = _stock_context(code.upper())
         if not context:
-            flash('Stock not found.', 'warning')
-            return redirect(url_for('index'))
+            return _not_tracked(code.upper())
         return render_template('stock/events.html', **context)
 
     # Legacy redirects

@@ -9,6 +9,7 @@ from datetime import datetime
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 
 import db
+from radar_app.shared.i18n import load_strings
 from radar_app.data.core import get_conn
 from radar_app.data.jobs import create_job, update_job
 from radar_app.data.users import get_push_settings
@@ -171,13 +172,18 @@ def register_watchlist_routes(app):
         notes = request.form.get('desc', '').strip()
         market = request.form.get('market', '').strip()
         asset_type = request.form.get('asset_type', '').strip() or None
+        t = load_strings(session.get('locale', 'en'))
         if not code or not name:
-            flash('Stock code and name are required.', 'warning')
+            flash(t['flash_add_missing'], 'warning')
             return redirect(url_for('index'))
 
         code, market = add_stock_and_start_analysis(session['user_id'], code, name, market, notes, asset_type=asset_type)
-        type_label = f'（{asset_type}）' if asset_type and asset_type != '股票' else ''
-        flash(f'{name}{type_label} ({code}) 已添加，正在分析中…', 'success')
+        type_label = f'（{asset_type}）' if asset_type and asset_type != '股票' and session.get('locale') == 'zh' else ''
+        flash(t['flash_added_analysing'].format(name=f'{name}{type_label}', code=code), 'success')
+        # US-224：从「还不在列表里」页加入后回到那只股票的页面。只接受站内 /stock/ 路径，防开放跳转
+        nxt = request.form.get('next', '')
+        if nxt.startswith('/stock/') and '//' not in nxt and '\\' not in nxt:
+            return redirect(nxt)
         return redirect(url_for('watchlist_page'))
 
     @app.route('/remove/<code>', methods=['POST'])

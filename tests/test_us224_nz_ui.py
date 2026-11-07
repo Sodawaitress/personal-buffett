@@ -470,6 +470,73 @@ def test_us_dollar_explicit_in_english_trading_params():
     assert en["stop_loss_label"].startswith("US$")
 
 
+# ── ⑫ 库里没有的股票：不再跳回首页 ───────────────────────
+
+def _client_logged_in(locale="en"):
+    import uuid
+    from radar_app import create_app
+    from radar_app.data.users import create_user, get_user_by_email
+    app = create_app()
+    email = f"us224-nt-{uuid.uuid4().hex[:8]}@example.test"
+    create_user(email)
+    uid = get_user_by_email(email)["id"]
+    c = app.test_client()
+    with c.session_transaction() as s:
+        s.update(user_id=uid, locale=locale, region="nz", role="member")
+    return c
+
+
+def _fake_search(monkeypatch, results):
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, "scripts"))
+    import stock_search
+    monkeypatch.setattr(stock_search, "search_typed", lambda q, search_type="auto", limit=10: results)
+
+
+def test_untracked_stock_shows_add_page_not_redirect(monkeypatch):
+    _fake_search(monkeypatch, [{"code": "ZZZ.NZ", "name": "Example Co", "market": "nz"}])
+    for loc, btn in (("en", "Add to my watchlist and analyse"), ("zh", "加入自选并分析")):
+        r = _client_logged_in(loc).get("/stock/ZZZ.NZ")
+        html = r.get_data(as_text=True)
+        assert r.status_code == 200, r.status_code
+        assert "Example Co" in html and btn in html
+        assert 'name="next" value="/stock/ZZZ.NZ"' in html
+        assert "Stock not found" not in html
+
+
+def test_unknown_code_is_honest_404_with_search(monkeypatch):
+    _fake_search(monkeypatch, [])
+    r = _client_logged_in("en").get("/stock/NOPE.NZ/signals")
+    import html as _h
+    html = _h.unescape(r.get_data(as_text=True))
+    assert r.status_code == 404
+    assert "couldn't find a share" in html and 'id="as-search"' in html
+
+
+def test_add_next_only_goes_to_stock_pages(monkeypatch):
+    import radar_app.watchlist.routes as wr
+    monkeypatch.setattr(wr, "add_stock_and_start_analysis", lambda uid, code, name, market, notes, asset_type=None: (code, market or "nz"))
+    c = _client_logged_in("en")
+    ok = c.post("/add", data={"code": "ZZZ.NZ", "name": "Example Co", "market": "nz", "next": "/stock/ZZZ.NZ"})
+    assert ok.status_code == 302 and ok.headers["Location"].endswith("/stock/ZZZ.NZ")
+    for evil in ("https://evil.example/", "//evil.example/stock/x", "/stock/../admin", "/\\evil.example"):
+        r = c.post("/add", data={"code": "ZZZ.NZ", "name": "Example Co", "next": evil})
+        loc = r.headers["Location"]
+        assert loc.endswith("/watchlist") or "/stock/" in loc and "evil" not in loc, (evil, loc)
+        assert "evil" not in loc
+
+
+def test_add_flash_follows_language(monkeypatch):
+    import radar_app.watchlist.routes as wr
+    monkeypatch.setattr(wr, "add_stock_and_start_analysis", lambda uid, code, name, market, notes, asset_type=None: (code, "nz"))
+    for loc, want in (("en", "Example Co (ZZZ.NZ) added. Analysing now"), ("zh", "Example Co（ZZZ.NZ）已添加")):
+        c = _client_logged_in(loc)
+        c.post("/add", data={"code": "ZZZ.NZ", "name": "Example Co"})
+        with c.session_transaction() as s:
+            msgs = [m for _, m in s.get("_flashes", [])]
+        assert any(want in m for m in msgs), msgs
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
