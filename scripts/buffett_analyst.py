@@ -94,6 +94,9 @@ def analyze_stock(name: str, code: str, news: list, fund_flow: dict, quote: dict
 
 _MARKET_CURRENCY = {"cn": "¥", "us": "$", "hk": "HK$", "nz": "NZ$", "kr": "₩"}
 
+# US-225：LLM 没写成信时存进 raw_output 的标记。should_analyze 靠它重排这只股票。
+LETTER_FALLBACK_MARKER = "（Layer 2 量化备用）"
+
 
 try:   # US-224：唯一一份映射在 radar_app/shared/display.py
     from radar_app.shared.display import CONCLUSION_EN as _CONCLUSION_EN
@@ -267,20 +270,16 @@ Write a 150–250 word analysis letter.
     raw = _call_groq(system_prompt, user_msg, max_tokens=500)
 
     if not raw:
-        if locale == "en":
-            letter_html = f"Based on quantitative analysis: {reasoning}\n\nRating: Grade {grade}, {conclusion_display}."
-            if trading_params and trading_params.get("position_label"):
-                letter_html += f"\n\nTrade parameters: {trading_params['position_label']}"
-        else:
-            letter_html = f"基于量化分析：{reasoning}\n\n评级：{grade}级，{conclusion}。"
-            if trading_params and trading_params.get("position_label"):
-                letter_html += f"\n\n操作参数：{trading_params['position_label']}"
+        # US-225：以前这里拼三行模板（「基于量化分析：…」+ 评级 + 操作参数），
+        # 页面照样署名「沃伦·巴菲特」当成信显示 —— 读者分不出那不是信。
+        # 现在信留空：页面显示「生成股东信」按钮；raw_output 留标记，
+        # analyze-svc 的 should_analyze 看到它会把这只重新排进去（"no_letter"）。
         return {
             "conclusion":        conclusion,
             "grade":             grade,
             "reasoning":         summarize_to_sentence(reasoning),
-            "letter_html":       letter_html,
-            "raw_output":        "（Layer 2 量化备用）",
+            "letter_html":       "",
+            "raw_output":        LETTER_FALLBACK_MARKER,
             "framework_used":    framework_name,
             "trade_block":       None,
             "moat":              _sc(moat_sc, 35),

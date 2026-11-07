@@ -106,7 +106,9 @@
 
     {# ── 操作参数卡片 ── #}
     {% set is_fund = analysis.framework_used == 'fund_v1' %}
-    {% set has_tech  = trading_params and trading_params.entry_1_label and not is_fund %}
+    {# US-225：评级 C 及以下时没有买入区间，但位置说明和止损仍要显示 #}
+    {% set has_tech  = trading_params and (trading_params.entry_1_label or trading_params.buy_suppressed) and not is_fund %}
+    {% set buy_suppressed = trading_params and trading_params.buy_suppressed %}
     {% set has_trade = analysis and analysis.trade_block %}
     {% if has_tech or has_trade %}
     <div class="trade-block" style="margin-top:20px">
@@ -123,10 +125,12 @@
         {% if trading_params.reduce_label %}
         <div class="trade-row"><span class="trade-label">{{ t.lbl_trade_reduce }}</span><span class="trade-val">{{ trading_params.reduce_label }}</span></div>
         {% endif %}
+        {% if trading_params.entry_1_label %}
         <div class="trade-row">
           <span class="trade-label">{{ t.lbl_trade_resistance1 if trading_params.entry_1_is_resistance else t.lbl_trade_entry1 }}</span>
           <span class="trade-val">{{ trading_params.entry_1_label }}</span>
         </div>
+        {% endif %}
         {% if trading_params.entry_2_label %}
         <div class="trade-row">
           <span class="trade-label">{{ t.lbl_trade_resistance2 if trading_params.entry_2_is_resistance else t.lbl_trade_entry2 }}</span>
@@ -144,6 +148,8 @@
           if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e){} }
           var rows = document.querySelector('.trade-block .trade-rows');
           var llmRows = '';
+          // US-225：评级 C 及以下不给买入区间 —— LLM 的块里就算有，也不补回来
+          if ({{ 'true' if buy_suppressed else 'false' }}) { delete data['买入区间1']; delete data['买入区间2']; }
           if (data['减仓区间'] && !rows.querySelector('[data-key="reduce"]')) {
             llmRows += '<div class="trade-row"><span class="trade-label" data-key="reduce">' + window._t.reduce_zone + '</span><span class="trade-val">' + data['减仓区间'] + '</span></div>';
           }

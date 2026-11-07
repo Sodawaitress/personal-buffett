@@ -345,6 +345,7 @@ def run_letter_only(job_id: int, code: str, market: str, user_id: int = None):
                     conclusion=stored.get("conclusion"),
                     reasoning=stored.get("reasoning"),
                     letter_html=result["letter_html"],
+                    raw_output=result.get("raw_output"),   # US-225：清掉「没写成信」标记
                     moat=result.get("moat") or stored.get("moat"),
                     management=result.get("management") or stored.get("management"),
                     valuation=result.get("valuation") or stored.get("valuation"),

@@ -30,7 +30,7 @@ ROTATION_DAYS = int(os.environ.get("ANALYZE_ROTATION_DAYS", "3"))
 QUANT_BUDGET_MIN = float(os.environ.get("QUANT_BUDGET_MIN", "20"))
 
 # 预算被截断时先做要紧的：持仓 > 重大新闻 > 从未分析 > 轮转
-_PRIORITY = {"held": 0, "material": 1, "never": 2, "bad_date": 2, "rotation": 3}
+_PRIORITY = {"held": 0, "material": 1, "never": 2, "bad_date": 2, "no_letter": 2, "rotation": 3}
 
 
 def _refresh_quant_all(date_str: str) -> tuple[int, bool]:
