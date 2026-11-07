@@ -31,7 +31,7 @@ def fetch_nz_quote(ticker: str) -> dict:
 
         return {
             "ticker":     ticker,
-            "name":       info.get("shortName", ticker),
+            "name":       info.get("longName") or info.get("shortName") or ticker,   # US-224
             "price":      round(price, 2),
             "change":     change,
             "currency":   info.get("currency", "NZD"),

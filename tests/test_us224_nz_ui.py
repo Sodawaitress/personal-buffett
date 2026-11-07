@@ -537,6 +537,30 @@ def test_add_flash_follows_language(monkeypatch):
         assert any(want in m for m in msgs), msgs
 
 
+# ── ⑬ 股票名：优先 Yahoo longName（shortName 被截断） ────────────
+
+def test_search_prefers_clean_long_name(monkeypatch):
+    import sys as _s, types, uuid
+    _s.path.insert(0, os.path.join(ROOT, "scripts"))
+    import stock_search
+    tick = f"T{uuid.uuid4().hex[:5].upper()}.NZ"      # 唯一代码，避开 1 小时结果缓存
+    fake = types.ModuleType("yfinance")
+
+    class _T:
+        def __init__(self, t):
+            self.info = {"shortName": "Air New Zealand Limited (NS) Or", "longName": "Air New Zealand Limited",
+                         "exchange": "NZE", "currency": "NZD"}
+
+    class _S:
+        def __init__(self, q, max_results=10):
+            self.quotes = [{"symbol": tick, "quoteType": "EQUITY", "exchDisp": "New Zealand",
+                            "shortname": "Air New Zealand Limited (NS) Or", "longname": "Air New Zealand Limited"}]
+    fake.Ticker, fake.Search = _T, _S
+    monkeypatch.setitem(_s.modules, "yfinance", fake)
+    assert stock_search._search_yf(tick)[0]["name"] == "Air New Zealand Limited"
+    assert stock_search._search_yf_name(f"q{uuid.uuid4().hex[:6]}")[0]["name"] == "Air New Zealand Limited"
+
+
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, ROOT)
