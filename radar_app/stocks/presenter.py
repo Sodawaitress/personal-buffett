@@ -700,6 +700,7 @@ def present_stock_page(bundle, fx_sort="impact"):
         # 而账面市盈率会被一次性收益做低（DUOL 账面 16.6 倍、真实约 43 倍）。
         # 在同一张卡上把它纠正掉 —— 不纠正的话，这张卡会继续把贵的说成便宜。
         _norm = None
+        _annual = None
         try:
             import json as _json
 
@@ -721,6 +722,7 @@ def present_stock_page(bundle, fx_sort="impact"):
             locale=_loc,
             normalized=_norm,
             reported_pe=_fund.get("pe_current"),
+            annual=_annual if isinstance(_annual, list) else None,   # US-225：亏损档
         )
     except Exception:
         cheapness = None

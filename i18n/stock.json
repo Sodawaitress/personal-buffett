@@ -1466,5 +1466,29 @@
   "verdict_mislead_suffix": {
     "en": "), financial data missing — auto-rating invalid. See Inst. Radar.",
     "zh": "），但财务数据缺失，自动评级无效——请看机构雷达"
+  },
+  "nt_not_yet": {
+    "en": "This share isn't on your list yet, so there's no analysis for it.",
+    "zh": "这只股票还不在你的列表里，所以还没有分析。"
+  },
+  "nt_add_and_analyse": {
+    "en": "Add to my watchlist and analyse",
+    "zh": "加入自选并分析"
+  },
+  "nt_note": {
+    "en": "The first analysis takes a few minutes. You'll come back to this page.",
+    "zh": "第一次分析要几分钟，加入后会回到这一页。"
+  },
+  "nt_unknown": {
+    "en": "We couldn't find a share with this code. Try searching by company name.",
+    "zh": "没找到这个代码对应的股票，试试按公司名搜索。"
+  },
+  "flash_add_missing": {
+    "en": "Stock code and name are required.",
+    "zh": "需要股票代码和名称。"
+  },
+  "flash_added_analysing": {
+    "en": "{name} ({code}) added. Analysing now…",
+    "zh": "{name}（{code}）已添加，正在分析中…"
   }
 }

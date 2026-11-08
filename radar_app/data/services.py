@@ -134,14 +134,19 @@ def has_recent_material(code: str, days: int = 2) -> bool:
         return row is not None
 
 
-def _last_analysis_date(code: str) -> str | None:
+def _last_analysis(code: str) -> tuple[str | None, str | None]:
+    """(最近一次分析日期, 它的 raw_output)。一次查询拿两样 —— 每趟 Neon 往返都要钱。"""
     with get_conn() as c:
         row = c.execute(
-            "SELECT analysis_date FROM analysis_results "
+            "SELECT analysis_date, raw_output FROM analysis_results "
             "WHERE code=:c ORDER BY analysis_date DESC, id DESC LIMIT 1",
             {"c": code},
         ).fetchone()
-        return row["analysis_date"] if row else None
+        return (row["analysis_date"], row["raw_output"]) if row else (None, None)
+
+
+# US-225：与 scripts.buffett_analyst.LETTER_FALLBACK_MARKER 一致（这里不 import scripts，避免反向依赖）
+_LETTER_FALLBACK_MARKER = "（Layer 2 量化备用）"
 
 
 def should_analyze(code: str, rotation_days: int = 3, held_codes: set = None) -> tuple[bool, str]:
@@ -155,9 +160,14 @@ def should_analyze(code: str, rotation_days: int = 3, held_codes: set = None) ->
     if has_recent_material(code):
         return True, "material"
 
-    last = _last_analysis_date(code)
+    last, raw_output = _last_analysis(code)
     if not last:
         return True, "never"
+    # US-225：上次 LLM 没写成信（Groq 空返回）→ 别等 3 天轮转，下一轮就重试。
+    # 只认这个标记，不认「letter_html 为空」—— 量化刷新的行本来就没有信，
+    # 认空信会让每只股票每天都烧一次 LLM。
+    if raw_output == _LETTER_FALLBACK_MARKER:
+        return True, "no_letter"
     try:
         last_d = date.fromisoformat(last[:10])
         if (date.today() - last_d).days >= rotation_days:

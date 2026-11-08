@@ -570,6 +570,12 @@ _CHEAP_STR = {
         "unknown_head": "估值数据不足，判断不了贵还是便宜",
         "unknown_reason": "缺少可比的历史估值（常见于亏损公司：市盈率为负，比不了）",
         "unknown_act": "这种情况看市净率和现金流更实在。",
+        "loss_head": "在亏损，市盈率不适用",
+        "loss_reason": "最近一个财年净利润是负的，市盈率也就是负数，拿来比贵贱没有意义",
+        "loss_narrow": "亏损比上一年少了",
+        "loss_widen": "亏损比上一年多了",
+        "loss_new": "上一年还在赚钱，这一年转成了亏损",
+        "loss_act": "这时候更该看两件事：亏损是不是在变少，手里的现金还能撑多久。",
         "pos": "当前市盈率处在自己过去 5 年的第 {p:.0f} 百分位",
         "low": "（偏低）", "high": "（偏高）", "mid": "（居中）",
         "mispriced_head": "便宜，而且不是因为公司变差",
@@ -598,6 +604,12 @@ _CHEAP_STR = {
         "unknown_head": "Not enough valuation data to say cheap or expensive",
         "unknown_reason": "No comparable valuation history (common for loss-making firms: P/E is negative)",
         "unknown_act": "Price-to-book and cash flow are more useful here.",
+        "loss_head": "Losing money, so P/E doesn't apply",
+        "loss_reason": "Net profit was negative in the latest financial year, so the P/E is negative too and can't tell you cheap or expensive",
+        "loss_narrow": "The loss was smaller than the year before",
+        "loss_widen": "The loss was bigger than the year before",
+        "loss_new": "It made a profit the year before; this year it made a loss",
+        "loss_act": "Two things matter more now: whether the loss is shrinking, and how long its cash will last.",
         "pos": "P/E sits in the {p:.0f}th percentile of its own last 5 years",
         "low": " (low)", "high": " (high)", "mid": " (middle)",
         "mispriced_head": "Cheap — and not because the business got worse",
@@ -622,9 +634,51 @@ _CHEAP_STR = {
 }
 
 
+def _loss_making(annual, locale: str = "zh") -> dict | None:
+    """US-225：最近一个财年净利润 < 0 → 亏损档。否则 None。
+
+    以前亏损公司和「没数据」共用 unknown 档（「估值数据不足」）——
+    可「在亏损」本身就是读者最该知道的事（AIR.NZ FY26 税后亏 2.42 亿）。
+    只说方向（变少/变多/转亏），不报数字：annual 的 net_profit 单位是「亿」，
+    放到新西兰元、美元公司上读起来会出错。
+    """
+    rows = []
+    for r in annual or []:
+        try:
+            y = str(r.get("year") or "")[:4]
+            v = r.get("net_profit")
+            if y and v is not None:
+                rows.append((y, float(v)))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    if not rows:
+        return None
+    rows.sort(key=lambda x: x[0], reverse=True)
+    latest = rows[0][1]
+    if latest >= 0:
+        return None
+    L = _CHEAP_STR.get(locale) or _CHEAP_STR["zh"]
+    reasons = [L["loss_reason"]]
+    if len(rows) >= 2:
+        prev = rows[1][1]
+        if prev >= 0:
+            reasons.append(L["loss_new"])
+        elif abs(latest) < abs(prev):
+            reasons.append(L["loss_narrow"])
+        elif abs(latest) > abs(prev):
+            reasons.append(L["loss_widen"])
+    return {
+        "tier": "loss_making",
+        "headline": L["loss_head"],
+        "reason": reasons,
+        "warning": "",
+        "actionable": L["loss_act"],
+    }
+
+
 def describe_cheapness(pe_percentile, evo_direction: str, evo_evidence: list = None,
                        locale: str = "zh", normalized: dict = None,
-                       reported_pe=None) -> dict:
+                       reported_pe=None, annual: list = None) -> dict:
     """US-172/173：在原判断之上，叠一层「这个市盈率是不是被一次性收益做低的」。
 
     `normalized` 来自 scripts.normalized_earnings.normalize()。没有就完全按原样返回。
@@ -632,7 +686,14 @@ def describe_cheapness(pe_percentile, evo_direction: str, evo_evidence: list = N
     为什么要叠在这张卡上：这张卡本来就在说「当前市盈率处在自己过去 5 年的
     第 X 百分位」—— 而那个分位是**用被做低的市盈率算的**。不在同一处说清楚，
     这张卡会继续把贵的说成便宜（DUOL：账面 16.6 倍，真实约 43 倍）。
+
+    US-225：没有市盈率分位、且最近一年在亏损时，返回 loss_making 档，
+    不再和「没数据」混在一起。
     """
+    if pe_percentile is None:
+        loss = _loss_making(annual, locale)
+        if loss:
+            return loss
     out = _describe_cheapness(pe_percentile, evo_direction, evo_evidence, locale)
     if not normalized:
         return out

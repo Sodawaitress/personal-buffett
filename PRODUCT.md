@@ -10850,7 +10850,12 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 
 > 用户（2026-11-07）：「先查修分析」。起因：US-223 那篇英文文章拿 Air NZ（AIR.NZ）做示例，生产上首次分析后页面撑不起文章（见 `research/nz_platforms_research.md`「生产实测 AIR.NZ」）。
 
-**实现状态（2026-11-07）**：📝 根因已查，设计待确认，未动代码。
+**实现状态（2026-11-07）**：✅ A/B/C 已实现，本地提交，**未推送**（等 Yu 说推）。`tests/test_us225_analysis_honesty.py` 13 条 + US-224 测试共 44 条在新空库上全过。D 已查（见文末），未改代码。
+
+**D 的调查结果（2026-11-07）**
+- **六个维度全「—」不是数据缺失**：yfinance 有完整的 AIR.NZ 年报（FY26 净利润 −2.42 亿、上年 +1.26 亿、营收 70.16 亿，资产负债表 83 项）。全「—」是因为新版按公司类型评级的 `components` 键是 `quality/value`，没有 `moat/growth_management/safety`（US-156 注释已写明），降级路径只能从这些键取分，于是全空。LLM 正常写成信时，维度由 LLM 输出解析，不受影响
+- **Groq 那次为什么返回空：未查清**。要看 2026-11-05 那个 job 的日志（`/api/job/<id>`），本机没有 flyctl，job id 也没找到。可能原因：账号级 TPM 12,000，与同时段的定时分析抢额度
+- **顺带发现，待核实**：analyze-svc 每天先跑量化刷新（`_run_layer2` 写当天的 daily 行），而 `should_analyze` 用「最近一行的日期」判断 3 天轮转 —— 如果量化行每天都写，非持仓股可能永远到不了轮转。还没在生产数据上确认，单独立 US 再查
 
 ### 生产实测（2026-11-05，英文界面，首次分析）
 评级 C · Reduce；摘要「quality 27/100 … valuation data thin」；估值卡「Not enough valuation data」；六个维度全「—」；信只有模板三行；交易参数写「This is a buying opportunity」并给买入区间和止损。

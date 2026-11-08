@@ -448,7 +448,8 @@ def _search_yf_name(query: str, limit: int = 6) -> list:
             if q.get("quoteType") not in ("EQUITY", "ETF"):
                 continue
             symbol = q.get("symbol", "")
-            name   = q.get("shortname") or q.get("longname") or symbol
+            # US-224：Yahoo 的 shortname 被截断（「Air New Zealand Limited (NS) Or」「BHP GROUP FPO [BHP]」「SamsungElec」），longname 干净
+            name   = q.get("longname") or q.get("shortname") or symbol
             exch   = q.get("exchDisp", "")
             sym_up = symbol.upper()
             if sym_up.endswith(".NZ"):
@@ -489,7 +490,7 @@ def _search_yf(ticker: str) -> list:
                 parts[0] = parts[0].lstrip("0") or "0"
             ticker = ".".join(parts)
         info = yf.Ticker(ticker).info
-        short = info.get("shortName") or info.get("longName")
+        short = info.get("longName") or info.get("shortName")   # US-224：同上，优先 longName
         if not short:
             return []
         exch = info.get("exchange", "")

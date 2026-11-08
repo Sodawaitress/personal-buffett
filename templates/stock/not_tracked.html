@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{# US-224：库里还没有这只股票。原来直接跳回首页 + 英文 flash，顺着文章链接来的读者走进死路。 #}
+{% block title %}{{ (match.name if match else code) }} — {{ t.brand }}{% endblock %}
+{% block content %}
+<div class="container py-4 not-tracked" style="max-width:620px">
+  <p class="nt-back"><a href="{{ url_for('watchlist_page') }}">← {{ t.nav_watchlist }}</a></p>
+  {% if match %}
+  <h1 class="nt-title">{{ match.name }} <span class="nt-code">{{ code }}</span></h1>
+  <p class="nt-lead">{{ t.nt_not_yet }}</p>
+  <form method="post" action="{{ url_for('add_stock') }}">
+    <input type="hidden" name="code" value="{{ match.code }}">
+    <input type="hidden" name="name" value="{{ match.name }}">
+    <input type="hidden" name="market" value="{{ match.market or '' }}">
+    <input type="hidden" name="next" value="{{ url_for('stock_page', code=match.code) }}">
+    <button type="submit" class="btn-ink">{{ t.nt_add_and_analyse }}</button>
+  </form>
+  <p class="nt-note">{{ t.nt_note }}</p>
+  {% else %}
+  <h1 class="nt-title">{{ code }}</h1>
+  <p class="nt-lead">{{ t.nt_unknown }}</p>
+  {% endif %}
+  <div class="nt-search">
+    {% set add_search_compact = true %}
+    {% include 'stock/_add_search.html' %}
+  </div>
+</div>
+{% endblock %}
