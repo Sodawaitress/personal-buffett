@@ -1,30 +1,72 @@
 [
   {
+    "code": "300274",
+    "name": "阳光电源",
+    "date": "2026-11-10",
+    "advice": "未持仓今日不是进场时机，等 ¥74 下方第二次回调再分批 5-10%(光伏 β 大仓位克制)，跌破 ¥70 止损；已持仓不恐慌但不加仓，¥85 上方止盈一部分。-5.03% 异动是中选 IRA 风险释放+技术回调，非基本面事故",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 79,
+      "short_change_pct": -6.8,
+      "survey_count_30d": 1,
+      "price": 77.85
+    }
+  },
+  {
     "code": "300124",
     "name": "汇川技术",
-    "date": "2026-11-06",
-    "advice": "延续 10-29/11-03/11-05 建议：未持仓 ¥54-¥58 分批 10-15%，跌破 ¥51 止损；已持仓继续持有看人形机器人订单转化。12 次调研(最密集,含现场调研/券商策略会)+融券+56%未进前5%,公司底好+机构抢跑+大众未动。",
+    "date": "2026-11-10",
+    "advice": "延续 10-29/11-03/11-05/11-06 建议：未持仓 ¥56-¥58 分批建仓 10-15%，跌破 ¥51 止损；已持仓继续持有。prec 5.75 全市场第一+12 调研+融券 base 真量级",
     "signals": {
       "grade": "A",
       "conclusion": "买入",
       "quant_score": 78,
-      "short_change_pct": 56.4,
+      "short_change_pct": 38.9,
       "survey_count_30d": 12,
-      "price": 57.94
+      "price": 57.55
     }
   },
   {
     "code": "300012",
     "name": "华测检测",
-    "date": "2026-11-06",
-    "advice": "观察为主,不进场;已持仓继续持有但不加仓。等融券见顶回落(base 跌回 50 万股下方)+股价企稳 ¥14 上方再评估。9 次调研+融券+169%(Top5% 极端,32.3→87.0 万股)两个方向同时走到极端,机构在调研+有别的资金对冲甚至做空,先等明确再动手。",
+    "date": "2026-11-10",
+    "advice": "观察为主，不进场、不加仓。多空极端分歧(6 调研+融券 base 41.4→89.3 万股真量级)，等融券见顶回落(base 跌回 50 万股下方)+股价企稳 ¥16 上方再评估",
     "signals": {
       "grade": "B+",
       "conclusion": "持有",
       "quant_score": 69,
-      "short_change_pct": 169.0,
-      "survey_count_30d": 9,
-      "price": 14.94
+      "short_change_pct": 115.9,
+      "survey_count_30d": 6,
+      "price": 15.64
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-11-10",
+    "advice": "延续 11-03/11-05/11-06 建议：未持仓 ¥33-¥34.5 分批 15% 建仓(防御底仓适合重仓)，跌破 ¥32.5 止损；已持仓继续持有。prec 4.14+8 高频调研+融券 base 真量级退",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": -22.9,
+      "survey_count_30d": 8,
+      "price": 34.37
+    }
+  },
+  {
+    "code": "000333",
+    "name": "美的集团",
+    "date": "2026-11-10",
+    "advice": "未持仓 ¥88-¥90 分批 10-15% 作防御底仓，跌破 ¥85 止损；已持仓继续持有收股息+回购注销 EPS 提升。回购 117.57 亿已超额，融券退 base 850→730 万股真量级",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 71,
+      "short_change_pct": -14.1,
+      "survey_count_30d": 1,
+      "price": 89.79
     }
   },
   {
@@ -42,20 +84,6 @@
     }
   },
   {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-11-06",
-    "advice": "延续 11-03/11-05 建议:未持仓 ¥33-¥34.5 分批 15%(防御底仓适合重仓),跌破 ¥32.5 止损;已持仓继续持有赚息差+分红。30日7次高频调研+融券-28.7%空头退+base 850 万股真实量级=典型慢牛前兆,银行股不给惊喜但在分化市里是组合底盘。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": -28.7,
-      "survey_count_30d": 7,
-      "price": 33.88
-    }
-  },
-  {
     "code": "300308",
     "name": "中际旭创",
     "date": "2026-11-06",
@@ -67,20 +95,6 @@
       "short_change_pct": -0.5,
       "survey_count_30d": 2,
       "price": 493.33
-    }
-  },
-  {
-    "code": "600549",
-    "name": "厦门钨业",
-    "date": "2026-11-05",
-    "advice": "未持仓 ¥34-¥36 分批 10-15%（有色周期敏感仓位不宜重），跌破 ¥32 止损；已持仓继续持有，¥42 上方止盈一部分。87 家五合一大调研+空头撤+Q3+82%。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 75,
-      "short_change_pct": -34.2,
-      "survey_count_30d": 1,
-      "price": 36.81
     }
   },
   {
@@ -112,17 +126,17 @@
     }
   },
   {
-    "code": "300394",
-    "name": "天孚通信",
-    "date": "2026-11-04",
-    "advice": "未持仓分 3 次等 ¥115-¥120 试探 5%，跌破 ¥110 严格止损；已持仓不恐慌但不加仓。关键观察：11 月中旬有无新一轮高质量调研补上 + CPO 产业链有无订单/澄清公告。",
+    "code": "600549",
+    "name": "厦门钨业",
+    "date": "2026-11-05",
+    "advice": "未持仓 ¥34-¥36 分批 10-15%（有色周期敏感仓位不宜重），跌破 ¥32 止损；已持仓继续持有，¥42 上方止盈一部分。87 家五合一大调研+空头撤+Q3+82%。",
     "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 90,
-      "short_change_pct": -34.6,
-      "survey_count_30d": 5,
-      "price": 123.61
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 75,
+      "short_change_pct": -34.2,
+      "survey_count_30d": 1,
+      "price": 36.81
     }
   },
   {
@@ -140,20 +154,6 @@
     }
   },
   {
-    "code": "002594",
-    "name": "比亚迪",
-    "date": "2026-11-04",
-    "advice": "延续 10-30 建议，未持仓 ¥82-¥84 分批建仓 15%，跌破 ¥77 严格止损；已持仓继续持有，¥90 以上止盈一部分。关键观察：11 月末北京车展新品 + 阿布扎比 RTC 项目兑现进度。",
-    "signals": {
-      "grade": "B",
-      "conclusion": "持有",
-      "quant_score": 41,
-      "short_change_pct": 2.0,
-      "survey_count_30d": 10,
-      "price": 84.95
-    }
-  },
-  {
     "code": "600900",
     "name": "长江电力",
     "date": "2026-11-04",
@@ -168,31 +168,31 @@
     }
   },
   {
-    "code": "002602",
-    "name": "世纪华通",
-    "date": "2026-11-03",
-    "advice": "未持仓 ¥11.5-¥12 回调分批建仓 10%（不追 +7.81% 当日高位），跌破 ¥11 止损；已持仓继续持有，¥13.5 上方止盈一部分。关键观察：Q4 新品上线节奏 + 社保基金 Q4 持仓变动。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 82,
-      "short_change_pct": null,
-      "survey_count_30d": 0,
-      "price": 12.42
-    }
-  },
-  {
-    "code": "688008",
-    "name": "澜起科技",
-    "date": "2026-11-03",
-    "advice": "未持仓 ¥150 下方回调分批 5-10%（估值贵，仓位克制），跌破 ¥140 止损；已持仓继续持有看 Q4 订单兑现（25-27.9 亿是硬指引），¥180 上方止盈一部分。关键观察：11 月中旬 DDR5 大客户采购公告 + 后续调研是否持续。",
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-11-04",
+    "advice": "未持仓分 3 次等 ¥115-¥120 试探 5%，跌破 ¥110 严格止损；已持仓不恐慌但不加仓。关键观察：11 月中旬有无新一轮高质量调研补上 + CPO 产业链有无订单/澄清公告。",
     "signals": {
       "grade": "B-",
       "conclusion": "观察",
-      "quant_score": 84,
-      "short_change_pct": null,
-      "survey_count_30d": 3,
-      "price": 164.58
+      "quant_score": 90,
+      "short_change_pct": -34.6,
+      "survey_count_30d": 5,
+      "price": 123.61
+    }
+  },
+  {
+    "code": "002594",
+    "name": "比亚迪",
+    "date": "2026-11-04",
+    "advice": "延续 10-30 建议，未持仓 ¥82-¥84 分批建仓 15%，跌破 ¥77 严格止损；已持仓继续持有，¥90 以上止盈一部分。关键观察：11 月末北京车展新品 + 阿布扎比 RTC 项目兑现进度。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 41,
+      "short_change_pct": 2.0,
+      "survey_count_30d": 10,
+      "price": 84.95
     }
   },
   {
@@ -210,17 +210,45 @@
     }
   },
   {
-    "code": "300750",
-    "name": "宁德时代",
-    "date": "2026-10-30",
-    "advice": "未持仓 ¥220-¥230 分批建仓 10%（防御型底仓），跌破 ¥210 止损；已持仓继续持有。阿布扎比项目丢失是提醒，若 Q4 国内连续丢单考虑减仓一半。",
+    "code": "688008",
+    "name": "澜起科技",
+    "date": "2026-11-03",
+    "advice": "未持仓 ¥150 下方回调分批 5-10%（估值贵，仓位克制），跌破 ¥140 止损；已持仓继续持有看 Q4 订单兑现（25-27.9 亿是硬指引），¥180 上方止盈一部分。关键观察：11 月中旬 DDR5 大客户采购公告 + 后续调研是否持续。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 84,
+      "short_change_pct": null,
+      "survey_count_30d": 3,
+      "price": 164.58
+    }
+  },
+  {
+    "code": "002602",
+    "name": "世纪华通",
+    "date": "2026-11-03",
+    "advice": "未持仓 ¥11.5-¥12 回调分批建仓 10%（不追 +7.81% 当日高位），跌破 ¥11 止损；已持仓继续持有，¥13.5 上方止盈一部分。关键观察：Q4 新品上线节奏 + 社保基金 Q4 持仓变动。",
     "signals": {
       "grade": "A",
-      "conclusion": "持有",
-      "quant_score": 87,
-      "short_change_pct": -11.3,
-      "survey_count_30d": 1,
-      "price": 229.07
+      "conclusion": "买入",
+      "quant_score": 82,
+      "short_change_pct": null,
+      "survey_count_30d": 0,
+      "price": 12.42
+    }
+  },
+  {
+    "code": "ANET",
+    "name": "Arista Networks",
+    "date": "2026-10-30",
+    "advice": "未持仓等 Q3 earnings 披露后再分批建仓 5-10%（AI 波动大，仓位控制），跌破 $170 止损；已持仓继续持有看 Q3 披露。关键观察：Q3 earnings 时间点（10 月末/11 月初）+ hyperscale 客户采购承诺更新。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 95,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 186.04
     }
   },
   {
@@ -238,17 +266,17 @@
     }
   },
   {
-    "code": "ANET",
-    "name": "Arista Networks",
+    "code": "300750",
+    "name": "宁德时代",
     "date": "2026-10-30",
-    "advice": "未持仓等 Q3 earnings 披露后再分批建仓 5-10%（AI 波动大，仓位控制），跌破 $170 止损；已持仓继续持有看 Q3 披露。关键观察：Q3 earnings 时间点（10 月末/11 月初）+ hyperscale 客户采购承诺更新。",
+    "advice": "未持仓 ¥220-¥230 分批建仓 10%（防御型底仓），跌破 ¥210 止损；已持仓继续持有。阿布扎比项目丢失是提醒，若 Q4 国内连续丢单考虑减仓一半。",
     "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 95,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 186.04
+      "grade": "A",
+      "conclusion": "持有",
+      "quant_score": 87,
+      "short_change_pct": -11.3,
+      "survey_count_30d": 1,
+      "price": 229.07
     }
   },
   {
@@ -361,20 +389,6 @@
       "short_change_pct": -30.9,
       "survey_count_30d": 3,
       "price": 176.85
-    }
-  },
-  {
-    "code": "000333",
-    "name": "美的集团",
-    "date": "2026-10-20",
-    "advice": "未持仓 ¥85-¥87 分批建仓 15-20% 作为组合防御底仓，跌破 ¥82 止损；已持仓继续持有收股息等 10 月下旬三季报。107 亿累计回购全部注销=EPS 直接提升。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 71,
-      "short_change_pct": 7.3,
-      "survey_count_30d": 1,
-      "price": 86.54
     }
   }
 ]
