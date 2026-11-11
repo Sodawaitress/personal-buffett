@@ -1,5 +1,75 @@
 [
   {
+    "code": "300124",
+    "name": "汇川技术",
+    "date": "2026-11-11",
+    "advice": "未持仓 ¥55-¥56 分批 15%（当前 ¥55.85 已在区间内），跌破 ¥51 止损；已持仓不恐慌不加仓，Q4 等伺服订单兑现数据。11 次高质量调研+便宜估值+今日被错杀=三层叠加接近完美窗口。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 78,
+      "short_change_pct": 40.1,
+      "survey_count_30d": 11,
+      "price": 55.85
+    }
+  },
+  {
+    "code": "002142",
+    "name": "宁波银行",
+    "date": "2026-11-11",
+    "advice": "未持仓 ¥33.5-¥34.5 分批 15%（防御底仓可重仓，当前 ¥34.26 已在区间），跌破 ¥32.5 止损；已持仓继续持有赚息差+分红。prec 4.54+8 次调研+空头认输撤退。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 80,
+      "short_change_pct": -20.6,
+      "survey_count_30d": 8,
+      "price": 34.26
+    }
+  },
+  {
+    "code": "603893",
+    "name": "瑞芯微",
+    "date": "2026-11-11",
+    "advice": "⚠️ 不追涨停。已持仓今日可止盈一部分；未持仓等 ¥195-¥205 回调分批 5%（基数小仓位必克制），跌破 ¥180 严格止损。融券+326% top 1% × 调研断档 40 天 × 涨停=US-166 预警格雏形。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": 325.9,
+      "survey_count_30d": 1,
+      "price": 233.2
+    }
+  },
+  {
+    "code": "300012",
+    "name": "华测检测",
+    "date": "2026-11-11",
+    "advice": "观察为主。未持仓等融券 base 回落至 70 万股下方+股价企稳 ¥16 上方再评估；已持仓继续持有不加仓。5 次调研质量参差（业绩说明会+特定对象混合），融券+74% top 11% 真量级加码，多空真刀实枪较劲。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 69,
+      "short_change_pct": 74.3,
+      "survey_count_30d": 5,
+      "price": 15.59
+    }
+  },
+  {
+    "code": "NVDA",
+    "name": "Nvidia Corporation",
+    "date": "2026-11-11",
+    "advice": "未持仓耐心等 Q3 earnings（11-17）披露后再决定，若财报无瑕疵且股价企稳 $170 上方可分批 5-10%；已持仓不加仓不恐慌，跌破 $160 严格止损。连续多日回调是情绪不是基本面，但不买答案没出来前的 AI 算力。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 90,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 168.23
+    }
+  },
+  {
     "code": "300274",
     "name": "阳光电源",
     "date": "2026-11-10",
@@ -11,48 +81,6 @@
       "short_change_pct": -6.8,
       "survey_count_30d": 1,
       "price": 77.85
-    }
-  },
-  {
-    "code": "300124",
-    "name": "汇川技术",
-    "date": "2026-11-10",
-    "advice": "延续 10-29/11-03/11-05/11-06 建议：未持仓 ¥56-¥58 分批建仓 10-15%，跌破 ¥51 止损；已持仓继续持有。prec 5.75 全市场第一+12 调研+融券 base 真量级",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": 38.9,
-      "survey_count_30d": 12,
-      "price": 57.55
-    }
-  },
-  {
-    "code": "300012",
-    "name": "华测检测",
-    "date": "2026-11-10",
-    "advice": "观察为主，不进场、不加仓。多空极端分歧(6 调研+融券 base 41.4→89.3 万股真量级)，等融券见顶回落(base 跌回 50 万股下方)+股价企稳 ¥16 上方再评估",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 69,
-      "short_change_pct": 115.9,
-      "survey_count_30d": 6,
-      "price": 15.64
-    }
-  },
-  {
-    "code": "002142",
-    "name": "宁波银行",
-    "date": "2026-11-10",
-    "advice": "延续 11-03/11-05/11-06 建议：未持仓 ¥33-¥34.5 分批 15% 建仓(防御底仓适合重仓)，跌破 ¥32.5 止损；已持仓继续持有。prec 4.14+8 高频调研+融券 base 真量级退",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 80,
-      "short_change_pct": -22.9,
-      "survey_count_30d": 8,
-      "price": 34.37
     }
   },
   {
@@ -95,20 +123,6 @@
       "short_change_pct": -0.5,
       "survey_count_30d": 2,
       "price": 493.33
-    }
-  },
-  {
-    "code": "603893",
-    "name": "瑞芯微",
-    "date": "2026-11-05",
-    "advice": "⚠️ 不追 +10% 高位，等 ¥180-¥190 回调分批 5%（基数小仓位必克制），跌破 ¥170 止损；已持仓继续持有看 Q4 业绩。融券+371% 表面极端但 base 1.4 万股分母噪音边缘。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "持有",
-      "quant_score": 70,
-      "short_change_pct": 371.3,
-      "survey_count_30d": 2,
-      "price": 198.01
     }
   },
   {
@@ -347,48 +361,6 @@
       "short_change_pct": 26.4,
       "survey_count_30d": 1,
       "price": 23.28
-    }
-  },
-  {
-    "code": "689009",
-    "name": "九号公司",
-    "date": "2026-10-20",
-    "advice": "未持仓不追 +4.66%，等回调 ¥37-¥38 再分批 10%，跌破 ¥35.5 止损；已持仓继续持有，¥42 以上止盈一部分。1400 万台出货里程碑+板块情绪跟进。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 78,
-      "short_change_pct": null,
-      "survey_count_30d": 1,
-      "price": 39.07
-    }
-  },
-  {
-    "code": "688111",
-    "name": "金山办公",
-    "date": "2026-10-20",
-    "advice": "未持仓 ¥225-¥232 分批建仓 10-15%(接近回购成交区间下沿)，跌破 ¥215 止损；已持仓继续持有看 Q3 业绩。质量 100/100+累计回购 1.15 亿。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 100,
-      "short_change_pct": 6.7,
-      "survey_count_30d": 1,
-      "price": 231.85
-    }
-  },
-  {
-    "code": "300476",
-    "name": "胜宏科技",
-    "date": "2026-10-20",
-    "advice": "未持仓耐心等 ¥170 下方分批 10%(接近 1.5 亿回购成本区间)，跌破 ¥160 止损；已持仓继续持有看回购实施。董事长 1.5-3 亿回购+融券-30.9%空头认输+3 次调研。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 77,
-      "short_change_pct": -30.9,
-      "survey_count_30d": 3,
-      "price": 176.85
     }
   }
 ]

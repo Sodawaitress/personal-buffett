@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-11",
+    "code": "603893",
+    "name": "瑞芯微",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "涨停日叠加融券余量+326%（top 1%）+ 调研断档40天，散户追高接盘雏形",
+    "price_at_prediction": 233.2
+  },
+  {
+    "date": "2026-11-11",
+    "code": "300124",
+    "name": "汇川技术",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "30天11次高质量调研+估值便宜（PE自身历史低位）+ 今日被错杀，底好时机到",
+    "price_at_prediction": 55.85
+  }
+]
