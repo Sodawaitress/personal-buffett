@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-12",
+    "code": "300394",
+    "name": "天孚通信",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "CPO板块今日集体爆发(+14%)+机构5次调研+空头小幅撤, 但估值贵于历史, 预期短期在¥125-¥155区间震荡回落",
+    "price_at_prediction": 144.06
+  },
+  {
+    "date": "2026-11-12",
+    "code": "002142",
+    "name": "宁波银行",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "prec 5.77+30日8次机构调研+融券余量-19.3%空头在撤, 公司底/机构/大众三层共振, 防御底仓窗口期",
+    "price_at_prediction": 33.97
+  }
+]
