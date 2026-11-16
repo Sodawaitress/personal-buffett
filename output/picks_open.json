@@ -404,19 +404,5 @@
       "survey_count_30d": 1,
       "price": 34.99
     }
-  },
-  {
-    "code": "600406",
-    "name": "国电南瑞",
-    "date": "2026-10-23",
-    "advice": "未持仓可小仓位 ¥22.8-¥23.5 建仓 10%，跌破 ¥22 考虑止损；大盘情绪稳定前不追高。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 72,
-      "short_change_pct": 26.4,
-      "survey_count_30d": 1,
-      "price": 23.28
-    }
   }
 ]
