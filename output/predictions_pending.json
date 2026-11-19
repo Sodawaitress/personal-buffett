@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-19",
+    "code": "300857",
+    "name": "协创数据",
+    "direction": "down",
+    "horizon_days": 10,
+    "key_signal": "刚拉涨 18% 后大众 FOMO + 新闻已充分发酵，大概率技术回调整理（控股股东 11-2 增持公告未在站上数据出现，是潜在的底部支撑）",
+    "price_at_prediction": 139.49
+  },
+  {
+    "date": "2026-11-19",
+    "code": "003816",
+    "name": "中国广核",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "防御股典型多空分歧：主力5日净流入 + 融券base 151→263万股翻倍加仓 + 30日调研2次 + 公用事业板块整体资金流出，长短期观点对冲中",
+    "price_at_prediction": 4.71
+  }
+]
