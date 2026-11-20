@@ -10961,3 +10961,26 @@ unavailable opacity .5 斜体      ← 算不出，但**必须显示**
 - [ ] DUOL 现在的状态（新闻 7 月、评级 9 月、财报 11-03）能让页面显示出两条过时提醒
 - [ ] 不过时的时候不显示任何提醒，不制造噪音
 - [ ] 双语
+
+
+## US-230 · 首页外网抓取不能拖垮整站（2026-11-20 503 事故）
+
+**实现状态（2026-11-20）**：✅ 已实现，已部署。
+
+**事故**：2026-11-20 10:14–10:30（北京时间）整站 503 约 16 分钟。机器、卷、进程都正常，但 `/healthz` 不回应 → Fly 判实例不健康、拒绝路由（`PR01 no known healthy instances`）。
+
+**根因**：首页 `build_dashboard_context` 每次渲染都**同步**抓外网（FOMC RSS / A股·NZ 新闻 RSS / RBNZ / yfinance NZX50）；`feedparser.parse(url)` **没有超时**、yfinance 也没有。gunicorn 只有 1 worker × 4 threads，几个请求卡在外网上就把线程占满，连 `/healthz` 都排不上队。
+
+**修**：
+- `radar_app/shared/bounded_fetch.py`：缓存 + 单飞（同 key 同时只一个刷新）+ 请求最多等 4 秒，等不到回上次结果或空；抓取在 daemon 线程里跑，不占请求线程。
+- `radar_app/legacy/market_data.py`：首页用到的 5 个外网函数套上（新闻 15 分钟、FOMC 30 分钟、NZX50 5 分钟）；脚本/流水线直接 import 原模块，行为不变。
+- `scripts/feed_http.py` `parse_feed()`：先 `requests` 带 10 秒超时取，再交给 feedparser；`macro_fetch` / `nz_fetch` 5 处调用替换。
+- `gunicorn.conf.py` threads 4 → 8。
+
+**AC**
+- [x] 外网卡住时，首页请求在几秒内返回（单测：挂起的抓取 0.2 秒内回 fallback）
+- [x] 同一数据同时只有一个外网请求在飞（单测）
+- [x] 缓存过期后刷新、异常时回 fallback（单测）
+- [x] 首页 5 个外网函数都已套护栏（单测）
+- [x] 真实 feed 抓取结果与改前一致（RNZ 前后都是 15 条）
+- [x] 全量测试通过；部署后 `/healthz`、`/register` 200

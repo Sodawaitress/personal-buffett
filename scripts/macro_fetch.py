@@ -6,6 +6,7 @@ CNY/USD汇率 · A股三大指数 · 铜/铁矿石 · Fear & Greed · FOMC声明
 """
 
 import time, requests, feedparser, json
+from feed_http import parse_feed
 from datetime import datetime
 
 SINA_HQ = "https://hq.sinajs.cn/list={symbols}"
@@ -179,7 +180,7 @@ def fetch_fomc_news(limit: int = 3) -> list:
     url = "https://www.federalreserve.gov/feeds/press_all.xml"
     items = []
     try:
-        feed = feedparser.parse(url)
+        feed = parse_feed(url)
         for e in feed.entries[:limit * 3]:
             title = e.get("title", "")
             # 只要利率/货币政策相关
@@ -223,7 +224,7 @@ def fetch_cn_market_news(limit: int = 8) -> list:
         try:
             encoded = requests.utils.quote(query)
             url = f"https://news.google.com/rss/search?q={encoded}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
-            feed = feedparser.parse(url)
+            feed = parse_feed(url)
             for e in feed.entries[:15]:
                 title = e.get("title", "")[:120]
                 link = e.get("link", "")
@@ -272,7 +273,7 @@ def fetch_excavator_sales() -> dict:
     url     = f"https://news.google.com/rss/search?q={encoded}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
     items   = []
     try:
-        feed = feedparser.parse(url)
+        feed = parse_feed(url)
         for e in feed.entries[:5]:
             title = e.get("title", "")
             if any(k in title for k in ["销量", "销售", "挖掘机", "工程机械"]):

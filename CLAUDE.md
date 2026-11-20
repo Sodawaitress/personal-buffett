@@ -163,6 +163,8 @@
   - **US-142 谁在卖自己公司的股票（已部署）**：**原源已死** —— `ak.stock_share_hold_change_sse/szse` 从 NZ 和 Fly 悉尼都 ConnectionReset，生产 `insider_changes` 四个月只 11 行。搜了三个候选：cninfo 公告(能查到「减持」377条但**只有标题拿不到比例**)、`webapi.cninfo.com.cn`(Fly 上**DNS 都解析不了**，与可用的 `www.cninfo.com.cn` 不同机)、**东财 datacenter `RPT_EXECUTIVE_HOLD_DETAILS`（Fly 可达、字段全结构化）** ← 采用。`CHANGE_RATIO`=占总股本、`END_HOLD_NUM`可算占本人持股、`CHANGE_REASON`判惯例性。**⚠️ 东财只能 Fly 悉尼跑**。`classify_insider_move()` 依 Cohen-Malloy-Pomorski(2012)**只有机会性交易有信息量**分惯例/机会性（大额即使原因机械也算机会性）；**卖出的「占本人持股」分母必须用卖前持股**（卖后+卖掉的），否则卖光的人永远显示 100%；窗口 30→180 天；必带 caveat「高管卖股票理由可能很私人，一笔不说明问题」；20 测试
   - **US-148 规则叙事 zh-only 欠债（待做）**：双语规范守住了模板层，但 `describe_*`/`conclusion_text`/`_SIGNAL_CONTEXT`/`lifecycle._evolution` evidence 等**规则生成的正文全是中文、绕过 t[]** → Da-young 切英文只有外壳是英文。US-141 已按正确姿势做（`locale=` 参数 + 双语串表 + 「en 输出无中文」正则单测），可作模板
 
+- **US-230 首页外网抓取不能拖垮整站（2026-11-20，已部署）**：**事故**——整站 503 约 16 分钟，机器/进程都好但 `/healthz` 不回 → Fly 拒绝路由。**根因**——首页每次渲染同步抓 FOMC/新闻 RSS/RBNZ/yfinance NZX50，`feedparser.parse(url)` 无超时，1 worker×4 threads 被几个卡住的请求占满。**修**：`radar_app/shared/bounded_fetch.py`（缓存+单飞+请求最多等 4 秒，抓取跑 daemon 线程）套在 `radar_app/legacy/market_data.py` 的 5 个首页外网函数上；`scripts/feed_http.py` `parse_feed()` 给 RSS 加 10 秒超时（macro_fetch/nz_fetch 5 处）；gunicorn threads 4→8；`tests/test_bounded_fetch.py` 5 测试。**教训：请求路径上任何外网调用都必须有超时 + 缓存，不能让第三方的慢变成我们的 503。**
+
 ### ❌ UI 待做（暂停）
 - US-07 组合分析 /portfolio（无路由，较大功能）
 - US-15 新闻情境化（标注影响哪只持仓）

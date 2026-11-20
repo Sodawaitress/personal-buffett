@@ -6,6 +6,7 @@ RBNZ RSS · NZX announcements · Earnings calendar
 
 import time
 import feedparser
+from feed_http import parse_feed
 import yfinance as yf
 from datetime import datetime, timezone, timedelta
 from nz_profiles import NZ_PROFILES
@@ -87,7 +88,7 @@ def fetch_nz_market_news() -> list:
     seen  = set()
     for url, source in sources:
         try:
-            feed = feedparser.parse(url)
+            feed = parse_feed(url)
             for e in feed.entries[:20]:
                 title = e.get("title", "")[:120]
                 link  = e.get("link", "")
@@ -154,7 +155,7 @@ def fetch_rbnz_news(limit: int = 3) -> list:
                 "monetary policy", "interest rate", "inflation", "mpc"]
     items = []
     try:
-        feed = feedparser.parse(url)
+        feed = parse_feed(url)
         for e in feed.entries[:30]:
             title = e.get("title", "")
             if any(k in title.lower() for k in keywords):
