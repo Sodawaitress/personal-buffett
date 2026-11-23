@@ -13269,3 +13269,141 @@ CLAUDE_ROUTINE.md 的 US-166 表格第 3 行目前写的是「减少 + 概念拉
 - **12-04（周三）**：11-20 组 Day 10（300308 中际旭创 up +2~+10% / 002415 海康威视 up +2~+8%）—— 本次新预言
 
 ---
+
+## 2026-11-23 · Run 1 · 跳过（Gate ① FAIL · 周一结构性缺口）
+
+### 门禁三重校验
+
+- **Gate ②（价格签名，先算）**：当前 `974fb87f578d99022a7eef709efe25d0`，上次 `75341afb6d21788e679a9c01fec61655`，不同 → **PASS**。说明 Fri pipeline 跑完过（周五 UTC 21:31 结束），服务器不是空跑。
+- **Gate ①（新鲜度）**：age **63.56h**（snapshot generated_at = 2026-11-20T21:31:51Z，now 2026-11-23T13:05Z）> 26h 宽通道 → **FAIL**。Gate ② PASS 下走宽通道也救不回来 —— 这是周一专属的「Fri 收盘 + 周末 + 本周一 pipeline 未触发」结构性缺口，63h 已是 2.5 个交易日空档。
+- **Gate ③（WebSearch 交叉验证）**：**未执行**（Gate ① FAIL 已决定跳过，无需浪费搜索配额）。
+
+### 上游诊断（US-206 四步）
+
+```
+gh run list --workflow=pipeline.yml -L 5
+```
+
+| 日期 | createdAt (UTC) | updatedAt | event | conclusion |
+|---|---|---|---|---|
+| 11-20 Fri | 16:11 | 21:35 | schedule | success ← 本次读到的 snapshot |
+| 11-19 Thu | 16:36 | 22:08 | schedule | cancelled |
+| 11-18 Wed | 16:29 | 21:45 | schedule | cancelled |
+| 11-17 Mon | 16:55 | 22:06 | schedule | success |
+| 11-16 Sun | 17:05 | 23:59 | schedule | success |
+| **11-23 Mon** | **13:05**（本次手动）| in_progress | workflow_dispatch | — |
+
+**根因两件**：
+1. **pipeline cron 定义**是 `cron: '23 7 * * 1-5'`（UTC 07:23 Mon-Fri），**周末不跑**
+2. **GHA cron 大幅漂移**：11-16~11-20 五次 schedule 实际 fire 在 UTC 16:11–17:05（延迟 **8h48m–9h42m**），不是定义的 07:23 —— US-206 已记录过这个漂移模式，六次里四次 pipeline 结束晚于 Routine
+
+**周一结构性缺口 = 两件事叠加**：
+- 周六/周日 cron 定义就不跑（无补救）
+- 周一 07:23 UTC 的 cron 几乎总是延迟到 UTC 16:00 后才 fire（甚至今天 13:05 还没 fire，可能已 skip 或排队中）
+- Routine 固定 UTC 13:04 fire，读到的必然是**周五那次延迟到周五 16:11 的 pipeline 产物**（即周五收盘数据）
+- 结果：周一每次 FAIL
+
+**US-206 预设的「结构性相位」已经漂移**：
+- US-206 实测相位（2026-09-02）：pipeline 07:23 → 11:2x 出数据 → Routine 13:2x（余量 2h）
+- 现在实测相位（2026-11-23 回溯 1 周）：pipeline 16:1x–17:0x → 21:3x 出数据 → Routine 13:0x（**负余量 -8h**，Routine 在 pipeline 之前）
+- 偏离时长：**~9 小时**，pipeline cron 从早晨 07:23 漂到下午 16:11
+
+### 处置
+
+1. **已手动触发**：`gh api -X POST .../actions/workflows/pipeline.yml/dispatches` → run `2026-11-23T13:05:52Z` in_progress（UTC 不要等，约 5h 跑满）
+2. **五选跳过**：`daily_push.txt` 只写陈旧提示 + pick_reversals 周五收盘状态回访 + 下次推送预告
+3. **predictions_pending.json 不写**（空档期无方向判断）
+4. **picks_open.json 不写**（保持周五版本，下次 Routine 回访基线不变）
+5. **last_price_signature.txt 已更新为 `974fb87f578d99022a7eef709efe25d0`**（避免下次 Routine 把 Fri snapshot 当"刚看到"再处理一遍）
+
+### 改进建议 49（P0，本次新增）：**周一结构性缺口 —— pipeline cron 相位修正**
+
+**现象**：周一 Routine 必然 Gate ① FAIL。pipeline 16:11 UTC 才启动，Routine 13:04 UTC 已跑完。周一每次都跳过 ≠ 可持续。
+
+**根因不是"cron 漂移"而是"排班顺序错"**：
+- 希望：pipeline 先跑完 → Routine 读新鲜数据
+- 现实：Routine 先跑 → 读周五数据 → 跳过
+
+**修复方案（三选一）**：
+
+| 方案 | 修改点 | 代价 | 推荐 |
+|---|---|---|---|
+| **A. 把 pipeline cron 提前到 UTC 06:00**（周一特殊 cron）| `.github/workflows/pipeline.yml` 加 `- cron: '0 6 * * 1'` | pipeline 11:00 完成，Routine 13:04 读到新数据（余量 2h）| ★★★ |
+| **B. 把 Routine 触发时间推迟到 UTC 23:00** | 修改 trig_01GfN41Yo9exfJaRr4wSwa8f 调度 | 妈妈 CST 07:00 周二早上收到推送，收效滞后 | ★★ |
+| **C. 周一 Routine 读周五 snapshot，标注基准日 Fri 继续分析** | Gate ① 周一特判放行 | 周五推过一次相同股票 → 内容重复；且周末 + 周一 2.5 个交易日价格已走开 | ★ |
+
+**推荐 A**：一次性修复、不影响其他日。周一 cron fire 在 UTC 06:00 = CST 14:00 周一下午（A 股开盘 + 2h），pipeline 跑 5h 完成于 UTC 11:00，Routine 13:04 读到新数据，余量 2h 与 US-206 原设计一致。
+
+**代价**：周一 pipeline 跑的是「周一上午 2h 的 intraday 数据 + 周五收盘后到周一的新闻/公告」，而不是完整周一收盘。这个代价**可接受** —— 周一 Routine 的价值就是让妈妈周一晚上对本周开盘做判断。等周一收盘数据的代价是**每周一必跳过**，这个代价更大。
+
+**落地位置**：`.github/workflows/pipeline.yml` 的 `schedule` 块加周一专属 cron。
+
+### 改进建议 50（P1，本次新增）：**Gate ① 周一特判 or cron 修复落地前，Routine 不要白跑**
+
+现在这次 fire 浪费了：
+- 读 snapshot
+- 调 gh run list / gh workflow run
+- 写 improvement_log
+- 没写 picks_open / predictions_pending
+
+**短期**：如 cron 修复未落地，建议在 Routine 内部加「if 周一 + Gate ① FAIL 原因=结构性 → 优先触发 pipeline + 立即退出（不写 daily_push）」路径，避免陈旧提示推送占 daily_push 微信名额。
+
+**长期**：等改进建议 49 A 方案落地，这个特判就不需要。
+
+### 历史对比
+
+| 日期 | Gate ① age | 处置 | 备注 |
+|---|---|---|---|
+| 11-16 周一 | 15.01h PASS | 正常推送 | 当时 pipeline 在 UTC 17:05 完成，snapshot 落 UTC 23:59 Sun（周日跑），周一 13:04 读到 -14h fresh |
+| 11-17 周一 | PASS | 正常推送 | 同上 |
+| 11-20 周五 | 15.01h PASS | 正常推送 | pipeline 11-19 Thu 22:04Z 完成（Thu 的 schedule 实际跑了），Routine Fri 13:04 读到 -15h fresh |
+| **11-23 周一** | **63.56h FAIL** | **跳过** | **pipeline 11-20 Fri 21:31Z，周末无运行**，Routine Mon 13:04 读到 -63h stale |
+
+**观察**：11-16/11-17 周一能 PASS 是因为周日/周日夜 pipeline 跑过（实际是周日凌晨 UTC 17:05 fire → UTC 23:59 完成，snapshot 落在周日深夜）。
+
+本次 11-21 Sat 和 11-22 Sun 两天 pipeline 不跑，因为 **cron 定义是 `cron: '23 7 * * 1-5'`**（只 Mon-Fri），确诊无误。
+
+**因此周一跳过 = 周末无 cron + 周一 cron 迟到两因素叠加，不是"偶发"，是每周结构性必跳**。
+
+### 不做 Run 2 的理由
+
+Run 2 需要验证 Day 10 预言。今天到期的预言（11-13 组 600392 盛和资源 sideways / 603288 海天味业 sideways）需要**周一收盘价**才能验证。周五 snapshot 里的 price 是周五收盘，不是周一收盘，**用周五数据验证周一到期预言是数据污染**。延后到明天（11-24 周二）读周一 fresh snapshot 后一并验证。
+
+### 落地状态表（本次更新）
+
+| 建议 | 提出日 | 状态 |
+|---|---|---|
+| 催化剂公布后 48h 自动降档（服务端） | 10-27 | 排队中 |
+| 信号时效性标注（调研"距今 N 天"字段） | 10-27 | 排队中 |
+| 主动回避 US-166 红色格子（Step 3） | 10-28 | 已部分落地 |
+| US-166 presenter 层强制标签 | 10-29 | 排队中 |
+| 预言写"中段触发器" | 11-11 | 已落地 |
+| Run 1 推送前自动读取未到期预言 | 11-11 | 排队中 |
+| presenter 层给 US-166 四种情境打明确标签 | 11-12 | 排队中 |
+| 融券 meaningful 阈值分级 | 11-12 | 排队中 |
+| 板块情绪预言写"板块触发器" | 11-12 | 已落地 |
+| US-166 第五格（分歧僵持）| 11-13 | 排队中 |
+| 网站评级展示「信号分歧度」独立字段 | 11-13 | 排队中 |
+| 建仓价格锚检查（routine prompt）| 11-13 | 排队中 |
+| 周一 cron 调度改时 + Step 1.5 主动巡检 | 11-16 | **本次新证据：周一 pipeline 排班在 Routine 之后 → 必 FAIL，升级为改进建议 49 P0** |
+| 预言 DEFERRED 显式接管机制 | 11-16 | 排队中 |
+| 板块情绪一次性反转识别规则（运行中触发器）| 11-17 | 排队中 |
+| 防御型股票 sideways 用非对称区间 | 11-17 | 已落地 |
+| Step 3.5 B 类口径错误事后记为服务端 bug | 11-18 | 排队中（P0） |
+| US-166 第 3 行变体注解（pump_dump 下沿放宽到 -15~-18%） | 11-18 | 已落地 |
+| B 类口径错误 - 价格位置独立字段 | 11-19 | 排队中（P1） |
+| Run 1 预言生成前读取连续 MISS 门禁 | 11-19 | 已落地 |
+| Step 3.5 发现「机构调研规模低估」survey.count_30d 字段口径问题 | 11-20 | 排队中（P0） |
+| picks_open operate 提示连续 MISS 门禁 | 11-20 | 排队中（P0） |
+| **周一结构性缺口 - pipeline cron 相位修正（提前到 UTC 06:00）** | 11-23 | **新增（P0）**：本次首次 Gate ① FAIL，根因 = pipeline cron 排班在 Routine 之后 |
+| **Gate ① 周一特判 - cron 修复落地前 Routine 不白跑** | 11-23 | **新增（P1）**：短期补丁，避免占 daily_push 微信名额 |
+
+### 下次到期窗口（未变）
+
+- **11-24（周二）**：**11-13 组 Day 10 延期验证**（600392 盛和资源 sideways / 603288 海天味业 sideways）—— 本次因 Gate FAIL 推迟一天
+- **11-27（周五）**：11-17 组 Day 10（002142 宁波银行 up +1~+4% / 300394 天孚通信 sideways ±8%）
+- **12-02（周一）**：11-18 组 Day 10（002142 宁波银行 up +0~+5% / 300866 安克创新 sideways ±8%）
+- **12-03（周二）**：11-19 组 Day 10（300857 协创数据 down -5~-15% / 003816 中国广核 sideways ±4%）
+- **12-04（周三）**：11-20 组 Day 10（300308 中际旭创 up +2~+10% / 002415 海康威视 up +2~+8%）
+
+---
