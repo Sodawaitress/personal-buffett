@@ -1,5 +1,75 @@
 [
   {
+    "code": "300394",
+    "name": "天孚通信",
+    "date": "2026-11-24",
+    "advice": "未持仓今日不追+13.82%，耐心等 ¥106-¥110 第二次探底+5%小仓位（CPO β 极大仓位必克制），跌破 ¥100 严格止损；已持仓继续持有看 Q4 1.6T 订单+800G 出货，¥130 上方止盈一部分。回购88万股均价103-150+CPO 2027提量公告。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 90,
+      "short_change_pct": -31.6,
+      "survey_count_30d": 5,
+      "price": 116.3
+    }
+  },
+  {
+    "code": "NVDA",
+    "name": "Nvidia Corporation",
+    "date": "2026-11-24",
+    "advice": "未持仓耐心等 $160-$165 区间+5%小仓位（AI 周期顶部争议未决），跌破 $150 严格止损；已持仓继续持有看 Q4 指引+云厂资本开支。Q3 FY27 单季创纪录营收+103%YoY已兑现但市场分歧未结束，评级 A→B+ 下调。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 90,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 165.26
+    }
+  },
+  {
+    "code": "601009",
+    "name": "南京银行",
+    "date": "2026-11-24",
+    "advice": "未持仓 ¥13.2-¥13.5 分批 8-10%（防御底仓+A 评级可稍重），跌破 ¥12.8 止损；已持仓继续持有赚分红+再贷款+江苏交控继续增持预期，¥15 上方止盈一部分。江苏交控增持至 15.09%+融券-87.3%空头认输（排前 6.8%）+估值便宜。关键观察：江苏交控 20% 举牌线+12 月 MLF。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 74,
+      "short_change_pct": -87.3,
+      "survey_count_30d": 0,
+      "price": 13.42
+    }
+  },
+  {
+    "code": "603893",
+    "name": "瑞芯微",
+    "date": "2026-11-24",
+    "advice": "未持仓今日不追涨停，耐心等 ¥180-¥190 回调+5%小仓位（半导体设计 β 极大仓位必克制），跌破 ¥175 严格止损；已持仓可持不加仓，¥230 上方止盈一部分。涨停板+调研少（2 次）+融券+29.4% 组合是 US-166 第 3 行边缘情境，需警惕空头趁高位建仓。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 70,
+      "short_change_pct": 29.4,
+      "survey_count_30d": 2,
+      "price": 202.88
+    }
+  },
+  {
+    "code": "301000",
+    "name": "肇民科技",
+    "date": "2026-11-24",
+    "advice": "⚠ 未持仓严禁追 20cm 涨停，耐心等 ¥26-¥27 第一次深度回调+3%小仓位（主题股必克制仓位），跌破 ¥25 严格止损；已持仓可持不加仓，¥34 上方止盈一部分。人形机器人概念+机构调研 3 次但质量 45 弱+现金流转化 68% 差，属于博弈行情不是价值投资。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "持有",
+      "quant_score": 45,
+      "short_change_pct": -2.5,
+      "survey_count_30d": 3,
+      "price": 30.48
+    }
+  },
+  {
     "code": "689009",
     "name": "九号公司",
     "date": "2026-11-20",
@@ -224,20 +294,6 @@
     }
   },
   {
-    "code": "300394",
-    "name": "天孚通信",
-    "date": "2026-11-17",
-    "advice": "未持仓¥106-¥108分批5%（CPO/光模块β极大仓位必克制），跌破¥100止损；已持仓继续持有看Q4 CPO出货+800G/1.6T订单，¥125上方止盈一部分。融券+15.1%中性+30天调研4家持续+Q3业绩加速。",
-    "signals": {
-      "grade": "B-",
-      "conclusion": "观察",
-      "quant_score": 90,
-      "short_change_pct": 15.1,
-      "survey_count_30d": 4,
-      "price": 110.2
-    }
-  },
-  {
     "code": "000333",
     "name": "美的集团",
     "date": "2026-11-17",
@@ -336,34 +392,6 @@
     }
   },
   {
-    "code": "NVDA",
-    "name": "Nvidia Corporation",
-    "date": "2026-11-11",
-    "advice": "未持仓今日不进场（AI 芯片周期顶部争议未决），耐心等 $160-$165 + Q4 指引明朗 + 5% 小仓位，跌破 $150 严格止损。Q3 FY27 单季创纪录但指引保守市场分歧。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 85,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 168.23
-    }
-  },
-  {
-    "code": "603893",
-    "name": "瑞芯微",
-    "date": "2026-11-11",
-    "advice": "⚠ 不建议追 Q3 业绩 price in。已持仓¥220 下方严格止损；未持仓耐心等¥210-¥220 第二次探底 + 融券见顶回落至 base 10 万股以下 + 5% 小仓位。半导体设计 β 极大仓位必克制。",
-    "signals": {
-      "grade": "B+",
-      "conclusion": "买入",
-      "quant_score": 70,
-      "short_change_pct": 326.0,
-      "survey_count_30d": 2,
-      "price": 233.2
-    }
-  },
-  {
     "code": "300274",
     "name": "阳光电源",
     "date": "2026-11-10",
@@ -459,34 +487,6 @@
       "short_change_pct": -15.0,
       "survey_count_30d": 2,
       "price": 12.85
-    }
-  },
-  {
-    "code": "ANET",
-    "name": "Arista Networks",
-    "date": "2026-10-30",
-    "advice": "未持仓今日不进场（估值高 + AI 网络周期顶部争议），耐心等 $180-$185 + Q4 指引明朗 + 5% 小仓位，跌破 $175 严格止损。AI 数据中心网络龙头但 Meta/MSFT 订单集中度风险。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 82,
-      "short_change_pct": null,
-      "survey_count_30d": null,
-      "price": 186.04
-    }
-  },
-  {
-    "code": "300750",
-    "name": "宁德时代",
-    "date": "2026-10-30",
-    "advice": "未持仓¥225-¥230分批5-8%（电池周期敏感），跌破¥215止损；已持仓继续持有看Q4海外产能释放+储能订单，¥260上方止盈一部分。融券-20%空头撤+Q3业绩兑现+机构持续调研。",
-    "signals": {
-      "grade": "A",
-      "conclusion": "买入",
-      "quant_score": 82,
-      "short_change_pct": -20.0,
-      "survey_count_30d": 5,
-      "price": 229.07
     }
   }
 ]

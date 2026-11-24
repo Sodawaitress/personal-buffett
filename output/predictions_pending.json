@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-24",
+    "code": "601009",
+    "name": "南京银行",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "江苏交控增持至15.09% + 融券基数1315→166万股大幅平仓(-87.3%,排全市场前6.8%) + Grade A 估值便宜 + 12月MLF续作催化",
+    "price_at_prediction": 13.42
+  },
+  {
+    "date": "2026-11-24",
+    "code": "300394",
+    "name": "天孚通信",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "回购88万股耗资1.08亿已公告 + CPO 批量交付2027年起 + 融券-31.6%空头撤但估值仍贵 + 波动区间±10%",
+    "price_at_prediction": 116.3
+  }
+]
