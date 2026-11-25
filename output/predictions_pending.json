@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-25",
+    "code": "002318",
+    "name": "久立特材",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "11-23 调研 1 天前新鲜（距今最近）+ 空头在撤 -26% + Q3 扭亏，核电高端项目进度 65-90%",
+    "price_at_prediction": 16.56
+  },
+  {
+    "date": "2026-11-25",
+    "code": "SMCI",
+    "name": "Super Micro Computer, Inc.",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "美股 AI 板块隔夜重挫 -7%（与 NVDA/MRVL 同步），需要 Q1 FY27 业绩预期触发方向",
+    "price_at_prediction": 22.72
+  }
+]

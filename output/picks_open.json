@@ -1,5 +1,75 @@
 [
   {
+    "code": "002318",
+    "name": "久立特材",
+    "date": "2026-11-25",
+    "advice": "未持仓 ¥16.3-¥16.7 分批 5-8%（Grade B 不冒进），跌破 ¥15.8 止损；已持仓继续持有看 Q4 核电订单 + 回购节奏（已回购 666 万股占 0.68%）。",
+    "signals": {
+      "grade": "B",
+      "conclusion": "持有",
+      "quant_score": 64,
+      "short_change_pct": -26.4,
+      "survey_count_30d": 2,
+      "price": 16.56
+    }
+  },
+  {
+    "code": "000001",
+    "name": "平安银行",
+    "date": "2026-11-25",
+    "advice": "未持仓 ¥12.2-¥12.4 分批 10-15%（A 级防御盘可稍重），跌破 ¥11.8 止损；已持仓继续持有赚分红 + 等 12 月 MLF 续作催化。",
+    "signals": {
+      "grade": "A",
+      "conclusion": "买入",
+      "quant_score": 73,
+      "short_change_pct": 18.7,
+      "survey_count_30d": 1,
+      "price": 12.3
+    }
+  },
+  {
+    "code": "300684",
+    "name": "中石科技",
+    "date": "2026-11-25",
+    "advice": "观察不进场。估值已炒过一轮，8-9 月 20cm 涨停已把 CPO 预期打满。真要进要等 ¥45 以下 + 回购信号 + Q4 出货数据。",
+    "signals": {
+      "grade": "B-",
+      "conclusion": "观察",
+      "quant_score": 73,
+      "short_change_pct": 21.5,
+      "survey_count_30d": 1,
+      "price": 51.63
+    }
+  },
+  {
+    "code": "SMCI",
+    "name": "Super Micro Computer, Inc.",
+    "date": "2026-11-25",
+    "advice": "未持仓不追跌，等 $20 下方 + 11 月 Q1 FY27 业绩真预览后再看。已持仓不恐慌不加仓。NVDA 昨天刚推（$165 → 今日 $152.75），本轮 AI 回调看板块共振。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "买入",
+      "quant_score": 77,
+      "short_change_pct": null,
+      "survey_count_30d": null,
+      "price": 22.72
+    }
+  },
+  {
+    "code": "601899",
+    "name": "紫金矿业",
+    "date": "2026-11-25",
+    "advice": "未持仓不进场，等 ¥22 下方 + 铜价企稳。已持仓继续持有看 Q4 金价，这种周期股的跌幅没到需要止损的程度。",
+    "signals": {
+      "grade": "B+",
+      "conclusion": "持有",
+      "quant_score": 84,
+      "short_change_pct": -1.1,
+      "survey_count_30d": 0,
+      "price": 23.21
+    }
+  },
+  {
     "code": "300394",
     "name": "天孚通信",
     "date": "2026-11-24",
@@ -473,20 +543,6 @@
       "short_change_pct": 5.0,
       "survey_count_30d": 4,
       "price": 84.95
-    }
-  },
-  {
-    "code": "688236",
-    "name": "春立医疗",
-    "date": "2026-11-03",
-    "advice": "未持仓今日不进场（骨科集采压力未消），耐心等¥12-¥12.5+Q4集采政策明朗+5%小仓位，跌破¥11止损。机构持续调研+融券-15%空头撤但业绩承压。",
-    "signals": {
-      "grade": "C+",
-      "conclusion": "观察",
-      "quant_score": 45,
-      "short_change_pct": -15.0,
-      "survey_count_30d": 2,
-      "price": 12.85
     }
   }
 ]
