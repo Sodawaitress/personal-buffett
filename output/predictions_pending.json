@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-11-27",
+    "code": "300308",
+    "name": "中际旭创",
+    "direction": "up",
+    "horizon_days": 10,
+    "key_signal": "20-40亿回购公告 + 融券空头在撤 + 两次电话会调研 + 11-26 全市场成交额第一",
+    "price_at_prediction": 430.18
+  },
+  {
+    "date": "2026-11-27",
+    "code": "600549",
+    "name": "厦门钨业",
+    "direction": "sideways",
+    "horizon_days": 10,
+    "key_signal": "A买入 + 10-30 全套 87 家现场参观 + 钨价高位震荡；但机构后续调研空白、有洛阳钼业仲裁扰动",
+    "price_at_prediction": 30.68
+  }
+]
